@@ -272,6 +272,7 @@ export default function CanvasWorkspace({
   const groupResizeStateRef = useRef<{
     groupBounds: { minX: number; minY: number; maxX: number; maxY: number; width: number; height: number; centerX: number; centerY: number };
     elements: Map<string, { x: number; y: number; width: number; height: number; rotation: number; offsetX: number; offsetY: number }>;
+    groupRotation: number;
   } | null>(null);
   const isGroupResize = useRef(false);
   
@@ -768,13 +769,20 @@ export default function CanvasWorkspace({
         saveToHistory(canvasElements);
       }
       
-      // Calculate group bounding box using center positions
+      // Determine group rotation from the first element (all grouped elements share rotation)
+      const groupRotation = selectedElements[0]?.rotation || 0;
+      
+      // Calculate group bounding box using VISUAL (rotation-aware) dimensions
       let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
       selectedElements.forEach(el => {
-        const left = el.x - el.width / 2;
-        const right = el.x + el.width / 2;
-        const top = el.y - el.height / 2;
-        const bottom = el.y + el.height / 2;
+        const rot = el.rotation || 0;
+        const isSwapped = rot === 90 || rot === 270;
+        const visualW = isSwapped ? el.height : el.width;
+        const visualH = isSwapped ? el.width : el.height;
+        const left = el.x - visualW / 2;
+        const right = el.x + visualW / 2;
+        const top = el.y - visualH / 2;
+        const bottom = el.y + visualH / 2;
         minX = Math.min(minX, left);
         minY = Math.min(minY, top);
         maxX = Math.max(maxX, right);
@@ -787,7 +795,6 @@ export default function CanvasWorkspace({
       const groupCenterY = (minY + maxY) / 2;
       
       // Store each element's ABSOLUTE initial position, size, and offset from group center
-      // This is immutable - we never modify these values during the resize
       const elements = new Map<string, { x: number; y: number; width: number; height: number; rotation: number; offsetX: number; offsetY: number }>();
       selectedElements.forEach(el => {
         elements.set(el.id, {
@@ -796,14 +803,15 @@ export default function CanvasWorkspace({
           width: el.width,
           height: el.height,
           rotation: el.rotation || 0,
-          offsetX: el.x - groupCenterX,  // Distance from group center (signed)
-          offsetY: el.y - groupCenterY,  // Distance from group center (signed)
+          offsetX: el.x - groupCenterX,
+          offsetY: el.y - groupCenterY,
         });
       });
       
       groupResizeStateRef.current = {
         groupBounds: { minX, minY, maxX, maxY, width: groupWidth, height: groupHeight, centerX: groupCenterX, centerY: groupCenterY },
-        elements
+        elements,
+        groupRotation,
       };
       
       // Use group bounds as initial size
@@ -994,22 +1002,24 @@ export default function CanvasWorkspace({
           const mouseX = (event.clientX - rect.left) / scaleFactor / mmToPixelRatio;
           const mouseY = (event.clientY - rect.top) / scaleFactor / mmToPixelRatio;
 
-          // Calculate delta from initial mouse position
-          let deltaX = mouseX - initialMousePos.x;
-          let deltaY = mouseY - initialMousePos.y;
+          // Calculate delta from initial mouse position (screen space)
+          const deltaX = mouseX - initialMousePos.x;
+          const deltaY = mouseY - initialMousePos.y;
 
-          // For group resize with rotated elements, transform screen deltas to local space
+          // For group resize with rotated elements, remap handle from local to screen space
+          // CSS rotate(90deg) CW: local NW→screen NE, local E→screen S, etc.
+          let effectiveHandle = resizeHandle;
           if (isGroupResize.current && groupResizeStateRef.current) {
-            const firstEl = groupResizeStateRef.current.elements.values().next().value;
-            const groupRotation = firstEl ? (firstEl.rotation || 0) : 0;
-            if (groupRotation !== 0) {
-              const rotRad = -(groupRotation * Math.PI) / 180;
-              const cosR = Math.cos(rotRad);
-              const sinR = Math.sin(rotRad);
-              const localDX = deltaX * cosR - deltaY * sinR;
-              const localDY = deltaX * sinR + deltaY * cosR;
-              deltaX = localDX;
-              deltaY = localDY;
+            const gr = groupResizeStateRef.current.groupRotation;
+            if (gr === 90) {
+              const map: Record<string, string> = { nw: 'ne', n: 'e', ne: 'se', e: 's', se: 'sw', s: 'w', sw: 'nw', w: 'n' };
+              effectiveHandle = map[resizeHandle] || resizeHandle;
+            } else if (gr === 180) {
+              const map: Record<string, string> = { nw: 'se', n: 's', ne: 'sw', e: 'w', se: 'nw', s: 'n', sw: 'ne', w: 'e' };
+              effectiveHandle = map[resizeHandle] || resizeHandle;
+            } else if (gr === 270) {
+              const map: Record<string, string> = { nw: 'sw', n: 'w', ne: 'nw', e: 'n', se: 'ne', s: 'e', sw: 'se', w: 's' };
+              effectiveHandle = map[resizeHandle] || resizeHandle;
             }
           }
 
@@ -1023,7 +1033,7 @@ export default function CanvasWorkspace({
           const aspectRatio = initialSize.width / initialSize.height;
           
           // Calculate new dimensions based on resize handle using deltas
-          switch (resizeHandle) {
+          switch (effectiveHandle) {
             case 'se': // Southeast
               newWidth = Math.max(20, initialSize.width + deltaX);
               newHeight = Math.max(20, initialSize.height + deltaY);
@@ -1136,41 +1146,40 @@ export default function CanvasWorkspace({
             console.log('🔄 Group resize - initialSize:', initialSize, 'groupBounds:', groupState.groupBounds);
             console.log('🔄 Group resize - newWidth:', newWidth, 'newHeight:', newHeight, 'scaleX:', scaleX.toFixed(3), 'scaleY:', scaleY.toFixed(3));
             
-            // Determine anchor point based on which handle is being dragged
-            // The anchor is the opposite corner/edge that stays fixed
-            let anchorX = minX; // Default: anchor at left
-            let anchorY = minY; // Default: anchor at top
+            // Determine anchor point based on the EFFECTIVE (screen-space) handle
+            let anchorX = minX;
+            let anchorY = minY;
             
-            switch (resizeHandle) {
-              case 'se': // Southeast - anchor at northwest
+            switch (effectiveHandle) {
+              case 'se':
                 anchorX = minX;
                 anchorY = minY;
                 break;
-              case 'sw': // Southwest - anchor at northeast
+              case 'sw':
                 anchorX = maxX;
                 anchorY = minY;
                 break;
-              case 'ne': // Northeast - anchor at southwest
+              case 'ne':
                 anchorX = minX;
                 anchorY = maxY;
                 break;
-              case 'nw': // Northwest - anchor at southeast
+              case 'nw':
                 anchorX = maxX;
                 anchorY = maxY;
                 break;
-              case 'e': // East - anchor at west edge center
+              case 'e':
                 anchorX = minX;
                 anchorY = (minY + maxY) / 2;
                 break;
-              case 'w': // West - anchor at east edge center
+              case 'w':
                 anchorX = maxX;
                 anchorY = (minY + maxY) / 2;
                 break;
-              case 'n': // North - anchor at south edge center
+              case 'n':
                 anchorX = (minX + maxX) / 2;
                 anchorY = maxY;
                 break;
-              case 's': // South - anchor at north edge center
+              case 's':
                 anchorX = (minX + maxX) / 2;
                 anchorY = minY;
                 break;
@@ -1178,21 +1187,20 @@ export default function CanvasWorkspace({
             
             // Update each element using its IMMUTABLE initial state
             groupState.elements.forEach((initial, elementId) => {
-              // Calculate element's offset from the anchor point (not center)
               const offsetFromAnchorX = initial.x - anchorX;
               const offsetFromAnchorY = initial.y - anchorY;
               
-              // Scale the offset from anchor by the scale factor
               const scaledOffsetX = offsetFromAnchorX * scaleX;
               const scaledOffsetY = offsetFromAnchorY * scaleY;
               
-              // New position = anchor + scaled offset
               const newElX = anchorX + scaledOffsetX;
               const newElY = anchorY + scaledOffsetY;
               
-              // Scale element dimensions proportionally
-              const newElWidth = Math.max(10, initial.width * scaleX);
-              const newElHeight = Math.max(10, initial.height * scaleY);
+              // For rotated elements, swap scale axes for stored dimensions
+              // Screen scaleX affects visual width, which is stored height for 90°/270° rotated elements
+              const isSwapped = initial.rotation === 90 || initial.rotation === 270;
+              const newElWidth = Math.max(10, initial.width * (isSwapped ? scaleY : scaleX));
+              const newElHeight = Math.max(10, initial.height * (isSwapped ? scaleX : scaleY));
               
               console.log(`📐 Resizing element ${elementId}: initial(${initial.x.toFixed(1)}, ${initial.y.toFixed(1)}) anchor(${anchorX.toFixed(1)}, ${anchorY.toFixed(1)}) -> new(${newElX.toFixed(1)}, ${newElY.toFixed(1)})`);
               
