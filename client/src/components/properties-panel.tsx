@@ -210,80 +210,91 @@ export default function PropertiesPanel({
 
 
   // Alignment handlers
+  const getElementVisualDims = (el: CanvasElement) => {
+    const rot = ((el.rotation || 0) % 360 + 360) % 360;
+    const isRot = rot === 90 || rot === 270;
+    return { w: isRot ? el.height : el.width, h: isRot ? el.width : el.height };
+  };
+
   const handleAlign = (alignment: 'top-left' | 'top-center' | 'top-right' | 'middle-left' | 'center' | 'middle-right' | 'bottom-left' | 'bottom-center' | 'bottom-right') => {
     if (!currentElement || !onAlignElement) return;
     
-    // Get current template dimensions
     const currentTemplate = templateSizes.find(t => t.id === project.templateSize);
     if (!currentTemplate) return;
     
-    const safetyMarginMm = 3; // 3mm safety margin (red boundaries)
-    const templateWidth = currentTemplate.width;
-    const templateHeight = currentTemplate.height;
+    const safetyMarginMm = 3;
+    const templateHalfWidth = currentTemplate.width / 2;
+    const templateHalfHeight = currentTemplate.height / 2;
     
-    // Center-based coordinate system - (0,0) is at the center of the template
-    const templateHalfWidth = templateWidth / 2;
-    const templateHalfHeight = templateHeight / 2;
+    const elementsToAlign = selectedElements.length > 1 ? selectedElements : [currentElement];
     
-    // Use VISUAL dimensions (swapped when rotated 90° or 270°)
-    const isRotated = currentElement.rotation === 90 || currentElement.rotation === 270;
-    const visualWidth = isRotated ? currentElement.height : currentElement.width;
-    const visualHeight = isRotated ? currentElement.width : currentElement.height;
-    const elementHalfWidth = visualWidth / 2;
-    const elementHalfHeight = visualHeight / 2;
+    let groupMinX = Infinity, groupMinY = Infinity, groupMaxX = -Infinity, groupMaxY = -Infinity;
+    elementsToAlign.forEach(el => {
+      const { w, h } = getElementVisualDims(el);
+      groupMinX = Math.min(groupMinX, el.x - w / 2);
+      groupMinY = Math.min(groupMinY, el.y - h / 2);
+      groupMaxX = Math.max(groupMaxX, el.x + w / 2);
+      groupMaxY = Math.max(groupMaxY, el.y + h / 2);
+    });
     
-    let x = currentElement.x;
-    let y = currentElement.y;
+    const groupWidth = groupMaxX - groupMinX;
+    const groupHeight = groupMaxY - groupMinY;
+    const groupCenterX = (groupMinX + groupMaxX) / 2;
+    const groupCenterY = (groupMinY + groupMaxY) / 2;
+    const groupHalfWidth = groupWidth / 2;
+    const groupHalfHeight = groupHeight / 2;
+    
+    let targetCenterX = groupCenterX;
+    let targetCenterY = groupCenterY;
     
     switch (alignment) {
       case 'top-left':
-        // Align to top-left red boundary
-        x = -templateHalfWidth + safetyMarginMm + elementHalfWidth;
-        y = -templateHalfHeight + safetyMarginMm + elementHalfHeight;
+        targetCenterX = -templateHalfWidth + safetyMarginMm + groupHalfWidth;
+        targetCenterY = -templateHalfHeight + safetyMarginMm + groupHalfHeight;
         break;
       case 'top-center':
-        // Center horizontally, align to top red boundary
-        x = 0;
-        y = -templateHalfHeight + safetyMarginMm + elementHalfHeight;
+        targetCenterX = 0;
+        targetCenterY = -templateHalfHeight + safetyMarginMm + groupHalfHeight;
         break;
       case 'top-right':
-        // Align to top-right red boundary
-        x = templateHalfWidth - safetyMarginMm - elementHalfWidth;
-        y = -templateHalfHeight + safetyMarginMm + elementHalfHeight;
+        targetCenterX = templateHalfWidth - safetyMarginMm - groupHalfWidth;
+        targetCenterY = -templateHalfHeight + safetyMarginMm + groupHalfHeight;
         break;
       case 'middle-left':
-        // Align to left red boundary, center vertically
-        x = -templateHalfWidth + safetyMarginMm + elementHalfWidth;
-        y = 0;
+        targetCenterX = -templateHalfWidth + safetyMarginMm + groupHalfWidth;
+        targetCenterY = 0;
         break;
       case 'center':
-        // Center both horizontally and vertically
-        x = 0;
-        y = 0;
+        targetCenterX = 0;
+        targetCenterY = 0;
         break;
       case 'middle-right':
-        // Align to right red boundary, center vertically
-        x = templateHalfWidth - safetyMarginMm - elementHalfWidth;
-        y = 0;
+        targetCenterX = templateHalfWidth - safetyMarginMm - groupHalfWidth;
+        targetCenterY = 0;
         break;
       case 'bottom-left':
-        // Align to bottom-left red boundary
-        x = -templateHalfWidth + safetyMarginMm + elementHalfWidth;
-        y = templateHalfHeight - safetyMarginMm - elementHalfHeight;
+        targetCenterX = -templateHalfWidth + safetyMarginMm + groupHalfWidth;
+        targetCenterY = templateHalfHeight - safetyMarginMm - groupHalfHeight;
         break;
       case 'bottom-center':
-        // Center horizontally, align to bottom red boundary
-        x = 0;
-        y = templateHalfHeight - safetyMarginMm - elementHalfHeight;
+        targetCenterX = 0;
+        targetCenterY = templateHalfHeight - safetyMarginMm - groupHalfHeight;
         break;
       case 'bottom-right':
-        // Align to bottom-right red boundary
-        x = templateHalfWidth - safetyMarginMm - elementHalfWidth;
-        y = templateHalfHeight - safetyMarginMm - elementHalfHeight;
+        targetCenterX = templateHalfWidth - safetyMarginMm - groupHalfWidth;
+        targetCenterY = templateHalfHeight - safetyMarginMm - groupHalfHeight;
         break;
     }
     
-    onAlignElement(currentElement.id, { x: Math.round(x), y: Math.round(y) });
+    const deltaX = targetCenterX - groupCenterX;
+    const deltaY = targetCenterY - groupCenterY;
+    
+    elementsToAlign.forEach(el => {
+      onAlignElement(el.id, { 
+        x: Math.round(el.x + deltaX), 
+        y: Math.round(el.y + deltaY) 
+      });
+    });
   };
 
   // Helper function for optimistic updates with fallback

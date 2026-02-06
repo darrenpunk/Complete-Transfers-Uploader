@@ -916,7 +916,7 @@ export default function UploadTool() {
     return { visualWidth, visualHeight };
   };
 
-  // Handle element alignment from ToolsSidebar (string-based)
+  // Handle element alignment from ToolsSidebar (string-based) - group-aware
   const handleAlignElement = (elementId: string, alignment: 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom') => {
     if (!currentProject || !canvasElements) return;
     
@@ -926,49 +926,67 @@ export default function UploadTool() {
     const template = templateSizes.find(t => t.id === currentProject.templateSize);
     if (!template) return;
     
-    const safetyMarginMm = 3; // 3mm safety margin (red boundaries)
-    
-    // Center-based coordinate system - (0,0) is at center of template
+    const safetyMarginMm = 3;
     const templateHalfWidth = template.width / 2;
     const templateHalfHeight = template.height / 2;
     
-    // Get visual bounding box dimensions accounting for rotation
-    const { visualWidth, visualHeight } = getVisualBounds(element);
-    const elementHalfWidth = visualWidth / 2;
-    const elementHalfHeight = visualHeight / 2;
+    // Determine which elements to move together (grouped or selected)
+    let elementsToMove: CanvasElement[] = [element];
+    if (selectedElements.length > 1) {
+      elementsToMove = selectedElements;
+    } else if (element.groupId) {
+      elementsToMove = canvasElements.filter(el => el.groupId === element.groupId);
+    }
     
-    let updates: { x?: number; y?: number } = {};
+    // Calculate group bounding box using visual dimensions
+    let groupMinX = Infinity, groupMinY = Infinity, groupMaxX = -Infinity, groupMaxY = -Infinity;
+    elementsToMove.forEach(el => {
+      const { visualWidth: vw, visualHeight: vh } = getVisualBounds(el);
+      groupMinX = Math.min(groupMinX, el.x - vw / 2);
+      groupMinY = Math.min(groupMinY, el.y - vh / 2);
+      groupMaxX = Math.max(groupMaxX, el.x + vw / 2);
+      groupMaxY = Math.max(groupMaxY, el.y + vh / 2);
+    });
+    
+    const groupCenterX = (groupMinX + groupMaxX) / 2;
+    const groupCenterY = (groupMinY + groupMaxY) / 2;
+    const groupHalfWidth = (groupMaxX - groupMinX) / 2;
+    const groupHalfHeight = (groupMaxY - groupMinY) / 2;
+    
+    let targetCenterX = groupCenterX;
+    let targetCenterY = groupCenterY;
     
     switch (alignment) {
       case 'left':
-        // Align to left red boundary (safety margin from left edge)
-        updates.x = -templateHalfWidth + safetyMarginMm + elementHalfWidth;
+        targetCenterX = -templateHalfWidth + safetyMarginMm + groupHalfWidth;
         break;
       case 'center':
-        // Center horizontally (x = 0 in center-based coordinates)
-        updates.x = 0;
+        targetCenterX = 0;
         break;
       case 'right':
-        // Align to right red boundary (safety margin from right edge)
-        updates.x = templateHalfWidth - safetyMarginMm - elementHalfWidth;
+        targetCenterX = templateHalfWidth - safetyMarginMm - groupHalfWidth;
         break;
       case 'top':
-        // Align to top red boundary (safety margin from top edge)
-        updates.y = -templateHalfHeight + safetyMarginMm + elementHalfHeight;
+        targetCenterY = -templateHalfHeight + safetyMarginMm + groupHalfHeight;
         break;
       case 'middle':
-        // Center vertically (y = 0 in center-based coordinates)
-        updates.y = 0;
+        targetCenterY = 0;
         break;
       case 'bottom':
-        // Align to bottom red boundary (safety margin from bottom edge)
-        updates.y = templateHalfHeight - safetyMarginMm - elementHalfHeight;
+        targetCenterY = templateHalfHeight - safetyMarginMm - groupHalfHeight;
         break;
     }
     
-    updateElementMutation.mutate({
-      id: elementId,
-      updates
+    const deltaX = targetCenterX - groupCenterX;
+    const deltaY = targetCenterY - groupCenterY;
+    
+    elementsToMove.forEach(el => {
+      const updates: { x?: number; y?: number } = {};
+      if (deltaX !== 0) updates.x = Math.round(el.x + deltaX);
+      if (deltaY !== 0) updates.y = Math.round(el.y + deltaY);
+      if (Object.keys(updates).length > 0) {
+        updateElementMutation.mutate({ id: el.id, updates });
+      }
     });
   };
 
