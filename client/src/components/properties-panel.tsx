@@ -113,6 +113,7 @@ interface PropertiesPanelProps {
   templateSizes: TemplateSize[];
   onTemplateChange: (templateId: string) => void;
   onAlignElement?: (elementId: string, alignment: { x?: number; y?: number }) => void;
+  onAlignElements?: (updates: Array<{ id: string; x: number; y: number }>) => void;
   onCenterAllElements?: () => void;
   maintainAspectRatio?: boolean;
   onMaintainAspectRatioChange?: (maintain: boolean) => void;
@@ -127,6 +128,7 @@ export default function PropertiesPanel({
   templateSizes,
   onTemplateChange,
   onAlignElement,
+  onAlignElements,
   onCenterAllElements,
   maintainAspectRatio: propMaintainAspectRatio = true,
   onMaintainAspectRatioChange
@@ -289,12 +291,19 @@ export default function PropertiesPanel({
     const deltaX = targetCenterX - groupCenterX;
     const deltaY = targetCenterY - groupCenterY;
     
-    elementsToAlign.forEach(el => {
-      onAlignElement(el.id, { 
-        x: Math.round(el.x + deltaX), 
-        y: Math.round(el.y + deltaY) 
+    if (elementsToAlign.length > 1 && onAlignElements) {
+      const updates = elementsToAlign.map(el => ({
+        id: el.id,
+        x: Math.round(el.x + deltaX),
+        y: Math.round(el.y + deltaY),
+      }));
+      onAlignElements(updates);
+    } else {
+      onAlignElement(elementsToAlign[0].id, { 
+        x: Math.round(elementsToAlign[0].x + deltaX), 
+        y: Math.round(elementsToAlign[0].y + deltaY) 
       });
-    });
+    }
   };
 
   // Helper function for optimistic updates with fallback

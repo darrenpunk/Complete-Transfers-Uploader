@@ -980,24 +980,36 @@ export default function UploadTool() {
     const deltaX = targetCenterX - groupCenterX;
     const deltaY = targetCenterY - groupCenterY;
     
-    elementsToMove.forEach(el => {
+    const updatePromises = elementsToMove.map(async (el) => {
       const updates: { x?: number; y?: number } = {};
       if (deltaX !== 0) updates.x = Math.round(el.x + deltaX);
       if (deltaY !== 0) updates.y = Math.round(el.y + deltaY);
       if (Object.keys(updates).length > 0) {
-        updateElementMutation.mutate({ id: el.id, updates });
+        await apiRequest("PATCH", `/api/canvas-elements/${el.id}`, updates);
       }
+    });
+    Promise.all(updatePromises).then(() => {
+      queryClient.invalidateQueries({ queryKey: ["/api/projects", currentProject.id, "canvas-elements"] });
     });
   };
 
-  // Handle element alignment from PropertiesPanel (coordinate-based)
+  // Handle element alignment from PropertiesPanel (coordinate-based) - single element
   const handleAlignElementByCoordinates = (elementId: string, alignment: { x?: number; y?: number }) => {
     if (!currentProject) return;
-    
-    updateElementMutation.mutate({
-      id: elementId,
-      updates: alignment
-    });
+    updateElementMutation.mutate({ id: elementId, updates: alignment });
+  };
+
+  // Handle batch alignment from PropertiesPanel (group of elements)
+  const handleAlignElementsBatch = async (updates: Array<{ id: string; x: number; y: number }>) => {
+    if (!currentProject) return;
+    try {
+      await Promise.all(
+        updates.map(({ id, x, y }) => apiRequest("PATCH", `/api/canvas-elements/${id}`, { x, y }))
+      );
+      queryClient.invalidateQueries({ queryKey: ["/api/projects", currentProject.id, "canvas-elements"] });
+    } catch (error) {
+      console.error('Failed to batch align elements:', error);
+    }
   };
 
   // Handle center all elements
@@ -1724,6 +1736,7 @@ export default function UploadTool() {
             templateSizes={templateSizes}
             onTemplateChange={handleTemplateChange}
             onAlignElement={handleAlignElementByCoordinates}
+            onAlignElements={handleAlignElementsBatch}
             onCenterAllElements={handleCenterAllElements}
             maintainAspectRatio={maintainAspectRatio}
             onMaintainAspectRatioChange={setMaintainAspectRatio}
@@ -1752,6 +1765,7 @@ export default function UploadTool() {
                 templateSizes={templateSizes}
                 onTemplateChange={handleTemplateChange}
                 onAlignElement={handleAlignElementByCoordinates}
+                onAlignElements={handleAlignElementsBatch}
                 onCenterAllElements={handleCenterAllElements}
                 maintainAspectRatio={maintainAspectRatio}
                 onMaintainAspectRatioChange={setMaintainAspectRatio}
