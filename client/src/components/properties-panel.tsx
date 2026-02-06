@@ -224,8 +224,13 @@ export default function PropertiesPanel({
     // Center-based coordinate system - (0,0) is at the center of the template
     const templateHalfWidth = templateWidth / 2;
     const templateHalfHeight = templateHeight / 2;
-    const elementHalfWidth = currentElement.width / 2;
-    const elementHalfHeight = currentElement.height / 2;
+    
+    // Use VISUAL dimensions (swapped when rotated 90° or 270°)
+    const isRotated = currentElement.rotation === 90 || currentElement.rotation === 270;
+    const visualWidth = isRotated ? currentElement.height : currentElement.width;
+    const visualHeight = isRotated ? currentElement.width : currentElement.height;
+    const elementHalfWidth = visualWidth / 2;
+    const elementHalfHeight = visualHeight / 2;
     
     let x = currentElement.x;
     let y = currentElement.y;
