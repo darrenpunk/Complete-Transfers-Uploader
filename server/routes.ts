@@ -2414,25 +2414,26 @@ export async function registerRoutes(app: express.Application) {
             
             console.log(`📊 Auto-analyzed ${finalFilename} - Colors: ${analysis.colors?.length || 0}, Stroke widths: ${analysis.strokeWidths?.length || 0}, Min: ${analysis.minStrokeWidth?.toFixed(2) || 'N/A'}pt`);
             
-            // Check for complex vectors and generate PNG fallback for canvas display
-            if (analysis.vectorComplexity?.isComplex) {
+            // Check for complex vectors OR Safari-incompatible features and generate PNG fallback
+            const needsPngFallback = analysis.vectorComplexity?.isComplex || analysis.vectorComplexity?.hasSafariIncompatibleFeatures;
+            if (needsPngFallback) {
               try {
-                console.log(`🎨 COMPLEX VECTOR: Generating PNG fallback for canvas (paths: ${analysis.vectorComplexity.pathCount}, elements: ${analysis.vectorComplexity.elementCount})`);
+                const reason = analysis.vectorComplexity?.isComplex 
+                  ? `complex vector (paths: ${analysis.vectorComplexity.pathCount}, elements: ${analysis.vectorComplexity.elementCount})`
+                  : `Safari-incompatible features: ${analysis.vectorComplexity?.safariIssues?.join(', ')}`;
+                console.log(`🎨 PNG FALLBACK NEEDED: ${reason}`);
                 
                 const pngFilename = finalFilename.replace(/\.svg$/, '-canvas-fallback.png');
                 const pngPath = path.join(uploadDir, pngFilename);
                 
-                // Generate high-resolution PNG using Inkscape or rsvg-convert (2400 DPI for quality)
                 const { execSync } = await import('child_process');
                 try {
-                  // Try rsvg-convert first (faster)
                   execSync(`rsvg-convert "${svgPath}" -o "${pngPath}" -d 300 -p 300`, { 
                     stdio: 'pipe',
                     timeout: 30000 
                   });
                   console.log(`✅ PNG fallback generated using rsvg-convert: ${pngFilename}`);
                 } catch (rsvgError) {
-                  // Fallback to Inkscape if rsvg-convert fails
                   console.log(`⚠️ rsvg-convert failed, trying Inkscape...`);
                   execSync(`inkscape "${svgPath}" --export-filename="${pngPath}" --export-dpi=300`, {
                     stdio: 'pipe',
@@ -2441,19 +2442,19 @@ export async function registerRoutes(app: express.Application) {
                   console.log(`✅ PNG fallback generated using Inkscape: ${pngFilename}`);
                 }
                 
-                // Store PNG fallback info on file object for later database storage
                 (file as any).canvasFallbackFilename = pngFilename;
                 (file as any).isComplexVector = true;
                 (file as any).vectorComplexityMetrics = {
                   pathCount: analysis.vectorComplexity.pathCount,
                   elementCount: analysis.vectorComplexity.elementCount,
+                  hasSafariIncompatibleFeatures: analysis.vectorComplexity.hasSafariIncompatibleFeatures || false,
+                  safariIssues: analysis.vectorComplexity.safariIssues || [],
                   detectedAt: new Date().toISOString()
                 };
                 
-                console.log(`✅ Complex vector metadata prepared for database storage`);
+                console.log(`✅ PNG fallback metadata prepared for database storage`);
               } catch (pngError) {
                 console.error('⚠️ Failed to generate PNG fallback:', pngError);
-                // Continue without PNG fallback - canvas will use SVG
               }
             }
             
@@ -4425,6 +4426,57 @@ export async function registerRoutes(app: express.Application) {
     } catch (error) {
       console.error('Update canvas element colors error:', error);
       res.status(500).json({ error: 'Failed to update canvas element colors' });
+    }
+  });
+
+  app.get('/api/logos/:logoId/safari-png', async (req, res) => {
+    try {
+      const logoId = req.params.logoId;
+      const logo = await storage.getLogo(logoId);
+      if (!logo) {
+        return res.status(404).json({ error: 'Logo not found' });
+      }
+      
+      if (logo.canvasFallbackFilename) {
+        const pngPath = path.join(uploadDir, logo.canvasFallbackFilename);
+        if (fs.existsSync(pngPath)) {
+          return res.sendFile(pngPath);
+        }
+      }
+      
+      const svgPath = path.join(uploadDir, logo.filename);
+      if (!fs.existsSync(svgPath)) {
+        return res.status(404).json({ error: 'SVG file not found' });
+      }
+      
+      const pngFilename = logo.filename.replace(/\.svg$/, '-safari-fallback.png');
+      const pngPath = path.join(uploadDir, pngFilename);
+      
+      if (fs.existsSync(pngPath)) {
+        return res.sendFile(pngPath);
+      }
+      
+      const { execSync } = await import('child_process');
+      try {
+        execSync(`rsvg-convert "${svgPath}" -o "${pngPath}" -d 300 -p 300`, { 
+          stdio: 'pipe', timeout: 30000 
+        });
+      } catch {
+        execSync(`inkscape "${svgPath}" --export-filename="${pngPath}" --export-dpi=300`, {
+          stdio: 'pipe', timeout: 30000
+        });
+      }
+      
+      try {
+        await storage.updateLogo(logoId, { canvasFallbackFilename: pngFilename });
+      } catch (e) {
+        console.log('Could not persist safari fallback filename:', e);
+      }
+      
+      res.sendFile(pngPath);
+    } catch (error) {
+      console.error('Safari PNG generation error:', error);
+      res.status(500).json({ error: 'Failed to generate PNG' });
     }
   });
 

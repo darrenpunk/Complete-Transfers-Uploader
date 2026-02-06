@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
 import { UpdateBanner } from "@/components/update-banner";
+import { SafariBanner } from "@/components/safari-banner";
 import NotFound from "@/pages/not-found";
 import UploadTool from "@/pages/upload-tool";
 import DownloadOdooModule from "@/pages/download-odoo-module";
@@ -36,6 +37,7 @@ function App() {
       <ThemeProvider defaultTheme="dark">
         <TooltipProvider>
           <UpdateBanner />
+          <SafariBanner />
           <Toaster />
           <Router />
         </TooltipProvider>

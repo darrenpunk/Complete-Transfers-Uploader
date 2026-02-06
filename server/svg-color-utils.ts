@@ -830,6 +830,8 @@ function analyzeVectorComplexity(svgContent: string): {
   pathCount: number;
   elementCount: number;
   isComplex: boolean;
+  hasSafariIncompatibleFeatures: boolean;
+  safariIssues: string[];
 } {
   // Count path elements
   const pathMatches = svgContent.match(/<path[^>]*>/g) || [];
@@ -856,10 +858,35 @@ function analyzeVectorComplexity(svgContent: string): {
     console.log(`⚠️ COMPLEX VECTOR DETECTED: ${pathCount} paths, ${elementCount} total elements`);
   }
   
+  const safariIssues: string[] = [];
+  
+  const feImageFragmentRefs = svgContent.match(/<feImage[^>]*xlink:href="#[^"]*"/g) || [];
+  if (feImageFragmentRefs.length > 0) {
+    safariIssues.push(`feImage fragment references (${feImageFragmentRefs.length} refs)`);
+  }
+  
+  const compositingGroups = svgContent.match(/id="compositing-group-/g) || [];
+  if (compositingGroups.length > 0) {
+    safariIssues.push(`compositing groups (${compositingGroups.length} groups)`);
+  }
+  
+  const filterBlends = svgContent.match(/<feBlend[^>]*mode="(?!normal)[^"]*"/g) || [];
+  if (filterBlends.length > 0) {
+    safariIssues.push(`filter blend modes (${filterBlends.length} blends)`);
+  }
+  
+  const hasSafariIncompatibleFeatures = safariIssues.length > 0;
+  
+  if (hasSafariIncompatibleFeatures) {
+    console.log(`🍎 SAFARI-INCOMPATIBLE SVG DETECTED: ${safariIssues.join(', ')}`);
+  }
+  
   return {
     pathCount,
     elementCount,
-    isComplex
+    isComplex,
+    hasSafariIncompatibleFeatures,
+    safariIssues
   };
 }
 

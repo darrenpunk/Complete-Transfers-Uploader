@@ -26,16 +26,15 @@ export default function SvgInlineRenderer({
   const LARGE_SVG_THRESHOLD = 1024 * 1024; // 1MB
   const isLargeSvg = logo.size && logo.size > LARGE_SVG_THRESHOLD;
 
+  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
   useEffect(() => {
-    // CRITICAL: Reset fallback flag when color overrides or recoloring are needed
     const needsColorManipulation = (element.colorOverrides && Object.keys(element.colorOverrides).length > 0) || shouldRecolorForInk;
     
     if (needsColorManipulation) {
-      // Force SVG rendering for color manipulation - PNG fallback cannot be recolored
       console.log(`🎨 Color manipulation needed, forcing SVG rendering (overrides: ${!!element.colorOverrides}, recolorForInk: ${shouldRecolorForInk})`);
       setUseFallbackImg(false);
     } else {
-      // PRIORITY CHECK: Use PNG fallback for complex vectors (only when no color manipulation)
       if (hasComplexVectorFallback) {
         const metrics = (logo as any).vectorComplexityMetrics;
         console.log(`🎨 COMPLEX VECTOR: Using PNG fallback for canvas (paths: ${metrics?.pathCount || 'unknown'}, elements: ${metrics?.elementCount || 'unknown'})`);
@@ -44,7 +43,14 @@ export default function SvgInlineRenderer({
         return;
       }
       
-      // Legacy check: For very large SVGs by file size
+      const metrics = (logo as any).vectorComplexityMetrics;
+      if (isSafari && metrics?.hasSafariIncompatibleFeatures) {
+        console.log(`🍎 Safari + known incompatible SVG (${metrics.safariIssues?.join(', ')}) - using PNG fallback`);
+        setUseFallbackImg(true);
+        setIsLoading(false);
+        return;
+      }
+      
       if (isLargeSvg) {
         console.log(`⚠️ Large SVG detected (${(logo.size! / 1024 / 1024).toFixed(1)}MB), using simplified rendering`);
         setUseFallbackImg(true);
@@ -136,6 +142,26 @@ export default function SvgInlineRenderer({
           ''
         );
         
+        if (isSafari && !needsColorManipulation) {
+          const safariProblems: string[] = [];
+          if (text.includes('xlink:href="#compositing-group') || /<feImage[^>]*xlink:href="#/.test(text)) {
+            safariProblems.push('feImage fragment references');
+          }
+          if (/id="compositing-group-/.test(text)) {
+            safariProblems.push('compositing groups');
+          }
+          if (/<feBlend[^>]*mode="(?!normal)[^"]*"/.test(text)) {
+            safariProblems.push('non-normal blend modes');
+          }
+          if (safariProblems.length > 0) {
+            console.log(`🍎 Safari detected with incompatible features (${safariProblems.join(', ')}) - switching to PNG fallback`);
+            setUseFallbackImg(true);
+            setSvgContent('');
+            setIsLoading(false);
+            return;
+          }
+        }
+        
         setSvgContent(cleanedSvg);
       } catch (error) {
         console.error('Failed to load SVG content:', error);
@@ -146,7 +172,7 @@ export default function SvgInlineRenderer({
     };
 
     fetchSvg();
-  }, [element.id, element.colorOverrides, logo.filename, shouldRecolorForInk, project.inkColor, isLargeSvg, logo.size]);
+  }, [element.id, element.colorOverrides, logo.filename, shouldRecolorForInk, project.inkColor, isLargeSvg, logo.size, isSafari]);
 
   // PERFORMANCE FIX: Render complex vectors using PNG fallback or simplified SVG
   const renderSimplifiedLargeSvg = () => {
@@ -192,11 +218,36 @@ export default function SvgInlineRenderer({
       );
     }
     
-    // Legacy: Large SVG simplified rendering
+    if (isSafari && !hasComplexVectorFallback) {
+      console.log('🍎 Safari fallback: rendering via server-generated PNG for compatibility');
+      return (
+        <div 
+          className="w-full h-full"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 0,
+            margin: 0,
+            overflow: 'visible'
+          }}
+        >
+          <img 
+            src={`/api/logos/${logo.id}/safari-png`}
+            alt={logo.originalName}
+            style={{
+              maxWidth: '100%',
+              maxHeight: '100%',
+              objectFit: 'contain'
+            }}
+            draggable={false}
+          />
+        </div>
+      );
+    }
+    
     console.log('🎨 Rendering large SVG with simplified inline rendering:', { size: logo.size });
     
-    // Render the SVG content as-is without complex transformations
-    // The SVG's viewBox will handle the scaling
     return (
       <div 
         className="w-full h-full"
