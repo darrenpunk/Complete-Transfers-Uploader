@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { RefreshCw, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Info, X } from "lucide-react";
 
 const VERSION_CHECK_INTERVAL = 60_000;
 const VERSION_STORAGE_KEY = "app-version";
@@ -37,40 +36,15 @@ export function UpdateBanner() {
     return () => clearInterval(interval);
   }, [checkVersion]);
 
-  const handleRefresh = () => {
-    if ("caches" in window) {
-      caches.keys().then((names) => {
-        names.forEach((name) => caches.delete(name));
-      });
-    }
-    const isInIframe = window !== window.top;
-    if (isInIframe) {
-      try {
-        window.parent.postMessage({ type: 'artwork-uploader-refresh' }, '*');
-        return;
-      } catch {}
-    }
-    window.location.reload();
-  };
-
   if (!showBanner) return null;
 
   return (
     <div className="fixed top-0 left-0 right-0 z-[9999] bg-amber-500 text-black px-4 py-3 shadow-lg">
       <div className="flex items-center justify-center gap-3 max-w-4xl mx-auto">
-        <RefreshCw className="h-5 w-5 flex-shrink-0 animate-spin" style={{ animationDuration: "3s" }} />
+        <Info className="h-5 w-5 flex-shrink-0" />
         <p className="text-sm font-medium">
-          A new update is available! Please clear your browser cache and refresh to get the latest version.
+          A new update is available! Please hard refresh your browser to get the latest version (Ctrl+Shift+R on Windows, Cmd+Shift+R on Mac).
         </p>
-        <Button
-          size="sm"
-          variant="outline"
-          className="bg-black text-white border-black hover:bg-gray-800 hover:text-white flex-shrink-0"
-          onClick={handleRefresh}
-        >
-          <RefreshCw className="h-4 w-4 mr-1" />
-          Refresh Now
-        </Button>
         <button
           onClick={() => setShowBanner(false)}
           className="ml-2 p-1 hover:bg-amber-600 rounded flex-shrink-0"
