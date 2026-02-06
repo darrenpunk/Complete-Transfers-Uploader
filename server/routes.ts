@@ -626,6 +626,12 @@ export async function registerRoutes(app: express.Application) {
   const { setupImpositionRoutes } = await import('./imposition-routes');
 
   app.get('/api/version', (_req, res) => {
+    res.set({
+      'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0',
+      'Surrogate-Control': 'no-store',
+    });
     res.json({ version: SERVER_BUILD_VERSION });
   });
   

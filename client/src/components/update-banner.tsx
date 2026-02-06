@@ -11,7 +11,7 @@ export function UpdateBanner() {
 
   const checkVersion = useCallback(async () => {
     try {
-      const res = await fetch("/api/version", { cache: "no-store" });
+      const res = await fetch(`/api/version?_=${Date.now()}`, { cache: "no-store" });
       if (!res.ok) return;
       const data = await res.json();
       const serverVersion = data.version;
