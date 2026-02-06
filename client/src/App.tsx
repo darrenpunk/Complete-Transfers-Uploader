@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
+import { UpdateBanner } from "@/components/update-banner";
 import NotFound from "@/pages/not-found";
 import UploadTool from "@/pages/upload-tool";
 import DownloadOdooModule from "@/pages/download-odoo-module";
@@ -34,6 +35,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider defaultTheme="dark">
         <TooltipProvider>
+          <UpdateBanner />
           <Toaster />
           <Router />
         </TooltipProvider>

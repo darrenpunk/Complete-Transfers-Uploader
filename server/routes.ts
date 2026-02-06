@@ -27,6 +27,8 @@ import { SVGBoundsAnalyzer } from './svg-bounds-analyzer';
 
 const execAsync = promisify(exec);
 
+const SERVER_BUILD_VERSION = Date.now().toString();
+
 // Get actual dimensions from PNG file
 async function getPNGDimensions(imagePath: string): Promise<{width: number, height: number} | null> {
   try {
@@ -622,6 +624,10 @@ const upload = multer({
 export async function registerRoutes(app: express.Application) {
   const { storage } = await import('./storage');
   const { setupImpositionRoutes } = await import('./imposition-routes');
+
+  app.get('/api/version', (_req, res) => {
+    res.json({ version: SERVER_BUILD_VERSION });
+  });
   
   // PDF Generation endpoint - Must be before other routes
   app.get('/api/projects/:projectId/generate-pdf', async (req, res) => {
