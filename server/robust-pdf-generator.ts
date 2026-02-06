@@ -482,7 +482,27 @@ grestore`;
         console.log(`📄 Created page 2: ${defaultColorName} background - ${pageWidth.toFixed(1)}×${pageHeight.toFixed(1)}pt`);
       }
     } else {
-      console.log(`📄 PASS-THROUGH MODE: Skipping generated page 2 - will append customer's original garment pages`);
+      console.log(`📄 PASS-THROUGH MODE: Will append customer's original garment pages`);
+      
+      // ALSO create additional garment color pages if customer selected extra colors
+      if (data.garmentColors && Array.isArray(data.garmentColors) && data.garmentColors.length > 0) {
+        console.log(`🎨 PASS-THROUGH + MULTI-COLOR: Creating ${data.garmentColors.length} additional garment color pages`);
+        
+        for (const garmentColorItem of data.garmentColors) {
+          const colorPage = pdfDoc.addPage([pageWidth, pageHeight]);
+          const colorHex = garmentColorItem.color || '#FFFFFF';
+          const colorName = garmentColorItem.colorName || getGarmentColorName(colorHex);
+          const qty = garmentColorItem.quantity || 0;
+          
+          const parsedColor = await this.parseGarmentColor(colorHex);
+          colorPage.drawRectangle({
+            x: 0, y: 0, width: pageWidth, height: pageHeight, color: parsedColor,
+          });
+          
+          garmentColorPages.push({ page: colorPage, color: colorHex, colorName, quantity: qty });
+          console.log(`✅ Created additional page for ${colorName} (Qty: ${qty})`);
+        }
+      }
     }
     
     // Process each canvas element and embed logos on page 1 and matching garment color pages
