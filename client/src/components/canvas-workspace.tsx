@@ -126,6 +126,9 @@ interface CanvasWorkspaceProps {
   currentStep?: number;
   isFullscreen?: boolean;
   onReenterFullscreen?: () => void;
+  isAppliqueTemplate?: boolean;
+  activeCanvasIndex?: number;
+  onActiveCanvasChange?: (index: number) => void;
 }
 
 // Helper function to check if logo has valid content bounds
@@ -156,7 +159,10 @@ export default function CanvasWorkspace({
   onContinue,
   currentStep = 1,
   isFullscreen = false,
-  onReenterFullscreen
+  onReenterFullscreen,
+  isAppliqueTemplate = false,
+  activeCanvasIndex = 0,
+  onActiveCanvasChange
 }: CanvasWorkspaceProps) {
   // Helper to get first selected element (for backwards compatibility with single-select operations)
   const selectedElement = selectedElements.length > 0 ? selectedElements[0] : null;
@@ -164,9 +170,13 @@ export default function CanvasWorkspace({
   // Helper to check if an element is selected
   const isElementSelected = (elementId: string) => selectedElements.some(el => el.id === elementId);
   
-  // Helper to select all elements
+  // Helper to select all elements (filtered by active canvas for applique)
   const selectAllElements = () => {
-    onElementsSelect([...canvasElements]);
+    if (isAppliqueTemplate) {
+      onElementsSelect(canvasElements.filter(el => (el.canvasIndex || 0) === activeCanvasIndex));
+    } else {
+      onElementsSelect([...canvasElements]);
+    }
   };
   
   // Helper to group selected elements
@@ -1958,6 +1968,26 @@ export default function CanvasWorkspace({
 
       {/* Canvas Container */}
       <div className="flex-1 relative overflow-hidden" style={{ backgroundColor: '#606060' }}>
+        {isAppliqueTemplate && (() => {
+          const badgeCount = canvasElements.filter(el => (el.canvasIndex || 0) === 0).length;
+          const embroideryCount = canvasElements.filter(el => (el.canvasIndex || 0) === 1).length;
+          return (
+            <div className="flex items-center justify-center gap-2 py-2 bg-gray-800">
+              <button 
+                className={`px-4 py-1.5 rounded text-sm font-medium transition-colors ${activeCanvasIndex === 0 ? 'bg-purple-600 text-white' : 'bg-gray-600 text-gray-300 hover:bg-gray-500'}`}
+                onClick={() => onActiveCanvasChange?.(0)}
+              >
+                Canvas 1: Badge Artwork {badgeCount > 0 && <span className="ml-1 bg-white/20 px-1.5 py-0.5 rounded text-xs">{badgeCount}</span>}
+              </button>
+              <button
+                className={`px-4 py-1.5 rounded text-sm font-medium transition-colors ${activeCanvasIndex === 1 ? 'bg-purple-600 text-white' : 'bg-gray-600 text-gray-300 hover:bg-gray-500'}`}
+                onClick={() => onActiveCanvasChange?.(1)}
+              >
+                Canvas 2: Embroidery Artwork {embroideryCount > 0 && <span className="ml-1 bg-white/20 px-1.5 py-0.5 rounded text-xs">{embroideryCount}</span>}
+              </button>
+            </div>
+          );
+        })()}
         <div 
           className="w-full h-full overflow-auto"
           style={{
@@ -2082,7 +2112,7 @@ export default function CanvasWorkspace({
             {/* Canvas Elements */}
             {canvasElements
               .filter((element) => {
-                // Always show visible elements
+                if (isAppliqueTemplate && (element.canvasIndex || 0) !== activeCanvasIndex) return false;
                 if (!element.isVisible) return false;
                 
                 // For elements with logoId, ensure the logo exists
@@ -2557,7 +2587,7 @@ export default function CanvasWorkspace({
 
             {/* Canvas Info */}
             <div className="absolute bottom-4 left-4 text-xs text-gray-500 bg-white px-2 py-1 rounded">
-              {template.label} ({template.width}×{template.height}mm) • {project.garmentColor ? getColorName(project.garmentColor) : 'No Color'} Garment
+              {isAppliqueTemplate ? (activeCanvasIndex === 0 ? 'Badge Artwork' : 'Embroidery Artwork') + ' • ' : ''}{template.label} ({template.width}×{template.height}mm) • {project.garmentColor ? getColorName(project.garmentColor) : 'No Color'} Garment
             </div>
           </div>
         </div>

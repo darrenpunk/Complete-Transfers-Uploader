@@ -82,6 +82,7 @@ export default function UploadTool() {
   const [pendingPassThroughLogo, setPendingPassThroughLogo] = useState<{ logoId: string; pageCount: number; fileName: string } | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isInIframe, setIsInIframe] = useState(false);
+  const [activeCanvasIndex, setActiveCanvasIndex] = useState(0);
   const [odooUrlFromParams, setOdooUrlFromParams] = useState<string | null>(() => {
     try { return sessionStorage.getItem('odoo_base_url'); } catch { return null; }
   });
@@ -1126,6 +1127,60 @@ export default function UploadTool() {
     });
   };
 
+  const handleEmbroiderElements = async () => {
+    if (!selectedElements.length || !currentProject) return;
+    const elementsToMove = selectedElements.filter(el => (el.canvasIndex || 0) === 0);
+    if (!elementsToMove.length) return;
+    
+    try {
+      for (const element of elementsToMove) {
+        await apiRequest("PATCH", `/api/canvas-elements/${element.id}`, {
+          canvasIndex: 1
+        });
+      }
+      setSelectedElements([]);
+      setActiveCanvasIndex(1);
+      queryClient.invalidateQueries({ queryKey: ["/api/projects", currentProject.id, "canvas-elements"] });
+      toast({
+        title: "Elements moved to Embroidery Canvas",
+        description: `${selectedElements.length} element${selectedElements.length > 1 ? 's' : ''} moved to the embroidery artwork canvas.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to move elements to embroidery canvas.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleMoveToBadgeCanvas = async () => {
+    if (!selectedElements.length || !currentProject) return;
+    const elementsToMove = selectedElements.filter(el => (el.canvasIndex || 0) === 1);
+    if (!elementsToMove.length) return;
+    
+    try {
+      for (const element of elementsToMove) {
+        await apiRequest("PATCH", `/api/canvas-elements/${element.id}`, {
+          canvasIndex: 0
+        });
+      }
+      setSelectedElements([]);
+      setActiveCanvasIndex(0);
+      queryClient.invalidateQueries({ queryKey: ["/api/projects", currentProject.id, "canvas-elements"] });
+      toast({
+        title: "Elements moved to Badge Canvas",
+        description: `${selectedElements.length} element${selectedElements.length > 1 ? 's' : ''} moved to the badge artwork canvas.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to move elements to badge canvas.",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Handle applique badges form submission
   const handleAppliqueBadgesFormConfirm = (formData: any) => {
     if (pendingTemplateData) {
@@ -1608,6 +1663,7 @@ export default function UploadTool() {
   }
 
   const currentTemplate = templateSizes.find(t => t.id === currentProject.templateSize);
+  const isAppliqueTemplate = currentProject.templateSize?.startsWith('applique-') || false;
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -1747,7 +1803,27 @@ export default function UploadTool() {
         )}
 
         {/* Main Canvas Area */}
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 relative">
+          {isAppliqueTemplate && selectedElements.length > 0 && (
+            <div className="absolute top-16 left-1/2 transform -translate-x-1/2 z-20 flex gap-2">
+              {activeCanvasIndex === 0 && (
+                <button
+                  onClick={handleEmbroiderElements}
+                  className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg shadow-lg flex items-center gap-2 transition-colors"
+                >
+                  <span>✂️</span> Embroider These Elements ({selectedElements.length})
+                </button>
+              )}
+              {activeCanvasIndex === 1 && (
+                <button
+                  onClick={handleMoveToBadgeCanvas}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow-lg flex items-center gap-2 transition-colors"
+                >
+                  <span>↩️</span> Move to Badge Canvas ({selectedElements.length})
+                </button>
+              )}
+            </div>
+          )}
           <CanvasWorkspace
             project={currentProject}
             template={currentTemplate}
@@ -1762,6 +1838,12 @@ export default function UploadTool() {
             onContinue={handleNextStep}
             currentStep={currentStep}
             isFullscreen={isFullscreen}
+            isAppliqueTemplate={isAppliqueTemplate}
+            activeCanvasIndex={activeCanvasIndex}
+            onActiveCanvasChange={(index) => {
+              setActiveCanvasIndex(index);
+              setSelectedElements([]);
+            }}
             onReenterFullscreen={() => {
               if (!document.fullscreenElement) {
                 document.documentElement.requestFullscreen().catch(() => {});
