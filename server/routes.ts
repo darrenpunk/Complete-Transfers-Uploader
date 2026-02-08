@@ -627,9 +627,9 @@ export async function registerRoutes(app: express.Application) {
 
   app.post('/api/embroidery-preview', async (req, res) => {
     try {
-      const { imageData } = req.body;
-      if (!imageData) {
-        return res.status(400).json({ error: 'Image data is required' });
+      const { embroideryImage, badgeImage } = req.body;
+      if (!embroideryImage) {
+        return res.status(400).json({ error: 'Embroidery image data is required' });
       }
 
       const { GoogleGenAI, Modality } = await import('@google/genai');
@@ -641,25 +641,33 @@ export async function registerRoutes(app: express.Application) {
         },
       });
 
-      const base64Data = imageData.replace(/^data:image\/\w+;base64,/, '');
-      const mimeType = imageData.match(/^data:(image\/\w+);base64,/)?.[1] || 'image/png';
+      const embBase64 = embroideryImage.replace(/^data:image\/\w+;base64,/, '');
+      const embMime = embroideryImage.match(/^data:(image\/\w+);base64,/)?.[1] || 'image/png';
+
+      const parts: any[] = [];
+
+      if (badgeImage) {
+        const badgeBase64 = badgeImage.replace(/^data:image\/\w+;base64,/, '');
+        const badgeMime = badgeImage.match(/^data:(image\/\w+);base64,/)?.[1] || 'image/png';
+        parts.push({
+          inlineData: { data: badgeBase64, mimeType: badgeMime }
+        });
+        parts.push({
+          text: "This is the full badge artwork (Image 1)."
+        });
+      }
+
+      parts.push({
+        inlineData: { data: embBase64, mimeType: embMime }
+      });
+
+      parts.push({
+        text: `Take ${badgeImage ? 'Image 2 (the embroidery elements)' : 'this artwork'} and transform it into a photorealistic embroidery rendering showing the design as if professionally machine-embroidered with realistic thread texture, visible satin stitch fills, and subtle 3D thread relief effect. The embroidery should look like real sewn thread with clean stitch lines. ${badgeImage ? 'Composite the embroidered elements on top of Image 1 (the badge artwork), keeping the badge artwork as the background layer exactly as-is. The final image should show the complete badge with the embroidery elements stitched on top of it.' : 'Keep the same design but render it as real embroidery on dark fabric.'} The result should look like a real embroidered badge/patch photograph.`
+      });
 
       const response = await ai.models.generateContent({
         model: "gemini-2.5-flash-image",
-        contents: [{
-          role: "user",
-          parts: [
-            {
-              inlineData: {
-                data: base64Data,
-                mimeType: mimeType,
-              }
-            },
-            {
-              text: "Transform this artwork into a photorealistic embroidery rendering with a TRANSPARENT background (PNG with alpha). Show the design elements as if they have been professionally machine-embroidered with realistic thread texture, visible satin stitch fills, and subtle 3D thread relief. The embroidery should look like real sewn thread with clean stitch lines. Keep the exact same design, shapes, layout and positioning - only change the rendering style to look like real embroidery thread. The background MUST be completely transparent/empty - do NOT add any fabric, background color, or backing material. Output as PNG with transparency."
-            }
-          ]
-        }],
+        contents: [{ role: "user", parts }],
         config: {
           responseModalities: [Modality.TEXT, Modality.IMAGE],
         },

@@ -493,8 +493,8 @@ export default function CanvasWorkspace({
   }, []);
 
   useEffect(() => {
-    if (isAppliqueTemplate && activeCanvasIndex === 0) {
-      const timer = setTimeout(() => captureBadgeSnapshot(), 500);
+    if (isAppliqueTemplate && activeCanvasIndex === 0 && canvasElements.some(el => (el.canvasIndex || 0) === 0)) {
+      const timer = setTimeout(() => captureBadgeSnapshot(), 800);
       return () => clearTimeout(timer);
     }
   }, [isAppliqueTemplate, activeCanvasIndex, canvasElements, captureBadgeSnapshot]);
@@ -504,13 +504,16 @@ export default function CanvasWorkspace({
     setShowEmbroideryPreview(true);
     setEmbroideryPreviewImage(null);
     try {
-      const imageData = await captureCanvasAsImage();
-      if (!imageData) {
+      const embroideryImage = await captureCanvasAsImage();
+      if (!embroideryImage) {
         toast({ title: "Error", description: "Could not capture canvas artwork", variant: "destructive" });
         setIsGeneratingPreview(false);
         return;
       }
-      const response = await apiRequest("POST", "/api/embroidery-preview", { imageData });
+      const response = await apiRequest("POST", "/api/embroidery-preview", {
+        embroideryImage,
+        badgeImage: badgeCanvasSnapshot || null,
+      });
       const data = await response.json();
       if (data.imageData) {
         setEmbroideryPreviewImage(data.imageData);
@@ -523,7 +526,7 @@ export default function CanvasWorkspace({
     } finally {
       setIsGeneratingPreview(false);
     }
-  }, [captureCanvasAsImage, toast]);
+  }, [captureCanvasAsImage, badgeCanvasSnapshot, toast]);
 
   // Automatic cleanup of orphaned canvas elements
   useCleanupOrphanedElements({
@@ -2742,21 +2745,12 @@ export default function CanvasWorkspace({
                 </div>
               ) : embroideryPreviewImage ? (
                 <div className="flex flex-col items-center gap-3">
-                  <div className="relative rounded-lg overflow-hidden border border-gray-700" style={{ maxWidth: '100%', maxHeight: '400px' }}>
-                    {badgeCanvasSnapshot && (
-                      <img
-                        src={badgeCanvasSnapshot}
-                        alt="Badge Artwork"
-                        className="w-full h-full object-contain"
-                      />
-                    )}
-                    <img
-                      src={embroideryPreviewImage}
-                      alt="Embroidery Preview"
-                      className={`object-contain ${badgeCanvasSnapshot ? 'absolute inset-0 w-full h-full' : 'w-full'}`}
-                    />
-                  </div>
-                  <p className="text-gray-400 text-xs text-center">AI-generated embroidery preview overlaid on badge artwork — actual result may vary</p>
+                  <img
+                    src={embroideryPreviewImage}
+                    alt="Embroidery Preview"
+                    className="rounded-lg max-w-full max-h-[400px] object-contain border border-gray-700"
+                  />
+                  <p className="text-gray-400 text-xs text-center">AI-generated embroidery preview on badge artwork — actual result may vary</p>
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center py-16 gap-3">
