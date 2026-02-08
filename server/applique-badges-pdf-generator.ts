@@ -12,6 +12,7 @@ interface AppliquePDFData {
   originalPdfBuffer: Buffer;
   appliqueBadgesForm: AppliqueBadgesFormData;
   projectName?: string;
+  embroideryPreviewPath?: string;
 }
 
 export class AppliqueBadgesPDFGenerator {
@@ -36,6 +37,87 @@ export class AppliqueBadgesPDFGenerator {
       const originalPages = await finalPdf.copyPages(originalPdf, originalPdf.getPageIndices());
       originalPages.forEach(page => finalPdf.addPage(page));
       
+      if (data.embroideryPreviewPath) {
+        try {
+          const fs = await import('fs');
+          if (fs.existsSync(data.embroideryPreviewPath)) {
+            const previewImageBytes = fs.readFileSync(data.embroideryPreviewPath);
+            const previewImage = await finalPdf.embedPng(previewImageBytes);
+            
+            const previewPage = finalPdf.addPage([595, 842]);
+            const helveticaBoldFont = await finalPdf.embedFont(StandardFonts.HelveticaBold);
+            const helveticaFont = await finalPdf.embedFont(StandardFonts.Helvetica);
+            
+            previewPage.drawText('AI EMBROIDERY PREVIEW', {
+              x: 50,
+              y: 792,
+              size: 16,
+              font: helveticaBoldFont,
+              color: rgb(0.2, 0.2, 0.2),
+            });
+            
+            previewPage.drawLine({
+              start: { x: 50, y: 780 },
+              end: { x: 545, y: 780 },
+              thickness: 1,
+              color: rgb(0.8, 0.8, 0.8),
+            });
+            
+            const imgWidth = previewImage.width;
+            const imgHeight = previewImage.height;
+            const maxDisplayWidth = 495;
+            const maxDisplayHeight = 495;
+            const scale = Math.min(maxDisplayWidth / imgWidth, maxDisplayHeight / imgHeight);
+            const displayWidth = imgWidth * scale;
+            const displayHeight = imgHeight * scale;
+            const imgX = 50 + (maxDisplayWidth - displayWidth) / 2;
+            const imgY = 770 - 20 - displayHeight;
+            
+            previewPage.drawImage(previewImage, {
+              x: imgX,
+              y: imgY,
+              width: displayWidth,
+              height: displayHeight,
+            });
+            
+            previewPage.drawRectangle({
+              x: imgX - 1,
+              y: imgY - 1,
+              width: displayWidth + 2,
+              height: displayHeight + 2,
+              borderColor: rgb(0.7, 0.7, 0.7),
+              borderWidth: 0.5,
+              opacity: 0,
+            });
+            
+            const disclaimerY = imgY - 25;
+            previewPage.drawText('AI-generated embroidery preview — actual result may vary', {
+              x: 50 + (495 - helveticaFont.widthOfTextAtSize('AI-generated embroidery preview — actual result may vary', 9)) / 2,
+              y: disclaimerY,
+              size: 9,
+              font: helveticaFont,
+              color: rgb(0.5, 0.5, 0.5),
+            });
+            
+            if (data.projectName) {
+              previewPage.drawText(`Project: ${data.projectName}`, {
+                x: 50,
+                y: 60,
+                size: 8,
+                font: helveticaFont,
+                color: rgb(0.4, 0.4, 0.4),
+              });
+            }
+            
+            console.log('✅ Added embroidery preview page to PDF');
+          } else {
+            console.log('⚠️ Embroidery preview file not found:', data.embroideryPreviewPath);
+          }
+        } catch (previewError) {
+          console.error('⚠️ Failed to add embroidery preview page:', previewError);
+        }
+      }
+
       // Add A4 form page (always A4: 210×297mm = 595×842 points)
       const formPage = finalPdf.addPage([595, 842]);
       

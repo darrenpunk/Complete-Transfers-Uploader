@@ -523,6 +523,7 @@ export default function CanvasWorkspace({
         badgeImage: badgeCanvasSnapshot,
         embroideryImage: embroideryImage || null,
         embroideryDescription: embDescription,
+        projectId: project?.id || null,
       });
       const data = await response.json();
       if (data.imageData) {

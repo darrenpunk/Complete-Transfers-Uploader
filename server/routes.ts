@@ -627,7 +627,7 @@ export async function registerRoutes(app: express.Application) {
 
   app.post('/api/embroidery-preview', async (req, res) => {
     try {
-      const { badgeImage, embroideryImage } = req.body;
+      const { badgeImage, embroideryImage, projectId } = req.body;
       if (!badgeImage || !embroideryImage) {
         return res.status(400).json({ error: 'Both badge and embroidery images are required' });
       }
@@ -710,6 +710,14 @@ export async function registerRoutes(app: express.Application) {
 
         const compositeBuffer = await fs.readFile(compositePath);
         const compositeBase64 = compositeBuffer.toString('base64');
+
+        if (projectId) {
+          const savedFilename = `embroidery_preview_${projectId}_${timestamp}.png`;
+          const savedPath = path.join(process.cwd(), 'uploads', savedFilename);
+          await fs.writeFile(savedPath, compositeBuffer);
+          await storage.updateProject(projectId, { embroideryPreviewPath: savedPath });
+          console.log(`[Embroidery Preview] Saved preview to ${savedPath} for project ${projectId}`);
+        }
 
         res.json({
           imageData: `data:image/png;base64,${compositeBase64}`,
@@ -861,7 +869,8 @@ export async function registerRoutes(app: express.Application) {
               const appliquePdfBytes = await appliqueGenerator.generateAppliquePDF({
                 originalPdfBuffer: pdfBuffer,
                 appliqueBadgesForm: project.appliqueBadgesForm,
-                projectName: project.name
+                projectName: project.name,
+                embroideryPreviewPath: project.embroideryPreviewPath || undefined
               });
               
               console.log(`✅ Applique Badges PDF with form page: ${appliquePdfBytes.length} bytes`);
@@ -1632,7 +1641,8 @@ export async function registerRoutes(app: express.Application) {
             const appliquePdfBytes = await appliqueGenerator.generateAppliquePDF({
               originalPdfBuffer: Buffer.from(pdfBytes),
               appliqueBadgesForm: project.appliqueBadgesForm,
-              projectName: project.name
+              projectName: project.name,
+              embroideryPreviewPath: project.embroideryPreviewPath || undefined
             });
             
             console.log(`✅ Applique Badges PDF with form page: ${appliquePdfBytes.length} bytes`);
