@@ -328,7 +328,7 @@ grestore`;
     console.log(`🎨 Creating direct PDF with exact user specifications`);
     
     // Import pdf-lib for direct PDF creation
-    const { PDFDocument, rgb, degrees } = await import('pdf-lib');
+    const { PDFDocument, rgb, degrees, StandardFonts } = await import('pdf-lib');
     const { PDFPage } = await import('pdf-lib');
     
     // Create PDF document
@@ -342,9 +342,23 @@ grestore`;
     console.log(`📐 Template dimensions: ${data.templateSize.width}×${data.templateSize.height}mm`);
     console.log(`📐 PDF page dimensions: ${pageWidth.toFixed(1)}×${pageHeight.toFixed(1)}pt`);
     
-    // Create page 1 (transparent artwork layout) with correct dimensions
+    // Detect applique template and split elements by canvas
+    const isAppliqueTemplate = data.templateSize?.id?.includes('applique') || 
+      data.canvasElements.some((el: any) => el.canvasIndex === 1);
+    const badgeElements = isAppliqueTemplate 
+      ? data.canvasElements.filter((el: any) => !el.canvasIndex || el.canvasIndex === 0)
+      : data.canvasElements;
+    const embroideryElements = isAppliqueTemplate 
+      ? data.canvasElements.filter((el: any) => el.canvasIndex === 1)
+      : [];
+    
+    if (isAppliqueTemplate) {
+      console.log(`📋 Applique template: Badge elements: ${badgeElements.length}, Embroidery elements: ${embroideryElements.length}`);
+    }
+    
+    // Create page 1 (Badge Artwork / transparent artwork layout) with correct dimensions
     const page1 = pdfDoc.addPage([pageWidth, pageHeight]);
-    console.log(`📄 Created page 1: Artwork layout (transparent) - ${pageWidth.toFixed(1)}×${pageHeight.toFixed(1)}pt`);
+    console.log(`📄 Created page 1: Badge Artwork (transparent) - ${pageWidth.toFixed(1)}×${pageHeight.toFixed(1)}pt`);
     
     // Check for pass-through mode: use customer's original garment color pages
     const usePassThrough = data.useOriginalGarmentPages === true;
@@ -505,7 +519,33 @@ grestore`;
       }
     }
     
-    // Process each canvas element and embed logos on page 1 and matching garment color pages
+    // APPLIQUE TEMPLATE: Separate page structure (P1=badge, P2=embroidery, P3=form)
+    if (isAppliqueTemplate) {
+      console.log(`📋 Applique PDF: Processing ${badgeElements.length} badge elements for page 1`);
+      for (const element of badgeElements) {
+        const logo = data.logos.find(l => l.id === element.logoId);
+        if (logo) {
+          await this.embedLogoInPages(pdfDoc, page1, null, logo, element, data.templateSize);
+        }
+      }
+      
+      if (embroideryElements.length > 0) {
+        const embroideryPage = pdfDoc.addPage([pageWidth, pageHeight]);
+        console.log(`📋 Applique PDF: Processing ${embroideryElements.length} embroidery elements for page 2`);
+        for (const element of embroideryElements) {
+          const logo = data.logos.find(l => l.id === element.logoId);
+          if (logo) {
+            await this.embedLogoInPages(pdfDoc, null, embroideryPage, logo, element, data.templateSize);
+          }
+        }
+      }
+      
+      // Save and return - applique form (P3) is appended by the route handler
+      const pdfBytes = await pdfDoc.save();
+      return Buffer.from(pdfBytes);
+    }
+    
+    // NON-APPLIQUE: Process each canvas element and embed logos on page 1 and matching garment color pages
     // NOTE: Labels are added AFTER logo embedding to appear on top
     console.log(`🔍 DEBUG: Starting logo processing loop - ${data.canvasElements.length} elements, ${data.logos.length} logos`);
     for (let i = 0; i < data.canvasElements.length; i++) {

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" 
+                      viewBox="0 0 160 80"
+                      preserveAspectRatio="xMidYMid meet"
+                      data-content-extracted="true"
+                      data-original-bounds="10,10,170,90">
+                        <g transform="translate(-10, -10)">
+                          <rect x="10" y="10" width="80" height="80" fill="#ffcc00"/><circle cx="140" cy="60" r="30" fill="#3366ff"/><text x="20" y="160" font-size="20" fill="#000">TestLogo</text>
+                        </g>
+                    </svg>

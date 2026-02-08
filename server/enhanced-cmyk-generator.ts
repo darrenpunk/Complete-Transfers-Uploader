@@ -321,6 +321,18 @@ export class EnhancedCMYKGenerator {
       template?.label?.includes('Single Colour');
     const inkColor = project?.inkColor;
     
+    const isAppliqueTemplate = project?.templateSize?.includes('applique') || !!appliqueBadgesForm;
+    const badgeElements = isAppliqueTemplate 
+      ? canvasElements.filter(el => !el.canvasIndex || el.canvasIndex === 0)
+      : canvasElements;
+    const embroideryElements = isAppliqueTemplate 
+      ? canvasElements.filter(el => el.canvasIndex === 1)
+      : [];
+    
+    if (isAppliqueTemplate) {
+      console.log(`Enhanced CMYK: Applique template detected - Badge elements: ${badgeElements.length}, Embroidery elements: ${embroideryElements.length}`);
+    }
+    
     // Get ICC profile info
     const uploadedICCPath = path.join(process.cwd(), 'attached_assets', 'PSO Coated FOGRA51 (EFI)_1753573621935.icc');
     const fallbackICCPath = path.join(process.cwd(), 'server', 'fogra51.icc');
@@ -343,11 +355,11 @@ export class EnhancedCMYKGenerator {
     // Create a logo map for quick lookup
     const logoMap = new Map(logos.map(logo => [logo.id, logo]));
     
-    // Page 1: Artwork only (white background)
+    // Page 1: Badge Artwork (or all artwork for non-applique templates)
     const page1 = pdfDoc.addPage([pageWidth, pageHeight]);
     
-    // Process each canvas element for page 1
-    for (const element of canvasElements) {
+    // Process badge elements (canvasIndex 0) for page 1
+    for (const element of badgeElements) {
       if (!element.logoId || !element.isVisible) continue;
       const logo = logoMap.get(element.logoId);
       if (!logo) continue;
@@ -359,7 +371,33 @@ export class EnhancedCMYKGenerator {
       }
     }
     
-    // Page 2: Artwork with garment color background(s)
+    // For applique templates: Page 2 is Embroidery Artwork (canvasIndex 1)
+    if (isAppliqueTemplate && embroideryElements.length > 0) {
+      const embroideryPage = pdfDoc.addPage([pageWidth, pageHeight]);
+      console.log(`Enhanced CMYK: Creating embroidery artwork page with ${embroideryElements.length} elements`);
+      
+      for (const element of embroideryElements) {
+        if (!element.logoId || !element.isVisible) continue;
+        const logo = logoMap.get(element.logoId);
+        if (!logo) continue;
+        
+        try {
+          await this.embedVectorLogo(pdfDoc, embroideryPage, element, logo, templateSize, isSingleColourTransfer, inkColor || undefined);
+        } catch (error) {
+          console.error(`Failed to embed embroidery vector logo ${logo.originalName}:`, error);
+        }
+      }
+    }
+    
+    // For applique templates: Page 3 is the embroidery specification form
+    if (isAppliqueTemplate && appliqueBadgesForm) {
+      const formPage = pdfDoc.addPage([595, 842]);
+      await this.renderAppliqueBadgesForm(formPage, appliqueBadgesForm, pdfDoc, 595, 842);
+      console.log('Enhanced CMYK: Added applique embroidery specification form as page 3');
+    }
+    
+    // For non-applique: Page 2 is artwork with garment color background(s)
+    if (!isAppliqueTemplate) {
     const page2 = pdfDoc.addPage([pageWidth, pageHeight]);
     
     // Check if we have individual garment colors per logo
@@ -499,11 +537,7 @@ export class EnhancedCMYKGenerator {
         }
       }
     }
-
-    // Add applique badges form to page 2 if present
-    if (appliqueBadgesForm) {
-      await this.renderAppliqueBadgesForm(page2, appliqueBadgesForm, pdfDoc, pageWidth, pageHeight);
-    }
+    } // end if (!isAppliqueTemplate)
     
     console.log('Enhanced CMYK: Created vector-preserving PDF with pdf-lib');
     const pdfBytes = await pdfDoc.save();

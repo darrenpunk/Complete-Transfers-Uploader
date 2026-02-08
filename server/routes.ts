@@ -843,10 +843,26 @@ export async function registerRoutes(app: express.Application) {
         const page1 = pdfDoc.addPage([pageWidth, pageHeight]);
         console.log(`✅ Page 1: TRANSPARENT - clean vectors only`);
         
+        // Detect applique template for dual-canvas page structure
+        const isAppliqueTemplate = project.templateSize?.includes('applique') || !!project.appliqueBadgesForm;
+        const badgeElements = isAppliqueTemplate 
+          ? canvasElements.filter(el => !el.canvasIndex || el.canvasIndex === 0)
+          : canvasElements;
+        const embroideryElements = isAppliqueTemplate 
+          ? canvasElements.filter(el => el.canvasIndex === 1)
+          : [];
+        
+        if (isAppliqueTemplate) {
+          console.log(`📋 Applique fallback: Badge elements: ${badgeElements.length}, Embroidery elements: ${embroideryElements.length}`);
+        }
+        
         // Multi-Color Orders: Create one page per garment color
         const garmentColorPages: Array<{ page: any; color: string; colorName: string; quantity: number }> = [];
         
-        if (project.garmentColors && Array.isArray(project.garmentColors) && project.garmentColors.length > 0) {
+        if (isAppliqueTemplate) {
+          // Applique templates skip garment color pages - handled separately below
+          console.log(`📋 Applique template: skipping garment color pages`);
+        } else if (project.garmentColors && Array.isArray(project.garmentColors) && project.garmentColors.length > 0) {
           console.log(`🎨 Multi-Color Order: Creating ${project.garmentColors.length} pages for different garment colors`);
           
           for (const garmentColorItem of project.garmentColors) {
@@ -898,8 +914,9 @@ export async function registerRoutes(app: express.Application) {
           console.log(`✅ Page 2: ${getColorName(defaultGarmentColor)} background for preview (${defaultGarmentColor})`);
         }
         
-        // Process canvas elements
-        for (let element of canvasElements) {
+        // Process canvas elements (use badge-only elements for applique templates)
+        const elementsToProcess = isAppliqueTemplate ? badgeElements : canvasElements;
+        for (let element of elementsToProcess) {
           const logo = Object.values(logosObject).find((l: any) => l.id === element.logoId);
           if (!logo) continue;
           
@@ -1421,6 +1438,57 @@ export async function registerRoutes(app: express.Application) {
           });
           
           console.log(`✅ Added footer to ${garmentPageInfo.colorName} page (Qty: ${garmentPageInfo.quantity})`);
+        }
+        
+        // For applique templates: add embroidery page (P2) with canvasIndex=1 elements
+        if (isAppliqueTemplate && embroideryElements.length > 0) {
+          const embroideryPage = pdfDoc.addPage([pageWidth, pageHeight]);
+          console.log(`📋 Applique fallback: Creating embroidery page with ${embroideryElements.length} elements`);
+          
+          for (let element of embroideryElements) {
+            const logo = Object.values(logosObject).find((l: any) => l.id === element.logoId);
+            if (!logo) continue;
+            
+            const svgPath = path.join(process.cwd(), 'uploads', (logo as any).filename);
+            if (!fs.existsSync(svgPath)) continue;
+            
+            try {
+              const rotation = element.rotation || 0;
+              const widthPts = element.width * 2.834645669;
+              const heightPts = element.height * 2.834645669;
+              
+              const templateCenterXmm = templateSize.width / 2;
+              const templateCenterYmm = templateSize.height / 2;
+              const leftMM = templateCenterXmm + element.x - element.width / 2;
+              const topMM = templateCenterYmm + element.y - element.height / 2;
+              const xPts = leftMM * 2.834645669;
+              const yPts = pageHeight - (topMM * 2.834645669) - heightPts;
+              
+              const logoFilename = (logo as any).filename as string;
+              if (logoFilename.endsWith('.png') || logoFilename.endsWith('.jpg') || logoFilename.endsWith('.jpeg')) {
+                const imgBytes = fs.readFileSync(svgPath);
+                const embeddedImage = logoFilename.endsWith('.png') 
+                  ? await pdfDoc.embedPng(imgBytes) 
+                  : await pdfDoc.embedJpg(imgBytes);
+                embroideryPage.drawImage(embeddedImage, { x: xPts, y: yPts, width: widthPts, height: heightPts });
+              } else {
+                const { execSync } = await import('child_process');
+                const tempPdfPath = path.join('/tmp', `emb_${Date.now()}_${Math.random().toString(36).slice(2)}.pdf`);
+                execSync(`rsvg-convert -f pdf "${svgPath}" -o "${tempPdfPath}"`, { timeout: 15000 });
+                if (fs.existsSync(tempPdfPath)) {
+                  const vecBytes = fs.readFileSync(tempPdfPath);
+                  const vecDoc = await pdfDoc.embedPdf(vecBytes);
+                  if (vecDoc.length > 0) {
+                    const embPage = vecDoc[0];
+                    embroideryPage.drawPage(embPage, { x: xPts, y: yPts, width: widthPts, height: heightPts });
+                  }
+                  fs.unlinkSync(tempPdfPath);
+                }
+              }
+            } catch (embErr) {
+              console.error(`Failed to embed embroidery element:`, embErr);
+            }
+          }
         }
         
         // Check for external file links and add to first garment color page if exists
