@@ -523,6 +523,11 @@ grestore`;
     if (isAppliqueTemplate) {
       console.log(`📋 Applique PDF: Processing ${badgeElements.length} badge elements for page 1`);
       for (const element of badgeElements) {
+        const isShape = element.elementType === 'rectangle' || element.elementType === 'ellipse' || element.elementType === 'circle' || element.elementType === 'line';
+        if (isShape) {
+          this.drawShapeOnPage(page1, element, data.templateSize, pageHeight);
+          continue;
+        }
         const logo = data.logos.find(l => l.id === element.logoId);
         if (logo) {
           await this.embedLogoInPages(pdfDoc, page1, null, logo, element, data.templateSize);
@@ -533,6 +538,11 @@ grestore`;
         const embroideryPage = pdfDoc.addPage([pageWidth, pageHeight]);
         console.log(`📋 Applique PDF: Processing ${embroideryElements.length} embroidery elements for page 2`);
         for (const element of embroideryElements) {
+          const isShape = element.elementType === 'rectangle' || element.elementType === 'ellipse' || element.elementType === 'circle' || element.elementType === 'line';
+          if (isShape) {
+            this.drawShapeOnPage(embroideryPage, element, data.templateSize, pageHeight);
+            continue;
+          }
           const logo = data.logos.find(l => l.id === element.logoId);
           if (logo) {
             await this.embedLogoInPages(pdfDoc, null, embroideryPage, logo, element, data.templateSize);
@@ -554,6 +564,18 @@ grestore`;
       const logo = data.logos.find(l => l.id === element.logoId);
       console.log(`🔍 DEBUG: Logo lookup result:`, logo ? `Found logo: ${logo.filename}` : 'Logo not found');
       
+      const isShapeElement = element.elementType === 'rectangle' || element.elementType === 'ellipse' || element.elementType === 'circle' || element.elementType === 'line';
+      
+      if (isShapeElement) {
+        console.log(`🔷 Processing shape element ${i + 1}/${data.canvasElements.length}: ${element.elementType}`);
+        this.drawShapeOnPage(page1, element, data.templateSize, pageHeight);
+        
+        for (const gcPage of garmentColorPages) {
+          this.drawShapeOnPage(gcPage.page, element, data.templateSize, pageHeight);
+        }
+        continue;
+      }
+
       if (logo) {
         console.log(`🎯 Processing logo ${i + 1}/${data.canvasElements.length}: ${logo.filename}`);
         
@@ -773,6 +795,81 @@ grestore`;
   /**
    * Parse garment color to RGB values
    */
+  private drawShapeOnPage(page: any, element: any, templateSize: any, pageHeight: number): void {
+    const { rgb, degrees } = require('pdf-lib');
+    const mmToPt = 2.834645669;
+    const templateWidthMM = templateSize?.width || 297;
+    const templateHeightMM = templateSize?.height || 420;
+    const templateCenterX = templateWidthMM / 2;
+    const templateCenterY = templateHeightMM / 2;
+
+    const elementCenterX = templateCenterX + element.x;
+    const elementCenterY = templateCenterY + element.y;
+
+    const elemWidthPt = element.width * mmToPt;
+    const elemHeightPt = element.height * mmToPt;
+
+    const elemXPt = (elementCenterX - element.width / 2) * mmToPt;
+    const elemYPt = pageHeight - ((elementCenterY + element.height / 2) * mmToPt);
+
+    const parseHexColor = (hex: string) => {
+      if (!hex || hex === 'none') return null;
+      const h = hex.replace('#', '');
+      return rgb(
+        parseInt(h.substring(0, 2), 16) / 255,
+        parseInt(h.substring(2, 4), 16) / 255,
+        parseInt(h.substring(4, 6), 16) / 255
+      );
+    };
+
+    const strokeColor = parseHexColor(element.strokeColor || '#000000');
+    const fillColor = element.fillColor && element.fillColor !== 'none' ? parseHexColor(element.fillColor) : undefined;
+    const strokeWidthPt = (element.strokeWidth || 1) * mmToPt;
+    const opacity = element.opacity ?? 1;
+    const cornerRadiusPt = (element.cornerRadius || 0) * mmToPt;
+
+    if (element.elementType === 'rectangle') {
+      const drawOpts: any = {
+        x: elemXPt,
+        y: elemYPt,
+        width: elemWidthPt,
+        height: elemHeightPt,
+        borderWidth: strokeWidthPt,
+        borderColor: strokeColor,
+        opacity,
+        borderOpacity: opacity,
+      };
+      if (fillColor) drawOpts.color = fillColor;
+      if (element.rotation) drawOpts.rotate = degrees(element.rotation);
+      page.drawRectangle(drawOpts);
+    } else if (element.elementType === 'ellipse' || element.elementType === 'circle') {
+      const drawOpts: any = {
+        x: elemXPt + elemWidthPt / 2,
+        y: elemYPt + elemHeightPt / 2,
+        xScale: elemWidthPt / 2,
+        yScale: elemHeightPt / 2,
+        borderWidth: strokeWidthPt,
+        borderColor: strokeColor,
+        opacity,
+        borderOpacity: opacity,
+      };
+      if (fillColor) drawOpts.color = fillColor;
+      if (element.rotation) drawOpts.rotate = degrees(element.rotation);
+      page.drawEllipse(drawOpts);
+    } else if (element.elementType === 'line') {
+      const lineOpts: any = {
+        start: { x: elemXPt, y: elemYPt + elemHeightPt / 2 },
+        end: { x: elemXPt + elemWidthPt, y: elemYPt + elemHeightPt / 2 },
+        thickness: strokeWidthPt,
+        color: strokeColor,
+        opacity,
+      };
+      page.drawLine(lineOpts);
+    }
+
+    console.log(`🔷 Drew ${element.elementType} shape at (${elemXPt.toFixed(1)}, ${elemYPt.toFixed(1)}) size ${elemWidthPt.toFixed(1)}×${elemHeightPt.toFixed(1)}`);
+  }
+
   private async parseGarmentColor(garmentColor: string | undefined): Promise<any> {
     const { rgb } = await import('pdf-lib');
     

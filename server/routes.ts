@@ -4803,9 +4803,10 @@ export async function registerRoutes(app: express.Application) {
       if (!project) {
         return res.status(404).json({ error: 'Project not found' });
       }
-      const elementData = {
+      const elementData: any = {
         projectId,
-        logoId: req.body.logoId,
+        logoId: req.body.logoId || null,
+        elementType: req.body.elementType || 'logo',
         x: req.body.x || 0,
         y: req.body.y || 0,
         width: req.body.width || 50,
@@ -4815,7 +4816,12 @@ export async function registerRoutes(app: express.Application) {
         isVisible: req.body.isVisible !== false,
         isLocked: req.body.isLocked || false,
         colorOverrides: req.body.colorOverrides || null,
-        canvasIndex: req.body.canvasIndex || 0
+        canvasIndex: req.body.canvasIndex || 0,
+        fillColor: req.body.fillColor || null,
+        strokeColor: req.body.strokeColor || '#000000',
+        strokeWidth: req.body.strokeWidth ?? 1,
+        opacity: req.body.opacity ?? 1,
+        cornerRadius: req.body.cornerRadius ?? 0,
       };
       const created = await storage.createCanvasElement(elementData);
       res.json(created);

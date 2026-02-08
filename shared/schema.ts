@@ -93,6 +93,7 @@ export const canvasElements = pgTable("canvas_elements", {
   strokeColor: text("stroke_color"), // Stroke color for shapes
   strokeWidth: real("stroke_width").default(1), // Stroke width for shapes
   opacity: real("opacity").default(1), // Element opacity
+  cornerRadius: real("corner_radius").default(0), // Corner radius for rounded rectangles
   groupId: text("group_id"), // Group ID for grouping elements together
   canvasIndex: integer("canvas_index").notNull().default(0), // 0=badge/main canvas, 1=embroidery canvas (applique only)
 });

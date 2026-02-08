@@ -4,7 +4,8 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { Project, Logo, CanvasElement, TemplateSize, ContentBounds } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Minus, Plus, Grid3X3, AlignCenter, Undo, Redo, Upload, Trash2, Maximize2, RotateCw, Move, ArrowRight, CheckSquare, Group, Ungroup, Sparkles, X, Loader2 } from "lucide-react";
+import { Minus, Plus, Grid3X3, AlignCenter, Undo, Redo, Upload, Trash2, Maximize2, RotateCw, Move, ArrowRight, CheckSquare, Group, Ungroup, Sparkles, X, Loader2, Square, Circle, MinusIcon, Shapes } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 
@@ -456,6 +457,47 @@ export default function CanvasWorkspace({
 
   // Initialize toast
   const { toast } = useToast();
+
+  const handleAddShape = async (shapeType: 'rectangle' | 'ellipse' | 'circle' | 'line') => {
+    if (!project?.id) return;
+    try {
+      const defaultWidth = shapeType === 'line' ? 60 : 40;
+      const defaultHeight = shapeType === 'line' ? 2 : 40;
+      const response = await apiRequest("POST", `/api/projects/${project.id}/canvas-elements`, {
+        elementType: shapeType,
+        logoId: null,
+        x: 0,
+        y: 0,
+        width: defaultWidth,
+        height: defaultHeight,
+        rotation: 0,
+        zIndex: canvasElements.length,
+        isVisible: true,
+        isLocked: false,
+        fillColor: shapeType === 'line' ? null : 'none',
+        strokeColor: '#000000',
+        strokeWidth: 2,
+        opacity: 1,
+        cornerRadius: 0,
+        canvasIndex: activeCanvasIndex || 0,
+      });
+      const newElement = await response.json();
+      queryClient.invalidateQueries({
+        queryKey: ["/api/projects", project.id, "canvas-elements"]
+      });
+      toast({
+        title: "Shape Added",
+        description: `${shapeType.charAt(0).toUpperCase() + shapeType.slice(1)} added to canvas. Select it to adjust size, color, and position.`,
+      });
+    } catch (error) {
+      console.error('Failed to add shape:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add shape to canvas",
+        variant: "destructive",
+      });
+    }
+  };
 
   const captureCanvasAsImage = useCallback(async (): Promise<string | null> => {
     if (!canvasRef.current) return null;
@@ -1827,6 +1869,37 @@ export default function CanvasWorkspace({
               )}
             </div>
             
+            {/* Add Shapes */}
+            <DropdownMenu>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" disabled={!project.garmentColor}>
+                      <Shapes className="w-4 h-4 mr-2" />
+                      Add Shape
+                    </Button>
+                  </DropdownMenuTrigger>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Add a shape border (rectangle, ellipse, or line) to the design</p>
+                </TooltipContent>
+              </Tooltip>
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem onClick={() => handleAddShape('rectangle')}>
+                  <Square className="w-4 h-4 mr-2" />
+                  Rectangle
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleAddShape('ellipse')}>
+                  <Circle className="w-4 h-4 mr-2" />
+                  Ellipse
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleAddShape('line')}>
+                  <MinusIcon className="w-4 h-4 mr-2" />
+                  Line
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             <div className="h-6 w-px bg-gray-300"></div>
             
             {/* Zoom Controls */}
@@ -2310,7 +2383,9 @@ export default function CanvasWorkspace({
                     transformOrigin: 'center',
                     outline: isSelected 
                       ? `2px solid #961E75` 
-                      : `1px solid #d1d5db`,
+                      : (element.elementType === 'rectangle' || element.elementType === 'ellipse' || element.elementType === 'circle' || element.elementType === 'line') 
+                        ? 'none'
+                        : `1px solid #d1d5db`,
                     outlineOffset: '-2px',
                     boxSizing: 'border-box'
                   }}
@@ -2335,6 +2410,59 @@ export default function CanvasWorkspace({
                       overflow: 'visible'
                     }}
                   >
+                    {/* Shape Elements */}
+                    {(element.elementType === 'rectangle' || element.elementType === 'ellipse' || element.elementType === 'circle' || element.elementType === 'line') ? (() => {
+                      const strokePx = (element.strokeWidth || 1) * mmToPixelRatio * (zoom / 100);
+                      const cornerPx = (element.cornerRadius || 0) * mmToPixelRatio * (zoom / 100);
+                      return (
+                        <svg
+                          width="100%"
+                          height="100%"
+                          viewBox={`0 0 ${elementWidth} ${elementHeight}`}
+                          xmlns="http://www.w3.org/2000/svg"
+                          style={{ overflow: 'visible' }}
+                        >
+                          {element.elementType === 'rectangle' && (
+                            <rect
+                              x={strokePx / 2}
+                              y={strokePx / 2}
+                              width={Math.max(0, elementWidth - strokePx)}
+                              height={Math.max(0, elementHeight - strokePx)}
+                              rx={cornerPx}
+                              ry={cornerPx}
+                              fill={element.fillColor || 'none'}
+                              stroke={element.strokeColor || '#000000'}
+                              strokeWidth={strokePx}
+                              opacity={element.opacity ?? 1}
+                            />
+                          )}
+                          {(element.elementType === 'ellipse' || element.elementType === 'circle') && (
+                            <ellipse
+                              cx={elementWidth / 2}
+                              cy={elementHeight / 2}
+                              rx={Math.max(0, (elementWidth - strokePx) / 2)}
+                              ry={Math.max(0, (elementHeight - strokePx) / 2)}
+                              fill={element.fillColor || 'none'}
+                              stroke={element.strokeColor || '#000000'}
+                              strokeWidth={strokePx}
+                              opacity={element.opacity ?? 1}
+                            />
+                          )}
+                          {element.elementType === 'line' && (
+                            <line
+                              x1={0}
+                              y1={elementHeight / 2}
+                              x2={elementWidth}
+                              y2={elementHeight / 2}
+                              stroke={element.strokeColor || '#000000'}
+                              strokeWidth={strokePx}
+                              opacity={element.opacity ?? 1}
+                            />
+                          )}
+                        </svg>
+                      );
+                    })() : null}
+
                     {/* Logo Elements */}
 
                     {(element.elementType === 'logo' || (!element.elementType && element.logoId)) && logo ? (

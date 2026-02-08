@@ -912,6 +912,76 @@ export default function PropertiesPanel({
               </div>
             </div>
 
+            {/* Shape Properties - only show for shape elements */}
+            {(currentElement.elementType === 'rectangle' || currentElement.elementType === 'ellipse' || currentElement.elementType === 'circle' || currentElement.elementType === 'line') && (
+              <div className="space-y-3">
+                <Label className="text-sm font-medium mb-2 block">Shape Properties</Label>
+                
+                {currentElement.elementType !== 'line' && (
+                  <div>
+                    <Label className="text-xs text-gray-500">Fill Color</Label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <input
+                        type="color"
+                        value={currentElement.fillColor === 'none' ? '#ffffff' : (currentElement.fillColor || '#000000')}
+                        onChange={(e) => handlePropertyChange('fillColor', e.target.value)}
+                        className="w-8 h-8 rounded border cursor-pointer"
+                      />
+                      <Button
+                        variant={currentElement.fillColor === 'none' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => handlePropertyChange('fillColor', currentElement.fillColor === 'none' ? '#000000' : 'none')}
+                        className="text-xs h-8"
+                      >
+                        {currentElement.fillColor === 'none' ? 'No Fill' : 'Remove Fill'}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                <div>
+                  <Label className="text-xs text-gray-500">Stroke Color</Label>
+                  <div className="flex items-center gap-2 mt-1">
+                    <input
+                      type="color"
+                      value={currentElement.strokeColor || '#000000'}
+                      onChange={(e) => handlePropertyChange('strokeColor', e.target.value)}
+                      className="w-8 h-8 rounded border cursor-pointer"
+                    />
+                    <span className="text-xs text-gray-500">{currentElement.strokeColor || '#000000'}</span>
+                  </div>
+                </div>
+
+                <div>
+                  <Label className="text-xs text-gray-500">Stroke Width (mm)</Label>
+                  <Input
+                    type="number"
+                    value={currentElement.strokeWidth || 1}
+                    onChange={(e) => handlePropertyChange('strokeWidth', parseFloat(e.target.value) || 1)}
+                    className="text-sm"
+                    step="0.5"
+                    min="0.5"
+                    max="20"
+                  />
+                </div>
+
+                {currentElement.elementType === 'rectangle' && (
+                  <div>
+                    <Label className="text-xs text-gray-500">Corner Radius</Label>
+                    <Input
+                      type="number"
+                      value={currentElement.cornerRadius || 0}
+                      onChange={(e) => handlePropertyChange('cornerRadius', parseFloat(e.target.value) || 0)}
+                      className="text-sm"
+                      step="1"
+                      min="0"
+                      max="100"
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Alignment Tools */}
             <div>
               <Label className="text-sm font-medium mb-2 block">Alignment</Label>
@@ -1197,9 +1267,26 @@ export default function PropertiesPanel({
                   .sort((a, b) => b.zIndex - a.zIndex)
                   .map((element) => {
                     const logo = logos.find(l => l.id === element.logoId);
-                    if (!logo) return null;
+                    const isShapeElement = element.elementType === 'rectangle' || element.elementType === 'ellipse' || element.elementType === 'circle' || element.elementType === 'line';
+                    if (!logo && !isShapeElement) return null;
 
                     const isSelected = currentElement?.id === element.id;
+
+                    const getShapeIcon = () => {
+                      switch (element.elementType) {
+                        case 'rectangle': return <div className="w-4 h-3 border-2 border-gray-600 rounded-sm" />;
+                        case 'ellipse': case 'circle': return <div className="w-4 h-4 border-2 border-gray-600 rounded-full" />;
+                        case 'line': return <div className="w-4 h-0.5 bg-gray-600" />;
+                        default: return <Image className="w-4 h-4 text-gray-600" />;
+                      }
+                    };
+
+                    const getElementName = () => {
+                      if (isShapeElement) {
+                        return element.elementType!.charAt(0).toUpperCase() + element.elementType!.slice(1);
+                      }
+                      return logo?.originalName || 'Unknown';
+                    };
 
                     return (
                       <div
@@ -1208,15 +1295,14 @@ export default function PropertiesPanel({
                           isSelected ? 'bg-blue-50 border border-blue-200' : 'border border-gray-200 hover:bg-gray-50'
                         }`}
                         onClick={() => {
-                          // This would need to be passed as a prop to select an element
                           console.log('Select element:', element.id);
                         }}
                       >
                         <div className="flex items-center space-x-2">
-                          <Image className="w-4 h-4 text-gray-600" />
+                          {isShapeElement ? getShapeIcon() : <Image className="w-4 h-4 text-gray-600" />}
                           <div className="flex flex-col">
                             <span className="text-sm font-medium truncate max-w-[120px]">
-                              {logo.originalName}
+                              {getElementName()}
                             </span>
                             <span className="text-xs text-gray-500">
                               {(() => {
