@@ -743,7 +743,7 @@ export default function UploadTool() {
         console.log('Custom/Applique Badges template detected, triggering form modal');
         setPendingTemplateData({
           templateId,
-          garmentColor: "#FFFFFF",
+          garmentColor: "#929292",
           inkColor: undefined,
           quantity: copies
         });
