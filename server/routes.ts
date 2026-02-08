@@ -627,7 +627,7 @@ export async function registerRoutes(app: express.Application) {
 
   app.post('/api/embroidery-preview', async (req, res) => {
     try {
-      const { badgeImage, embroideryImage } = req.body;
+      const { badgeImage, embroideryImage, embroideryDescription } = req.body;
       if (!badgeImage) {
         return res.status(400).json({ error: 'Badge image is required' });
       }
@@ -647,37 +647,28 @@ export async function registerRoutes(app: express.Application) {
       const parts: any[] = [];
 
       parts.push({
-        text: "I'm creating an applique badge for custom apparel. This badge has two layers:"
-      });
-
-      parts.push({
-        text: "IMAGE 1 - The complete badge artwork (this is what gets printed on fabric):"
-      });
-      parts.push({
         inlineData: { data: badgeBase64, mimeType: badgeMime }
       });
 
       if (embroideryImage) {
         const embBase64 = embroideryImage.replace(/^data:image\/\w+;base64,/, '');
         const embMime = embroideryImage.match(/^data:(image\/\w+);base64,/)?.[1] || 'image/png';
-
-        parts.push({
-          text: "IMAGE 2 - These are ONLY the elements that will be machine embroidered (stitched with thread on top of the printed badge):"
-        });
         parts.push({
           inlineData: { data: embBase64, mimeType: embMime }
         });
-
-        parts.push({
-          text: "Generate a photorealistic image showing the final applique badge. The badge from Image 1 is the printed fabric base. ONLY the elements shown in Image 2 should have embroidery thread texture (satin stitch, 3D thread relief, thread sheen). Everything else from Image 1 should remain as smooth printed fabric. The embroidered elements from Image 2 should appear stitched ON TOP of the printed badge from Image 1, in their correct positions. The result should look like a real photograph of an applique badge where some elements are printed and some are embroidered with thread."
-        });
-      } else {
-        parts.push({
-          text: "Generate a photorealistic image of this badge as a real embroidered applique patch with thread texture, satin stitches, and 3D relief. Keep the same layout, colors and proportions."
-        });
       }
 
-      console.log('[Embroidery Preview] Sending', embroideryImage ? '2 images' : '1 image', 'to Gemini');
+      const elementsDesc = embroideryDescription || 'the text and circular outline border';
+
+      parts.push({
+        text: `This is an applique badge. It is made of two production techniques combined:
+1. PRINTED elements: The decorative graphics, colored shapes, dots, lines, and patterns are digitally PRINTED on fabric. These should remain as smooth, flat, printed fabric with no thread texture.
+2. EMBROIDERED elements: ${elementsDesc} — these specific elements are machine-embroidered with actual thread ON TOP of the printed badge.
+
+Generate a photorealistic photograph of this applique badge. The printed areas must look like smooth printed fabric. ONLY ${elementsDesc} should have visible embroidery thread texture with satin stitches, 3D thread relief, and thread sheen. Keep the exact same design, layout, colors, and proportions. The badge should be shown on a neutral surface.`
+      });
+
+      console.log('[Embroidery Preview] Sending to Gemini with description:', elementsDesc);
 
       const response = await ai.models.generateContent({
         model: "gemini-2.5-flash-image",

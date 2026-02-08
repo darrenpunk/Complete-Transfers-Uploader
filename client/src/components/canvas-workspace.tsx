@@ -510,9 +510,19 @@ export default function CanvasWorkspace({
         return;
       }
       const embroideryImage = await captureCanvasAsImage();
+
+      const embElements = canvasElements.filter(el => (el.canvasIndex || 0) === 1);
+      const embLogos = embElements
+        .map(el => el.logoId ? logos.find(l => l.id === el.logoId) : null)
+        .filter(Boolean);
+      const embDescription = embLogos.length > 0
+        ? `the embroidery overlay elements (outlines, text, and border shapes that were extracted for stitching)`
+        : 'the text and circular outline border';
+
       const response = await apiRequest("POST", "/api/embroidery-preview", {
         badgeImage: badgeCanvasSnapshot,
         embroideryImage: embroideryImage || null,
+        embroideryDescription: embDescription,
       });
       const data = await response.json();
       if (data.imageData) {
@@ -526,7 +536,7 @@ export default function CanvasWorkspace({
     } finally {
       setIsGeneratingPreview(false);
     }
-  }, [badgeCanvasSnapshot, captureCanvasAsImage, toast]);
+  }, [badgeCanvasSnapshot, captureCanvasAsImage, canvasElements, logos, toast]);
 
   // Automatic cleanup of orphaned canvas elements
   useCleanupOrphanedElements({
