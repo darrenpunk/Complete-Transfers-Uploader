@@ -656,7 +656,7 @@ export async function registerRoutes(app: express.Application) {
               }
             },
             {
-              text: "Transform this artwork into a photorealistic embroidery preview. Show the design as if it has been professionally machine-embroidered onto dark navy/black fabric. Add realistic embroidery texture with visible thread stitching patterns, satin stitch fills, and a subtle 3D thread relief effect. The embroidery should look like a real sewn badge/patch with clean stitch lines. Keep the exact same design, shapes, and layout - only change the rendering style to look like real embroidery thread on fabric. Make the background dark fabric with visible textile weave texture."
+              text: "Transform this artwork into a photorealistic embroidery rendering with a TRANSPARENT background (PNG with alpha). Show the design elements as if they have been professionally machine-embroidered with realistic thread texture, visible satin stitch fills, and subtle 3D thread relief. The embroidery should look like real sewn thread with clean stitch lines. Keep the exact same design, shapes, layout and positioning - only change the rendering style to look like real embroidery thread. The background MUST be completely transparent/empty - do NOT add any fabric, background color, or backing material. Output as PNG with transparency."
             }
           ]
         }],

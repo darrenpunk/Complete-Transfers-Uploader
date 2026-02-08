@@ -303,6 +303,7 @@ export default function CanvasWorkspace({
   // Embroidery preview state
   const [showEmbroideryPreview, setShowEmbroideryPreview] = useState(false);
   const [embroideryPreviewImage, setEmbroideryPreviewImage] = useState<string | null>(null);
+  const [badgeCanvasSnapshot, setBadgeCanvasSnapshot] = useState<string | null>(null);
   const [isGeneratingPreview, setIsGeneratingPreview] = useState(false);
 
   // History management
@@ -473,6 +474,30 @@ export default function CanvasWorkspace({
       return null;
     }
   }, []);
+
+  const captureBadgeSnapshot = useCallback(async () => {
+    if (!canvasRef.current) return;
+    try {
+      const { default: html2canvas } = await import('html2canvas');
+      const canvas = await html2canvas(canvasRef.current, {
+        backgroundColor: null,
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+      });
+      setBadgeCanvasSnapshot(canvas.toDataURL('image/png'));
+    } catch (err) {
+      console.error('Failed to capture badge snapshot:', err);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isAppliqueTemplate && activeCanvasIndex === 0) {
+      const timer = setTimeout(() => captureBadgeSnapshot(), 500);
+      return () => clearTimeout(timer);
+    }
+  }, [isAppliqueTemplate, activeCanvasIndex, canvasElements, captureBadgeSnapshot]);
 
   const generateEmbroideryPreview = useCallback(async () => {
     setIsGeneratingPreview(true);
@@ -2717,12 +2742,21 @@ export default function CanvasWorkspace({
                 </div>
               ) : embroideryPreviewImage ? (
                 <div className="flex flex-col items-center gap-3">
-                  <img
-                    src={embroideryPreviewImage}
-                    alt="Embroidery Preview"
-                    className="rounded-lg max-w-full max-h-[400px] object-contain border border-gray-700"
-                  />
-                  <p className="text-gray-400 text-xs text-center">AI-generated preview — actual embroidery may vary</p>
+                  <div className="relative rounded-lg overflow-hidden border border-gray-700" style={{ maxWidth: '100%', maxHeight: '400px' }}>
+                    {badgeCanvasSnapshot && (
+                      <img
+                        src={badgeCanvasSnapshot}
+                        alt="Badge Artwork"
+                        className="w-full h-full object-contain"
+                      />
+                    )}
+                    <img
+                      src={embroideryPreviewImage}
+                      alt="Embroidery Preview"
+                      className={`object-contain ${badgeCanvasSnapshot ? 'absolute inset-0 w-full h-full' : 'w-full'}`}
+                    />
+                  </div>
+                  <p className="text-gray-400 text-xs text-center">AI-generated embroidery preview overlaid on badge artwork — actual result may vary</p>
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center py-16 gap-3">
