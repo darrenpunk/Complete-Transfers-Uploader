@@ -4,7 +4,7 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { Project, Logo, CanvasElement, TemplateSize, ContentBounds } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Minus, Plus, Grid3X3, AlignCenter, Undo, Redo, Upload, Trash2, Maximize2, RotateCw, Move, ArrowRight, CheckSquare, Group, Ungroup } from "lucide-react";
+import { Minus, Plus, Grid3X3, AlignCenter, Undo, Redo, Upload, Trash2, Maximize2, RotateCw, Move, ArrowRight, CheckSquare, Group, Ungroup, Sparkles, X, Loader2 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 
@@ -300,6 +300,11 @@ export default function CanvasWorkspace({
   const [history, setHistory] = useState<CanvasElement[][]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
 
+  // Embroidery preview state
+  const [showEmbroideryPreview, setShowEmbroideryPreview] = useState(false);
+  const [embroideryPreviewImage, setEmbroideryPreviewImage] = useState<string | null>(null);
+  const [isGeneratingPreview, setIsGeneratingPreview] = useState(false);
+
   // History management
   const saveToHistory = useCallback((elements: CanvasElement[]) => {
     const newHistory = history.slice(0, historyIndex + 1);
@@ -450,6 +455,50 @@ export default function CanvasWorkspace({
 
   // Initialize toast
   const { toast } = useToast();
+
+  const captureCanvasAsImage = useCallback(async (): Promise<string | null> => {
+    if (!canvasRef.current) return null;
+    try {
+      const { default: html2canvas } = await import('html2canvas');
+      const canvas = await html2canvas(canvasRef.current, {
+        backgroundColor: null,
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+      });
+      return canvas.toDataURL('image/png');
+    } catch (err) {
+      console.error('Failed to capture canvas:', err);
+      return null;
+    }
+  }, []);
+
+  const generateEmbroideryPreview = useCallback(async () => {
+    setIsGeneratingPreview(true);
+    setShowEmbroideryPreview(true);
+    setEmbroideryPreviewImage(null);
+    try {
+      const imageData = await captureCanvasAsImage();
+      if (!imageData) {
+        toast({ title: "Error", description: "Could not capture canvas artwork", variant: "destructive" });
+        setIsGeneratingPreview(false);
+        return;
+      }
+      const response = await apiRequest("POST", "/api/embroidery-preview", { imageData });
+      const data = await response.json();
+      if (data.imageData) {
+        setEmbroideryPreviewImage(data.imageData);
+      } else {
+        toast({ title: "Error", description: "Failed to generate preview", variant: "destructive" });
+      }
+    } catch (err: any) {
+      console.error('Embroidery preview error:', err);
+      toast({ title: "Error", description: err.message || "Failed to generate embroidery preview", variant: "destructive" });
+    } finally {
+      setIsGeneratingPreview(false);
+    }
+  }, [captureCanvasAsImage, toast]);
 
   // Automatic cleanup of orphaned canvas elements
   useCleanupOrphanedElements({
@@ -1995,6 +2044,16 @@ export default function CanvasWorkspace({
               >
                 Canvas 2: Embroidery Artwork {embroideryCount > 0 && <span className="ml-1 bg-white/20 px-1.5 py-0.5 rounded text-xs">{embroideryCount}</span>}
               </button>
+              {activeCanvasIndex === 1 && embroideryCount > 0 && (
+                <button
+                  className="px-3 py-1.5 rounded text-sm font-medium bg-amber-600 text-white hover:bg-amber-500 transition-colors flex items-center gap-1.5 ml-2"
+                  onClick={generateEmbroideryPreview}
+                  disabled={isGeneratingPreview}
+                >
+                  {isGeneratingPreview ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                  Preview Embroidery
+                </button>
+              )}
             </div>
           );
         })()}
@@ -2636,6 +2695,50 @@ export default function CanvasWorkspace({
         />
       )}
 
+      {/* Embroidery Preview Modal */}
+      {showEmbroideryPreview && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={() => setShowEmbroideryPreview(false)}>
+          <div className="bg-gray-900 rounded-xl shadow-2xl max-w-lg w-full mx-4 overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-5 py-3 border-b border-gray-700">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-amber-400" />
+                <h3 className="text-white font-semibold text-sm">AI Embroidery Preview</h3>
+              </div>
+              <button onClick={() => setShowEmbroideryPreview(false)} className="text-gray-400 hover:text-white transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-5">
+              {isGeneratingPreview ? (
+                <div className="flex flex-col items-center justify-center py-16 gap-4">
+                  <Loader2 className="w-10 h-10 text-amber-400 animate-spin" />
+                  <p className="text-gray-300 text-sm">Generating embroidery preview...</p>
+                  <p className="text-gray-500 text-xs">This may take a few moments</p>
+                </div>
+              ) : embroideryPreviewImage ? (
+                <div className="flex flex-col items-center gap-3">
+                  <img
+                    src={embroideryPreviewImage}
+                    alt="Embroidery Preview"
+                    className="rounded-lg max-w-full max-h-[400px] object-contain border border-gray-700"
+                  />
+                  <p className="text-gray-400 text-xs text-center">AI-generated preview — actual embroidery may vary</p>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-16 gap-3">
+                  <p className="text-gray-400 text-sm">Preview generation failed</p>
+                  <button
+                    onClick={generateEmbroideryPreview}
+                    className="px-4 py-2 bg-amber-600 text-white rounded-lg text-sm hover:bg-amber-500 transition-colors"
+                  >
+                    Try Again
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
     </TooltipProvider>

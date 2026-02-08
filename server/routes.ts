@@ -625,6 +625,66 @@ export async function registerRoutes(app: express.Application) {
   const { storage } = await import('./storage');
   const { setupImpositionRoutes } = await import('./imposition-routes');
 
+  app.post('/api/embroidery-preview', async (req, res) => {
+    try {
+      const { imageData } = req.body;
+      if (!imageData) {
+        return res.status(400).json({ error: 'Image data is required' });
+      }
+
+      const { GoogleGenAI, Modality } = await import('@google/genai');
+      const ai = new GoogleGenAI({
+        apiKey: process.env.AI_INTEGRATIONS_GEMINI_API_KEY!,
+        httpOptions: {
+          apiVersion: "",
+          baseUrl: process.env.AI_INTEGRATIONS_GEMINI_BASE_URL!,
+        },
+      });
+
+      const base64Data = imageData.replace(/^data:image\/\w+;base64,/, '');
+      const mimeType = imageData.match(/^data:(image\/\w+);base64,/)?.[1] || 'image/png';
+
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash-image",
+        contents: [{
+          role: "user",
+          parts: [
+            {
+              inlineData: {
+                data: base64Data,
+                mimeType: mimeType,
+              }
+            },
+            {
+              text: "Transform this artwork into a photorealistic embroidery preview. Show the design as if it has been professionally machine-embroidered onto dark navy/black fabric. Add realistic embroidery texture with visible thread stitching patterns, satin stitch fills, and a subtle 3D thread relief effect. The embroidery should look like a real sewn badge/patch with clean stitch lines. Keep the exact same design, shapes, and layout - only change the rendering style to look like real embroidery thread on fabric. Make the background dark fabric with visible textile weave texture."
+            }
+          ]
+        }],
+        config: {
+          responseModalities: [Modality.TEXT, Modality.IMAGE],
+        },
+      });
+
+      const candidate = response.candidates?.[0];
+      const imagePart = candidate?.content?.parts?.find(
+        (part: any) => part.inlineData
+      );
+
+      if (!imagePart?.inlineData?.data) {
+        console.error('No image data in Gemini response');
+        return res.status(500).json({ error: 'Failed to generate embroidery preview' });
+      }
+
+      const resultMimeType = imagePart.inlineData.mimeType || 'image/png';
+      res.json({
+        imageData: `data:${resultMimeType};base64,${imagePart.inlineData.data}`,
+      });
+    } catch (error: any) {
+      console.error('Embroidery preview generation error:', error);
+      res.status(500).json({ error: error.message || 'Failed to generate embroidery preview' });
+    }
+  });
+
   app.get('/api/version', (_req, res) => {
     res.set({
       'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',

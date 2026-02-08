@@ -12,7 +12,7 @@ Current focus: Core functionality over complex color management features.
 ### Frontend Architecture
 - **Framework**: React 18 with TypeScript, Wouter for routing, TanStack Query for state management.
 - **UI Framework**: shadcn/ui on Radix UI, styled with Tailwind CSS.
-- **UI/UX Decisions**: Workflow-based 5-step progress, dark mode, professional color palettes (27 garment colors, Hi-Viz, pastels, specialized inks), enhanced color tooltips, CMYK popup color picker, template grouping, smart zoom, collapsible template interface, individual garment color assignment, project naming, PDF preview & approval, content-based bounding boxes, safety margins, "Fit to Bounds," 90° rotation, "Center Logo," eyedropper, canvas rotation, upload progress, collapsible garment brands, fixed PDF generation footer, rotated element visual dimension display, dual-canvas system for applique templates (Badge Artwork + Embroidery Artwork).
+- **UI/UX Decisions**: Workflow-based 5-step progress, dark mode, professional color palettes (27 garment colors, Hi-Viz, pastels, specialized inks), enhanced color tooltips, CMYK popup color picker, template grouping, smart zoom, collapsible template interface, individual garment color assignment, project naming, PDF preview & approval, content-based bounding boxes, safety margins, "Fit to Bounds," 90° rotation, "Center Logo," eyedropper, canvas rotation, upload progress, collapsible garment brands, fixed PDF generation footer, rotated element visual dimension display, dual-canvas system for applique templates (Badge Artwork + Embroidery Artwork), AI-powered embroidery preview on Canvas 2 using Gemini image generation.
 
 ### Backend Architecture
 - **Framework**: Express.js with TypeScript.
