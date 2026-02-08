@@ -803,6 +803,19 @@ grestore`;
     // Store target dimensions for SVG conversion process
     (this as any)._currentTargetDimensions = targetDimensions;
     try {
+      // RASTER IMAGE HANDLING: Check if logo is a PNG/JPG raster image
+      const logoFilename = logo.filename || '';
+      const logoMimeType = logo.mimeType || logo.originalMimeType || '';
+      const isRasterImage = logoMimeType.startsWith('image/png') || logoMimeType.startsWith('image/jpeg') || 
+                            logoMimeType.startsWith('image/jpg') ||
+                            logoFilename.endsWith('.png') || logoFilename.endsWith('.jpg') || logoFilename.endsWith('.jpeg');
+      
+      if (isRasterImage) {
+        console.log(`🖼️ RASTER IMAGE DETECTED: ${logoFilename} - using direct image embedding`);
+        await this.embedRasterImage(pdfDoc, page1, page2, logo, element, templateSize);
+        return;
+      }
+      
       let logoPdfPath: string | null = null;
       let shouldCleanup = false;
       
@@ -1186,6 +1199,110 @@ grestore`;
     } catch (error) {
       console.error(`❌ Failed to embed logo:`, error);
     }
+  }
+  
+  /**
+   * Embed a raster image (PNG/JPG) directly into the PDF pages
+   * Uses pdf-lib's embedPng/embedJpg for proper raster image handling
+   */
+  private async embedRasterImage(
+    pdfDoc: any,
+    page1: any | null,
+    page2: any | null,
+    logo: any,
+    element: any,
+    templateSize: any
+  ): Promise<void> {
+    const MM_TO_POINTS = 2.834645669;
+    const { degrees } = await import('pdf-lib');
+    
+    // Find the raster image file
+    let imagePath = path.join(process.cwd(), 'uploads', logo.filename);
+    
+    // Also check for original file if the processed one doesn't exist
+    if (!fs.existsSync(imagePath) && logo.originalFilename) {
+      imagePath = path.join(process.cwd(), 'uploads', logo.originalFilename);
+    }
+    
+    if (!fs.existsSync(imagePath)) {
+      console.warn(`⚠️ Raster image file not found: ${imagePath}`);
+      return;
+    }
+    
+    console.log(`🖼️ Embedding raster image: ${path.basename(imagePath)}`);
+    
+    // Read image bytes
+    const imageBytes = fs.readFileSync(imagePath);
+    
+    // Determine image type and embed accordingly
+    const filename = (logo.filename || logo.originalFilename || '').toLowerCase();
+    const mimeType = (logo.mimeType || logo.originalMimeType || '').toLowerCase();
+    let embeddedImage: any;
+    
+    try {
+      if (filename.endsWith('.jpg') || filename.endsWith('.jpeg') || mimeType.includes('jpeg') || mimeType.includes('jpg')) {
+        embeddedImage = await pdfDoc.embedJpg(imageBytes);
+        console.log(`📸 Embedded JPEG image: ${embeddedImage.width}×${embeddedImage.height}px`);
+      } else {
+        embeddedImage = await pdfDoc.embedPng(imageBytes);
+        console.log(`📸 Embedded PNG image: ${embeddedImage.width}×${embeddedImage.height}px`);
+      }
+    } catch (embedError) {
+      console.error(`❌ Failed to embed image:`, embedError);
+      return;
+    }
+    
+    // Calculate positioning using the same logic as vector logos
+    const contentWidthMM = element.width;
+    const contentHeightMM = element.height;
+    const contentWidthPts = contentWidthMM * MM_TO_POINTS;
+    const contentHeightPts = contentHeightMM * MM_TO_POINTS;
+    
+    // Template center in PDF coordinates
+    const templateCenterXPts = (templateSize?.width || 297) / 2 * MM_TO_POINTS;
+    const templateCenterYPts = (templateSize?.height || 420) / 2 * MM_TO_POINTS;
+    
+    // Target visual center
+    const targetCenterX = templateCenterXPts + element.x * MM_TO_POINTS;
+    const targetCenterY = templateCenterYPts - element.y * MM_TO_POINTS;
+    
+    let drawX: number;
+    let drawY: number;
+    
+    if (element.rotation === 90) {
+      drawX = targetCenterX + contentHeightPts / 2;
+      drawY = targetCenterY - contentWidthPts / 2;
+    } else if (element.rotation === 180) {
+      drawX = targetCenterX + contentWidthPts / 2;
+      drawY = targetCenterY + contentHeightPts / 2;
+    } else if (element.rotation === 270) {
+      drawX = targetCenterX - contentHeightPts / 2;
+      drawY = targetCenterY + contentWidthPts / 2;
+    } else {
+      drawX = targetCenterX - contentWidthPts / 2;
+      drawY = targetCenterY - contentHeightPts / 2;
+    }
+    
+    const drawOptions = {
+      x: drawX,
+      y: drawY,
+      width: contentWidthPts,
+      height: contentHeightPts,
+      rotate: element.rotation ? degrees(element.rotation) : undefined,
+    };
+    
+    console.log(`📍 RASTER POSITION: (${drawX.toFixed(1)}, ${drawY.toFixed(1)}) Size=${contentWidthPts.toFixed(1)}×${contentHeightPts.toFixed(1)}pts, Rotation=${element.rotation || 0}°`);
+    
+    if (page1) {
+      page1.drawImage(embeddedImage, drawOptions);
+      console.log(`✅ Raster image drawn on page 1`);
+    }
+    if (page2) {
+      page2.drawImage(embeddedImage, drawOptions);
+      console.log(`✅ Raster image drawn on page 2`);
+    }
+    
+    console.log(`✅ Raster image embedded successfully`);
   }
   
   /**
