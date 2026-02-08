@@ -645,18 +645,18 @@ export async function registerRoutes(app: express.Application) {
         },
       });
 
-      const embBase64 = embroideryImage.replace(/^data:image\/\w+;base64,/, '');
-      const embMime = embroideryImage.match(/^data:(image\/\w+);base64,/)?.[1] || 'image/png';
+      const badgeBase64 = badgeImage.replace(/^data:image\/\w+;base64,/, '');
+      const badgeMime = badgeImage.match(/^data:(image\/\w+);base64,/)?.[1] || 'image/png';
 
-      console.log('[Embroidery Preview] Step 1: Sending ONLY embroidery elements to Gemini for thread rendering');
+      console.log('[Embroidery Preview] Step 1: Sending FULL badge to Gemini for embroidery rendering');
 
       const response = await ai.models.generateContent({
         model: "gemini-2.5-flash-image",
         contents: [{
           role: "user",
           parts: [
-            { inlineData: { data: embBase64, mimeType: embMime } },
-            { text: "This image shows outline elements from a badge design on a gray background. Transform ONLY the visible design elements (lines, outlines, shapes, text) into photorealistic machine embroidery with visible satin stitch thread texture, 3D thread relief, and thread sheen. The gray background MUST remain as a plain flat gray color - do NOT add fabric texture, stitching, or any embroidery effect to the background. Only the actual design elements (the dark colored outlines and shapes) should look like embroidered thread. Keep the exact same layout, positioning, colors and proportions." }
+            { inlineData: { data: badgeBase64, mimeType: badgeMime } },
+            { text: "Transform this badge/patch design into a photorealistic photograph of a real machine-embroidered patch. All elements should have realistic embroidery thread texture with visible satin stitches, 3D thread relief, and thread sheen. Keep the exact same design, layout, colors, shapes and proportions. The result should look like a close-up photograph of a real embroidered badge lying flat on a neutral light surface." }
           ]
         }],
         config: {
@@ -678,21 +678,22 @@ export async function registerRoutes(app: express.Application) {
         return res.status(500).json({ error: 'Failed to generate embroidery preview' });
       }
 
-      console.log('[Embroidery Preview] Step 2: Compositing embroidery onto badge with ImageMagick');
+      console.log('[Embroidery Preview] Step 2: Masking embroidery to Canvas 2 elements only');
 
       const tmpDir = '/tmp/embroidery-preview';
       await fs.mkdir(tmpDir, { recursive: true });
       const timestamp = Date.now();
       const badgePath = path.join(tmpDir, `badge_${timestamp}.png`);
       const embroideredPath = path.join(tmpDir, `embroidered_${timestamp}.png`);
+      const embOrigPath = path.join(tmpDir, `emb_orig_${timestamp}.png`);
       const maskPath = path.join(tmpDir, `mask_${timestamp}.png`);
+      const dilatedMaskPath = path.join(tmpDir, `mask_dilated_${timestamp}.png`);
       const compositePath = path.join(tmpDir, `composite_${timestamp}.png`);
 
-      const badgeBase64 = badgeImage.replace(/^data:image\/\w+;base64,/, '');
+      const embBase64 = embroideryImage.replace(/^data:image\/\w+;base64,/, '');
+
       await fs.writeFile(badgePath, Buffer.from(badgeBase64, 'base64'));
       await fs.writeFile(embroideredPath, Buffer.from(imagePart.inlineData.data, 'base64'));
-
-      const embOrigPath = path.join(tmpDir, `emb_orig_${timestamp}.png`);
       await fs.writeFile(embOrigPath, Buffer.from(embBase64, 'base64'));
 
       try {
@@ -701,9 +702,11 @@ export async function registerRoutes(app: express.Application) {
 
         execSync(`convert "${embroideredPath}" -resize ${badgeSize}! "${embroideredPath}"`);
 
-        execSync(`convert "${embOrigPath}" -resize ${badgeSize}! -colorspace Gray -negate -threshold 50% -negate "${maskPath}"`);
+        execSync(`convert "${embOrigPath}" -resize ${badgeSize}! -colorspace Gray -threshold 45% -negate "${maskPath}"`);
 
-        execSync(`convert "${badgePath}" "${embroideredPath}" "${maskPath}" -composite "${compositePath}"`);
+        execSync(`convert "${maskPath}" -morphology Dilate Disk:5 "${dilatedMaskPath}"`);
+
+        execSync(`convert "${badgePath}" "${embroideredPath}" "${dilatedMaskPath}" -composite "${compositePath}"`);
 
         const compositeBuffer = await fs.readFile(compositePath);
         const compositeBase64 = compositeBuffer.toString('base64');
@@ -712,7 +715,7 @@ export async function registerRoutes(app: express.Application) {
           imageData: `data:image/png;base64,${compositeBase64}`,
         });
       } finally {
-        const cleanup = [badgePath, embroideredPath, maskPath, compositePath, embOrigPath];
+        const cleanup = [badgePath, embroideredPath, embOrigPath, maskPath, dilatedMaskPath, compositePath];
         for (const f of cleanup) {
           try { await fs.unlink(f); } catch {}
         }
