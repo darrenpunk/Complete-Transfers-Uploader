@@ -627,9 +627,10 @@ export async function registerRoutes(app: express.Application) {
 
   app.post('/api/embroidery-preview', async (req, res) => {
     try {
-      const { embroideryImage, badgeImage } = req.body;
-      if (!embroideryImage) {
-        return res.status(400).json({ error: 'Embroidery image data is required' });
+      const { badgeImage, embroideryImage } = req.body;
+      const sourceImage = badgeImage || embroideryImage;
+      if (!sourceImage) {
+        return res.status(400).json({ error: 'Image data is required' });
       }
 
       const { GoogleGenAI, Modality } = await import('@google/genai');
@@ -641,39 +642,34 @@ export async function registerRoutes(app: express.Application) {
         },
       });
 
-      const embBase64 = embroideryImage.replace(/^data:image\/\w+;base64,/, '');
-      const embMime = embroideryImage.match(/^data:(image\/\w+);base64,/)?.[1] || 'image/png';
+      const base64Data = sourceImage.replace(/^data:image\/\w+;base64,/, '');
+      const mimeType = sourceImage.match(/^data:(image\/\w+);base64,/)?.[1] || 'image/png';
 
-      const parts: any[] = [];
-
-      if (badgeImage) {
-        const badgeBase64 = badgeImage.replace(/^data:image\/\w+;base64,/, '');
-        const badgeMime = badgeImage.match(/^data:(image\/\w+);base64,/)?.[1] || 'image/png';
-        parts.push({
-          inlineData: { data: badgeBase64, mimeType: badgeMime }
-        });
-        parts.push({
-          text: "This is the full badge artwork (Image 1)."
-        });
-      }
-
-      parts.push({
-        inlineData: { data: embBase64, mimeType: embMime }
-      });
-
-      parts.push({
-        text: `Take ${badgeImage ? 'Image 2 (the embroidery elements)' : 'this artwork'} and transform it into a photorealistic embroidery rendering showing the design as if professionally machine-embroidered with realistic thread texture, visible satin stitch fills, and subtle 3D thread relief effect. The embroidery should look like real sewn thread with clean stitch lines. ${badgeImage ? 'Composite the embroidered elements on top of Image 1 (the badge artwork), keeping the badge artwork as the background layer exactly as-is. The final image should show the complete badge with the embroidery elements stitched on top of it.' : 'Keep the same design but render it as real embroidery on dark fabric.'} The result should look like a real embroidered badge/patch photograph.`
-      });
+      console.log('[Embroidery Preview] Sending image to Gemini, size:', Math.round(base64Data.length / 1024), 'KB');
 
       const response = await ai.models.generateContent({
         model: "gemini-2.5-flash-image",
-        contents: [{ role: "user", parts }],
+        contents: [{
+          role: "user",
+          parts: [
+            {
+              inlineData: { data: base64Data, mimeType }
+            },
+            {
+              text: "This is an applique badge design for custom apparel. Generate a photorealistic image of this badge as if it were a real embroidered patch. The text and outline elements should have realistic machine embroidery thread texture with visible satin stitches, 3D thread relief, and thread sheen. The filled/printed areas of the badge should remain as printed fabric. Keep the exact same layout, colors, shapes, and proportions. The result should look like a photograph of a real embroidered applique badge lying on a neutral surface."
+            }
+          ]
+        }],
         config: {
           responseModalities: [Modality.TEXT, Modality.IMAGE],
         },
       });
 
       const candidate = response.candidates?.[0];
+      const textPart = candidate?.content?.parts?.find((part: any) => part.text);
+      if (textPart) {
+        console.log('[Embroidery Preview] Gemini text response:', textPart.text);
+      }
       const imagePart = candidate?.content?.parts?.find(
         (part: any) => part.inlineData
       );
@@ -684,6 +680,7 @@ export async function registerRoutes(app: express.Application) {
       }
 
       const resultMimeType = imagePart.inlineData.mimeType || 'image/png';
+      console.log('[Embroidery Preview] Generated preview, size:', Math.round(imagePart.inlineData.data.length / 1024), 'KB');
       res.json({
         imageData: `data:${resultMimeType};base64,${imagePart.inlineData.data}`,
       });

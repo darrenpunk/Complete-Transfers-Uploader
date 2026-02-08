@@ -504,15 +504,13 @@ export default function CanvasWorkspace({
     setShowEmbroideryPreview(true);
     setEmbroideryPreviewImage(null);
     try {
-      const embroideryImage = await captureCanvasAsImage();
-      if (!embroideryImage) {
-        toast({ title: "Error", description: "Could not capture canvas artwork", variant: "destructive" });
+      if (!badgeCanvasSnapshot) {
+        toast({ title: "Error", description: "Please visit Canvas 1 first so the badge artwork can be captured", variant: "destructive" });
         setIsGeneratingPreview(false);
         return;
       }
       const response = await apiRequest("POST", "/api/embroidery-preview", {
-        embroideryImage,
-        badgeImage: badgeCanvasSnapshot || null,
+        badgeImage: badgeCanvasSnapshot,
       });
       const data = await response.json();
       if (data.imageData) {
@@ -526,7 +524,7 @@ export default function CanvasWorkspace({
     } finally {
       setIsGeneratingPreview(false);
     }
-  }, [captureCanvasAsImage, badgeCanvasSnapshot, toast]);
+  }, [badgeCanvasSnapshot, toast]);
 
   // Automatic cleanup of orphaned canvas elements
   useCleanupOrphanedElements({
