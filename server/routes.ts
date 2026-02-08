@@ -628,9 +628,8 @@ export async function registerRoutes(app: express.Application) {
   app.post('/api/embroidery-preview', async (req, res) => {
     try {
       const { badgeImage, embroideryImage } = req.body;
-      const sourceImage = badgeImage || embroideryImage;
-      if (!sourceImage) {
-        return res.status(400).json({ error: 'Image data is required' });
+      if (!badgeImage) {
+        return res.status(400).json({ error: 'Badge image is required' });
       }
 
       const { GoogleGenAI, Modality } = await import('@google/genai');
@@ -642,24 +641,47 @@ export async function registerRoutes(app: express.Application) {
         },
       });
 
-      const base64Data = sourceImage.replace(/^data:image\/\w+;base64,/, '');
-      const mimeType = sourceImage.match(/^data:(image\/\w+);base64,/)?.[1] || 'image/png';
+      const badgeBase64 = badgeImage.replace(/^data:image\/\w+;base64,/, '');
+      const badgeMime = badgeImage.match(/^data:(image\/\w+);base64,/)?.[1] || 'image/png';
 
-      console.log('[Embroidery Preview] Sending image to Gemini, size:', Math.round(base64Data.length / 1024), 'KB');
+      const parts: any[] = [];
+
+      parts.push({
+        text: "I'm creating an applique badge for custom apparel. This badge has two layers:"
+      });
+
+      parts.push({
+        text: "IMAGE 1 - The complete badge artwork (this is what gets printed on fabric):"
+      });
+      parts.push({
+        inlineData: { data: badgeBase64, mimeType: badgeMime }
+      });
+
+      if (embroideryImage) {
+        const embBase64 = embroideryImage.replace(/^data:image\/\w+;base64,/, '');
+        const embMime = embroideryImage.match(/^data:(image\/\w+);base64,/)?.[1] || 'image/png';
+
+        parts.push({
+          text: "IMAGE 2 - These are ONLY the elements that will be machine embroidered (stitched with thread on top of the printed badge):"
+        });
+        parts.push({
+          inlineData: { data: embBase64, mimeType: embMime }
+        });
+
+        parts.push({
+          text: "Generate a photorealistic image showing the final applique badge. The badge from Image 1 is the printed fabric base. ONLY the elements shown in Image 2 should have embroidery thread texture (satin stitch, 3D thread relief, thread sheen). Everything else from Image 1 should remain as smooth printed fabric. The embroidered elements from Image 2 should appear stitched ON TOP of the printed badge from Image 1, in their correct positions. The result should look like a real photograph of an applique badge where some elements are printed and some are embroidered with thread."
+        });
+      } else {
+        parts.push({
+          text: "Generate a photorealistic image of this badge as a real embroidered applique patch with thread texture, satin stitches, and 3D relief. Keep the same layout, colors and proportions."
+        });
+      }
+
+      console.log('[Embroidery Preview] Sending', embroideryImage ? '2 images' : '1 image', 'to Gemini');
 
       const response = await ai.models.generateContent({
         model: "gemini-2.5-flash-image",
-        contents: [{
-          role: "user",
-          parts: [
-            {
-              inlineData: { data: base64Data, mimeType }
-            },
-            {
-              text: "This is an applique badge design for custom apparel. Generate a photorealistic image of this badge as if it were a real embroidered patch. The text and outline elements should have realistic machine embroidery thread texture with visible satin stitches, 3D thread relief, and thread sheen. The filled/printed areas of the badge should remain as printed fabric. Keep the exact same layout, colors, shapes, and proportions. The result should look like a photograph of a real embroidered applique badge lying on a neutral surface."
-            }
-          ]
-        }],
+        contents: [{ role: "user", parts }],
         config: {
           responseModalities: [Modality.TEXT, Modality.IMAGE],
         },
@@ -668,7 +690,7 @@ export async function registerRoutes(app: express.Application) {
       const candidate = response.candidates?.[0];
       const textPart = candidate?.content?.parts?.find((part: any) => part.text);
       if (textPart) {
-        console.log('[Embroidery Preview] Gemini text response:', textPart.text);
+        console.log('[Embroidery Preview] Gemini text:', textPart.text);
       }
       const imagePart = candidate?.content?.parts?.find(
         (part: any) => part.inlineData
@@ -680,7 +702,6 @@ export async function registerRoutes(app: express.Application) {
       }
 
       const resultMimeType = imagePart.inlineData.mimeType || 'image/png';
-      console.log('[Embroidery Preview] Generated preview, size:', Math.round(imagePart.inlineData.data.length / 1024), 'KB');
       res.json({
         imageData: `data:${resultMimeType};base64,${imagePart.inlineData.data}`,
       });

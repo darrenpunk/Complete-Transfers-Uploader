@@ -509,8 +509,10 @@ export default function CanvasWorkspace({
         setIsGeneratingPreview(false);
         return;
       }
+      const embroideryImage = await captureCanvasAsImage();
       const response = await apiRequest("POST", "/api/embroidery-preview", {
         badgeImage: badgeCanvasSnapshot,
+        embroideryImage: embroideryImage || null,
       });
       const data = await response.json();
       if (data.imageData) {
@@ -524,7 +526,7 @@ export default function CanvasWorkspace({
     } finally {
       setIsGeneratingPreview(false);
     }
-  }, [badgeCanvasSnapshot, toast]);
+  }, [badgeCanvasSnapshot, captureCanvasAsImage, toast]);
 
   // Automatic cleanup of orphaned canvas elements
   useCleanupOrphanedElements({
