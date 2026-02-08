@@ -28,6 +28,7 @@ import { RasterWarningModal } from "@/components/raster-warning-modal";
 import { ExternalFileLinkModal } from "@/components/external-file-link-modal";
 import { DropboxUploadModal } from "@/components/dropbox-upload-modal";
 import { UploadGuidanceModal } from "@/components/upload-guidance-modal";
+import { EmbroideryElementSelector } from "@/components/embroidery-element-selector";
 import { UploadProgressModal } from "@/components/upload-progress-modal";
 
 export default function UploadTool() {
@@ -83,6 +84,8 @@ export default function UploadTool() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isInIframe, setIsInIframe] = useState(false);
   const [activeCanvasIndex, setActiveCanvasIndex] = useState(0);
+  const [showEmbroiderySelector, setShowEmbroiderySelector] = useState(false);
+  const [isEmbroideryProcessing, setIsEmbroideryProcessing] = useState(false);
   const [odooUrlFromParams, setOdooUrlFromParams] = useState<string | null>(() => {
     try { return sessionStorage.getItem('odoo_base_url'); } catch { return null; }
   });
@@ -1127,55 +1130,58 @@ export default function UploadTool() {
     });
   };
 
-  const handleEmbroiderElements = async () => {
-    if (!selectedElements.length || !currentProject) return;
-    const elementsToMove = selectedElements.filter(el => (el.canvasIndex || 0) === 0);
-    if (!elementsToMove.length) return;
+  const handleEmbroiderElements = async (selectedElementIds: string[]) => {
+    if (!selectedElementIds.length || !currentProject) return;
+    setIsEmbroideryProcessing(true);
     
     try {
-      for (const element of elementsToMove) {
-        await apiRequest("PATCH", `/api/canvas-elements/${element.id}`, {
-          canvasIndex: 1
+      for (const elementId of selectedElementIds) {
+        const duplicated = await apiRequest("POST", `/api/canvas-elements/${elementId}/duplicate`);
+        const dupData = await duplicated.json();
+        await apiRequest("PATCH", `/api/canvas-elements/${dupData.id}`, {
+          canvasIndex: 1,
+          x: canvasElements.find(el => el.id === elementId)?.x || dupData.x,
+          y: canvasElements.find(el => el.id === elementId)?.y || dupData.y,
         });
       }
       setSelectedElements([]);
       setActiveCanvasIndex(1);
+      setShowEmbroiderySelector(false);
       queryClient.invalidateQueries({ queryKey: ["/api/projects", currentProject.id, "canvas-elements"] });
       toast({
-        title: "Elements moved to Embroidery Canvas",
-        description: `${selectedElements.length} element${selectedElements.length > 1 ? 's' : ''} moved to the embroidery artwork canvas.`,
+        title: "Elements copied to Embroidery Canvas",
+        description: `${selectedElementIds.length} element${selectedElementIds.length > 1 ? 's' : ''} copied to the embroidery artwork canvas. Originals remain on Badge Canvas.`,
       });
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to move elements to embroidery canvas.",
+        description: "Failed to copy elements to embroidery canvas.",
         variant: "destructive",
       });
+    } finally {
+      setIsEmbroideryProcessing(false);
     }
   };
 
-  const handleMoveToBadgeCanvas = async () => {
+  const handleRemoveFromEmbroidery = async () => {
     if (!selectedElements.length || !currentProject) return;
-    const elementsToMove = selectedElements.filter(el => (el.canvasIndex || 0) === 1);
-    if (!elementsToMove.length) return;
+    const elementsToRemove = selectedElements.filter(el => (el.canvasIndex || 0) === 1);
+    if (!elementsToRemove.length) return;
     
     try {
-      for (const element of elementsToMove) {
-        await apiRequest("PATCH", `/api/canvas-elements/${element.id}`, {
-          canvasIndex: 0
-        });
+      for (const element of elementsToRemove) {
+        await apiRequest("DELETE", `/api/canvas-elements/${element.id}`);
       }
       setSelectedElements([]);
-      setActiveCanvasIndex(0);
       queryClient.invalidateQueries({ queryKey: ["/api/projects", currentProject.id, "canvas-elements"] });
       toast({
-        title: "Elements moved to Badge Canvas",
-        description: `${selectedElements.length} element${selectedElements.length > 1 ? 's' : ''} moved to the badge artwork canvas.`,
+        title: "Elements removed from Embroidery Canvas",
+        description: `${elementsToRemove.length} element${elementsToRemove.length > 1 ? 's' : ''} removed. Originals remain on Badge Canvas.`,
       });
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to move elements to badge canvas.",
+        description: "Failed to remove elements from embroidery canvas.",
         variant: "destructive",
       });
     }
@@ -1804,22 +1810,22 @@ export default function UploadTool() {
 
         {/* Main Canvas Area */}
         <div className="flex-1 min-w-0 relative">
-          {isAppliqueTemplate && selectedElements.length > 0 && (
+          {isAppliqueTemplate && (
             <div className="absolute top-16 left-1/2 transform -translate-x-1/2 z-20 flex gap-2">
-              {activeCanvasIndex === 0 && (
+              {activeCanvasIndex === 0 && canvasElements.filter(el => (el.canvasIndex || 0) === 0).length > 0 && (
                 <button
-                  onClick={handleEmbroiderElements}
+                  onClick={() => setShowEmbroiderySelector(true)}
                   className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg shadow-lg flex items-center gap-2 transition-colors"
                 >
-                  <span>✂️</span> Embroider These Elements ({selectedElements.length})
+                  <span>✂️</span> Select Elements for Embroidery
                 </button>
               )}
-              {activeCanvasIndex === 1 && (
+              {activeCanvasIndex === 1 && selectedElements.length > 0 && (
                 <button
-                  onClick={handleMoveToBadgeCanvas}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow-lg flex items-center gap-2 transition-colors"
+                  onClick={handleRemoveFromEmbroidery}
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg shadow-lg flex items-center gap-2 transition-colors"
                 >
-                  <span>↩️</span> Move to Badge Canvas ({selectedElements.length})
+                  <span>🗑️</span> Remove from Embroidery ({selectedElements.length})
                 </button>
               )}
             </div>
@@ -2032,6 +2038,18 @@ export default function UploadTool() {
         onOpenChange={setShowDropboxUploadModal}
         onSubmit={handleDropboxUpload}
       />
+
+      {/* Embroidery Element Selector Modal */}
+      {isAppliqueTemplate && (
+        <EmbroideryElementSelector
+          open={showEmbroiderySelector}
+          onClose={() => setShowEmbroiderySelector(false)}
+          canvasElements={canvasElements}
+          logos={logos}
+          onConfirm={handleEmbroiderElements}
+          isProcessing={isEmbroideryProcessing}
+        />
+      )}
 
       {/* Upload Guidance Modal */}
       <UploadGuidanceModal
