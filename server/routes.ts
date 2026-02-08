@@ -627,12 +627,16 @@ export async function registerRoutes(app: express.Application) {
 
   app.post('/api/embroidery-preview', async (req, res) => {
     try {
-      const { badgeImage, embroideryImage, embroideryDescription } = req.body;
-      if (!badgeImage) {
-        return res.status(400).json({ error: 'Badge image is required' });
+      const { badgeImage, embroideryImage } = req.body;
+      if (!badgeImage || !embroideryImage) {
+        return res.status(400).json({ error: 'Both badge and embroidery images are required' });
       }
 
       const { GoogleGenAI, Modality } = await import('@google/genai');
+      const fs = await import('fs/promises');
+      const path = await import('path');
+      const { execSync } = await import('child_process');
+
       const ai = new GoogleGenAI({
         apiKey: process.env.AI_INTEGRATIONS_GEMINI_API_KEY!,
         httpOptions: {
@@ -641,38 +645,20 @@ export async function registerRoutes(app: express.Application) {
         },
       });
 
-      const badgeBase64 = badgeImage.replace(/^data:image\/\w+;base64,/, '');
-      const badgeMime = badgeImage.match(/^data:(image\/\w+);base64,/)?.[1] || 'image/png';
+      const embBase64 = embroideryImage.replace(/^data:image\/\w+;base64,/, '');
+      const embMime = embroideryImage.match(/^data:(image\/\w+);base64,/)?.[1] || 'image/png';
 
-      const parts: any[] = [];
-
-      parts.push({
-        inlineData: { data: badgeBase64, mimeType: badgeMime }
-      });
-
-      if (embroideryImage) {
-        const embBase64 = embroideryImage.replace(/^data:image\/\w+;base64,/, '');
-        const embMime = embroideryImage.match(/^data:(image\/\w+);base64,/)?.[1] || 'image/png';
-        parts.push({
-          inlineData: { data: embBase64, mimeType: embMime }
-        });
-      }
-
-      const elementsDesc = embroideryDescription || 'the text and circular outline border';
-
-      parts.push({
-        text: `This is an applique badge. It is made of two production techniques combined:
-1. PRINTED elements: The decorative graphics, colored shapes, dots, lines, and patterns are digitally PRINTED on fabric. These should remain as smooth, flat, printed fabric with no thread texture.
-2. EMBROIDERED elements: ${elementsDesc} — these specific elements are machine-embroidered with actual thread ON TOP of the printed badge.
-
-Generate a photorealistic photograph of this applique badge. The printed areas must look like smooth printed fabric. ONLY ${elementsDesc} should have visible embroidery thread texture with satin stitches, 3D thread relief, and thread sheen. Keep the exact same design, layout, colors, and proportions. The badge should be shown on a neutral surface.`
-      });
-
-      console.log('[Embroidery Preview] Sending to Gemini with description:', elementsDesc);
+      console.log('[Embroidery Preview] Step 1: Sending ONLY embroidery elements to Gemini for thread rendering');
 
       const response = await ai.models.generateContent({
         model: "gemini-2.5-flash-image",
-        contents: [{ role: "user", parts }],
+        contents: [{
+          role: "user",
+          parts: [
+            { inlineData: { data: embBase64, mimeType: embMime } },
+            { text: "This image shows outline elements from a badge design on a gray background. Transform ONLY the visible design elements (lines, outlines, shapes, text) into photorealistic machine embroidery with visible satin stitch thread texture, 3D thread relief, and thread sheen. The gray background MUST remain as a plain flat gray color - do NOT add fabric texture, stitching, or any embroidery effect to the background. Only the actual design elements (the dark colored outlines and shapes) should look like embroidered thread. Keep the exact same layout, positioning, colors and proportions." }
+          ]
+        }],
         config: {
           responseModalities: [Modality.TEXT, Modality.IMAGE],
         },
@@ -692,10 +678,45 @@ Generate a photorealistic photograph of this applique badge. The printed areas m
         return res.status(500).json({ error: 'Failed to generate embroidery preview' });
       }
 
-      const resultMimeType = imagePart.inlineData.mimeType || 'image/png';
-      res.json({
-        imageData: `data:${resultMimeType};base64,${imagePart.inlineData.data}`,
-      });
+      console.log('[Embroidery Preview] Step 2: Compositing embroidery onto badge with ImageMagick');
+
+      const tmpDir = '/tmp/embroidery-preview';
+      await fs.mkdir(tmpDir, { recursive: true });
+      const timestamp = Date.now();
+      const badgePath = path.join(tmpDir, `badge_${timestamp}.png`);
+      const embroideredPath = path.join(tmpDir, `embroidered_${timestamp}.png`);
+      const maskPath = path.join(tmpDir, `mask_${timestamp}.png`);
+      const compositePath = path.join(tmpDir, `composite_${timestamp}.png`);
+
+      const badgeBase64 = badgeImage.replace(/^data:image\/\w+;base64,/, '');
+      await fs.writeFile(badgePath, Buffer.from(badgeBase64, 'base64'));
+      await fs.writeFile(embroideredPath, Buffer.from(imagePart.inlineData.data, 'base64'));
+
+      const embOrigPath = path.join(tmpDir, `emb_orig_${timestamp}.png`);
+      await fs.writeFile(embOrigPath, Buffer.from(embBase64, 'base64'));
+
+      try {
+        const badgeSize = execSync(`identify -format "%wx%h" "${badgePath}"`).toString().trim();
+        console.log('[Embroidery Preview] Badge size:', badgeSize);
+
+        execSync(`convert "${embroideredPath}" -resize ${badgeSize}! "${embroideredPath}"`);
+
+        execSync(`convert "${embOrigPath}" -resize ${badgeSize}! -colorspace Gray -negate -threshold 50% -negate "${maskPath}"`);
+
+        execSync(`convert "${badgePath}" "${embroideredPath}" "${maskPath}" -composite "${compositePath}"`);
+
+        const compositeBuffer = await fs.readFile(compositePath);
+        const compositeBase64 = compositeBuffer.toString('base64');
+
+        res.json({
+          imageData: `data:image/png;base64,${compositeBase64}`,
+        });
+      } finally {
+        const cleanup = [badgePath, embroideredPath, maskPath, compositePath, embOrigPath];
+        for (const f of cleanup) {
+          try { await fs.unlink(f); } catch {}
+        }
+      }
     } catch (error: any) {
       console.error('Embroidery preview generation error:', error);
       res.status(500).json({ error: error.message || 'Failed to generate embroidery preview' });
