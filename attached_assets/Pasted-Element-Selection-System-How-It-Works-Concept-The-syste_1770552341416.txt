@@ -1,0 +1,84 @@
+Element Selection System - How It Works
+Concept
+The system lets users click individual SVG elements in a rendered preview to select them (for merging/editing) or hide them (Shift+click). It works by assigning a sequential index to every element in the SVG DOM tree, then tracking which indices are selected or hidden via Set<number> state.
+
+Core State Variables
+const [elementSelectMode, setElementSelectMode] = useState(false);        // Toggle mode on/off
+const [hiddenBgElements, setHiddenBgElements] = useState<Set<number>>(new Set());  // Hidden element indices
+const [hiddenElementsHistory, setHiddenElementsHistory] = useState<Set<number>[]>([]); // Undo stack
+const [selectedElementIndices, setSelectedElementIndices] = useState<Set<number>>(new Set()); // Selected for merge
+Step 1: Element Indexing (getElementIndex)
+Every element in the SVG gets a sequential integer index via depth-first traversal. <defs> elements are skipped (they contain definitions like gradients, not visible shapes). This same traversal order is used both when the user clicks an element AND when processing/rendering the SVG, so the indices always match.
+
+const getElementIndex = (target: Element, svgRoot: Element): number => {
+  let index = 0;
+  let foundIndex = -1;
+  const traverse = (el: Element): boolean => {
+    if (el.tagName.toLowerCase() === 'defs') return false; // Skip defs
+    const currentIndex = index++;
+    if (el === target) { foundIndex = currentIndex; return true; }
+    for (const child of Array.from(el.children)) {
+      if (traverse(child)) return true;
+    }
+    return false;
+  };
+  traverse(svgRoot);
+  return foundIndex;
+};
+Step 2: Click Handler (handleSvgClick)
+When the user clicks the SVG preview div while elementSelectMode is active:
+
+Get the clicked e.target (the actual SVG element)
+Find the <svg> root from the container
+Call getElementIndex(target, svgRoot) to get its index
+Shift+click = hide the element (add index to hiddenBgElements, save previous state to history for undo)
+Regular click = toggle selection (add/remove index from selectedElementIndices for merging)
+if (elementSelectMode) {
+  const svgRoot = container.querySelector('svg');
+  const elementIdx = getElementIndex(target, svgRoot);
+  if (elementIdx < 0) return;
+  if (e.shiftKey) {
+    // HIDE: push current state to history, add index to hidden set
+    if (hiddenBgElements.has(elementIdx)) return; // Already hidden
+    setHiddenElementsHistory(prev => [...prev, new Set(hiddenBgElements)]);
+    setHiddenBgElements(prev => { const next = new Set(prev); next.add(elementIdx); return next; });
+  } else {
+    // SELECT: toggle in selectedElementIndices
+    setSelectedElementIndices(prev => {
+      const next = new Set(prev);
+      next.has(elementIdx) ? next.delete(elementIdx) : next.add(elementIdx);
+      return next;
+    });
+  }
+}
+Step 3: SVG Processing (processElement)
+A separate function re-processes the SVG for rendering. It uses the same depth-first traversal with the same index counter (skipping <defs>), so indices match the click handler. For each element:
+
+If hiddenBgElements.has(currentIndex) → set fill/stroke to transparent and add pointer-events:none so clicks pass through to elements below
+If selectedElementIndices.has(currentIndex) → add a green highlight stroke (#00ff00, width 3) for visual feedback (preview only, not export)
+let elementIndex = 0;
+const processElement = (el: Element) => {
+  if (el.tagName.toLowerCase() === 'defs') return; // Same skip rule
+  const currentIndex = elementIndex++;
+  
+  const isHidden = hiddenBgElements.has(currentIndex);
+  if (isHidden) {
+    el.setAttribute("fill", "transparent");
+    style += ";pointer-events:none;"; // Let clicks pass through
+  }
+  
+  // Green highlight for selected elements (preview only)
+  if (!forExport && selectedElementIndices.has(currentIndex)) {
+    el.setAttribute("stroke", "#00ff00");
+    el.setAttribute("stroke-width", "3");
+  }
+  
+  Array.from(el.children).forEach(processElement);
+};
+Step 4: Undo
+The undo stack stores snapshots of hiddenBgElements before each hide action. Undo simply pops the last snapshot and restores it.
+
+Key Design Points
+Index consistency is critical: The getElementIndex traversal and the processElement traversal MUST use the exact same order and skip the same elements (e.g., <defs>), otherwise indices won't match and wrong elements get hidden/selected.
+Hidden elements get pointer-events:none: This lets clicks pass through to elements underneath, so users can click through layers.
+The SVG is re-processed on every state change: Whenever hiddenBgElements or selectedElementIndices changes, the SVG is re-rendered with the updated visibility/highlights via a useMemo or effect that calls the processing function.

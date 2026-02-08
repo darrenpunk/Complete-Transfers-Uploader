@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" 
+                      viewBox="0 0 180 180"
+                      preserveAspectRatio="xMidYMid meet"
+                      data-content-extracted="true"
+                      data-original-bounds="10,10,190,190">
+                        <g transform="translate(-10, -10)">
+                          
+    <circle cx="100" cy="100" r="90" fill="#1a5276" stroke="#2c3e50" stroke-width="5"/>
+    <rect x="60" y="60" width="80" height="80" fill="#e74c3c"/>
+    <text x="100" y="110" text-anchor="middle" font-size="20" fill="white">TEST</text>
+  
+                        </g>
+                    </svg>

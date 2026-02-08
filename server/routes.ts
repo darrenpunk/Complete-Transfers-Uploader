@@ -4616,6 +4616,147 @@ export async function registerRoutes(app: express.Application) {
     }
   });
 
+  // Create canvas element directly
+  app.post('/api/projects/:projectId/canvas-elements', async (req, res) => {
+    try {
+      const projectId = req.params.projectId;
+      const project = await storage.getProject(projectId);
+      if (!project) {
+        return res.status(404).json({ error: 'Project not found' });
+      }
+      const elementData = {
+        projectId,
+        logoId: req.body.logoId,
+        x: req.body.x || 0,
+        y: req.body.y || 0,
+        width: req.body.width || 50,
+        height: req.body.height || 50,
+        rotation: req.body.rotation || 0,
+        zIndex: req.body.zIndex || 0,
+        isVisible: req.body.isVisible !== false,
+        isLocked: req.body.isLocked || false,
+        colorOverrides: req.body.colorOverrides || null,
+        canvasIndex: req.body.canvasIndex || 0
+      };
+      const created = await storage.createCanvasElement(elementData);
+      res.json(created);
+    } catch (error) {
+      console.error('Create canvas element error:', error);
+      res.status(500).json({ error: 'Failed to create canvas element' });
+    }
+  });
+
+  // Extract selected SVG elements into a new SVG file for embroidery canvas
+  app.post('/api/logos/:logoId/extract-elements', async (req, res) => {
+    try {
+      const logoId = req.params.logoId;
+      const { selectedIndices, projectId } = req.body;
+      
+      if (!selectedIndices || !Array.isArray(selectedIndices) || selectedIndices.length === 0) {
+        return res.status(400).json({ error: 'selectedIndices array is required' });
+      }
+      if (!projectId) {
+        return res.status(400).json({ error: 'projectId is required' });
+      }
+      
+      const logo = await storage.getLogo(logoId);
+      if (!logo) {
+        return res.status(404).json({ error: 'Logo not found' });
+      }
+      
+      if (logo.mimeType !== 'image/svg+xml') {
+        return res.status(400).json({ error: 'Element extraction only works with SVG files' });
+      }
+      
+      const fs = await import('fs');
+      const path = await import('path');
+      const filePath = path.join('uploads', logo.filename);
+      
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ error: 'SVG file not found on disk' });
+      }
+      
+      const svgContent = fs.readFileSync(filePath, 'utf-8');
+      const selectedSet = new Set(selectedIndices.map(Number));
+      
+      // Parse SVG and extract only selected elements using same depth-first indexing
+      const { JSDOM } = await import('jsdom');
+      const dom = new JSDOM(svgContent, { contentType: 'image/svg+xml' });
+      const doc = dom.window.document;
+      const svgRoot = doc.documentElement;
+      
+      // First pass: index all elements and mark which to keep
+      let elementIndex = 0;
+      const keepSet = new Set<Element>();
+      
+      const indexElements = (el: Element) => {
+        if (el.tagName.toLowerCase() === 'defs') return;
+        const currentIndex = elementIndex++;
+        if (selectedSet.has(currentIndex)) {
+          keepSet.add(el);
+        }
+        Array.from(el.children).forEach(c => indexElements(c));
+      };
+      indexElements(svgRoot);
+      
+      // Second pass: remove non-selected leaf elements (keep structure for selected ones)
+      const removeUnselected = (el: Element): boolean => {
+        if (el.tagName.toLowerCase() === 'defs') return true; // Always keep defs
+        if (el === svgRoot) {
+          Array.from(el.children).forEach(child => {
+            if (!removeUnselected(child)) {
+              el.removeChild(child);
+            }
+          });
+          return true;
+        }
+        
+        if (keepSet.has(el)) return true;
+        
+        // Check if any descendant is selected
+        let hasSelectedChild = false;
+        Array.from(el.children).forEach(child => {
+          if (removeUnselected(child)) {
+            hasSelectedChild = true;
+          } else {
+            el.removeChild(child);
+          }
+        });
+        
+        return hasSelectedChild;
+      };
+      removeUnselected(svgRoot);
+      
+      // Serialize the filtered SVG
+      const serializer = new dom.window.XMLSerializer();
+      const extractedSvg = serializer.serializeToString(svgRoot);
+      
+      // Save as new file
+      const { randomUUID } = await import('crypto');
+      const newFilename = `${randomUUID()}_embroidery-extract.svg`;
+      const newFilePath = path.join('uploads', newFilename);
+      fs.writeFileSync(newFilePath, extractedSvg);
+      
+      // Create a new logo record
+      const newLogo = await storage.createLogo({
+        projectId,
+        filename: newFilename,
+        originalName: `${logo.originalName} (embroidery)`,
+        mimeType: 'image/svg+xml',
+        size: Buffer.byteLength(extractedSvg, 'utf-8'),
+        width: logo.width,
+        height: logo.height,
+        contentBounds: logo.contentBounds
+      });
+      
+      console.log(`✅ Extracted ${selectedIndices.length} elements from ${logo.filename} → ${newFilename}`);
+      res.json({ logoId: newLogo.id, filename: newFilename });
+    } catch (error) {
+      console.error('Extract elements error:', error);
+      res.status(500).json({ error: 'Failed to extract SVG elements' });
+    }
+  });
+
   // Duplicate canvas element endpoint
   app.post('/api/canvas-elements/:elementId/duplicate', async (req, res) => {
     try {

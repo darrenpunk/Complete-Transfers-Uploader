@@ -86,6 +86,11 @@ export default function UploadTool() {
   const [activeCanvasIndex, setActiveCanvasIndex] = useState(0);
   const [showEmbroiderySelector, setShowEmbroiderySelector] = useState(false);
   const [isEmbroideryProcessing, setIsEmbroideryProcessing] = useState(false);
+  const [elementSelectMode, setElementSelectMode] = useState(false);
+  const [elementSelectTargetId, setElementSelectTargetId] = useState<string | undefined>();
+  const [selectedSvgIndices, setSelectedSvgIndices] = useState<Set<number>>(new Set());
+  const [hiddenSvgIndices, setHiddenSvgIndices] = useState<Set<number>>(new Set());
+  const [hiddenIndicesHistory, setHiddenIndicesHistory] = useState<Set<number>[]>([]);
   const [odooUrlFromParams, setOdooUrlFromParams] = useState<string | null>(() => {
     try { return sessionStorage.getItem('odoo_base_url'); } catch { return null; }
   });
@@ -1187,6 +1192,97 @@ export default function UploadTool() {
     }
   };
 
+  const enterElementSelectMode = (canvasElementId: string) => {
+    setElementSelectMode(true);
+    setElementSelectTargetId(canvasElementId);
+    setSelectedSvgIndices(new Set());
+    setHiddenSvgIndices(new Set());
+    setHiddenIndicesHistory([]);
+    setSelectedElements([]);
+  };
+
+  const exitElementSelectMode = () => {
+    setElementSelectMode(false);
+    setElementSelectTargetId(undefined);
+    setSelectedSvgIndices(new Set());
+    setHiddenSvgIndices(new Set());
+    setHiddenIndicesHistory([]);
+  };
+
+  const handleSvgElementClick = (elementIndex: number, shiftKey: boolean) => {
+    if (shiftKey) {
+      if (hiddenSvgIndices.has(elementIndex)) return;
+      setHiddenIndicesHistory(prev => [...prev, new Set(hiddenSvgIndices)]);
+      setHiddenSvgIndices(prev => {
+        const next = new Set(prev);
+        next.add(elementIndex);
+        return next;
+      });
+    } else {
+      setSelectedSvgIndices(prev => {
+        const next = new Set(prev);
+        if (next.has(elementIndex)) {
+          next.delete(elementIndex);
+        } else {
+          next.add(elementIndex);
+        }
+        return next;
+      });
+    }
+  };
+
+  const undoHideSvgElement = () => {
+    if (hiddenIndicesHistory.length === 0) return;
+    const previous = hiddenIndicesHistory[hiddenIndicesHistory.length - 1];
+    setHiddenSvgIndices(previous);
+    setHiddenIndicesHistory(prev => prev.slice(0, -1));
+  };
+
+  const handleSendSelectedToEmbroidery = async () => {
+    if (!currentProject || !elementSelectTargetId || selectedSvgIndices.size === 0) return;
+    setIsEmbroideryProcessing(true);
+    try {
+      const element = canvasElements.find(el => el.id === elementSelectTargetId);
+      if (!element?.logoId) throw new Error('No logo found for element');
+      
+      const response = await apiRequest("POST", `/api/logos/${element.logoId}/extract-elements`, {
+        selectedIndices: Array.from(selectedSvgIndices),
+        projectId: currentProject.id
+      });
+      const data = await response.json();
+      
+      await apiRequest("POST", `/api/projects/${currentProject.id}/canvas-elements`, {
+        logoId: data.logoId,
+        x: element.x,
+        y: element.y,
+        width: element.width,
+        height: element.height,
+        rotation: element.rotation || 0,
+        zIndex: canvasElements.length,
+        isVisible: true,
+        isLocked: false,
+        canvasIndex: 1
+      });
+
+      exitElementSelectMode();
+      setActiveCanvasIndex(1);
+      queryClient.invalidateQueries({ queryKey: ["/api/projects", currentProject.id, "canvas-elements"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/projects", currentProject.id, "logos"] });
+      toast({
+        title: "Elements sent to Embroidery Canvas",
+        description: `Selected parts copied to the embroidery artwork canvas.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to extract elements for embroidery canvas.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsEmbroideryProcessing(false);
+    }
+  };
+
   // Handle applique badges form submission
   const handleAppliqueBadgesFormConfirm = (formData: any) => {
     if (pendingTemplateData) {
@@ -1811,14 +1907,63 @@ export default function UploadTool() {
         {/* Main Canvas Area */}
         <div className="flex-1 min-w-0 relative">
           {isAppliqueTemplate && (
-            <div className="absolute top-16 left-1/2 transform -translate-x-1/2 z-20 flex gap-2">
-              {activeCanvasIndex === 0 && canvasElements.filter(el => (el.canvasIndex || 0) === 0).length > 0 && (
-                <button
-                  onClick={() => setShowEmbroiderySelector(true)}
-                  className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg shadow-lg flex items-center gap-2 transition-colors"
-                >
-                  <span>✂️</span> Select Elements for Embroidery
-                </button>
+            <div className="absolute top-16 left-1/2 transform -translate-x-1/2 z-20 flex gap-2 flex-wrap justify-center">
+              {activeCanvasIndex === 0 && !elementSelectMode && canvasElements.filter(el => (el.canvasIndex || 0) === 0).length > 0 && (
+                <>
+                  <button
+                    onClick={() => {
+                      const badgeElements = canvasElements.filter(el => (el.canvasIndex || 0) === 0 && el.logoId);
+                      const svgElement = badgeElements.find(el => {
+                        const logo = logos.find(l => l.id === el.logoId);
+                        return logo?.mimeType === 'image/svg+xml';
+                      });
+                      if (svgElement) {
+                        enterElementSelectMode(svgElement.id);
+                      } else {
+                        setShowEmbroiderySelector(true);
+                      }
+                    }}
+                    className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg shadow-lg flex items-center gap-2 transition-colors"
+                  >
+                    <span>✂️</span> Select Elements for Embroidery
+                  </button>
+                  {canvasElements.filter(el => (el.canvasIndex || 0) === 0).length > 1 && (
+                    <button
+                      onClick={() => setShowEmbroiderySelector(true)}
+                      className="px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white text-sm font-medium rounded-lg shadow-lg flex items-center gap-2 transition-colors"
+                    >
+                      Copy Whole Logos
+                    </button>
+                  )}
+                </>
+              )}
+              {activeCanvasIndex === 0 && elementSelectMode && (
+                <>
+                  <div className="px-3 py-2 bg-green-600/90 text-white text-xs font-medium rounded-lg shadow-lg">
+                    Element Select Mode: Click parts to select (green) | Shift+click to hide
+                  </div>
+                  <button
+                    onClick={handleSendSelectedToEmbroidery}
+                    disabled={selectedSvgIndices.size === 0 || isEmbroideryProcessing}
+                    className="px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg shadow-lg flex items-center gap-2 transition-colors"
+                  >
+                    {isEmbroideryProcessing ? 'Processing...' : `Send to Embroidery (${selectedSvgIndices.size})`}
+                  </button>
+                  {hiddenIndicesHistory.length > 0 && (
+                    <button
+                      onClick={undoHideSvgElement}
+                      className="px-3 py-2 bg-gray-600 hover:bg-gray-700 text-white text-sm font-medium rounded-lg shadow-lg flex items-center gap-2 transition-colors"
+                    >
+                      Undo Hide
+                    </button>
+                  )}
+                  <button
+                    onClick={exitElementSelectMode}
+                    className="px-3 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-lg shadow-lg flex items-center gap-2 transition-colors"
+                  >
+                    Exit
+                  </button>
+                </>
               )}
               {activeCanvasIndex === 1 && selectedElements.length > 0 && (
                 <button
@@ -1849,7 +1994,13 @@ export default function UploadTool() {
             onActiveCanvasChange={(index) => {
               setActiveCanvasIndex(index);
               setSelectedElements([]);
+              if (elementSelectMode) exitElementSelectMode();
             }}
+            elementSelectMode={elementSelectMode}
+            elementSelectTargetId={elementSelectTargetId}
+            hiddenElementIndices={hiddenSvgIndices}
+            selectedElementIndices={selectedSvgIndices}
+            onSvgElementClick={handleSvgElementClick}
             onReenterFullscreen={() => {
               if (!document.fullscreenElement) {
                 document.documentElement.requestFullscreen().catch(() => {});

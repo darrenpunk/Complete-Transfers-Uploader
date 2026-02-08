@@ -129,6 +129,11 @@ interface CanvasWorkspaceProps {
   isAppliqueTemplate?: boolean;
   activeCanvasIndex?: number;
   onActiveCanvasChange?: (index: number) => void;
+  elementSelectMode?: boolean;
+  elementSelectTargetId?: string;
+  hiddenElementIndices?: Set<number>;
+  selectedElementIndices?: Set<number>;
+  onSvgElementClick?: (elementIndex: number, shiftKey: boolean) => void;
 }
 
 // Helper function to check if logo has valid content bounds
@@ -162,7 +167,12 @@ export default function CanvasWorkspace({
   onReenterFullscreen,
   isAppliqueTemplate = false,
   activeCanvasIndex = 0,
-  onActiveCanvasChange
+  onActiveCanvasChange,
+  elementSelectMode = false,
+  elementSelectTargetId,
+  hiddenElementIndices,
+  selectedElementIndices,
+  onSvgElementClick
 }: CanvasWorkspaceProps) {
   // Helper to get first selected element (for backwards compatibility with single-select operations)
   const selectedElement = selectedElements.length > 0 ? selectedElements[0] : null;
@@ -2206,7 +2216,13 @@ export default function CanvasWorkspace({
                     outlineOffset: '-2px',
                     boxSizing: 'border-box'
                   }}
-                  onMouseDown={(e) => handleMouseDown(element, e)}
+                  onMouseDown={(e) => {
+                    if (elementSelectMode && elementSelectTargetId === element.id) {
+                      e.stopPropagation();
+                      return;
+                    }
+                    handleMouseDown(element, e);
+                  }}
                 >
                   {/* Element Content with Garment Background */}
                   <div 
@@ -2231,6 +2247,10 @@ export default function CanvasWorkspace({
                           logo={logo}
                           project={project}
                           shouldRecolorForInk={shouldRecolorForInk}
+                          elementSelectMode={elementSelectMode && elementSelectTargetId === element.id}
+                          hiddenElementIndices={elementSelectTargetId === element.id ? hiddenElementIndices : undefined}
+                          selectedElementIndices={elementSelectTargetId === element.id ? selectedElementIndices : undefined}
+                          onElementClick={elementSelectTargetId === element.id ? onSvgElementClick : undefined}
                         />
                       ) : (
                         // For non-SVG files (PNG, JPEG), use regular img element

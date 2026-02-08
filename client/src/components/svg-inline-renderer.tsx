@@ -1,18 +1,80 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import type { Logo, CanvasElement, Project, ContentBounds } from '@shared/schema';
+
+export function getElementIndex(target: Element, svgRoot: Element): number {
+  let index = 0;
+  let foundIndex = -1;
+  const traverse = (el: Element): boolean => {
+    if (el.tagName.toLowerCase() === 'defs') return false;
+    const currentIndex = index++;
+    if (el === target) { foundIndex = currentIndex; return true; }
+    for (const child of Array.from(el.children)) {
+      if (traverse(child)) return true;
+    }
+    return false;
+  };
+  traverse(svgRoot);
+  return foundIndex;
+}
+
+export function processSvgForSelection(
+  svgString: string,
+  hiddenIndices: Set<number>,
+  selectedIndices: Set<number>,
+  forExport: boolean = false
+): string {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(svgString, 'image/svg+xml');
+  const svgRoot = doc.documentElement;
+
+  let elementIndex = 0;
+  const processElement = (el: Element) => {
+    if (el.tagName.toLowerCase() === 'defs') return;
+    const currentIndex = elementIndex++;
+
+    el.setAttribute('data-element-idx', String(currentIndex));
+
+    if (hiddenIndices.has(currentIndex)) {
+      el.setAttribute('fill', 'transparent');
+      el.setAttribute('stroke', 'transparent');
+      el.setAttribute('style', (el.getAttribute('style') || '') + ';pointer-events:none;opacity:0;');
+    }
+
+    if (!forExport && selectedIndices.has(currentIndex)) {
+      const existingStroke = el.getAttribute('stroke');
+      el.setAttribute('data-original-stroke', existingStroke || '');
+      el.setAttribute('stroke', '#00ff00');
+      el.setAttribute('stroke-width', '3');
+      el.setAttribute('stroke-opacity', '1');
+    }
+
+    Array.from(el.children).forEach(processElement);
+  };
+  processElement(svgRoot);
+
+  return new XMLSerializer().serializeToString(svgRoot);
+}
 
 interface SvgInlineRendererProps {
   element: CanvasElement;
   logo: Logo;
   project: Project;
   shouldRecolorForInk: boolean;
+  elementSelectMode?: boolean;
+  hiddenElementIndices?: Set<number>;
+  selectedElementIndices?: Set<number>;
+  onElementClick?: (elementIndex: number, shiftKey: boolean) => void;
 }
 
 export default function SvgInlineRenderer({ 
   element, 
   logo, 
   project,
-  shouldRecolorForInk 
+  shouldRecolorForInk,
+  elementSelectMode = false,
+  hiddenElementIndices,
+  selectedElementIndices,
+  onElementClick
 }: SvgInlineRendererProps) {
   const [svgContent, setSvgContent] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
@@ -405,6 +467,32 @@ export default function SvgInlineRenderer({
     );
   };
 
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const processedSvgContent = (() => {
+    if (!svgContent || !elementSelectMode) return svgContent;
+    const hidden = hiddenElementIndices || new Set<number>();
+    const selected = selectedElementIndices || new Set<number>();
+    if (hidden.size === 0 && selected.size === 0) return svgContent;
+    return processSvgForSelection(svgContent, hidden, selected, false);
+  })();
+
+  const handleSvgContainerClick = useCallback((e: React.MouseEvent) => {
+    if (!elementSelectMode || !onElementClick) return;
+    e.stopPropagation();
+    e.preventDefault();
+    const target = e.target as Element;
+    if (!target || target.tagName.toLowerCase() === 'div') return;
+    const container = containerRef.current;
+    if (!container) return;
+    const svgRoot = container.querySelector('svg');
+    if (!svgRoot) return;
+    if (target === svgRoot) return;
+    const idx = getElementIndex(target, svgRoot);
+    if (idx <= 0) return;
+    onElementClick(idx, e.shiftKey);
+  }, [elementSelectMode, onElementClick]);
+
   // Early returns for loading and error states
   if (isLoading) {
     return (
@@ -420,7 +508,7 @@ export default function SvgInlineRenderer({
     return renderSimplifiedLargeSvg();
   }
 
-  if (!svgContent) {
+  if (!processedSvgContent) {
     return (
       <div className="w-full h-full flex flex-col items-center justify-center text-gray-500 p-2">
         <svg className="w-8 h-8 mb-1" fill="currentColor" viewBox="0 0 20 20">
@@ -428,6 +516,21 @@ export default function SvgInlineRenderer({
         </svg>
         <span className="text-xs">{logo.originalName}</span>
       </div>
+    );
+  }
+
+  if (elementSelectMode) {
+    return (
+      <div
+        ref={containerRef}
+        className="w-full h-full"
+        style={{
+          cursor: 'crosshair',
+          overflow: 'visible'
+        }}
+        onClick={handleSvgContainerClick}
+        dangerouslySetInnerHTML={{ __html: processedSvgContent }}
+      />
     );
   }
   
