@@ -117,6 +117,7 @@ interface PropertiesPanelProps {
   onCenterAllElements?: () => void;
   maintainAspectRatio?: boolean;
   onMaintainAspectRatioChange?: (maintain: boolean) => void;
+  isAppliqueTemplate?: boolean;
 }
 
 export default function PropertiesPanel({
@@ -131,7 +132,8 @@ export default function PropertiesPanel({
   onAlignElements,
   onCenterAllElements,
   maintainAspectRatio: propMaintainAspectRatio = true,
-  onMaintainAspectRatioChange
+  onMaintainAspectRatioChange,
+  isAppliqueTemplate = false
 }: PropertiesPanelProps) {
   const { toast } = useToast();
   
@@ -468,7 +470,7 @@ export default function PropertiesPanel({
 
     // Convert string inputs to numbers for numeric properties
     let processedValue = value;
-    if (property === 'x' || property === 'y' || property === 'width' || property === 'height' || property === 'rotation') {
+    if (property === 'x' || property === 'y' || property === 'width' || property === 'height' || property === 'rotation' || property === 'canvasIndex') {
       processedValue = parseFloat(value);
       if (isNaN(processedValue)) {
         console.log('Invalid number input, ignoring');
@@ -979,6 +981,36 @@ export default function PropertiesPanel({
                     />
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Canvas Assignment - for applique templates */}
+            {isAppliqueTemplate && (
+              <div className="space-y-2">
+                <Label className="text-sm font-medium mb-2 block">Canvas Assignment</Label>
+                <div className="flex gap-2">
+                  <Button
+                    variant={(currentElement.canvasIndex || 0) === 0 ? 'default' : 'outline'}
+                    size="sm"
+                    className="flex-1 text-xs h-8"
+                    onClick={() => handlePropertyChange('canvasIndex' as keyof CanvasElement, 0)}
+                  >
+                    Badge Artwork
+                  </Button>
+                  <Button
+                    variant={(currentElement.canvasIndex || 0) === 1 ? 'default' : 'outline'}
+                    size="sm"
+                    className="flex-1 text-xs h-8"
+                    onClick={() => handlePropertyChange('canvasIndex' as keyof CanvasElement, 1)}
+                  >
+                    Embroidery
+                  </Button>
+                </div>
+                <p className="text-xs text-gray-500">
+                  {(currentElement.canvasIndex || 0) === 0 
+                    ? 'This element is on the Badge (printed) canvas' 
+                    : 'This element is on the Embroidery (stitched) canvas'}
+                </p>
               </div>
             )}
 

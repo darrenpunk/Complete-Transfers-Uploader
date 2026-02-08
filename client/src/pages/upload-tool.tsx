@@ -2024,6 +2024,7 @@ export default function UploadTool() {
             onCenterAllElements={handleCenterAllElements}
             maintainAspectRatio={maintainAspectRatio}
             onMaintainAspectRatioChange={setMaintainAspectRatio}
+            isAppliqueTemplate={isAppliqueTemplate}
           />
         </div>
 
@@ -2051,6 +2052,7 @@ export default function UploadTool() {
                 onAlignElement={handleAlignElementByCoordinates}
                 onAlignElements={handleAlignElementsBatch}
                 onCenterAllElements={handleCenterAllElements}
+                isAppliqueTemplate={isAppliqueTemplate}
                 maintainAspectRatio={maintainAspectRatio}
                 onMaintainAspectRatioChange={setMaintainAspectRatio}
               />

@@ -463,11 +463,13 @@ export default function CanvasWorkspace({
     try {
       const defaultWidth = shapeType === 'line' ? 60 : 40;
       const defaultHeight = shapeType === 'line' ? 2 : 40;
+      const centerX = Math.round(((template?.width || 100) - defaultWidth) / 2);
+      const centerY = Math.round(((template?.height || 100) - defaultHeight) / 2);
       const response = await apiRequest("POST", `/api/projects/${project.id}/canvas-elements`, {
         elementType: shapeType,
         logoId: null,
-        x: 0,
-        y: 0,
+        x: centerX,
+        y: centerY,
         width: defaultWidth,
         height: defaultHeight,
         rotation: 0,
