@@ -543,6 +543,40 @@ export default function CanvasWorkspace({
     }
   }, [isAppliqueTemplate, activeCanvasIndex, canvasElements, captureBadgeSnapshot]);
 
+  const captureCanvasTransparent = useCallback(async (): Promise<string | null> => {
+    if (!canvasRef.current) return null;
+    try {
+      const originalBg = canvasRef.current.style.backgroundColor;
+      canvasRef.current.style.backgroundColor = 'transparent';
+      const overlays = canvasRef.current.querySelectorAll('.pointer-events-none') as NodeListOf<HTMLElement>;
+      const savedStyles: { el: HTMLElement; display: string; bg: string }[] = [];
+      overlays.forEach(el => {
+        savedStyles.push({ el, display: el.style.display, bg: el.style.backgroundColor });
+        el.style.backgroundColor = 'transparent';
+        if (el.style.backgroundImage || el.className.includes('opacity-')) {
+          el.style.display = 'none';
+        }
+      });
+      const { default: html2canvas } = await import('html2canvas');
+      const canvas = await html2canvas(canvasRef.current, {
+        backgroundColor: null,
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+      });
+      canvasRef.current.style.backgroundColor = originalBg;
+      savedStyles.forEach(({ el, display, bg }) => {
+        el.style.display = display;
+        el.style.backgroundColor = bg;
+      });
+      return canvas.toDataURL('image/png');
+    } catch (err) {
+      console.error('Failed to capture canvas transparently:', err);
+      return null;
+    }
+  }, []);
+
   const generateEmbroideryPreview = useCallback(async () => {
     setIsGeneratingPreview(true);
     setEmbroideryPreviewImage(null);
@@ -552,7 +586,7 @@ export default function CanvasWorkspace({
         setIsGeneratingPreview(false);
         return;
       }
-      const embroideryImage = await captureCanvasAsImage();
+      const embroideryImage = await captureCanvasTransparent();
       onActiveCanvasChange?.(2);
 
       const embElements = canvasElements.filter(el => (el.canvasIndex || 0) === 1);
@@ -582,7 +616,7 @@ export default function CanvasWorkspace({
     } finally {
       setIsGeneratingPreview(false);
     }
-  }, [badgeCanvasSnapshot, captureCanvasAsImage, canvasElements, logos, toast, onActiveCanvasChange]);
+  }, [badgeCanvasSnapshot, captureCanvasTransparent, canvasElements, logos, toast, onActiveCanvasChange]);
 
   // Automatic cleanup of orphaned canvas elements
   useCleanupOrphanedElements({
@@ -2188,7 +2222,7 @@ export default function CanvasWorkspace({
           );
         })()}
         {activeCanvasIndex === 2 ? (
-          <div className="w-full h-full flex flex-col items-center justify-center p-6" style={{ backgroundColor: '#404040' }}>
+          <div className="w-full h-full overflow-auto flex items-center justify-center" style={{ backgroundColor: '#404040' }}>
             {isGeneratingPreview ? (
               <div className="flex flex-col items-center justify-center gap-4">
                 <Loader2 className="w-12 h-12 text-amber-400 animate-spin" />
@@ -2196,12 +2230,15 @@ export default function CanvasWorkspace({
                 <p className="text-gray-500 text-xs">This may take a few moments</p>
               </div>
             ) : embroideryPreviewImage ? (
-              <div className="flex flex-col items-center gap-3 max-h-full">
-                <img
-                  src={embroideryPreviewImage}
-                  alt="AI Embroidery Preview"
-                  className="rounded-lg max-w-full max-h-[calc(100%-60px)] object-contain border border-gray-600 shadow-xl"
-                />
+              <div className="flex flex-col items-center gap-3" style={{ flexShrink: 0 }}>
+                <div style={{ transform: `scale(${zoom / 100})`, transformOrigin: 'center center', transition: 'transform 0.1s ease' }}>
+                  <img
+                    src={embroideryPreviewImage}
+                    alt="AI Embroidery Preview"
+                    className="rounded-lg object-contain border border-gray-600 shadow-xl"
+                    style={{ maxWidth: '800px', maxHeight: '600px' }}
+                  />
+                </div>
                 <div className="flex items-center gap-4">
                   <p className="text-gray-400 text-xs">AI-generated embroidery preview — actual result may vary</p>
                   <button
