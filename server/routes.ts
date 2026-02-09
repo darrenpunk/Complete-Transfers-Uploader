@@ -659,7 +659,7 @@ export async function registerRoutes(app: express.Application) {
             { text: "I have an applique badge design. Image 1 is the FULL badge with all printed elements. Image 2 shows ONLY the embroidery overlay elements (outlines, borders, text) that will be stitched on top." },
             { inlineData: { data: badgeBase64, mimeType: badgeMime } },
             { inlineData: { data: embBase64, mimeType: embMime } },
-            { text: "Create a photorealistic preview of this finished applique badge. The printed areas from Image 1 should remain as smooth heat-transfer prints. The embroidery elements shown in Image 2 (outlines, borders, text, shapes) should have realistic machine-embroidered texture with visible satin stitches, 3D thread relief, and thread sheen. Keep the exact same design, layout, colors, shapes and proportions. Output a single clean image of the complete badge on a plain neutral background, no extra borders or decorations." }
+            { text: "Create a photorealistic preview of this finished applique badge. The printed areas from Image 1 should remain as smooth heat-transfer prints. The embroidery elements from Image 2 should look like real machine satin-stitch embroidery: each line or border should be a SINGLE rounded satin-stitch cord (like the reference style of a single thick embroidered thread line), NOT a double outline or two parallel lines. The stitch should have fine perpendicular thread texture, subtle 3D relief, and natural thread sheen. Keep the exact same design, layout, colors, shapes and proportions. Output a single clean image of the complete badge on a plain neutral background, no extra borders or decorations." }
           ]
         }],
         config: {
