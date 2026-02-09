@@ -8,6 +8,7 @@ import CMYKColorModal from "@/components/cmyk-color-modal";
 import { manufacturerColors } from "@shared/garment-colors";
 import gildanLogoPath from "@assets/GILDAN_LOGO_blue_1753539382856.png";
 import fruitOfTheLoomLogoPath from "@assets/Fruit_logo.svg_1753539605426.png";
+import stanleyStellaLogoPath from "@assets/Stanley_Stella_1770656215368.png";
 import TShirtSwatch from "@/components/ui/tshirt-swatch";
 
 interface GarmentColorModalProps {
@@ -203,6 +204,13 @@ export default function GarmentColorModal({ currentColor, onColorChange, trigger
                             src={fruitOfTheLoomLogoPath} 
                             alt="Fruit of the Loom" 
                             className="h-8 w-auto object-contain"
+                          />
+                        )}
+                        {manufacturerName === "Stanley/Stella" && (
+                          <img 
+                            src={stanleyStellaLogoPath} 
+                            alt="Stanley/Stella" 
+                            className="h-6 w-auto object-contain"
                           />
                         )}
                       </div>

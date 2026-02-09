@@ -239,7 +239,76 @@ export const fruitOfTheLoomColors: ManufacturerColorGroup[] = [
   }
 ];
 
+export const stanleyStellaColors: ManufacturerColorGroup[] = [
+  {
+    name: "Neutrals (Black, White & Greys)",
+    colors: [
+      { code: "C002", name: "Black", hex: "#343737", cmyk: { c: 67, m: 52, y: 52, k: 68 } },
+      { code: "C001", name: "White", hex: "#F4F9FF", cmyk: { c: 6, m: 4, y: 5, k: 0 } },
+      { code: "C018", name: "Off White", hex: "#F2F0EB", cmyk: { c: 4, m: 5, y: 7, k: 1 } },
+      { code: "C253", name: "Anthracite", hex: "#4A4B4D", cmyk: { c: 59, m: 45, y: 44, k: 55 } },
+      { code: "C250", name: "Heather Grey", hex: "#98979A", cmyk: { c: 32, m: 23, y: 23, k: 12 } },
+      { code: "C651", name: "Dark Heather Grey", hex: "#5E5C56", cmyk: { c: 51, m: 40, y: 37, k: 33 } },
+      { code: "C650", name: "Mid Heather Grey", hex: "#8A8683", cmyk: { c: 39, m: 29, y: 28, k: 18 } },
+      { code: "C138", name: "Misty Grey", hex: "#D5D5D8", cmyk: { c: 12, m: 10, y: 9, k: 0 } },
+      { code: "C157", name: "G. Dyed Misty Grey", hex: "#9FA39F", cmyk: { c: 37, m: 24, y: 30, k: 13 } },
+    ]
+  },
+  {
+    name: "Blues",
+    colors: [
+      { code: "C727", name: "French Navy", hex: "#282D3C", cmyk: { c: 81, m: 59, y: 34, k: 65 } },
+      { code: "C230", name: "Royal Blue", hex: "#005A92", cmyk: { c: 93, m: 45, y: 6, k: 19 } },
+      { code: "C156", name: "Blue Grey", hex: "#62677A", cmyk: { c: 59, m: 46, y: 27, k: 30 } },
+      { code: "C702", name: "Stargazer", hex: "#39505C", cmyk: { c: 78, m: 37, y: 36, k: 47 } },
+      { code: "C729", name: "Mindful Blue", hex: "#94A5BC", cmyk: { c: 42, m: 23, y: 11, k: 0 } },
+      { code: "C232", name: "Sky Blue", hex: "#A5C9E5", cmyk: { c: 34, m: 11, y: 3, k: 0 } },
+      { code: "C710", name: "Ocean Depth", hex: "#265165", cmyk: { c: 83, m: 39, y: 31, k: 41 } },
+      { code: "C158", name: "G. Dyed Blue Grey", hex: "#868A9F", cmyk: { c: 48, m: 37, y: 20, k: 14 } },
+    ]
+  },
+  {
+    name: "Greens & Olives",
+    colors: [
+      { code: "C224", name: "Bottle Green", hex: "#344D41", cmyk: { c: 74, m: 29, y: 60, k: 52 } },
+      { code: "C153", name: "Faded Olive", hex: "#A49667", cmyk: { c: 25, m: 28, y: 60, k: 22 } },
+      { code: "C047", name: "Sage", hex: "#A39F86", cmyk: { c: 24, m: 19, y: 39, k: 9 } },
+      { code: "C223", name: "Khaki", hex: "#6C644F", cmyk: { c: 43, m: 39, y: 58, k: 37 } },
+      { code: "C036", name: "Glazed Green", hex: "#608C7D", cmyk: { c: 60, m: 19, y: 48, k: 25 } },
+      { code: "C137", name: "Verdant Green", hex: "#4F845F", cmyk: { c: 64, m: 11, y: 66, k: 31 } },
+      { code: "C089", name: "Aloe", hex: "#A2C8BA", cmyk: { c: 36, m: 7, y: 27, k: 0 } },
+    ]
+  },
+  {
+    name: "Reds, Pinks & Purples",
+    colors: [
+      { code: "C004", name: "Red", hex: "#BD162C", cmyk: { c: 8, m: 95, y: 76, k: 9 } },
+      { code: "C150", name: "Earthy Red", hex: "#8A3F39", cmyk: { c: 17, m: 80, y: 69, k: 31 } },
+      { code: "C151", name: "Deep Plum", hex: "#542B39", cmyk: { c: 38, m: 81, y: 43, k: 58 } },
+      { code: "C244", name: "Burgundy", hex: "#64242E", cmyk: { c: 30, m: 84, y: 55, k: 55 } },
+      { code: "C038", name: "Canyon Pink", hex: "#D1969A", cmyk: { c: 3, m: 41, y: 27, k: 0 } },
+      { code: "C005", name: "Cotton Pink", hex: "#F7CCD2", cmyk: { c: 0, m: 26, y: 9, k: 0 } },
+      { code: "C134", name: "Violet", hex: "#807DB2", cmyk: { c: 56, m: 51, y: 4, k: 1 } },
+      { code: "C115", name: "Purple Love", hex: "#7A69AC", cmyk: { c: 60, m: 64, y: 0, k: 0 } },
+    ]
+  },
+  {
+    name: "Earth Tones (Beige, Brown & Yellow)",
+    colors: [
+      { code: "C152", name: "Grounded Beige", hex: "#AF895A", cmyk: { c: 16, m: 42, y: 66, k: 18 } },
+      { code: "C155", name: "Honey Paper", hex: "#EFE8D0", cmyk: { c: 4, m: 12, y: 26, k: 0 } },
+      { code: "C054", name: "Natural Raw", hex: "#E0D5C6", cmyk: { c: 5, m: 8, y: 16, k: 0 } },
+      { code: "C028", name: "Desert Dust", hex: "#9A9887", cmyk: { c: 21, m: 27, y: 35, k: 10 } },
+      { code: "C135", name: "Mocha", hex: "#725848", cmyk: { c: 37, m: 52, y: 63, k: 36 } },
+      { code: "C204", name: "Spectra Yellow", hex: "#F7B718", cmyk: { c: 0, m: 33, y: 93, k: 0 } },
+      { code: "C133", name: "Lemon Sorbet", hex: "#F8EEC3", cmyk: { c: 3, m: 5, y: 32, k: 0 } },
+      { code: "C048", name: "Ochre", hex: "#A97A2F", cmyk: { c: 10, m: 43, y: 85, k: 23 } },
+    ]
+  }
+];
+
 export const manufacturerColors = {
   "Gildan": gildanColors,
-  "Fruit of the Loom": fruitOfTheLoomColors
+  "Fruit of the Loom": fruitOfTheLoomColors,
+  "Stanley/Stella": stanleyStellaColors
 };
