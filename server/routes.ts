@@ -1570,11 +1570,19 @@ export async function registerRoutes(app: express.Application) {
           console.log(`📋 Applique fallback: Creating embroidery page with ${embroideryElements.length} elements`);
           
           for (let element of embroideryElements) {
+            console.log(`📋 Emb element: logoId=${element.logoId?.substring(0,8)}, size=${element.width}x${element.height}, pos=(${element.x},${element.y})`);
             const logo = Object.values(logosObject).find((l: any) => l.id === element.logoId);
-            if (!logo) continue;
+            if (!logo) {
+              console.log(`❌ Emb logo NOT FOUND for logoId: ${element.logoId}`);
+              continue;
+            }
             
             const svgPath = path.join(process.cwd(), 'uploads', (logo as any).filename);
-            if (!fs.existsSync(svgPath)) continue;
+            console.log(`📋 Emb SVG path: ${svgPath}, exists=${fs.existsSync(svgPath)}`);
+            if (!fs.existsSync(svgPath)) {
+              console.log(`❌ Emb SVG file NOT FOUND: ${svgPath}`);
+              continue;
+            }
             
             try {
               const rotation = element.rotation || 0;
@@ -1589,28 +1597,45 @@ export async function registerRoutes(app: express.Application) {
               const yPts = pageHeight - (topMM * 2.834645669) - heightPts;
               
               const logoFilename = (logo as any).filename as string;
-              if (logoFilename.endsWith('.png') || logoFilename.endsWith('.jpg') || logoFilename.endsWith('.jpeg')) {
+              const logoMimeType = (logo as any).mimeType || '';
+              const isRaster = logoFilename.endsWith('.png') || logoFilename.endsWith('.jpg') || logoFilename.endsWith('.jpeg') ||
+                               logoMimeType.startsWith('image/png') || logoMimeType.startsWith('image/jpeg');
+              console.log(`📋 Emb logo: ${logoFilename}, mime=${logoMimeType}, isRaster=${isRaster}`);
+              
+              if (isRaster) {
                 const imgBytes = fs.readFileSync(svgPath);
-                const embeddedImage = logoFilename.endsWith('.png') 
+                const embeddedImage = (logoFilename.endsWith('.png') || logoMimeType.startsWith('image/png'))
                   ? await pdfDoc.embedPng(imgBytes) 
                   : await pdfDoc.embedJpg(imgBytes);
                 embroideryPage.drawImage(embeddedImage, { x: xPts, y: yPts, width: widthPts, height: heightPts });
+                console.log(`✅ Emb raster embedded at (${xPts.toFixed(1)}, ${yPts.toFixed(1)}) size=${widthPts.toFixed(1)}x${heightPts.toFixed(1)}`);
               } else {
                 const { execSync } = await import('child_process');
                 const tempPdfPath = path.join('/tmp', `emb_${Date.now()}_${Math.random().toString(36).slice(2)}.pdf`);
-                execSync(`rsvg-convert -f pdf "${svgPath}" -o "${tempPdfPath}"`, { timeout: 15000 });
+                console.log(`📋 Converting emb SVG to PDF: rsvg-convert -f pdf "${svgPath}" -o "${tempPdfPath}"`);
+                try {
+                  execSync(`rsvg-convert -f pdf "${svgPath}" -o "${tempPdfPath}"`, { timeout: 15000 });
+                } catch (convertErr: any) {
+                  console.error(`❌ rsvg-convert failed for embroidery:`, convertErr.message);
+                }
                 if (fs.existsSync(tempPdfPath)) {
                   const vecBytes = fs.readFileSync(tempPdfPath);
                   const vecDoc = await pdfDoc.embedPdf(vecBytes);
+                  console.log(`📋 Embedded PDF pages: ${vecDoc.length}`);
                   if (vecDoc.length > 0) {
                     const embPage = vecDoc[0];
                     embroideryPage.drawPage(embPage, { x: xPts, y: yPts, width: widthPts, height: heightPts });
+                    console.log(`✅ Emb vector embedded at (${xPts.toFixed(1)}, ${yPts.toFixed(1)}) size=${widthPts.toFixed(1)}x${heightPts.toFixed(1)}`);
+                  } else {
+                    console.log(`❌ embedPdf returned 0 pages for embroidery element`);
                   }
                   fs.unlinkSync(tempPdfPath);
+                } else {
+                  console.log(`❌ rsvg-convert output file not found: ${tempPdfPath}`);
                 }
               }
             } catch (embErr) {
-              console.error(`Failed to embed embroidery element:`, embErr);
+              console.error(`❌ Failed to embed embroidery element:`, embErr);
             }
           }
         }

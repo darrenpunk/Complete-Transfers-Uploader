@@ -354,6 +354,8 @@ grestore`;
     
     if (isAppliqueTemplate) {
       console.log(`📋 Applique template: Badge elements: ${badgeElements.length}, Embroidery elements: ${embroideryElements.length}`);
+      console.log(`📋 All canvas elements canvasIndex values:`, data.canvasElements.map((el: any) => ({ id: el.id?.substring(0,8), logoId: el.logoId?.substring(0,8), canvasIndex: el.canvasIndex })));
+      console.log(`📋 Available logos:`, data.logos.map((l: any) => ({ id: l.id?.substring(0,8), filename: l.filename, mimeType: l.mimeType })));
     }
     
     // Create page 1 (Badge Artwork / transparent artwork layout) with correct dimensions
@@ -538,6 +540,7 @@ grestore`;
         const embroideryPage = pdfDoc.addPage([pageWidth, pageHeight]);
         console.log(`📋 Applique PDF: Processing ${embroideryElements.length} embroidery elements for page 2`);
         for (const element of embroideryElements) {
+          console.log(`📋 Emb element: id=${(element as any).id?.substring(0,8)}, logoId=${element.logoId?.substring(0,8)}, type=${element.elementType}, size=${element.width}x${element.height}`);
           const isShape = element.elementType === 'rectangle' || element.elementType === 'ellipse' || element.elementType === 'circle' || element.elementType === 'line';
           if (isShape) {
             this.drawShapeOnPage(embroideryPage, element, data.templateSize, pageHeight);
@@ -545,7 +548,10 @@ grestore`;
           }
           const logo = data.logos.find(l => l.id === element.logoId);
           if (logo) {
+            console.log(`📋 Found emb logo: ${logo.filename}, mime=${logo.mimeType}`);
             await this.embedLogoInPages(pdfDoc, null, embroideryPage, logo, element, data.templateSize);
+          } else {
+            console.log(`❌ Embroidery logo NOT FOUND for logoId: ${element.logoId}`);
           }
         }
       }
