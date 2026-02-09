@@ -716,16 +716,11 @@ export async function registerRoutes(app: express.Application) {
       console.log('[Embroidery Preview] Step 2: Sending to Gemini');
 
       const promptParts: any[] = [
-        { text: "I need a photorealistic preview of a finished applique badge.\n\nImage 1: The FULL badge with all printed elements (this is the complete badge design).\nImage 2: ONLY the embroidery overlay elements (outlines, borders, text) that will be stitched on top of the badge.\nImage 3: A REFERENCE showing exactly how machine satin-stitch embroidery looks — notice the SINGLE thick rounded cord with fine perpendicular thread texture, 3D relief, and thread sheen. Each stitch line is ONE solid raised cord, NOT two parallel lines." },
+        { text: "I need a photorealistic preview of a finished applique badge.\n\nImage 1: The FULL badge with all printed elements (this is the complete badge design).\nImage 2: ONLY the embroidery overlay elements (the outlines, borders, and text shapes that will be stitched on top of the printed badge)." },
         { inlineData: { data: badgeBase64, mimeType: badgeData.mime } },
         { inlineData: { data: embBase64, mimeType: embData.mime } },
+        { text: "Generate the finished badge by combining both images: keep the printed areas from Image 1 as smooth flat prints. For every line, border, and text shape shown in Image 2, render them as photorealistic machine satin-stitch embroidery — each stitch line should be a SINGLE thick raised cord with fine perpendicular thread texture running across it, natural 3D relief, and subtle thread sheen. Do NOT render double outlines or two parallel stitch lines — each embroidery element is ONE solid raised cord. Keep the exact same design, layout, colors, shapes and proportions as the original images. Do NOT add any elements, borders, circles, or shapes that are not present in Image 1 or Image 2. Output one clean image on a plain neutral background." },
       ];
-
-      if (stitchRefBase64) {
-        promptParts.push({ inlineData: { data: stitchRefBase64, mimeType: 'image/png' } });
-      }
-
-      promptParts.push({ text: "Generate the finished badge: keep printed areas from Image 1 as smooth prints. Replace every embroidery line/border from Image 2 with a SINGLE thick satin-stitch cord exactly like Image 3 — one solid raised thread cord per line, with perpendicular stitch texture, 3D relief, and natural sheen. Do NOT render double outlines or two parallel stitch lines. Keep the exact same design, layout, colors, shapes and proportions. CRITICAL: Do NOT add any circle, ring, oval, round border, or any frame around the badge that is not present in the original artwork images. Only render what exists in Image 1 and Image 2 — nothing extra. Output one clean image on a plain neutral background." });
 
       const response = await ai.models.generateContent({
         model: "gemini-2.5-flash-image",
