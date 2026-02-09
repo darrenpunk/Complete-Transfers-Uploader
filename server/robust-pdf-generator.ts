@@ -1259,16 +1259,9 @@ grestore`;
       
       console.log(`📍 ELEMENT POSITION: Using actual position X=${finalX.toFixed(1)}pts (from element.x=${element.x}mm)`);
       
-      // CRITICAL: Check if original PDF exists and use it directly to avoid all conversion issues
-      if (logo.originalFilename && logo.originalFilename.endsWith('.pdf')) {
-        const originalPdfPath = path.join(process.cwd(), 'uploads', logo.originalFilename);
-        if (fs.existsSync(originalPdfPath)) {
-          console.log(`🎯 USING ORIGINAL PDF DIRECTLY: Bypassing all conversions to preserve vectors and colors`);
-          logoPdfPath = originalPdfPath;
-          shouldCleanup = false;
-          console.log(`✅ ORIGINAL PDF SET: Will use direct embedding with exact positioning and sizing`);
-        }
-      }
+      // NOTE: Previously overrode logoPdfPath with full original PDF here,
+      // but that undoes content-bounds cropping and causes clipping on small templates.
+      // The cropped/processed PDF from earlier is already correct.
       console.log(`✅ EXACT ELEMENT SIZE: Using ${contentWidthPts.toFixed(1)}×${contentHeightPts.toFixed(1)}pts from element dimensions`);
       
       // CORRECT ROTATION HANDLING:
