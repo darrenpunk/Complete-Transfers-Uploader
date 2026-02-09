@@ -751,7 +751,10 @@ export async function registerRoutes(app: express.Application) {
 
       let finalBuffer: Buffer;
 
-      if (embAlphaMean > 240) {
+      if (embAlphaMean < 1 && badgeAlphaMean < 1) {
+        console.log('[Embroidery Preview] Both alpha channels are near-zero (html2canvas transparency issue) - using Gemini result directly');
+        finalBuffer = resizedEmbroidered;
+      } else if (embAlphaMean > 240) {
         console.log('[Embroidery Preview] WARNING: Embroidery alpha is nearly all opaque - capture may lack transparency');
         console.log('[Embroidery Preview] Using badge alpha as shape mask instead');
 
