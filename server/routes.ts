@@ -776,21 +776,34 @@ export async function registerRoutes(app: express.Application) {
       if (!embDescription) embDescription = 'borders, outlines, text, and decorative elements';
       console.log(`[Embroidery Preview] Embroidery description: ${embDescription}`);
 
-      const embOnBlack = await sharp(embData.buffer)
+      const badgeResized = await sharp(badgeData.buffer)
         .resize(2048, 2048, { fit: 'inside', withoutEnlargement: false })
         .png()
         .toBuffer();
-      const embOnBlackMeta = await sharp(embOnBlack).metadata();
-      const ew = embOnBlackMeta.width || 2048;
-      const eh = embOnBlackMeta.height || 2048;
-      const embWithBlackBg = await sharp({
-        create: { width: ew, height: eh, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 255 } }
-      })
-        .composite([{ input: embOnBlack, gravity: 'center' }])
+      const badgeMeta = await sharp(badgeResized).metadata();
+      const bw = badgeMeta.width || 2048;
+      const bh = badgeMeta.height || 2048;
+
+      const embResized = await sharp(embData.buffer)
+        .resize(bw, bh, { fit: 'inside', withoutEnlargement: false })
         .png()
         .toBuffer();
-      const embBlackBase64 = embWithBlackBg.toString('base64');
-      console.log(`[Embroidery Preview] Embroidery on black background: ${ew}x${eh}, ${embWithBlackBg.length} bytes`);
+
+      const embOnBlackBg = await sharp({
+        create: { width: bw, height: bh, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 255 } }
+      })
+        .composite([{ input: embResized, gravity: 'center' }])
+        .png()
+        .toBuffer();
+
+      const compositePreview = await sharp(badgeResized)
+        .composite([{ input: embResized, gravity: 'center', blend: 'over' }])
+        .png()
+        .toBuffer();
+      const compositeBase64 = compositePreview.toString('base64');
+      const embBlackBase64 = embOnBlackBg.toString('base64');
+      console.log(`[Embroidery Preview] Composite preview: ${bw}x${bh}, ${compositePreview.length} bytes`);
+      console.log(`[Embroidery Preview] Embroidery on black: ${bw}x${bh}, ${embOnBlackBg.length} bytes`);
 
       const ai = new GoogleGenAI({
         apiKey: process.env.AI_INTEGRATIONS_GEMINI_API_KEY!,
@@ -805,32 +818,24 @@ export async function registerRoutes(app: express.Application) {
       const bulletPoints = embElementList.map(item => `- ${item}`).join('\n');
 
       const promptParts: any[] = [
-        { text: `You are creating a photorealistic preview of a FINISHED APPLIQUE BADGE for custom apparel.
+        { text: `I have an image of flat printed artwork. I need you to modify SPECIFIC PARTS of it to look like they have raised machine-embroidery stitch texture, while keeping everything else exactly as-is.
 
-An applique badge has TWO layers:
-- A PRINTED LAYER: artwork printed flat onto vinyl/fabric (smooth, no texture). This is Image 1.
-- An EMBROIDERY LAYER: elements stitched on TOP of the printed layer with real thread. This is Image 2.
-
-IMAGE 1 (next image): The PRINTED BASE of the badge — this is the flat-printed artwork including all backgrounds, fills, and imagery. This entire image is PRINTED (not embroidered). Keep it exactly as-is: flat, smooth, no stitch texture.` },
+IMAGE 1 (next image): This is the COMPLETE artwork as it currently looks. This is your starting point — preserve the EXACT background color, layout, proportions, and all details.` },
         { inlineData: { data: badgeBase64, mimeType: badgeData.mime } },
-        { text: `IMAGE 2 (next image): The EMBROIDERY OVERLAY — these elements are stitched ON TOP of the printed base with real thread. Shown on black background for visibility.` },
+        { text: `IMAGE 2 (next image): This MASK shows which elements need embroidery texture added. These elements are shown on a black background for contrast. ONLY these elements should get stitch texture.` },
         { inlineData: { data: embBlackBase64, mimeType: 'image/png' } },
-        { text: `TASK: Generate ONE photorealistic image showing the finished applique badge.
+        { text: `TASK: Take Image 1 exactly as-is, and add photorealistic raised satin-stitch embroidery texture ONLY to the elements shown in Image 2.
 
-HOW APPLIQUE BADGES WORK:
-- Start with Image 1 as the flat printed base (this IS the badge background — preserve its colors, layout, and all details exactly)
-- Layer Image 2's elements ON TOP as raised satin-stitch machine embroidery with visible thread texture, 3D relief, and natural sheen
-
-The embroidery overlay contains:
+These elements need embroidery texture:
 ${bulletPoints}
 
-CRITICAL RULES:
-1. The badge background and base artwork come from Image 1 — keep it FLAT PRINTED with zero stitch texture. If Image 1 has a black background, the badge has a black printed background. If it has imagery, keep that imagery as flat print.
-2. ONLY the elements from Image 2 get embroidery texture — render them as raised satin-stitch embroidery sitting ON TOP of the printed base.
-3. PRESERVE EXACT COLORS from both images. Do NOT change any colors — only add stitch texture to Image 2's elements.
-4. The badge shape and proportions must match Image 1 exactly.
-5. Do NOT add borders, outlines, or elements not present in the original artwork.
-6. Show the badge on a plain neutral background with padding so the ENTIRE badge is fully visible.` },
+RULES:
+1. START from Image 1 as your base — keep its EXACT background, colors, and layout unchanged. A black background stays black. A blue background stays blue. Do NOT replace the background with fabric or any other material.
+2. Add raised satin-stitch embroidery texture (visible thread direction, 3D relief, thread sheen) ONLY to the elements identified in Image 2.
+3. Everything NOT in Image 2 must remain completely flat and smooth — no stitch texture on those parts.
+4. Keep all original colors exactly the same — only add thread texture, do not change any colors.
+5. The output should look like Image 1 but with certain parts having a tactile embroidered look on top.
+6. Show on a plain neutral background with padding so the ENTIRE artwork is fully visible with nothing cropped.` },
       ];
 
       const response = await ai.models.generateContent({
@@ -862,7 +867,7 @@ CRITICAL RULES:
 
       const timestamp = Date.now();
       const finalBuffer = Buffer.from(imagePart.inlineData.data, 'base64');
-      const compositeBase64 = finalBuffer.toString('base64');
+      const resultBase64 = finalBuffer.toString('base64');
 
       if (projectId) {
         const savedFilename = `embroidery_preview_${projectId}_${timestamp}.png`;
@@ -873,7 +878,7 @@ CRITICAL RULES:
       }
 
       res.json({
-        imageData: `data:image/png;base64,${compositeBase64}`,
+        imageData: `data:image/png;base64,${resultBase64}`,
       });
     } catch (error: any) {
       console.error('Embroidery preview generation error:', error);
