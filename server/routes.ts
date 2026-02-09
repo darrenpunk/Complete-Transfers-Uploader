@@ -694,21 +694,25 @@ export async function registerRoutes(app: express.Application) {
           
           const buffer = await fs.readFile(filePath);
           if (isSvg) {
-            const svgImage = sharp(buffer, { density: 600 })
-              .resize(2048, 2048, { fit: 'inside', withoutEnlargement: false });
-            const metadata = await svgImage.metadata();
+            const renderedPng = await sharp(buffer, { density: 600 })
+              .resize(2048, 2048, { fit: 'inside', withoutEnlargement: false })
+              .png()
+              .toBuffer();
+            const meta = await sharp(renderedPng).metadata();
+            const w = meta.width || 2048;
+            const h = meta.height || 2048;
             const pngBuffer = await sharp({
               create: {
-                width: metadata.width || 2048,
-                height: metadata.height || 2048,
+                width: w,
+                height: h,
                 channels: 4,
                 background: { r: 240, g: 240, b: 240, alpha: 1 }
               }
             })
-              .composite([{ input: await svgImage.png().toBuffer(), gravity: 'center' }])
+              .composite([{ input: renderedPng, gravity: 'center' }])
               .png()
               .toBuffer();
-            console.log(`[Embroidery Preview] Converted SVG to high-res PNG with background: ${pngBuffer.length} bytes`);
+            console.log(`[Embroidery Preview] Converted SVG to high-res PNG with background: ${w}x${h}, ${pngBuffer.length} bytes`);
             return { buffer: pngBuffer, mime: 'image/png' };
           }
           const mime = logo.mimeType || 'image/png';
