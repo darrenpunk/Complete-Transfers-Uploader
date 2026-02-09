@@ -4,7 +4,7 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { Project, Logo, CanvasElement, TemplateSize, ContentBounds } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Minus, Plus, Grid3X3, AlignCenter, Undo, Redo, Upload, Trash2, Maximize2, RotateCw, Move, ArrowRight, CheckSquare, Group, Ungroup, X, Loader2, Square, Circle, MinusIcon, Shapes, Scissors, Shield, Star, Hexagon, Pentagon, Triangle, Layers, Eye, EyeOff, Lock, Unlock, ChevronUp, ChevronDown, GripVertical, Image } from "lucide-react";
+import { Minus, Plus, Grid3X3, AlignCenter, Undo, Redo, Upload, Trash2, Maximize2, RotateCw, Move, ArrowRight, CheckSquare, Group, Ungroup, X, Loader2, Square, Circle, MinusIcon, Shapes, Scissors, Shield, Star, Hexagon, Pentagon, Triangle, Layers, Eye, EyeOff, Lock, Unlock, ChevronUp, ChevronDown, GripVertical, Image, Copy } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
@@ -611,6 +611,55 @@ export default function CanvasWorkspace({
 
   const handleLayerToggleLock = async (element: CanvasElement) => {
     await updateElementDirect(element.id, { isLocked: !element.isLocked }, false);
+  };
+
+  const handleDuplicateLayer = async (element: CanvasElement) => {
+    if (!project?.id) return;
+    try {
+      const response = await apiRequest("POST", `/api/projects/${project.id}/canvas-elements`, {
+        elementType: element.elementType,
+        logoId: element.logoId || null,
+        x: element.x + 5,
+        y: element.y + 5,
+        width: element.width,
+        height: element.height,
+        rotation: element.rotation || 0,
+        zIndex: canvasElements.length,
+        isVisible: true,
+        isLocked: false,
+        fillColor: element.fillColor,
+        strokeColor: element.strokeColor,
+        strokeWidth: element.strokeWidth,
+        opacity: element.opacity,
+        cornerRadius: element.cornerRadius,
+        canvasIndex: element.canvasIndex || 0,
+        garmentColor: element.garmentColor,
+        colorOverrides: element.colorOverrides,
+        textContent: element.textContent,
+        fontSize: element.fontSize,
+        fontFamily: element.fontFamily,
+        textColor: element.textColor,
+        textAlign: element.textAlign,
+        fontWeight: element.fontWeight,
+        fontStyle: element.fontStyle,
+      });
+      const newElement = await response.json();
+      queryClient.invalidateQueries({
+        queryKey: ["/api/projects", project.id, "canvas-elements"]
+      });
+      onElementsSelect([newElement]);
+      toast({
+        title: "Layer Duplicated",
+        description: `${getLayerName(element)} has been duplicated.`,
+      });
+    } catch (error) {
+      console.error('Failed to duplicate layer:', error);
+      toast({
+        title: "Error",
+        description: "Failed to duplicate layer",
+        variant: "destructive",
+      });
+    }
   };
 
   const captureCanvasAsImage = useCallback(async (): Promise<string | null> => {
@@ -3243,10 +3292,17 @@ export default function CanvasWorkspace({
                         </div>
                         <button
                           className="p-0.5 rounded hover:bg-gray-700 text-gray-500 hover:text-gray-300"
+                          title="Duplicate"
+                          onClick={(e) => { e.stopPropagation(); handleDuplicateLayer(element); }}
+                        >
+                          <Copy className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          className="p-0.5 rounded hover:bg-gray-700 text-gray-500 hover:text-gray-300"
                           title={element.isVisible ? "Hide" : "Show"}
                           onClick={(e) => { e.stopPropagation(); handleLayerToggleVisibility(element); }}
                         >
-                          {element.isVisible ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5 text-gray-600" />}
+                          {element.isVisible ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
                         </button>
                         <button
                           className="p-0.5 rounded hover:bg-gray-700 text-gray-500 hover:text-gray-300"
