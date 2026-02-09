@@ -646,16 +646,20 @@ export async function registerRoutes(app: express.Application) {
 
       const badgeBase64 = badgeImage.replace(/^data:image\/\w+;base64,/, '');
       const badgeMime = badgeImage.match(/^data:(image\/\w+);base64,/)?.[1] || 'image/png';
+      const embBase64 = embroideryImage.replace(/^data:image\/\w+;base64,/, '');
+      const embMime = embroideryImage.match(/^data:(image\/\w+);base64,/)?.[1] || 'image/png';
 
-      console.log('[Embroidery Preview] Step 1: Sending FULL badge to Gemini for embroidery rendering');
+      console.log('[Embroidery Preview] Step 1: Sending badge + embroidery overlay to Gemini');
 
       const response = await ai.models.generateContent({
         model: "gemini-2.5-flash-image",
         contents: [{
           role: "user",
           parts: [
+            { text: "I have an applique badge design. Image 1 is the FULL badge with all printed elements. Image 2 shows ONLY the embroidery overlay elements (outlines, borders, text) that will be stitched on top." },
             { inlineData: { data: badgeBase64, mimeType: badgeMime } },
-            { text: "Transform this badge/patch design into a photorealistic photograph of a real machine-embroidered patch. All elements should have realistic embroidery thread texture with visible satin stitches, 3D thread relief, and thread sheen. Keep the exact same design, layout, colors, shapes and proportions. The result should look like a close-up photograph of a real embroidered badge lying flat on a neutral light surface." }
+            { inlineData: { data: embBase64, mimeType: embMime } },
+            { text: "Create a photorealistic preview of this finished applique badge. The printed areas from Image 1 should remain as smooth heat-transfer prints. The embroidery elements shown in Image 2 (outlines, borders, text, shapes) should have realistic machine-embroidered texture with visible satin stitches, 3D thread relief, and thread sheen. Keep the exact same design, layout, colors, shapes and proportions. Output a single clean image of the complete badge on a plain neutral background, no extra borders or decorations." }
           ]
         }],
         config: {
@@ -677,68 +681,21 @@ export async function registerRoutes(app: express.Application) {
         return res.status(500).json({ error: 'Failed to generate embroidery preview' });
       }
 
-      console.log('[Embroidery Preview] Step 2: Masking embroidery to Canvas 2 elements only');
+      console.log('[Embroidery Preview] Step 2: Resizing Gemini result to match badge');
 
       const sharp = (await import('sharp')).default;
       const timestamp = Date.now();
 
-      const embBase64 = embroideryImage.replace(/^data:image\/\w+;base64,/, '');
-
       const badgeBuffer = Buffer.from(badgeBase64, 'base64');
       const embroideredBuffer = Buffer.from(imagePart.inlineData.data, 'base64');
-      const embOrigBuffer = Buffer.from(embBase64, 'base64');
 
       const badgeMeta = await sharp(badgeBuffer).metadata();
       const badgeW = badgeMeta.width!;
       const badgeH = badgeMeta.height!;
       console.log('[Embroidery Preview] Badge size:', `${badgeW}x${badgeH}`);
 
-      const resizedEmbroidered = await sharp(embroideredBuffer)
+      const finalBuffer = await sharp(embroideredBuffer)
         .resize(badgeW, badgeH, { fit: 'fill' })
-        .removeAlpha()
-        .raw()
-        .toBuffer();
-
-      const embOrigResized = await sharp(embOrigBuffer)
-        .resize(badgeW, badgeH, { fit: 'fill' })
-        .removeAlpha()
-        .raw()
-        .toBuffer();
-
-      const bgHex = (garmentColor || '#929292').replace('#', '');
-      const bgR = parseInt(bgHex.substring(0, 2), 16) || 0x92;
-      const bgG = parseInt(bgHex.substring(2, 4), 16) || 0x92;
-      const bgB = parseInt(bgHex.substring(4, 6), 16) || 0x92;
-      console.log('[Embroidery Preview] Background color for mask:', `RGB(${bgR},${bgG},${bgB})`);
-      const threshold = 30;
-      const maskRaw = Buffer.alloc(badgeW * badgeH);
-      for (let i = 0; i < badgeW * badgeH; i++) {
-        const r = embOrigResized[i * 3 + 0];
-        const g = embOrigResized[i * 3 + 1];
-        const b = embOrigResized[i * 3 + 2];
-        const dist = Math.sqrt((r - bgR) ** 2 + (g - bgG) ** 2 + (b - bgB) ** 2);
-        maskRaw[i] = dist > threshold ? 255 : 0;
-      }
-
-      const blurredMask = await sharp(maskRaw, {
-        raw: { width: badgeW, height: badgeH, channels: 1 }
-      }).blur(3).raw().toBuffer();
-
-      const rgbaBuffer = Buffer.alloc(badgeW * badgeH * 4);
-      for (let i = 0; i < badgeW * badgeH; i++) {
-        rgbaBuffer[i * 4 + 0] = resizedEmbroidered[i * 3 + 0];
-        rgbaBuffer[i * 4 + 1] = resizedEmbroidered[i * 3 + 1];
-        rgbaBuffer[i * 4 + 2] = resizedEmbroidered[i * 3 + 2];
-        rgbaBuffer[i * 4 + 3] = blurredMask[i];
-      }
-
-      const maskedEmbroidery = await sharp(rgbaBuffer, {
-        raw: { width: badgeW, height: badgeH, channels: 4 }
-      }).png().toBuffer();
-
-      const finalBuffer = await sharp(badgeBuffer)
-        .ensureAlpha()
-        .composite([{ input: maskedEmbroidery, blend: 'over' as const }])
         .png()
         .toBuffer();
 
