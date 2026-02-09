@@ -642,8 +642,8 @@ export async function registerRoutes(app: express.Application) {
         return res.status(404).json({ error: 'Project not found' });
       }
 
-      const canvasElements = await storage.getCanvasElements(projectId);
-      const logos = await storage.getLogos(projectId);
+      const canvasElements = await storage.getCanvasElementsByProject(projectId);
+      const logos = await storage.getLogosByProject(projectId);
 
       const badgeElements = canvasElements.filter(el => (el.canvasIndex || 0) === 0);
       const embElements = canvasElements.filter(el => (el.canvasIndex || 0) === 1);
