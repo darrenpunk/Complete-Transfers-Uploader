@@ -635,7 +635,6 @@ export async function registerRoutes(app: express.Application) {
       const { GoogleGenAI, Modality } = await import('@google/genai');
       const fs = await import('fs/promises');
       const path = await import('path');
-      const { execSync } = await import('child_process');
 
       const ai = new GoogleGenAI({
         apiKey: process.env.AI_INTEGRATIONS_GEMINI_API_KEY!,
@@ -680,54 +679,61 @@ export async function registerRoutes(app: express.Application) {
 
       console.log('[Embroidery Preview] Step 2: Masking embroidery to Canvas 2 elements only');
 
-      const tmpDir = '/tmp/embroidery-preview';
-      await fs.mkdir(tmpDir, { recursive: true });
+      const sharp = (await import('sharp')).default;
       const timestamp = Date.now();
-      const badgePath = path.join(tmpDir, `badge_${timestamp}.png`);
-      const embroideredPath = path.join(tmpDir, `embroidered_${timestamp}.png`);
-      const embOrigPath = path.join(tmpDir, `emb_orig_${timestamp}.png`);
-      const maskPath = path.join(tmpDir, `mask_${timestamp}.png`);
-      const dilatedMaskPath = path.join(tmpDir, `mask_dilated_${timestamp}.png`);
-      const compositePath = path.join(tmpDir, `composite_${timestamp}.png`);
 
       const embBase64 = embroideryImage.replace(/^data:image\/\w+;base64,/, '');
 
-      await fs.writeFile(badgePath, Buffer.from(badgeBase64, 'base64'));
-      await fs.writeFile(embroideredPath, Buffer.from(imagePart.inlineData.data, 'base64'));
-      await fs.writeFile(embOrigPath, Buffer.from(embBase64, 'base64'));
+      const badgeBuffer = Buffer.from(badgeBase64, 'base64');
+      const embroideredBuffer = Buffer.from(imagePart.inlineData.data, 'base64');
+      const embOrigBuffer = Buffer.from(embBase64, 'base64');
 
-      try {
-        const badgeSize = execSync(`identify -format "%wx%h" "${badgePath}"`).toString().trim();
-        console.log('[Embroidery Preview] Badge size:', badgeSize);
+      const badgeMeta = await sharp(badgeBuffer).metadata();
+      const badgeW = badgeMeta.width!;
+      const badgeH = badgeMeta.height!;
+      console.log('[Embroidery Preview] Badge size:', `${badgeW}x${badgeH}`);
 
-        execSync(`convert "${embroideredPath}" -resize ${badgeSize}! "${embroideredPath}"`);
+      const resizedEmbroidered = await sharp(embroideredBuffer)
+        .resize(badgeW, badgeH, { fit: 'fill' })
+        .png()
+        .toBuffer();
 
-        execSync(`convert "${embOrigPath}" -resize ${badgeSize}! -colorspace Gray -threshold 45% -negate "${maskPath}"`);
+      const maskBuffer = await sharp(embOrigBuffer)
+        .resize(badgeW, badgeH, { fit: 'fill' })
+        .greyscale()
+        .threshold(115)
+        .negate()
+        .blur(5)
+        .png()
+        .toBuffer();
 
-        execSync(`convert "${maskPath}" -morphology Dilate Disk:5 "${dilatedMaskPath}"`);
+      const compositeBuffer = await sharp(badgeBuffer)
+        .ensureAlpha()
+        .composite([
+          { input: resizedEmbroidered, blend: 'over' as const },
+          { input: maskBuffer, blend: 'dest-in' as const },
+        ])
+        .png()
+        .toBuffer();
 
-        execSync(`convert "${badgePath}" "${embroideredPath}" "${dilatedMaskPath}" -composite "${compositePath}"`);
+      const finalBuffer = await sharp(badgeBuffer)
+        .composite([{ input: compositeBuffer, blend: 'over' as const }])
+        .png()
+        .toBuffer();
 
-        const compositeBuffer = await fs.readFile(compositePath);
-        const compositeBase64 = compositeBuffer.toString('base64');
+      const compositeBase64 = finalBuffer.toString('base64');
 
-        if (projectId) {
-          const savedFilename = `embroidery_preview_${projectId}_${timestamp}.png`;
-          const savedPath = path.join(process.cwd(), 'uploads', savedFilename);
-          await fs.writeFile(savedPath, compositeBuffer);
-          await storage.updateProject(projectId, { embroideryPreviewPath: savedPath });
-          console.log(`[Embroidery Preview] Saved preview to ${savedPath} for project ${projectId}`);
-        }
-
-        res.json({
-          imageData: `data:image/png;base64,${compositeBase64}`,
-        });
-      } finally {
-        const cleanup = [badgePath, embroideredPath, embOrigPath, maskPath, dilatedMaskPath, compositePath];
-        for (const f of cleanup) {
-          try { await fs.unlink(f); } catch {}
-        }
+      if (projectId) {
+        const savedFilename = `embroidery_preview_${projectId}_${timestamp}.png`;
+        const savedPath = path.join(process.cwd(), 'uploads', savedFilename);
+        await fs.writeFile(savedPath, finalBuffer);
+        await storage.updateProject(projectId, { embroideryPreviewPath: savedPath });
+        console.log(`[Embroidery Preview] Saved preview to ${savedPath} for project ${projectId}`);
       }
+
+      res.json({
+        imageData: `data:image/png;base64,${compositeBase64}`,
+      });
     } catch (error: any) {
       console.error('Embroidery preview generation error:', error);
       res.status(500).json({ error: error.message || 'Failed to generate embroidery preview' });
