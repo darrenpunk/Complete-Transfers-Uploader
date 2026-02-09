@@ -695,29 +695,34 @@ export async function registerRoutes(app: express.Application) {
 
       const resizedEmbroidered = await sharp(embroideredBuffer)
         .resize(badgeW, badgeH, { fit: 'fill' })
-        .png()
+        .removeAlpha()
+        .raw()
         .toBuffer();
 
-      const maskBuffer = await sharp(embOrigBuffer)
+      const maskRaw = await sharp(embOrigBuffer)
         .resize(badgeW, badgeH, { fit: 'fill' })
         .greyscale()
         .threshold(115)
         .negate()
         .blur(5)
-        .png()
+        .raw()
         .toBuffer();
 
-      const compositeBuffer = await sharp(badgeBuffer)
-        .ensureAlpha()
-        .composite([
-          { input: resizedEmbroidered, blend: 'over' as const },
-          { input: maskBuffer, blend: 'dest-in' as const },
-        ])
-        .png()
-        .toBuffer();
+      const rgbaBuffer = Buffer.alloc(badgeW * badgeH * 4);
+      for (let i = 0; i < badgeW * badgeH; i++) {
+        rgbaBuffer[i * 4 + 0] = resizedEmbroidered[i * 3 + 0];
+        rgbaBuffer[i * 4 + 1] = resizedEmbroidered[i * 3 + 1];
+        rgbaBuffer[i * 4 + 2] = resizedEmbroidered[i * 3 + 2];
+        rgbaBuffer[i * 4 + 3] = maskRaw[i];
+      }
+
+      const maskedEmbroidery = await sharp(rgbaBuffer, {
+        raw: { width: badgeW, height: badgeH, channels: 4 }
+      }).png().toBuffer();
 
       const finalBuffer = await sharp(badgeBuffer)
-        .composite([{ input: compositeBuffer, blend: 'over' as const }])
+        .ensureAlpha()
+        .composite([{ input: maskedEmbroidery, blend: 'over' as const }])
         .png()
         .toBuffer();
 
