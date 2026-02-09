@@ -2286,7 +2286,15 @@ export default function CanvasWorkspace({
           );
         })()}
         {isAppliqueTemplate && activeCanvasIndex === 2 ? (
-          <div className="w-full h-full overflow-auto flex items-center justify-center" style={{ backgroundColor: '#404040' }}>
+          <div 
+            className="w-full h-full overflow-auto"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: '#404040'
+            }}
+          >
             {isGeneratingPreview ? (
               <div className="flex flex-col items-center justify-center gap-4">
                 <Loader2 className="w-12 h-12 text-amber-400 animate-spin" />
@@ -2294,17 +2302,31 @@ export default function CanvasWorkspace({
                 <p className="text-gray-500 text-xs">This may take a few moments</p>
               </div>
             ) : embroideryPreviewImage ? (
-              <div className="flex flex-col items-center gap-3" style={{ flexShrink: 0 }}>
-                <div style={{ transform: `scale(${zoom / 100})`, transformOrigin: 'center center', transition: 'transform 0.1s ease' }}>
+              <div style={{
+                width: `${canvasWidth + 40}px`,
+                height: `${canvasHeight + 40}px`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0
+              }}>
+                <div
+                  className="relative shadow-xl rounded-lg overflow-hidden"
+                  style={{
+                    width: canvasWidth,
+                    height: canvasHeight,
+                    backgroundColor: '#f0f0f0',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
                   <img
                     src={embroideryPreviewImage}
                     alt="AI Embroidery Preview"
-                    className="rounded-lg object-contain border border-gray-600 shadow-xl"
-                    style={{ maxWidth: '800px', maxHeight: '600px' }}
+                    className="object-contain"
+                    style={{ maxWidth: '100%', maxHeight: '100%' }}
                   />
-                </div>
-                <div className="flex items-center gap-4">
-                  <p className="text-gray-400 text-xs">AI-generated embroidery preview — actual result may vary</p>
                 </div>
               </div>
             ) : (
