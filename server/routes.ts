@@ -747,13 +747,40 @@ export async function registerRoutes(app: express.Application) {
         console.log('[Embroidery Preview] Warning: stitch reference image not found');
       }
 
+      let embDescription = 'outlines, borders, and text';
+      try {
+        const embFilename = embLogo.canvasFallbackFilename || embLogo.previewFilename || embLogo.filename;
+        let svgContent = '';
+        if (embFilename.endsWith('.svg')) {
+          svgContent = (await fs.readFile(path.join(uploadsDir, embFilename))).toString();
+        } else if (embFilename.endsWith('.pdf')) {
+          const svgFile = embFilename.replace(/\.pdf$/, '') + '.svg';
+          try { svgContent = (await fs.readFile(path.join(uploadsDir, svgFile))).toString(); } catch {}
+        }
+        if (svgContent) {
+          const hasCircle = /circle|ellipse|rx=|ry=/.test(svgContent);
+          const hasText = /<text[\s>]/.test(svgContent);
+          const textMatches = svgContent.match(/<text[^>]*>([^<]+)<\/text>/g) || [];
+          const textContents = textMatches.map((t: string) => t.replace(/<[^>]+>/g, '').trim()).filter(Boolean);
+          const pathCount = (svgContent.match(/<path /g) || []).length;
+          const parts = [];
+          if (hasCircle) parts.push('a circular border outline');
+          if (pathCount > 0) parts.push(`${pathCount} vector path shapes (outlines, borders, text letterforms)`);
+          if (hasText && textContents.length > 0) parts.push(`text elements: "${textContents.join('", "')}"`);
+          if (parts.length > 0) embDescription = parts.join(', ');
+          console.log(`[Embroidery Preview] Detected embroidery elements: ${embDescription}`);
+        }
+      } catch (e) {
+        console.log('[Embroidery Preview] Could not analyze embroidery SVG');
+      }
+
       console.log('[Embroidery Preview] Step 2: Sending to Gemini');
 
       const promptParts: any[] = [
-        { text: "I need a photorealistic preview of a finished applique badge. This badge has TWO layers:\n\nImage 1 (PRINTED LAYER): The complete badge with all printed artwork — icons, images, text, and decorative elements. Everything in this image is FLAT PRINTED onto fabric.\n\nImage 2 (EMBROIDERY MASK): This shows ONLY the specific shapes that will be machine-embroidered on top of the printed badge. These are typically outline borders and text banners." },
+        { text: `I need a photorealistic preview of a finished applique badge. This badge has TWO layers:\n\nImage 1 (PRINTED LAYER): The complete badge with all printed artwork — icons, images, text, and decorative elements. Everything in this image is FLAT PRINTED onto fabric.\n\nImage 2 (EMBROIDERY MASK): This shows ONLY the specific shapes that will be machine-embroidered on top. The embroidery layer contains: ${embDescription}. Every single element visible in Image 2 — no matter how small — will be stitched.` },
         { inlineData: { data: badgeBase64, mimeType: badgeData.mime } },
         { inlineData: { data: embBase64, mimeType: embData.mime } },
-        { text: "Generate one photorealistic image of the finished badge:\n\nRULE 1 — PRINTED ELEMENTS: Every element from Image 1 that is NOT in Image 2 must remain as a smooth, flat print with zero embroidery texture. This includes all icons, small crests, crosses, images, and interior artwork. They must look exactly like Image 1 — crisp, flat, and untouched.\n\nRULE 2 — EMBROIDERED ELEMENTS: ALL shapes, text, outlines, and elements visible in Image 2 must be rendered as photorealistic machine satin-stitch embroidery — this includes ALL text (large and small), ALL outlines, ALL borders, and ANY other shape in Image 2. Every single element in Image 2 gets embroidered, no exceptions. Each embroidered element should be a SINGLE thick raised cord with fine perpendicular thread texture, natural 3D relief, and subtle thread sheen. Do NOT render double outlines.\n\nRULE 3 — NO ADDITIONS: Do NOT add any elements, borders, circles, or decorations not present in Image 1 or Image 2.\n\nKeep the exact same design, layout, colors, shapes and proportions. Output one clean image on a plain neutral background with generous padding around ALL edges — ensure the ENTIRE badge is fully visible with nothing cropped or cut off at the top, bottom, left, or right. Leave at least 10% blank space around every edge." },
+        { text: `Generate one photorealistic image of the finished badge:\n\nRULE 1 — PRINTED ELEMENTS: Every element from Image 1 that is NOT in Image 2 must remain as a smooth, flat print with zero embroidery texture. They must look exactly like Image 1 — crisp, flat, and untouched.\n\nRULE 2 — EMBROIDERED ELEMENTS: EVERY element in Image 2 must be rendered as photorealistic machine satin-stitch embroidery. This explicitly includes: ${embDescription}. Even the smallest text must have visible raised thread texture. Each embroidered element should be a SINGLE thick raised cord with fine perpendicular thread texture, natural 3D relief, and subtle thread sheen.\n\nRULE 3 — NO ADDITIONS: Do NOT add any elements not present in Image 1 or Image 2.\n\nKeep the exact same design, layout, colors, shapes and proportions. Output one clean image on a plain neutral background with generous padding around ALL edges — ensure the ENTIRE badge is fully visible with nothing cropped or cut off. Leave at least 10% blank space around every edge.` },
       ];
 
       const response = await ai.models.generateContent({
