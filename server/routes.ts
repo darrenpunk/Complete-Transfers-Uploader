@@ -805,23 +805,32 @@ export async function registerRoutes(app: express.Application) {
       const bulletPoints = embElementList.map(item => `- ${item}`).join('\n');
 
       const promptParts: any[] = [
-        { text: `You are generating a photorealistic preview of a finished applique badge/patch.
+        { text: `You are creating a photorealistic preview of a FINISHED APPLIQUE BADGE for custom apparel.
 
-IMAGE 1: The complete badge artwork showing all printed and embroidered elements together.
-IMAGE 2: ONLY the embroidery elements shown on a black background. EVERY single element visible in Image 2 — no matter how large or small — must be rendered as machine embroidery.` },
+An applique badge has TWO layers:
+- A PRINTED LAYER: artwork printed flat onto vinyl/fabric (smooth, no texture). This is Image 1.
+- An EMBROIDERY LAYER: elements stitched on TOP of the printed layer with real thread. This is Image 2.
+
+IMAGE 1 (next image): The PRINTED BASE of the badge — this is the flat-printed artwork including all backgrounds, fills, and imagery. This entire image is PRINTED (not embroidered). Keep it exactly as-is: flat, smooth, no stitch texture.` },
         { inlineData: { data: badgeBase64, mimeType: badgeData.mime } },
+        { text: `IMAGE 2 (next image): The EMBROIDERY OVERLAY — these elements are stitched ON TOP of the printed base with real thread. Shown on black background for visibility.` },
         { inlineData: { data: embBlackBase64, mimeType: 'image/png' } },
-        { text: `TASK: Generate ONE photorealistic image of the finished badge.
+        { text: `TASK: Generate ONE photorealistic image showing the finished applique badge.
 
-EMBROIDERED — every element from Image 2 must be rendered as raised satin-stitch machine embroidery with visible thread texture, 3D relief, and natural sheen. The embroidery layer contains:
+HOW APPLIQUE BADGES WORK:
+- Start with Image 1 as the flat printed base (this IS the badge background — preserve its colors, layout, and all details exactly)
+- Layer Image 2's elements ON TOP as raised satin-stitch machine embroidery with visible thread texture, 3D relief, and natural sheen
+
+The embroidery overlay contains:
 ${bulletPoints}
 
 CRITICAL RULES:
-1. EVERY element visible in Image 2 gets embroidery texture — including ALL text of ANY size. Small text must also show stitch texture.
-2. Everything NOT in Image 2 stays as a smooth, flat print with zero stitch texture.
-3. PRESERVE THE EXACT ORIGINAL COLORS from Image 1 for every element. Do NOT change, shift, or reinterpret any colors. White text must remain white embroidery thread. Blue must stay the same blue. Every color must match Image 1 exactly — only add stitch texture, not color changes.
-4. Do NOT add any extra elements not present in the original artwork.
-5. Output on a plain neutral background with padding so the ENTIRE badge is fully visible with nothing cropped.` },
+1. The badge background and base artwork come from Image 1 — keep it FLAT PRINTED with zero stitch texture. If Image 1 has a black background, the badge has a black printed background. If it has imagery, keep that imagery as flat print.
+2. ONLY the elements from Image 2 get embroidery texture — render them as raised satin-stitch embroidery sitting ON TOP of the printed base.
+3. PRESERVE EXACT COLORS from both images. Do NOT change any colors — only add stitch texture to Image 2's elements.
+4. The badge shape and proportions must match Image 1 exactly.
+5. Do NOT add borders, outlines, or elements not present in the original artwork.
+6. Show the badge on a plain neutral background with padding so the ENTIRE badge is fully visible.` },
       ];
 
       const response = await ai.models.generateContent({
