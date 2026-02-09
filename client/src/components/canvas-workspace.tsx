@@ -519,20 +519,22 @@ export default function CanvasWorkspace({
     }
   }, []);
 
-  const captureBadgeSnapshot = useCallback(async () => {
-    if (!canvasRef.current) return;
+  const captureCanvasArtworkOnly = useCallback(async (): Promise<string | null> => {
+    if (!canvasRef.current) return null;
     try {
       const originalBg = canvasRef.current.style.backgroundColor;
       canvasRef.current.style.backgroundColor = 'transparent';
-      const overlays = canvasRef.current.querySelectorAll('.pointer-events-none') as NodeListOf<HTMLElement>;
-      const savedStyles: { el: HTMLElement; display: string; bg: string }[] = [];
-      overlays.forEach(el => {
-        savedStyles.push({ el, display: el.style.display, bg: el.style.backgroundColor });
-        el.style.backgroundColor = 'transparent';
-        if (el.style.backgroundImage || el.className.includes('opacity-')) {
-          el.style.display = 'none';
+
+      const savedDisplay: Map<HTMLElement, string> = new Map();
+      const children = canvasRef.current.children;
+      for (let i = 0; i < children.length; i++) {
+        const child = children[i] as HTMLElement;
+        if (!child.hasAttribute('data-canvas-element')) {
+          savedDisplay.set(child, child.style.display);
+          child.style.display = 'none';
         }
-      });
+      }
+
       const { default: html2canvas } = await import('html2canvas');
       const canvas = await html2canvas(canvasRef.current, {
         backgroundColor: null,
@@ -541,16 +543,23 @@ export default function CanvasWorkspace({
         allowTaint: true,
         logging: false,
       });
+
       canvasRef.current.style.backgroundColor = originalBg;
-      savedStyles.forEach(({ el, display, bg }) => {
-        el.style.display = display;
-        el.style.backgroundColor = bg;
-      });
-      setBadgeCanvasSnapshot(canvas.toDataURL('image/png'));
+      savedDisplay.forEach((display, el) => { el.style.display = display; });
+
+      return canvas.toDataURL('image/png');
     } catch (err) {
-      console.error('Failed to capture badge snapshot:', err);
+      console.error('Failed to capture canvas artwork:', err);
+      return null;
     }
   }, []);
+
+  const captureBadgeSnapshot = useCallback(async () => {
+    const result = await captureCanvasArtworkOnly();
+    if (result) {
+      setBadgeCanvasSnapshot(result);
+    }
+  }, [captureCanvasArtworkOnly]);
 
   useEffect(() => {
     if (isAppliqueTemplate && activeCanvasIndex === 0 && canvasElements.some(el => (el.canvasIndex || 0) === 0)) {
@@ -560,38 +569,8 @@ export default function CanvasWorkspace({
   }, [isAppliqueTemplate, activeCanvasIndex, canvasElements, captureBadgeSnapshot]);
 
   const captureCanvasTransparent = useCallback(async (): Promise<string | null> => {
-    if (!canvasRef.current) return null;
-    try {
-      const originalBg = canvasRef.current.style.backgroundColor;
-      canvasRef.current.style.backgroundColor = 'transparent';
-      const overlays = canvasRef.current.querySelectorAll('.pointer-events-none') as NodeListOf<HTMLElement>;
-      const savedStyles: { el: HTMLElement; display: string; bg: string }[] = [];
-      overlays.forEach(el => {
-        savedStyles.push({ el, display: el.style.display, bg: el.style.backgroundColor });
-        el.style.backgroundColor = 'transparent';
-        if (el.style.backgroundImage || el.className.includes('opacity-')) {
-          el.style.display = 'none';
-        }
-      });
-      const { default: html2canvas } = await import('html2canvas');
-      const canvas = await html2canvas(canvasRef.current, {
-        backgroundColor: null,
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        logging: false,
-      });
-      canvasRef.current.style.backgroundColor = originalBg;
-      savedStyles.forEach(({ el, display, bg }) => {
-        el.style.display = display;
-        el.style.backgroundColor = bg;
-      });
-      return canvas.toDataURL('image/png');
-    } catch (err) {
-      console.error('Failed to capture canvas transparently:', err);
-      return null;
-    }
-  }, []);
+    return captureCanvasArtworkOnly();
+  }, [captureCanvasArtworkOnly]);
 
   const generateEmbroideryPreview = useCallback(async () => {
     setIsGeneratingPreview(true);

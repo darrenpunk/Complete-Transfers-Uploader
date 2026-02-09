@@ -702,12 +702,18 @@ export async function registerRoutes(app: express.Application) {
         .png()
         .toBuffer();
 
-      const dilatedMask = await sharp(embAlpha)
-        .blur(2)
-        .threshold(20)
-        .blur(1)
+      const embAlphaStats = await sharp(embAlpha).stats();
+      const embAlphaMean = embAlphaStats.channels[0].mean;
+      console.log('[Embroidery Preview] Embroidery alpha mean:', embAlphaMean.toFixed(1), '(255=fully opaque, 0=fully transparent)');
+
+      const badgeAlpha = await sharp(badgeBuffer)
+        .ensureAlpha()
+        .extractChannel(3)
         .png()
         .toBuffer();
+      const badgeAlphaStats = await sharp(badgeAlpha).stats();
+      const badgeAlphaMean = badgeAlphaStats.channels[0].mean;
+      console.log('[Embroidery Preview] Badge alpha mean:', badgeAlphaMean.toFixed(1));
 
       const resizedEmbroidered = await sharp(embroideredBuffer)
         .resize(badgeW, badgeH, { fit: 'fill' })
@@ -715,19 +721,60 @@ export async function registerRoutes(app: express.Application) {
         .png()
         .toBuffer();
 
-      const embWithMask = await sharp(resizedEmbroidered)
-        .composite([{
-          input: dilatedMask,
-          blend: 'dest-in' as any,
-        }])
-        .png()
-        .toBuffer();
+      let finalBuffer: Buffer;
 
-      const finalBuffer = await sharp(badgeBuffer)
-        .ensureAlpha()
-        .composite([{ input: embWithMask, blend: 'over' as any }])
-        .png()
-        .toBuffer();
+      if (embAlphaMean > 240) {
+        console.log('[Embroidery Preview] WARNING: Embroidery alpha is nearly all opaque - capture may lack transparency');
+        console.log('[Embroidery Preview] Using badge alpha as shape mask instead');
+
+        if (badgeAlphaMean < 240) {
+          finalBuffer = await sharp(resizedEmbroidered)
+            .composite([{
+              input: badgeAlpha,
+              blend: 'dest-in' as any,
+            }])
+            .png()
+            .toBuffer();
+        } else {
+          console.log('[Embroidery Preview] Badge alpha also opaque - returning Gemini result as-is');
+          finalBuffer = resizedEmbroidered;
+        }
+      } else {
+        const dilatedMask = await sharp(embAlpha)
+          .blur(2)
+          .threshold(20)
+          .blur(1)
+          .png()
+          .toBuffer();
+
+        const embWithMask = await sharp(resizedEmbroidered)
+          .composite([{
+            input: dilatedMask,
+            blend: 'dest-in' as any,
+          }])
+          .png()
+          .toBuffer();
+
+        let composited = await sharp(badgeBuffer)
+          .ensureAlpha()
+          .composite([{ input: embWithMask, blend: 'over' as any }])
+          .png()
+          .toBuffer();
+
+        if (badgeAlphaMean < 240) {
+          finalBuffer = await sharp(composited)
+            .ensureAlpha()
+            .composite([{
+              input: badgeAlpha,
+              blend: 'dest-in' as any,
+            }])
+            .png()
+            .toBuffer();
+          console.log('[Embroidery Preview] Applied badge shape mask to final composite');
+        } else {
+          finalBuffer = composited;
+        }
+      }
 
       const compositeBase64 = finalBuffer.toString('base64');
 
