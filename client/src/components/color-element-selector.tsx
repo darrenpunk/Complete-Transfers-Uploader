@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Palette, Check, X, Loader2, Send } from "lucide-react";
 
@@ -31,12 +31,6 @@ export function ColorElementSelector({
   const [colorGroups, setColorGroups] = useState<ColorGroup[]>([]);
   const [selectedColors, setSelectedColors] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
-  const [position, setPosition] = useState(() => {
-    const w = typeof window !== 'undefined' ? window.innerWidth : 1200;
-    return { x: w - 290, y: 120 };
-  });
-  const [dragging, setDragging] = useState(false);
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
     if (open && logoId) {
@@ -52,25 +46,6 @@ export function ColorElementSelector({
     }
   }, [open, logoId]);
 
-  const handleMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if ((e.target as HTMLElement).closest('button, [role="button"]')) return;
-    setDragging(true);
-    setDragOffset({ x: e.clientX - position.x, y: e.clientY - position.y });
-  }, [position]);
-
-  useEffect(() => {
-    if (!dragging) return;
-    const handleMove = (e: MouseEvent) => {
-      setPosition({ x: e.clientX - dragOffset.x, y: e.clientY - dragOffset.y });
-    };
-    const handleUp = () => setDragging(false);
-    window.addEventListener('mousemove', handleMove);
-    window.addEventListener('mouseup', handleUp);
-    return () => {
-      window.removeEventListener('mousemove', handleMove);
-      window.removeEventListener('mouseup', handleUp);
-    };
-  }, [dragging, dragOffset]);
 
   const toggleColor = (hex: string) => {
     setSelectedColors(prev => {
@@ -105,11 +80,10 @@ export function ColorElementSelector({
   return (
     <div
       className="fixed z-50 w-64 bg-background border border-border rounded-xl shadow-2xl overflow-hidden"
-      style={{ left: position.x, top: position.y }}
+      style={{ right: 328, top: 120 }}
     >
       <div
-        className="px-3 py-2 bg-purple-600 text-white flex items-center justify-between cursor-move select-none"
-        onMouseDown={handleMouseDown}
+        className="px-3 py-2 bg-purple-600 text-white flex items-center justify-between select-none"
       >
         <div className="flex items-center gap-2 text-sm font-medium">
           <Palette className="w-4 h-4" />
