@@ -9,6 +9,8 @@ import TShirtSwatch from "@/components/ui/tshirt-swatch";
 import { manufacturerColors } from "@shared/garment-colors";
 import gildanLogoPath from "@assets/GILDAN_LOGO_blue_1753539382856.png";
 import fruitOfTheLoomLogoPath from "@assets/Fruit_logo.svg_1753539605426.png";
+import stanleyStellaLogoPath from "@assets/Stanley_Stella_1770656215368.png";
+import solsLogoPath from "@assets/sols_logog_1770656711740.png";
 import CMYKColorModal from "@/components/cmyk-color-modal";
 
 // Professional color palette - same as garment color modal
@@ -159,6 +161,12 @@ export function MultiColorSelector({ garmentColors, onChange, className, targetQ
                     )}
                     {manufacturerName === "Fruit of the Loom" && (
                       <img src={fruitOfTheLoomLogoPath} alt="Fruit of the Loom" className="h-6 w-auto object-contain" />
+                    )}
+                    {manufacturerName === "Stanley/Stella" && (
+                      <img src={stanleyStellaLogoPath} alt="Stanley/Stella" className="h-5 w-auto object-contain" />
+                    )}
+                    {manufacturerName === "SOL'S" && (
+                      <img src={solsLogoPath} alt="SOL'S" className="h-6 w-auto object-contain" />
                     )}
                   </div>
                   {expandedManufacturers.includes(manufacturerName) 
