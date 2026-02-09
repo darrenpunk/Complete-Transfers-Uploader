@@ -744,50 +744,44 @@ export async function registerRoutes(app: express.Application) {
       const badgeBase64 = badgeData.buffer.toString('base64');
       const embBase64 = embData.buffer.toString('base64');
 
-      const badgePng = await sharp(badgeData.buffer)
+      let embDescription = '';
+      try {
+        const embFilename = embLogo.canvasFallbackFilename || embLogo.previewFilename || embLogo.filename;
+        if (embFilename.endsWith('.svg')) {
+          const svgContent = (await fs.readFile(path.join(uploadsDir, embFilename))).toString();
+          const parts: string[] = [];
+          if (/circle|ellipse/i.test(svgContent)) parts.push('the circular border/outline ring');
+          const pathCount = (svgContent.match(/<path /g) || []).length;
+          if (pathCount > 5) parts.push(`text letterforms rendered as ${pathCount} vector paths (including large "Grub" text AND smaller "Deli & Grocer" text below it)`);
+          else if (pathCount > 0) parts.push(`${pathCount} vector path shapes`);
+          const textMatches = svgContent.match(/<text[^>]*>([^<]*)<\/text>/g);
+          if (textMatches) {
+            const texts = textMatches.map((t: string) => t.replace(/<[^>]+>/g, '').trim()).filter(Boolean);
+            if (texts.length > 0) parts.push(`text: "${texts.join('", "')}"`);
+          }
+          embDescription = parts.join(', ');
+        }
+      } catch (e) {
+        console.log('[Embroidery Preview] Could not analyze embroidery SVG');
+      }
+      if (!embDescription) embDescription = 'circular border, large text, and small text';
+      console.log(`[Embroidery Preview] Embroidery description: ${embDescription}`);
+
+      const embOnBlack = await sharp(embData.buffer)
         .resize(2048, 2048, { fit: 'inside', withoutEnlargement: false })
         .png()
         .toBuffer();
-      const badgeMeta = await sharp(badgePng).metadata();
-      const compositeWidth = badgeMeta.width || 2048;
-      const compositeHeight = badgeMeta.height || 2048;
-
-      let annotatedBuffer: Buffer;
-      try {
-        const embFilename = embLogo.canvasFallbackFilename || embLogo.previewFilename || embLogo.filename;
-        let redEmbBuffer: Buffer;
-        if (embFilename.endsWith('.svg')) {
-          let svgContent = (await fs.readFile(path.join(uploadsDir, embFilename))).toString();
-          svgContent = svgContent
-            .replace(/fill\s*=\s*"(?!none)[^"]*"/gi, 'fill="#FF0000"')
-            .replace(/stroke\s*=\s*"(?!none)[^"]*"/gi, 'stroke="#FF0000"')
-            .replace(/fill\s*:\s*(?!none)[^;}"']+/gi, 'fill:#FF0000')
-            .replace(/stroke\s*:\s*(?!none)[^;}"']+/gi, 'stroke:#FF0000');
-          redEmbBuffer = await sharp(Buffer.from(svgContent), { density: 600 })
-            .resize(compositeWidth, compositeHeight, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
-            .ensureAlpha()
-            .png()
-            .toBuffer();
-          console.log(`[Embroidery Preview] Rendered red-colored SVG: ${redEmbBuffer.length} bytes`);
-        } else {
-          redEmbBuffer = await sharp(embData.buffer)
-            .resize(compositeWidth, compositeHeight, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
-            .ensureAlpha()
-            .tint({ r: 255, g: 0, b: 0 })
-            .png()
-            .toBuffer();
-        }
-
-        annotatedBuffer = await sharp(badgePng)
-          .composite([{ input: redEmbBuffer, blend: 'over' }])
-          .png()
-          .toBuffer();
-        console.log(`[Embroidery Preview] Created annotated composite: ${compositeWidth}x${compositeHeight}, ${annotatedBuffer.length} bytes`);
-      } catch (compErr) {
-        console.log(`[Embroidery Preview] Composite failed, using separate images: ${compErr}`);
-        annotatedBuffer = badgePng;
-      }
-      const annotatedBase64 = annotatedBuffer.toString('base64');
+      const embOnBlackMeta = await sharp(embOnBlack).metadata();
+      const ew = embOnBlackMeta.width || 2048;
+      const eh = embOnBlackMeta.height || 2048;
+      const embWithBlackBg = await sharp({
+        create: { width: ew, height: eh, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 255 } }
+      })
+        .composite([{ input: embOnBlack, gravity: 'center' }])
+        .png()
+        .toBuffer();
+      const embBlackBase64 = embWithBlackBg.toString('base64');
+      console.log(`[Embroidery Preview] Embroidery on black background: ${ew}x${eh}, ${embWithBlackBg.length} bytes`);
 
       const ai = new GoogleGenAI({
         apiKey: process.env.AI_INTEGRATIONS_GEMINI_API_KEY!,
@@ -800,10 +794,24 @@ export async function registerRoutes(app: express.Application) {
       console.log('[Embroidery Preview] Step 2: Sending to Gemini');
 
       const promptParts: any[] = [
-        { text: "I need a photorealistic preview of a finished applique badge.\n\nImage 1: The badge with RED HIGHLIGHTED areas. Everything shown in RED must be rendered as machine satin-stitch embroidery. Everything NOT red stays as a smooth flat print.\n\nImage 2: The clean badge artwork without highlights (for color reference)." },
-        { inlineData: { data: annotatedBase64, mimeType: 'image/png' } },
+        { text: `You are generating a photorealistic preview of a finished applique badge/patch.
+
+IMAGE 1: The complete badge artwork showing all printed and embroidered elements together.
+IMAGE 2: ONLY the embroidery elements shown on a black background. EVERY element visible in Image 2 must be rendered as machine embroidery — this includes: ${embDescription}. Count carefully: there are multiple text elements of different sizes.` },
         { inlineData: { data: badgeBase64, mimeType: badgeData.mime } },
-        { text: "Generate one photorealistic image of the finished badge:\n\n1. Every RED-highlighted area from Image 1 (including ALL text, ALL outlines, ALL borders — every red element no matter how small) must be rendered as photorealistic machine satin-stitch embroidery with raised thread texture, perpendicular stitch lines, 3D relief, and natural thread sheen. Use the original colors from Image 2, not red.\n\n2. All NON-red areas stay as smooth, flat prints exactly like Image 2.\n\n3. Do NOT add any extra elements.\n\nOutput one clean image on a plain neutral background with generous padding — ensure the ENTIRE badge is fully visible with nothing cropped." },
+        { inlineData: { data: embBlackBase64, mimeType: 'image/png' } },
+        { text: `TASK: Generate ONE photorealistic image of the finished badge where:
+
+EMBROIDERED (from Image 2): Render ALL of the following as raised satin-stitch machine embroidery with visible thread texture, 3D relief, and natural sheen:
+- The circular border ring around the badge edge
+- The large "Grub" text in the center  
+- The smaller "Deli & Grocer" text below "Grub" — THIS TEXT MUST ALSO BE EMBROIDERED, not flat
+
+PRINTED (everything else): All other elements (dots, lines, abstract shapes, background) remain as smooth flat prints with zero stitch texture.
+
+CRITICAL: The "Deli & Grocer" text is SMALL but it MUST have visible embroidery stitch texture, just like the "Grub" text above it. Do NOT leave it as flat print.
+
+Keep exact same colors, layout, proportions. Output on a plain neutral background with padding so the entire badge is visible.` },
       ];
 
       const response = await ai.models.generateContent({
