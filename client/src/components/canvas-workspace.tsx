@@ -2647,11 +2647,11 @@ export default function CanvasWorkspace({
                     handleMouseDown(element, e);
                   }}
                 >
-                  {/* Element Content with Garment Background */}
+                  {/* Element Content with Garment Background (transparent for shapes) */}
                   <div 
                     className="absolute inset-0" 
                     style={{ 
-                      backgroundColor: element.garmentColor || 'transparent',
+                      backgroundColor: (['rectangle', 'ellipse', 'circle', 'line', 'shield', 'star', 'hexagon', 'pentagon', 'triangle', 'diamond', 'banner', 'cross'].includes(element.elementType || '')) ? 'transparent' : (element.garmentColor || 'transparent'),
                       padding: 0,
                       margin: 0,
                       display: 'block',
