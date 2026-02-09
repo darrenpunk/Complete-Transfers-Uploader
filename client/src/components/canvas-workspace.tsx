@@ -4,7 +4,7 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { Project, Logo, CanvasElement, TemplateSize, ContentBounds } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Minus, Plus, Grid3X3, AlignCenter, Undo, Redo, Upload, Trash2, Maximize2, RotateCw, Move, ArrowRight, CheckSquare, Group, Ungroup, X, Loader2, Square, Circle, MinusIcon, Shapes, Scissors, Shield, Star, Hexagon, Pentagon, Triangle, Layers, Eye, EyeOff, Lock, Unlock, ChevronUp, ChevronDown, GripVertical, Image, Copy } from "lucide-react";
+import { Minus, Plus, Grid3X3, AlignCenter, Undo, Redo, Upload, Trash2, Maximize2, RotateCw, Move, ArrowRight, CheckSquare, Group, Ungroup, X, Loader2, Square, Circle, MinusIcon, Shapes, Scissors, Shield, Star, Hexagon, Pentagon, Triangle, Layers, Eye, EyeOff, Lock, Unlock, ChevronUp, ChevronDown, GripVertical, Image, Copy, Heart, Octagon, ChevronRight } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
@@ -460,13 +460,13 @@ export default function CanvasWorkspace({
   // Initialize toast
   const { toast } = useToast();
 
-  const handleAddShape = async (shapeType: 'rectangle' | 'ellipse' | 'circle' | 'line' | 'shield' | 'star' | 'hexagon' | 'pentagon' | 'triangle' | 'diamond' | 'banner' | 'cross') => {
+  const handleAddShape = async (shapeType: string) => {
     if (!project?.id) return;
     try {
-      const badgeShapes = ['shield', 'star', 'hexagon', 'pentagon', 'triangle', 'diamond', 'banner', 'cross'];
+      const badgeShapes = ['shield', 'star', 'hexagon', 'pentagon', 'triangle', 'diamond', 'banner', 'cross', 'oval', 'heart', 'octagon', 'arch', 'malteseCross', 'chevron', 'arrow', 'ribbon'];
       const isBadgeShape = badgeShapes.includes(shapeType);
-      const defaultWidth = shapeType === 'line' ? 60 : isBadgeShape ? 50 : 40;
-      const defaultHeight = shapeType === 'line' ? 2 : shapeType === 'banner' ? 20 : isBadgeShape ? 50 : 40;
+      const defaultWidth = shapeType === 'line' ? 60 : shapeType === 'chevron' ? 30 : shapeType === 'arrow' ? 60 : shapeType === 'ribbon' ? 70 : shapeType === 'oval' ? 60 : isBadgeShape ? 50 : 40;
+      const defaultHeight = shapeType === 'line' ? 2 : shapeType === 'banner' ? 20 : shapeType === 'chevron' ? 40 : shapeType === 'arrow' ? 25 : shapeType === 'ribbon' ? 25 : shapeType === 'oval' ? 40 : isBadgeShape ? 50 : 40;
       const centerX = Math.round(((template?.width || 100) - defaultWidth) / 2);
       const centerY = Math.round(((template?.height || 100) - defaultHeight) / 2);
       const response = await apiRequest("POST", `/api/projects/${project.id}/canvas-elements`, {
@@ -505,7 +505,7 @@ export default function CanvasWorkspace({
     }
   };
 
-  const allShapeTypes = ['rectangle', 'ellipse', 'circle', 'line', 'shield', 'star', 'hexagon', 'pentagon', 'triangle', 'diamond', 'banner', 'cross'];
+  const allShapeTypes = ['rectangle', 'ellipse', 'circle', 'line', 'shield', 'star', 'hexagon', 'pentagon', 'triangle', 'diamond', 'banner', 'cross', 'oval', 'heart', 'octagon', 'arch', 'malteseCross', 'chevron', 'arrow', 'ribbon'];
 
   const getLayerElements = useCallback(() => {
     let elements = canvasElements;
@@ -521,12 +521,20 @@ export default function CanvasWorkspace({
     switch (element.elementType) {
       case 'rectangle': return <Square className="w-4 h-4 text-gray-400" />;
       case 'ellipse': case 'circle': return <Circle className="w-4 h-4 text-gray-400" />;
+      case 'oval': return <Circle className="w-4 h-4 text-gray-400" />;
       case 'line': return <MinusIcon className="w-4 h-4 text-gray-400" />;
       case 'triangle': return <Triangle className="w-4 h-4 text-gray-400" />;
       case 'shield': return <Shield className="w-4 h-4 text-gray-400" />;
       case 'star': return <Star className="w-4 h-4 text-gray-400" />;
       case 'hexagon': return <Hexagon className="w-4 h-4 text-gray-400" />;
       case 'pentagon': return <Pentagon className="w-4 h-4 text-gray-400" />;
+      case 'heart': return <Heart className="w-4 h-4 text-gray-400" />;
+      case 'octagon': return <Octagon className="w-4 h-4 text-gray-400" />;
+      case 'arch': return <svg className="w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 22V10a8 8 0 0 1 16 0v12" /></svg>;
+      case 'malteseCross': return <svg className="w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2l4 5-3 2h0l5 3-5 4-2-3v0l-3 5-4-5 3-2h0l-5-3 5-4 2 3v0z" /></svg>;
+      case 'chevron': return <ChevronRight className="w-4 h-4 text-gray-400" />;
+      case 'arrow': return <ArrowRight className="w-4 h-4 text-gray-400" />;
+      case 'ribbon': return <svg className="w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 8l2-4h12l2 4v8l-2 4H6l-2-4V8z" /></svg>;
       default: return <Shapes className="w-4 h-4 text-gray-400" />;
     }
   };
@@ -2109,6 +2117,38 @@ export default function CanvasWorkspace({
                     <Plus className="w-4 h-4 mr-2" />
                     Cross
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleAddShape('oval')}>
+                    <Circle className="w-4 h-4 mr-2" />
+                    Oval
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleAddShape('heart')}>
+                    <Heart className="w-4 h-4 mr-2" />
+                    Heart
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleAddShape('octagon')}>
+                    <Octagon className="w-4 h-4 mr-2" />
+                    Octagon
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleAddShape('arch')}>
+                    <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 22V10a8 8 0 0 1 16 0v12" /></svg>
+                    Arch
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleAddShape('malteseCross')}>
+                    <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2l4 5-3 2h0l5 3-5 4-2-3v0l-3 5-4-5 3-2h0l-5-3 5-4 2 3v0z" /></svg>
+                    Maltese Cross
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleAddShape('chevron')}>
+                    <ChevronRight className="w-4 h-4 mr-2" />
+                    Chevron
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleAddShape('arrow')}>
+                    <ArrowRight className="w-4 h-4 mr-2" />
+                    Arrow
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleAddShape('ribbon')}>
+                    <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 8l2-4h12l2 4v8l-2 4H6l-2-4V8z" /></svg>
+                    Ribbon
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => handleAddShape('line')}>
                     <MinusIcon className="w-4 h-4 mr-2" />
                     Line
@@ -2441,6 +2481,38 @@ export default function CanvasWorkspace({
                       <Plus className="w-4 h-4 mr-2" />
                       Cross
                     </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleAddShape('oval')}>
+                      <Circle className="w-4 h-4 mr-2" />
+                      Oval
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleAddShape('heart')}>
+                      <Heart className="w-4 h-4 mr-2" />
+                      Heart
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleAddShape('octagon')}>
+                      <Octagon className="w-4 h-4 mr-2" />
+                      Octagon
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleAddShape('arch')}>
+                      <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 22V10a8 8 0 0 1 16 0v12" /></svg>
+                      Arch
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleAddShape('malteseCross')}>
+                      <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2l4 5-3 2h0l5 3-5 4-2-3v0l-3 5-4-5 3-2h0l-5-3 5-4 2 3v0z" /></svg>
+                      Maltese Cross
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleAddShape('chevron')}>
+                      <ChevronRight className="w-4 h-4 mr-2" />
+                      Chevron
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleAddShape('arrow')}>
+                      <ArrowRight className="w-4 h-4 mr-2" />
+                      Arrow
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleAddShape('ribbon')}>
+                      <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 8l2-4h12l2 4v8l-2 4H6l-2-4V8z" /></svg>
+                      Ribbon
+                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleAddShape('line')}>
                       <MinusIcon className="w-4 h-4 mr-2" />
                       Line
@@ -2682,7 +2754,7 @@ export default function CanvasWorkspace({
                     transformOrigin: 'center',
                     outline: isSelected 
                       ? `2px solid #961E75` 
-                      : (['rectangle', 'ellipse', 'circle', 'line', 'shield', 'star', 'hexagon', 'pentagon', 'triangle', 'diamond', 'banner', 'cross'].includes(element.elementType || '')) 
+                      : allShapeTypes.includes(element.elementType || '') 
                         ? 'none'
                         : `1px solid #d1d5db`,
                     outlineOffset: '-2px',
@@ -2700,7 +2772,7 @@ export default function CanvasWorkspace({
                   <div 
                     className="absolute inset-0" 
                     style={{ 
-                      backgroundColor: (['rectangle', 'ellipse', 'circle', 'line', 'shield', 'star', 'hexagon', 'pentagon', 'triangle', 'diamond', 'banner', 'cross'].includes(element.elementType || '')) ? 'transparent' : (element.garmentColor || 'transparent'),
+                      backgroundColor: allShapeTypes.includes(element.elementType || '') ? 'transparent' : (element.garmentColor || 'transparent'),
                       padding: 0,
                       margin: 0,
                       display: 'block',
@@ -2710,7 +2782,7 @@ export default function CanvasWorkspace({
                     }}
                   >
                     {/* Shape Elements */}
-                    {(['rectangle', 'ellipse', 'circle', 'line', 'shield', 'star', 'hexagon', 'pentagon', 'triangle', 'diamond', 'banner', 'cross'].includes(element.elementType || '')) ? (() => {
+                    {allShapeTypes.includes(element.elementType || '') ? (() => {
                       const strokePx = (element.strokeWidth || 1) * mmToPixelRatio * (zoom / 100);
                       const cornerPx = (element.cornerRadius || 0) * mmToPixelRatio * (zoom / 100);
                       const w = elementWidth;
@@ -2765,11 +2837,41 @@ export default function CanvasWorkspace({
                             const armW = iw / 3;
                             return `M ${s + armW} ${s} L ${s + armW * 2} ${s} L ${s + armW * 2} ${s + armW} L ${s + iw} ${s + armW} L ${s + iw} ${s + armW * 2} L ${s + armW * 2} ${s + armW * 2} L ${s + armW * 2} ${s + ih} L ${s + armW} ${s + ih} L ${s + armW} ${s + armW * 2} L ${s} ${s + armW * 2} L ${s} ${s + armW} L ${s + armW} ${s + armW} Z`;
                           }
+                          case 'oval':
+                            return '';
+                          case 'heart': {
+                            const cx = w / 2;
+                            return `M ${cx} ${s + ih * 0.25} C ${cx} ${s}, ${s + iw} ${s}, ${s + iw} ${s + ih * 0.3} C ${s + iw} ${s + ih * 0.55}, ${cx} ${s + ih * 0.8}, ${cx} ${s + ih} C ${cx} ${s + ih * 0.8}, ${s} ${s + ih * 0.55}, ${s} ${s + ih * 0.3} C ${s} ${s}, ${cx} ${s}, ${cx} ${s + ih * 0.25} Z`;
+                          }
+                          case 'octagon': {
+                            const cx2 = w / 2, cy2 = h / 2;
+                            const rx2 = iw / 2, ry2 = ih / 2;
+                            let d2 = '';
+                            for (let i = 0; i < 8; i++) {
+                              const angle = (i * 45 - 90 + 22.5) * Math.PI / 180;
+                              d2 += `${i === 0 ? 'M' : 'L'} ${cx2 + rx2 * Math.cos(angle)} ${cy2 + ry2 * Math.sin(angle)} `;
+                            }
+                            return d2 + 'Z';
+                          }
+                          case 'arch':
+                            return `M ${s} ${s + ih} L ${s} ${s + ih * 0.4} Q ${s} ${s}, ${w / 2} ${s} Q ${s + iw} ${s}, ${s + iw} ${s + ih * 0.4} L ${s + iw} ${s + ih} Z`;
+                          case 'malteseCross': {
+                            const mw = iw, mh = ih;
+                            const notch = 0.22;
+                            const arm = 0.35;
+                            return `M ${s + mw * 0.5} ${s} L ${s + mw * (0.5 + arm)} ${s + mh * notch} L ${s + mw * (0.5 + notch)} ${s + mh * (0.5 - arm)} L ${s + mw} ${s + mh * 0.5} L ${s + mw * (0.5 + notch)} ${s + mh * (0.5 + arm)} L ${s + mw * (0.5 + arm)} ${s + mh * (1 - notch)} L ${s + mw * 0.5} ${s + mh} L ${s + mw * (0.5 - arm)} ${s + mh * (1 - notch)} L ${s + mw * (0.5 - notch)} ${s + mh * (0.5 + arm)} L ${s} ${s + mh * 0.5} L ${s + mw * (0.5 - notch)} ${s + mh * (0.5 - arm)} L ${s + mw * (0.5 - arm)} ${s + mh * notch} Z`;
+                          }
+                          case 'chevron':
+                            return `M ${s} ${s} L ${s + iw} ${s} L ${s + iw} ${s + ih * 0.7} L ${s + iw * 0.5} ${s + ih} L ${s} ${s + ih * 0.7} Z`;
+                          case 'arrow':
+                            return `M ${s} ${s + ih * 0.25} L ${s + iw * 0.65} ${s + ih * 0.25} L ${s + iw * 0.65} ${s} L ${s + iw} ${s + ih * 0.5} L ${s + iw * 0.65} ${s + ih} L ${s + iw * 0.65} ${s + ih * 0.75} L ${s} ${s + ih * 0.75} Z`;
+                          case 'ribbon':
+                            return `M ${s} ${s + ih * 0.2} L ${s + iw * 0.1} ${s} L ${s + iw * 0.1} ${s + ih * 0.2} L ${s + iw * 0.9} ${s + ih * 0.2} L ${s + iw * 0.9} ${s} L ${s + iw} ${s + ih * 0.2} L ${s + iw} ${s + ih * 0.8} L ${s + iw * 0.9} ${s + ih} L ${s + iw * 0.9} ${s + ih * 0.8} L ${s + iw * 0.1} ${s + ih * 0.8} L ${s + iw * 0.1} ${s + ih} L ${s} ${s + ih * 0.8} Z`;
                           default:
                             return '';
                         }
                       };
-                      const badgeShapeTypes = ['shield', 'star', 'hexagon', 'pentagon', 'triangle', 'diamond', 'banner', 'cross'];
+                      const badgeShapeTypes = ['shield', 'star', 'hexagon', 'pentagon', 'triangle', 'diamond', 'banner', 'cross', 'heart', 'octagon', 'arch', 'malteseCross', 'chevron', 'arrow', 'ribbon'];
                       const isBadge = badgeShapeTypes.includes(element.elementType || '');
                       return (
                         <svg
@@ -2793,7 +2895,7 @@ export default function CanvasWorkspace({
                               opacity={element.opacity ?? 1}
                             />
                           )}
-                          {(element.elementType === 'ellipse' || element.elementType === 'circle') && (
+                          {(element.elementType === 'ellipse' || element.elementType === 'circle' || element.elementType === 'oval') && (
                             <ellipse
                               cx={elementWidth / 2}
                               cy={elementHeight / 2}

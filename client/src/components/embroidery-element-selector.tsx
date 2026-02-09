@@ -2,10 +2,10 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Scissors, CheckSquare, Square, Circle, Minus as MinusIcon, Triangle, Shield, Star, Hexagon, Pentagon } from "lucide-react";
+import { Scissors, CheckSquare, Square, Circle, Minus as MinusIcon, Triangle, Shield, Star, Hexagon, Pentagon, Heart, Octagon, ChevronRight, ArrowRight, Shapes } from "lucide-react";
 import type { CanvasElement, Logo } from "@shared/schema";
 
-const SHAPE_TYPES = ['rectangle', 'ellipse', 'circle', 'line', 'shield', 'star', 'hexagon', 'pentagon', 'triangle', 'diamond', 'banner', 'cross'];
+const SHAPE_TYPES = ['rectangle', 'ellipse', 'circle', 'line', 'shield', 'star', 'hexagon', 'pentagon', 'triangle', 'diamond', 'banner', 'cross', 'oval', 'heart', 'octagon', 'arch', 'malteseCross', 'chevron', 'arrow', 'ribbon'];
 
 interface EmbroideryElementSelectorProps {
   open: boolean;
@@ -155,7 +155,15 @@ export function EmbroideryElementSelector({
                               case 'diamond': return <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2 L22 12 L12 22 L2 12 Z" /></svg>;
                               case 'banner': return <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16v12l-3-2-5 3-5-3-3 2V4z" /></svg>;
                               case 'cross': return <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8 2v8H2v4h6v8h4v-8h6v-4h-6V2H8z" /></svg>;
-                              default: return <Square className="w-8 h-8" />;
+                              case 'oval': return <Circle className="w-8 h-8" />;
+                              case 'heart': return <Heart className="w-8 h-8" />;
+                              case 'octagon': return <Octagon className="w-8 h-8" />;
+                              case 'arch': return <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 22V10a8 8 0 0 1 16 0v12" /></svg>;
+                              case 'malteseCross': return <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2l4 5-3 2h0l5 3-5 4-2-3v0l-3 5-4-5 3-2h0l-5-3 5-4 2 3v0z" /></svg>;
+                              case 'chevron': return <ChevronRight className="w-8 h-8" />;
+                              case 'arrow': return <ArrowRight className="w-8 h-8" />;
+                              case 'ribbon': return <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 8l2-4h12l2 4v8l-2 4H6l-2-4V8z" /></svg>;
+                              default: return <Shapes className="w-8 h-8" />;
                             }
                           })()}
                         </div>

@@ -1299,7 +1299,7 @@ export default function PropertiesPanel({
                   .sort((a, b) => b.zIndex - a.zIndex)
                   .map((element) => {
                     const logo = logos.find(l => l.id === element.logoId);
-                    const shapeTypes = ['rectangle', 'ellipse', 'circle', 'line', 'shield', 'star', 'hexagon', 'pentagon', 'triangle', 'diamond', 'banner', 'cross'];
+                    const shapeTypes = ['rectangle', 'ellipse', 'circle', 'line', 'shield', 'star', 'hexagon', 'pentagon', 'triangle', 'diamond', 'banner', 'cross', 'oval', 'heart', 'octagon', 'arch', 'malteseCross', 'chevron', 'arrow', 'ribbon'];
                     const isShapeElement = shapeTypes.includes(element.elementType || '');
                     if (!logo && !isShapeElement) return null;
 
@@ -1308,8 +1308,11 @@ export default function PropertiesPanel({
                     const getShapeIcon = () => {
                       switch (element.elementType) {
                         case 'rectangle': return <div className="w-4 h-3 border-2 border-gray-600 rounded-sm" />;
-                        case 'ellipse': case 'circle': return <div className="w-4 h-4 border-2 border-gray-600 rounded-full" />;
+                        case 'ellipse': case 'circle': case 'oval': return <div className="w-4 h-4 border-2 border-gray-600 rounded-full" />;
                         case 'line': return <div className="w-4 h-0.5 bg-gray-600" />;
+                        case 'shield': return <svg className="w-4 h-4 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2l10 4v6c0 6-10 10-10 10S2 18 2 12V6l10-4z" /></svg>;
+                        case 'star': return <svg className="w-4 h-4 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z" /></svg>;
+                        case 'heart': return <svg className="w-4 h-4 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></svg>;
                         default: return <Image className="w-4 h-4 text-gray-600" />;
                       }
                     };

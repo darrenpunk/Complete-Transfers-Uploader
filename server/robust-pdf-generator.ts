@@ -525,7 +525,7 @@ grestore`;
     if (isAppliqueTemplate) {
       console.log(`📋 Applique PDF: Processing ${badgeElements.length} badge elements for page 1`);
       for (const element of badgeElements) {
-        const shapeTypes = ['rectangle', 'ellipse', 'circle', 'line', 'shield', 'star', 'hexagon', 'pentagon', 'triangle', 'diamond', 'banner', 'cross'];
+        const shapeTypes = ['rectangle', 'ellipse', 'circle', 'line', 'shield', 'star', 'hexagon', 'pentagon', 'triangle', 'diamond', 'banner', 'cross', 'oval', 'heart', 'octagon', 'arch', 'malteseCross', 'chevron', 'arrow', 'ribbon'];
         const isShape = shapeTypes.includes(element.elementType || '');
         if (isShape) {
           this.drawShapeOnPage(page1, element, data.templateSize, pageHeight);
@@ -542,7 +542,7 @@ grestore`;
         console.log(`📋 Applique PDF: Processing ${embroideryElements.length} embroidery elements for page 2`);
         for (const element of embroideryElements) {
           console.log(`📋 Emb element: id=${(element as any).id?.substring(0,8)}, logoId=${element.logoId?.substring(0,8)}, type=${element.elementType}, size=${element.width}x${element.height}`);
-          const embShapeTypes = ['rectangle', 'ellipse', 'circle', 'line', 'shield', 'star', 'hexagon', 'pentagon', 'triangle', 'diamond', 'banner', 'cross'];
+          const embShapeTypes = ['rectangle', 'ellipse', 'circle', 'line', 'shield', 'star', 'hexagon', 'pentagon', 'triangle', 'diamond', 'banner', 'cross', 'oval', 'heart', 'octagon', 'arch', 'malteseCross', 'chevron', 'arrow', 'ribbon'];
           const isShape = embShapeTypes.includes(element.elementType || '');
           if (isShape) {
             this.drawShapeOnPage(embroideryPage, element, data.templateSize, pageHeight);
@@ -572,7 +572,7 @@ grestore`;
       const logo = data.logos.find(l => l.id === element.logoId);
       console.log(`🔍 DEBUG: Logo lookup result:`, logo ? `Found logo: ${logo.filename}` : 'Logo not found');
       
-      const allShapeTypes = ['rectangle', 'ellipse', 'circle', 'line', 'shield', 'star', 'hexagon', 'pentagon', 'triangle', 'diamond', 'banner', 'cross'];
+      const allShapeTypes = ['rectangle', 'ellipse', 'circle', 'line', 'shield', 'star', 'hexagon', 'pentagon', 'triangle', 'diamond', 'banner', 'cross', 'oval', 'heart', 'octagon', 'arch', 'malteseCross', 'chevron', 'arrow', 'ribbon'];
       const isShapeElement = allShapeTypes.includes(element.elementType || '');
       
       if (isShapeElement) {
@@ -851,7 +851,7 @@ grestore`;
       if (fillColor) drawOpts.color = fillColor;
       if (element.rotation) drawOpts.rotate = degrees(element.rotation);
       page.drawRectangle(drawOpts);
-    } else if (element.elementType === 'ellipse' || element.elementType === 'circle') {
+    } else if (element.elementType === 'ellipse' || element.elementType === 'circle' || element.elementType === 'oval') {
       const drawOpts: any = {
         x: elemXPt + elemWidthPt / 2,
         y: elemYPt + elemHeightPt / 2,
@@ -875,7 +875,7 @@ grestore`;
       };
       page.drawLine(lineOpts);
     } else {
-      const badgeShapes = ['shield', 'star', 'hexagon', 'pentagon', 'triangle', 'diamond', 'banner', 'cross'];
+      const badgeShapes = ['shield', 'star', 'hexagon', 'pentagon', 'triangle', 'diamond', 'banner', 'cross', 'oval', 'heart', 'octagon', 'arch', 'malteseCross', 'chevron', 'arrow', 'ribbon'];
       if (badgeShapes.includes(element.elementType || '')) {
         const svgPath = this.getBadgeShapeSvgPath(element.elementType!, elemWidthPt, elemHeightPt);
         if (svgPath) {
@@ -943,6 +943,33 @@ grestore`;
         const armH = h / 3;
         return `M ${armW} 0 L ${armW * 2} 0 L ${armW * 2} ${armH} L ${w} ${armH} L ${w} ${armH * 2} L ${armW * 2} ${armH * 2} L ${armW * 2} ${h} L ${armW} ${h} L ${armW} ${armH * 2} L 0 ${armH * 2} L 0 ${armH} L ${armW} ${armH} Z`;
       }
+      case 'heart': {
+        const cx = w / 2;
+        return `M ${cx} ${h * 0.25} C ${cx} 0, ${w} 0, ${w} ${h * 0.3} C ${w} ${h * 0.55}, ${cx} ${h * 0.8}, ${cx} ${h} C ${cx} ${h * 0.8}, 0 ${h * 0.55}, 0 ${h * 0.3} C 0 0, ${cx} 0, ${cx} ${h * 0.25} Z`;
+      }
+      case 'octagon': {
+        const cx = w / 2, cy = h / 2;
+        const rx = w / 2, ry = h / 2;
+        let d = '';
+        for (let i = 0; i < 8; i++) {
+          const angle = (i * 45 - 90 + 22.5) * Math.PI / 180;
+          d += `${i === 0 ? 'M' : 'L'} ${cx + rx * Math.cos(angle)} ${cy + ry * Math.sin(angle)} `;
+        }
+        return d + 'Z';
+      }
+      case 'arch':
+        return `M 0 ${h} L 0 ${h * 0.4} Q 0 0, ${w / 2} 0 Q ${w} 0, ${w} ${h * 0.4} L ${w} ${h} Z`;
+      case 'malteseCross': {
+        const notch = 0.22;
+        const arm = 0.35;
+        return `M ${w * 0.5} 0 L ${w * (0.5 + arm)} ${h * notch} L ${w * (0.5 + notch)} ${h * (0.5 - arm)} L ${w} ${h * 0.5} L ${w * (0.5 + notch)} ${h * (0.5 + arm)} L ${w * (0.5 + arm)} ${h * (1 - notch)} L ${w * 0.5} ${h} L ${w * (0.5 - arm)} ${h * (1 - notch)} L ${w * (0.5 - notch)} ${h * (0.5 + arm)} L 0 ${h * 0.5} L ${w * (0.5 - notch)} ${h * (0.5 - arm)} L ${w * (0.5 - arm)} ${h * notch} Z`;
+      }
+      case 'chevron':
+        return `M 0 0 L ${w} 0 L ${w} ${h * 0.7} L ${w * 0.5} ${h} L 0 ${h * 0.7} Z`;
+      case 'arrow':
+        return `M 0 ${h * 0.25} L ${w * 0.65} ${h * 0.25} L ${w * 0.65} 0 L ${w} ${h * 0.5} L ${w * 0.65} ${h} L ${w * 0.65} ${h * 0.75} L 0 ${h * 0.75} Z`;
+      case 'ribbon':
+        return `M 0 ${h * 0.2} L ${w * 0.1} 0 L ${w * 0.1} ${h * 0.2} L ${w * 0.9} ${h * 0.2} L ${w * 0.9} 0 L ${w} ${h * 0.2} L ${w} ${h * 0.8} L ${w * 0.9} ${h} L ${w * 0.9} ${h * 0.8} L ${w * 0.1} ${h * 0.8} L ${w * 0.1} ${h} L 0 ${h * 0.8} Z`;
       default:
         return '';
     }
