@@ -182,6 +182,14 @@ export default function PDFPreviewModal({
   
   console.log('PDFPreviewModal render:', { open, project: project?.name });
 
+  const isSingleColourTemplate = useMemo(() => {
+    if (!template) return false;
+    return template.group === "Screen Printed Transfers" && 
+      (template.label?.includes("Single Colour") || template.label?.includes("Zero"));
+  }, [template]);
+
+  const shouldRecolorForInk = isSingleColourTemplate && !!project?.inkColor;
+
   const canProceed = designApproved && rightsConfirmed;
 
   // Check if pass-through mode is enabled and find the multi-page PDF logo
@@ -317,7 +325,11 @@ export default function PDFPreviewModal({
                       const topPos = elementCenterY - element.height / 2;
                       
                       // Use proper URL construction for all logo types
-                      const imageUrl = getImageUrl(logo);
+                      let imageUrl = getImageUrl(logo);
+                      if (shouldRecolorForInk) {
+                        const sep = imageUrl.includes('?') ? '&' : '?';
+                        imageUrl = `${imageUrl}${sep}inkColor=${encodeURIComponent(project.inkColor)}&recolor=true&t=${Date.now()}`;
+                      }
                       
                       return (
                         <div
@@ -337,16 +349,15 @@ export default function PDFPreviewModal({
                             src={imageUrl}
                             alt="Logo"
                             className="w-full h-full object-contain"
-                            key={`preview-${element.id}`}
+                            key={`preview-${element.id}-${project?.inkColor || ''}`}
                             onLoad={() => {
                               console.log('✅ Image loaded for preview');
                             }}
                             onError={(e) => {
                               console.error('Image failed to load:', imageUrl);
-                              // Retry with timestamp
                               const currentSrc = e.currentTarget.src;
-                              if (!currentSrc.includes('?retry=')) {
-                                e.currentTarget.src = `${imageUrl}?retry=${Date.now()}`;
+                              if (!currentSrc.includes('retry=')) {
+                                e.currentTarget.src = `${imageUrl}${imageUrl.includes('?') ? '&' : '?'}retry=${Date.now()}`;
                               }
                             }}
                             style={{ 
@@ -396,7 +407,11 @@ export default function PDFPreviewModal({
                           const elementCenterY = centerY + element.y;
                           const leftPos = elementCenterX - element.width / 2;
                           const topPos = elementCenterY - element.height / 2;
-                          const imageUrl = getImageUrl(logo);
+                          let imageUrl = getImageUrl(logo);
+                          if (shouldRecolorForInk) {
+                            const sep = imageUrl.includes('?') ? '&' : '?';
+                            imageUrl = `${imageUrl}${sep}inkColor=${encodeURIComponent(project.inkColor)}&recolor=true&t=${Date.now()}`;
+                          }
                           
                           return (
                             <div
@@ -513,7 +528,11 @@ export default function PDFPreviewModal({
                           const topPos = elementCenterY - element.height / 2;
                           
                           // Use proper URL construction for all logo types
-                          const imageUrl = getImageUrl(logo);
+                          let imageUrl = getImageUrl(logo);
+                          if (shouldRecolorForInk) {
+                            const sep = imageUrl.includes('?') ? '&' : '?';
+                            imageUrl = `${imageUrl}${sep}inkColor=${encodeURIComponent(project.inkColor)}&recolor=true&t=${Date.now()}`;
+                          }
                           
                           return (
                             <div
@@ -535,6 +554,7 @@ export default function PDFPreviewModal({
                                 src={imageUrl}
                                 alt={logo.originalName}
                                 className="w-full h-full object-contain relative z-10"
+                                key={`garment-preview-${element.id}-${project?.inkColor || ''}`}
                                 style={{ 
                                   filter: element.opacity !== undefined && element.opacity < 1 ? `opacity(${element.opacity})` : 'none'
                                 }}

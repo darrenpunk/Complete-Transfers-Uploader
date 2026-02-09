@@ -14,7 +14,7 @@ import { UploadProgressModal } from "./upload-progress-modal";
 import { TextDialog } from "./text-dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import GarmentColorModal from "@/components/garment-color-modal";
-import InkColorModal, { getColorName as getInkColorName } from "@/components/ink-color-modal";
+import InkColorModal, { getColorName as getInkColorName, inkColors } from "@/components/ink-color-modal";
 import InkDropSwatch from "@/components/ui/ink-drop-swatch";
 import TemplateSelectorModal from "@/components/template-selector-modal";
 import { manufacturerColors } from "@shared/garment-colors";
@@ -777,21 +777,28 @@ export default function ToolsSidebar({
 
                   <div className="space-y-3">
                     {/* Current Selection Display */}
-                    {project.inkColor && (
-                      <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                        <InkDropSwatch
-                          color={project.inkColor}
-                          colorName={getInkColorName(project.inkColor)}
-                          variant="drop1"
-                          isSelected={false}
-                          onClick={() => {}}
-                        />
-                        <div className="text-sm">
-                          <div className="font-medium text-gray-900">Selected Ink</div>
-                          <div className="text-gray-600">{getInkColorName(project.inkColor)}</div>
+                    {project.inkColor && (() => {
+                      const inkHex = project.inkColor!;
+                      const matchedInk = inkColors.find(c => c.hex.toLowerCase() === inkHex.toLowerCase());
+                      const otCode = matchedInk?.otCode;
+                      const variant = otCode === 'OT 91' ? 'drop1' : otCode === 'OT 100' ? 'drop2' : 'drop3';
+                      return (
+                        <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                          <InkDropSwatch
+                            color={project.inkColor}
+                            colorName={getInkColorName(project.inkColor)}
+                            variant={variant}
+                            otCode={otCode}
+                            isSelected={false}
+                            onClick={() => {}}
+                          />
+                          <div className="text-sm">
+                            <div className="font-medium text-gray-900">Selected Ink</div>
+                            <div className="text-gray-600">{getInkColorName(project.inkColor)}</div>
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      );
+                    })()}
 
                     {/* Ink Color Modal Trigger */}
                     <InkColorModal

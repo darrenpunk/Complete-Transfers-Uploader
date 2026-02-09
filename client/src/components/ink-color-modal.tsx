@@ -199,4 +199,4 @@ export default function InkColorModal({ currentColor, onColorChange, trigger, au
   );
 }
 
-export { getColorName };
+export { getColorName, inkColors };
