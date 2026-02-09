@@ -5,6 +5,129 @@ import { Eye, Layers, Palette, Type, FileText, ChevronLeft, ChevronRight } from 
 import { CompleteTransferLogo } from "./complete-transfer-logo";
 import { useState, useMemo, useCallback } from "react";
 
+const SHAPE_TYPES = ['rectangle', 'ellipse', 'circle', 'line', 'shield', 'star', 'hexagon', 'pentagon', 'triangle', 'diamond', 'banner', 'cross', 'oval', 'heart', 'octagon', 'arch', 'malteseCross', 'chevron', 'arrow', 'ribbon'];
+
+function getShapeSvgPath(type: string, w: number, h: number): string {
+  switch (type) {
+    case 'shield':
+      return `M ${w * 0.5} 0 L ${w} ${h * 0.15} L ${w} ${h * 0.55} Q ${w * 0.5} ${h} ${w * 0.5} ${h} Q ${w * 0.5} ${h} 0 ${h * 0.55} L 0 ${h * 0.15} Z`;
+    case 'star': {
+      const cx = w / 2, cy = h / 2;
+      const outerR = Math.min(w, h) / 2;
+      const innerR = outerR * 0.38;
+      let d = '';
+      for (let i = 0; i < 5; i++) {
+        const outerAngle = (i * 72 - 90) * Math.PI / 180;
+        const innerAngle = ((i * 72) + 36 - 90) * Math.PI / 180;
+        d += `${i === 0 ? 'M' : 'L'} ${cx + outerR * Math.cos(outerAngle)} ${cy + outerR * Math.sin(outerAngle)} `;
+        d += `L ${cx + innerR * Math.cos(innerAngle)} ${cy + innerR * Math.sin(innerAngle)} `;
+      }
+      return d + 'Z';
+    }
+    case 'hexagon': {
+      const cx = w / 2, cy = h / 2;
+      let d = '';
+      for (let i = 0; i < 6; i++) {
+        const angle = (i * 60 - 90) * Math.PI / 180;
+        d += `${i === 0 ? 'M' : 'L'} ${cx + (w / 2) * Math.cos(angle)} ${cy + (h / 2) * Math.sin(angle)} `;
+      }
+      return d + 'Z';
+    }
+    case 'pentagon': {
+      const cx = w / 2, cy = h / 2;
+      let d = '';
+      for (let i = 0; i < 5; i++) {
+        const angle = (i * 72 - 90) * Math.PI / 180;
+        d += `${i === 0 ? 'M' : 'L'} ${cx + (w / 2) * Math.cos(angle)} ${cy + (h / 2) * Math.sin(angle)} `;
+      }
+      return d + 'Z';
+    }
+    case 'triangle':
+      return `M ${w / 2} 0 L ${w} ${h} L 0 ${h} Z`;
+    case 'diamond':
+      return `M ${w / 2} 0 L ${w} ${h / 2} L ${w / 2} ${h} L 0 ${h / 2} Z`;
+    case 'banner':
+      return `M 0 0 L ${w} 0 L ${w} ${h * 0.75} L ${w * 0.5} ${h} L 0 ${h * 0.75} Z`;
+    case 'cross': {
+      const armW = w / 3;
+      const armH = h / 3;
+      return `M ${armW} 0 L ${armW * 2} 0 L ${armW * 2} ${armH} L ${w} ${armH} L ${w} ${armH * 2} L ${armW * 2} ${armH * 2} L ${armW * 2} ${h} L ${armW} ${h} L ${armW} ${armH * 2} L 0 ${armH * 2} L 0 ${armH} L ${armW} ${armH} Z`;
+    }
+    case 'heart': {
+      const cx = w / 2;
+      return `M ${cx} ${h * 0.25} C ${cx} 0, ${w} 0, ${w} ${h * 0.3} C ${w} ${h * 0.55}, ${cx} ${h * 0.8}, ${cx} ${h} C ${cx} ${h * 0.8}, 0 ${h * 0.55}, 0 ${h * 0.3} C 0 0, ${cx} 0, ${cx} ${h * 0.25} Z`;
+    }
+    case 'octagon': {
+      const cx = w / 2, cy = h / 2;
+      let d = '';
+      for (let i = 0; i < 8; i++) {
+        const angle = (i * 45 - 90 + 22.5) * Math.PI / 180;
+        d += `${i === 0 ? 'M' : 'L'} ${cx + (w / 2) * Math.cos(angle)} ${cy + (h / 2) * Math.sin(angle)} `;
+      }
+      return d + 'Z';
+    }
+    case 'arch':
+      return `M 0 ${h} L 0 ${h * 0.4} Q 0 0, ${w / 2} 0 Q ${w} 0, ${w} ${h * 0.4} L ${w} ${h} Z`;
+    case 'malteseCross': {
+      const notch = 0.22, arm = 0.35;
+      return `M ${w * 0.5} 0 L ${w * (0.5 + arm)} ${h * notch} L ${w * (0.5 + notch)} ${h * (0.5 - arm)} L ${w} ${h * 0.5} L ${w * (0.5 + notch)} ${h * (0.5 + arm)} L ${w * (0.5 + arm)} ${h * (1 - notch)} L ${w * 0.5} ${h} L ${w * (0.5 - arm)} ${h * (1 - notch)} L ${w * (0.5 - notch)} ${h * (0.5 + arm)} L 0 ${h * 0.5} L ${w * (0.5 - notch)} ${h * (0.5 - arm)} L ${w * (0.5 - arm)} ${h * notch} Z`;
+    }
+    case 'chevron':
+      return `M 0 0 L ${w} 0 L ${w} ${h * 0.7} L ${w * 0.5} ${h} L 0 ${h * 0.7} Z`;
+    case 'arrow':
+      return `M 0 ${h * 0.25} L ${w * 0.65} ${h * 0.25} L ${w * 0.65} 0 L ${w} ${h * 0.5} L ${w * 0.65} ${h} L ${w * 0.65} ${h * 0.75} L 0 ${h * 0.75} Z`;
+    case 'ribbon':
+      return `M 0 ${h * 0.2} L ${w * 0.1} 0 L ${w * 0.1} ${h * 0.2} L ${w * 0.9} ${h * 0.2} L ${w * 0.9} 0 L ${w} ${h * 0.2} L ${w} ${h * 0.8} L ${w * 0.9} ${h} L ${w * 0.9} ${h * 0.8} L ${w * 0.1} ${h * 0.8} L ${w * 0.1} ${h} L 0 ${h * 0.8} Z`;
+    default:
+      return '';
+  }
+}
+
+function renderShapePreview(element: any, templateWidth: number, templateHeight: number) {
+  const isShape = SHAPE_TYPES.includes(element.elementType || '');
+  if (!isShape) return null;
+  
+  const centerX = templateWidth / 2;
+  const centerY = templateHeight / 2;
+  const elementCenterX = centerX + element.x;
+  const elementCenterY = centerY + element.y;
+  const leftPos = elementCenterX - element.width / 2;
+  const topPos = elementCenterY - element.height / 2;
+  const svgW = 100;
+  const svgH = 100;
+  
+  return (
+    <div
+      key={element.id}
+      className="absolute"
+      style={{
+        left: `${(leftPos / templateWidth) * 100}%`,
+        top: `${(topPos / templateHeight) * 100}%`,
+        width: `${(element.width / templateWidth) * 100}%`,
+        height: `${(element.height / templateHeight) * 100}%`,
+        transform: `rotate(${element.rotation || 0}deg)`,
+        transformOrigin: 'center',
+        opacity: element.opacity || 1,
+      }}
+    >
+      <svg width="100%" height="100%" viewBox={`0 0 ${svgW} ${svgH}`} xmlns="http://www.w3.org/2000/svg" style={{ overflow: 'visible' }}>
+        {(element.elementType === 'rectangle') && (
+          <rect x="1" y="1" width={svgW - 2} height={svgH - 2} rx={element.cornerRadius ? (element.cornerRadius / element.width) * svgW : 0} fill={element.fillColor || 'none'} stroke={element.strokeColor || '#000000'} strokeWidth="2" />
+        )}
+        {(element.elementType === 'ellipse' || element.elementType === 'circle' || element.elementType === 'oval') && (
+          <ellipse cx={svgW / 2} cy={svgH / 2} rx={(svgW - 2) / 2} ry={(svgH - 2) / 2} fill={element.fillColor || 'none'} stroke={element.strokeColor || '#000000'} strokeWidth="2" />
+        )}
+        {element.elementType === 'line' && (
+          <line x1="0" y1={svgH / 2} x2={svgW} y2={svgH / 2} stroke={element.strokeColor || '#000000'} strokeWidth="2" />
+        )}
+        {!['rectangle', 'ellipse', 'circle', 'oval', 'line'].includes(element.elementType || '') && (
+          <path d={getShapeSvgPath(element.elementType || '', svgW, svgH)} fill={element.fillColor || 'none'} stroke={element.strokeColor || '#000000'} strokeWidth="2" />
+        )}
+      </svg>
+    </div>
+  );
+}
+
 // Helper function to get the correct image URL for display (matches canvas-workspace logic)
 const getImageUrl = (logo: any): string => {
   // For complex files using PNG fallback
@@ -174,6 +297,10 @@ export default function PDFPreviewModal({
                         return isApplique ? (el.canvasIndex || 0) === 0 : true;
                       })
                       .map((element) => {
+                      const isShape = SHAPE_TYPES.includes(element.elementType || '');
+                      if (isShape) {
+                        return renderShapePreview(element, template?.width || 297, template?.height || 420);
+                      }
                       const logo = logos.find(l => l.id === element.logoId);
                       if (!logo) return null;
                       
@@ -254,6 +381,10 @@ export default function PDFPreviewModal({
                         }}
                       >
                         {canvasElements.filter(el => (el.canvasIndex || 0) === 1).map((element) => {
+                          const isShape = SHAPE_TYPES.includes(element.elementType || '');
+                          if (isShape) {
+                            return renderShapePreview(element, template?.width || 297, template?.height || 420);
+                          }
                           const logo = logos.find(l => l.id === element.logoId);
                           if (!logo) return null;
                           
