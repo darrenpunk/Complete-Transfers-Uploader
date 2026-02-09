@@ -819,7 +819,7 @@ ${bulletPoints}
 CRITICAL RULES:
 1. EVERY element visible in Image 2 gets embroidery texture — including ALL text of ANY size. Small text must also show stitch texture.
 2. Everything NOT in Image 2 stays as a smooth, flat print with zero stitch texture.
-3. Use the original colors from Image 1, keep exact layout and proportions.
+3. PRESERVE THE EXACT ORIGINAL COLORS from Image 1 for every element. Do NOT change, shift, or reinterpret any colors. White text must remain white embroidery thread. Blue must stay the same blue. Every color must match Image 1 exactly — only add stitch texture, not color changes.
 4. Do NOT add any extra elements not present in the original artwork.
 5. Output on a plain neutral background with padding so the ENTIRE badge is fully visible with nothing cropped.` },
       ];
