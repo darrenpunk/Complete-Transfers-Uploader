@@ -4,7 +4,7 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { Project, Logo, CanvasElement, TemplateSize, ContentBounds } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Minus, Plus, Grid3X3, AlignCenter, Undo, Redo, Upload, Trash2, Maximize2, RotateCw, Move, ArrowRight, CheckSquare, Group, Ungroup, Sparkles, X, Loader2, Square, Circle, MinusIcon, Shapes, Scissors } from "lucide-react";
+import { Minus, Plus, Grid3X3, AlignCenter, Undo, Redo, Upload, Trash2, Maximize2, RotateCw, Move, ArrowRight, CheckSquare, Group, Ungroup, X, Loader2, Square, Circle, MinusIcon, Shapes, Scissors } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
@@ -303,9 +303,6 @@ export default function CanvasWorkspace({
   const [history, setHistory] = useState<CanvasElement[][]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
 
-  const [embroideryPreviewImage, setEmbroideryPreviewImage] = useState<string | null>(null);
-  const [badgeCanvasSnapshot, setBadgeCanvasSnapshot] = useState<string | null>(null);
-  const [isGeneratingPreview, setIsGeneratingPreview] = useState(false);
 
   // History management
   const saveToHistory = useCallback((elements: CanvasElement[]) => {
@@ -609,47 +606,9 @@ export default function CanvasWorkspace({
     }
   }, []);
 
-  const captureBadgeSnapshot = useCallback(async () => {
-    const result = await captureCanvasArtworkOnly();
-    if (result) {
-      setBadgeCanvasSnapshot(result);
-    }
-  }, [captureCanvasArtworkOnly]);
-
-  useEffect(() => {
-    if (isAppliqueTemplate && activeCanvasIndex === 0 && canvasElements.some(el => (el.canvasIndex || 0) === 0)) {
-      const timer = setTimeout(() => captureBadgeSnapshot(), 800);
-      return () => clearTimeout(timer);
-    }
-  }, [isAppliqueTemplate, activeCanvasIndex, canvasElements, captureBadgeSnapshot]);
-
   const captureCanvasTransparent = useCallback(async (): Promise<string | null> => {
     return captureCanvasArtworkOnly();
   }, [captureCanvasArtworkOnly]);
-
-  const generateEmbroideryPreview = useCallback(async () => {
-    setIsGeneratingPreview(true);
-    setEmbroideryPreviewImage(null);
-    try {
-      onActiveCanvasChange?.(2);
-
-      const response = await apiRequest("POST", "/api/embroidery-preview", {
-        projectId: project?.id || null,
-        garmentColor: project?.garmentColor || '#929292',
-      });
-      const data = await response.json();
-      if (data.imageData) {
-        setEmbroideryPreviewImage(data.imageData);
-      } else {
-        toast({ title: "Error", description: "Failed to generate preview", variant: "destructive" });
-      }
-    } catch (err: any) {
-      console.error('Embroidery preview error:', err);
-      toast({ title: "Error", description: err.message || "Failed to generate embroidery preview", variant: "destructive" });
-    } finally {
-      setIsGeneratingPreview(false);
-    }
-  }, [toast, onActiveCanvasChange, project]);
 
   // Automatic cleanup of orphaned canvas elements
   useCleanupOrphanedElements({
@@ -2223,23 +2182,7 @@ export default function CanvasWorkspace({
               >
                 Canvas 2: Embroidery Artwork {embroideryCount > 0 && <span className="ml-1 bg-white/20 px-1.5 py-0.5 rounded text-xs">{embroideryCount}</span>}
               </button>
-              {embroideryCount > 0 && (
-                <button
-                  className={`px-4 py-1.5 rounded text-sm font-medium transition-colors flex items-center gap-1.5 ${activeCanvasIndex === 2 ? 'bg-amber-600 text-white' : 'bg-gray-600 text-gray-300 hover:bg-gray-500'}`}
-                  onClick={() => {
-                    if (embroideryPreviewImage || isGeneratingPreview) {
-                      onActiveCanvasChange?.(2);
-                    } else {
-                      generateEmbroideryPreview();
-                    }
-                  }}
-                  disabled={isGeneratingPreview && activeCanvasIndex === 2}
-                >
-                  {isGeneratingPreview ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
-                  Canvas 3: AI Preview
-                </button>
-              )}
-              {onSetupEmbroidery && activeCanvasIndex !== 2 && (
+              {onSetupEmbroidery && (
                 <button
                   className="px-3 py-1.5 rounded text-sm font-medium bg-purple-600 text-white hover:bg-purple-500 transition-colors flex items-center gap-1.5 ml-auto"
                   onClick={onSetupEmbroidery}
@@ -2251,64 +2194,6 @@ export default function CanvasWorkspace({
             </div>
           );
         })()}
-        {isAppliqueTemplate && activeCanvasIndex === 2 ? (
-          <div 
-            className="w-full h-full overflow-auto"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: '#404040'
-            }}
-          >
-            {isGeneratingPreview ? (
-              <div className="flex flex-col items-center justify-center gap-4">
-                <Loader2 className="w-12 h-12 text-amber-400 animate-spin" />
-                <p className="text-gray-300 text-sm">Generating AI embroidery preview...</p>
-                <p className="text-gray-500 text-xs">This may take a few moments</p>
-              </div>
-            ) : embroideryPreviewImage ? (
-              <div style={{
-                width: `${canvasWidth + 40}px`,
-                height: `${canvasHeight + 40}px`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0
-              }}>
-                <div
-                  className="relative shadow-xl rounded-lg overflow-hidden"
-                  style={{
-                    width: canvasWidth,
-                    height: canvasHeight,
-                    backgroundColor: '#f0f0f0',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <img
-                    src={embroideryPreviewImage}
-                    alt="AI Embroidery Preview"
-                    className="object-contain"
-                    style={{ maxWidth: '100%', maxHeight: '100%' }}
-                  />
-                </div>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center gap-4">
-                <p className="text-gray-400 text-sm">Preview generation failed</p>
-                <button
-                  onClick={generateEmbroideryPreview}
-                  className="px-4 py-2 bg-amber-600 text-white rounded-lg text-sm hover:bg-amber-500 transition-colors flex items-center gap-2"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  Try Again
-                </button>
-              </div>
-            )}
-          </div>
-        ) : (
         <div 
           className="w-full h-full overflow-auto"
           style={{
@@ -2980,7 +2865,6 @@ export default function CanvasWorkspace({
           </div>
         </div>
       </div>
-    )}
     </div>
 
       {/* Raster Warning Modal */}
