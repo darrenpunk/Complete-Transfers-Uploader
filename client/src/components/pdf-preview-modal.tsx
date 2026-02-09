@@ -420,7 +420,7 @@ export default function PDFPreviewModal({
           </div>
 
           {/* Preflight Summary */}
-          <div className="w-80 flex flex-col">
+          <div className="w-80 flex flex-col min-h-0 overflow-y-auto">
             <h3 className="text-lg font-semibold mb-3">Preflight Summary</h3>
             
             <div className="space-y-3 mb-6">
@@ -493,7 +493,7 @@ export default function PDFPreviewModal({
             </div>
 
             {/* Action Buttons */}
-            <div className="flex gap-3">
+            <div className="flex gap-3 mt-auto pt-4 sticky bottom-0 bg-background pb-1">
               <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
                 Cancel
               </Button>
