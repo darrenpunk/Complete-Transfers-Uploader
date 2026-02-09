@@ -681,21 +681,51 @@ export async function registerRoutes(app: express.Application) {
         return res.status(500).json({ error: 'Failed to generate embroidery preview' });
       }
 
-      console.log('[Embroidery Preview] Step 2: Resizing Gemini result to match badge');
+      console.log('[Embroidery Preview] Step 2: Masking Gemini result using Canvas 2 alpha channel');
 
       const sharp = (await import('sharp')).default;
       const timestamp = Date.now();
 
       const badgeBuffer = Buffer.from(badgeBase64, 'base64');
       const embroideredBuffer = Buffer.from(imagePart.inlineData.data, 'base64');
+      const embOrigBuffer = Buffer.from(embBase64, 'base64');
 
       const badgeMeta = await sharp(badgeBuffer).metadata();
       const badgeW = badgeMeta.width!;
       const badgeH = badgeMeta.height!;
       console.log('[Embroidery Preview] Badge size:', `${badgeW}x${badgeH}`);
 
-      const finalBuffer = await sharp(embroideredBuffer)
+      const embAlpha = await sharp(embOrigBuffer)
         .resize(badgeW, badgeH, { fit: 'fill' })
+        .ensureAlpha()
+        .extractChannel(3)
+        .png()
+        .toBuffer();
+
+      const dilatedMask = await sharp(embAlpha)
+        .blur(2)
+        .threshold(20)
+        .blur(1)
+        .png()
+        .toBuffer();
+
+      const resizedEmbroidered = await sharp(embroideredBuffer)
+        .resize(badgeW, badgeH, { fit: 'fill' })
+        .ensureAlpha()
+        .png()
+        .toBuffer();
+
+      const embWithMask = await sharp(resizedEmbroidered)
+        .composite([{
+          input: dilatedMask,
+          blend: 'dest-in' as any,
+        }])
+        .png()
+        .toBuffer();
+
+      const finalBuffer = await sharp(badgeBuffer)
+        .ensureAlpha()
+        .composite([{ input: embWithMask, blend: 'over' as any }])
         .png()
         .toBuffer();
 
