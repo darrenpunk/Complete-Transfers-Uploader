@@ -789,21 +789,21 @@ export async function registerRoutes(app: express.Application) {
         .png()
         .toBuffer();
 
-      const embOnBlackBg = await sharp({
-        create: { width: bw, height: bh, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 255 } }
-      })
-        .composite([{ input: embResized, gravity: 'center' }])
+      const redTint = await sharp({
+        create: { width: bw, height: bh, channels: 4, background: { r: 255, g: 0, b: 0, alpha: 128 } }
+      }).png().toBuffer();
+
+      const embRedTinted = await sharp(embResized)
+        .composite([{ input: redTint, gravity: 'center', blend: 'atop' }])
         .png()
         .toBuffer();
 
-      const compositePreview = await sharp(badgeResized)
-        .composite([{ input: embResized, gravity: 'center', blend: 'over' }])
+      const annotatedComposite = await sharp(badgeResized)
+        .composite([{ input: embRedTinted, gravity: 'center', blend: 'over' }])
         .png()
         .toBuffer();
-      const compositeBase64 = compositePreview.toString('base64');
-      const embBlackBase64 = embOnBlackBg.toString('base64');
-      console.log(`[Embroidery Preview] Composite preview: ${bw}x${bh}, ${compositePreview.length} bytes`);
-      console.log(`[Embroidery Preview] Embroidery on black: ${bw}x${bh}, ${embOnBlackBg.length} bytes`);
+      const annotatedBase64 = annotatedComposite.toString('base64');
+      console.log(`[Embroidery Preview] Badge: ${bw}x${bh}, Annotated composite: ${annotatedComposite.length} bytes`);
 
       const ai = new GoogleGenAI({
         apiKey: process.env.AI_INTEGRATIONS_GEMINI_API_KEY!,
@@ -818,24 +818,31 @@ export async function registerRoutes(app: express.Application) {
       const bulletPoints = embElementList.map(item => `- ${item}`).join('\n');
 
       const promptParts: any[] = [
-        { text: `I have an image of flat printed artwork. I need you to modify SPECIFIC PARTS of it to look like they have raised machine-embroidery stitch texture, while keeping everything else exactly as-is.
+        { text: `I need a photorealistic mockup of a finished applique badge/patch for custom apparel production.
 
-IMAGE 1 (next image): This is the COMPLETE artwork as it currently looks. This is your starting point — preserve the EXACT background color, layout, proportions, and all details.` },
+IMAGE 1 (next image): The original flat artwork — this is what gets printed onto vinyl. Preserve this EXACTLY as the base.` },
         { inlineData: { data: badgeBase64, mimeType: badgeData.mime } },
-        { text: `IMAGE 2 (next image): This MASK shows which elements need embroidery texture added. These elements are shown on a black background for contrast. ONLY these elements should get stitch texture.` },
-        { inlineData: { data: embBlackBase64, mimeType: 'image/png' } },
-        { text: `TASK: Take Image 1 exactly as-is, and add STRONGLY VISIBLE photorealistic raised satin-stitch machine embroidery texture to the elements shown in Image 2.
+        { text: `IMAGE 2 (next image): Same artwork but with RED-HIGHLIGHTED areas. The RED-TINTED elements are the parts that will be machine-embroidered with real thread ON TOP of the printed base.` },
+        { inlineData: { data: annotatedBase64, mimeType: 'image/png' } },
+        { text: `TASK: Generate a photorealistic image of the finished badge. The badge has two production layers:
 
-These elements MUST have clearly visible embroidery stitching:
+LAYER 1 (PRINTED): Everything from Image 1 is printed flat onto vinyl — smooth, no texture. This includes the background color, any imagery, and all non-highlighted elements.
+
+LAYER 2 (EMBROIDERED): The red-highlighted elements from Image 2 are machine-embroidered ON TOP of the printed vinyl with real thread. These must show:
+- Clearly visible individual satin stitches with parallel thread lines
+- Raised 3D relief that stands up from the flat surface
+- Natural thread sheen catching light
+- The embroidery sits physically ON TOP of the flat printed surface
+
+Elements that need embroidery:
 ${bulletPoints}
 
-RULES:
-1. START from Image 1 as your base — keep its EXACT background, colors, and layout unchanged. A black background stays black. A blue background stays blue. Do NOT replace the background with fabric or any other material.
-2. The embroidered elements (from Image 2) must have OBVIOUS, clearly visible thread texture: individual satin stitches running in parallel, raised 3D relief that catches light, and a visible thread sheen. The stitching should be dramatic and clearly distinguishable from flat areas — like a real close-up photo of machine embroidery.
-3. Everything NOT in Image 2 must remain completely flat and smooth — no stitch texture on those parts.
-4. Keep all original colors exactly the same — only add thread texture, do not change any colors.
-5. The output should look like Image 1 but with the masked elements having a strongly tactile, raised embroidered appearance.
-6. Add generous padding/margin around the entire artwork so nothing is cropped at the edges. The artwork should be centered with visible space around all sides.` },
+CRITICAL:
+1. The background and non-highlighted areas remain FLAT PRINTED vinyl (smooth, no texture). A black background stays black printed vinyl. Do NOT change the background to fabric.
+2. ONLY the red-highlighted elements get embroidery stitch texture.
+3. Keep the EXACT same colors from Image 1 — the red highlighting is just to show which areas get stitched, NOT the actual color. Use the original colors.
+4. The badge should be shown on a neutral surface with generous padding around all edges so nothing is cropped.
+5. Make the contrast between flat-printed areas and raised-embroidered areas clearly visible — this is the whole point of an applique badge.` },
       ];
 
       const response = await ai.models.generateContent({
