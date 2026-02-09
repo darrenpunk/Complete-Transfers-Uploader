@@ -378,7 +378,7 @@ export default function CanvasWorkspace({
   });
 
   const handleZoomIn = () => {
-    setZoom(Math.min(zoom + 10, 400));
+    setZoom(Math.min(zoom + 10, 1000));
   };
 
   const handleZoomOut = () => {
@@ -1602,7 +1602,7 @@ export default function CanvasWorkspace({
     
     const targetScale = optimalScale * fillFactor;
     
-    const maxZoom = template.pixelWidth <= 300 || template.pixelHeight <= 300 ? 400 : 150;
+    const maxZoom = template.pixelWidth <= 300 || template.pixelHeight <= 300 ? 1000 : 150;
     const optimalZoom = Math.min(Math.max(targetScale * 100, 50), maxZoom);
     
     console.log(`Template ${template.name}: ${template.pixelWidth}x${template.pixelHeight}px, Workspace: ${workspaceWidth}x${workspaceHeight}, Zoom: ${Math.round(optimalZoom)}%`);
@@ -1990,7 +1990,7 @@ export default function CanvasWorkspace({
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Zoom in (400% maximum)</p>
+                  <p>Zoom in (1000% maximum)</p>
                 </TooltipContent>
               </Tooltip>
               <Tooltip>

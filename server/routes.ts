@@ -661,13 +661,47 @@ export async function registerRoutes(app: express.Application) {
         try {
           const filename = logo.canvasFallbackFilename || logo.previewFilename || logo.filename;
           const filePath = path.join(uploadsDir, filename);
-          const buffer = await fs.readFile(filePath);
+          
+          const isPdf = filename.endsWith('.pdf');
           const isSvg = filename.endsWith('.svg');
+          
+          if (isPdf) {
+            const svgFilename = filename.replace(/\.pdf$/, '') + '.svg';
+            const svgPath = path.join(uploadsDir, svgFilename);
+            try {
+              const svgBuffer = await fs.readFile(svgPath);
+              const pngBuffer = await sharp(svgBuffer, { density: 300 })
+                .resize(1500, 1500, { fit: 'inside', withoutEnlargement: false })
+                .png()
+                .toBuffer();
+              console.log(`[Embroidery Preview] Converted SVG (from PDF) to high-res PNG: ${pngBuffer.length} bytes`);
+              return { buffer: pngBuffer, mime: 'image/png' };
+            } catch (svgErr) {
+              console.log(`[Embroidery Preview] No SVG found for PDF, trying PNG fallback`);
+              const pngFallback = filename.replace(/\.pdf$/, '') + '_raster_direct_' + '*.png';
+              const { execSync } = await import('child_process');
+              try {
+                const pngFiles = execSync(`ls ${uploadsDir}/${filename.replace(/\.pdf$/, '')}*.png 2>/dev/null`).toString().trim().split('\n').filter(Boolean);
+                if (pngFiles.length > 0) {
+                  const pngBuffer = await fs.readFile(pngFiles[0]);
+                  return { buffer: pngBuffer, mime: 'image/png' };
+                }
+              } catch {}
+              const buffer = await fs.readFile(filePath);
+              return { buffer, mime: 'application/pdf' };
+            }
+          }
+          
+          const buffer = await fs.readFile(filePath);
           if (isSvg) {
-            const pngBuffer = await sharp(buffer).png().toBuffer();
+            const pngBuffer = await sharp(buffer, { density: 300 })
+              .resize(1500, 1500, { fit: 'inside', withoutEnlargement: false })
+              .png()
+              .toBuffer();
+            console.log(`[Embroidery Preview] Converted SVG to high-res PNG: ${pngBuffer.length} bytes`);
             return { buffer: pngBuffer, mime: 'image/png' };
           }
-          const mime = logo.mimeType || (filename.endsWith('.png') ? 'image/png' : 'image/png');
+          const mime = logo.mimeType || 'image/png';
           return { buffer, mime };
         } catch (e) {
           console.error(`[Embroidery Preview] Failed to load logo ${logo.id}:`, e);
