@@ -525,7 +525,8 @@ grestore`;
     if (isAppliqueTemplate) {
       console.log(`📋 Applique PDF: Processing ${badgeElements.length} badge elements for page 1`);
       for (const element of badgeElements) {
-        const isShape = element.elementType === 'rectangle' || element.elementType === 'ellipse' || element.elementType === 'circle' || element.elementType === 'line';
+        const shapeTypes = ['rectangle', 'ellipse', 'circle', 'line', 'shield', 'star', 'hexagon', 'pentagon', 'triangle', 'diamond', 'banner', 'cross'];
+        const isShape = shapeTypes.includes(element.elementType || '');
         if (isShape) {
           this.drawShapeOnPage(page1, element, data.templateSize, pageHeight);
           continue;
@@ -541,7 +542,8 @@ grestore`;
         console.log(`📋 Applique PDF: Processing ${embroideryElements.length} embroidery elements for page 2`);
         for (const element of embroideryElements) {
           console.log(`📋 Emb element: id=${(element as any).id?.substring(0,8)}, logoId=${element.logoId?.substring(0,8)}, type=${element.elementType}, size=${element.width}x${element.height}`);
-          const isShape = element.elementType === 'rectangle' || element.elementType === 'ellipse' || element.elementType === 'circle' || element.elementType === 'line';
+          const embShapeTypes = ['rectangle', 'ellipse', 'circle', 'line', 'shield', 'star', 'hexagon', 'pentagon', 'triangle', 'diamond', 'banner', 'cross'];
+          const isShape = embShapeTypes.includes(element.elementType || '');
           if (isShape) {
             this.drawShapeOnPage(embroideryPage, element, data.templateSize, pageHeight);
             continue;
@@ -570,7 +572,8 @@ grestore`;
       const logo = data.logos.find(l => l.id === element.logoId);
       console.log(`🔍 DEBUG: Logo lookup result:`, logo ? `Found logo: ${logo.filename}` : 'Logo not found');
       
-      const isShapeElement = element.elementType === 'rectangle' || element.elementType === 'ellipse' || element.elementType === 'circle' || element.elementType === 'line';
+      const allShapeTypes = ['rectangle', 'ellipse', 'circle', 'line', 'shield', 'star', 'hexagon', 'pentagon', 'triangle', 'diamond', 'banner', 'cross'];
+      const isShapeElement = allShapeTypes.includes(element.elementType || '');
       
       if (isShapeElement) {
         console.log(`🔷 Processing shape element ${i + 1}/${data.canvasElements.length}: ${element.elementType}`);
@@ -871,9 +874,78 @@ grestore`;
         opacity,
       };
       page.drawLine(lineOpts);
+    } else {
+      const badgeShapes = ['shield', 'star', 'hexagon', 'pentagon', 'triangle', 'diamond', 'banner', 'cross'];
+      if (badgeShapes.includes(element.elementType || '')) {
+        const svgPath = this.getBadgeShapeSvgPath(element.elementType!, elemWidthPt, elemHeightPt);
+        if (svgPath) {
+          page.drawSvgPath(svgPath, {
+            x: elemXPt,
+            y: elemYPt + elemHeightPt,
+            borderWidth: strokeWidthPt,
+            borderColor: strokeColor,
+            color: fillColor,
+            opacity,
+            borderOpacity: opacity,
+          });
+        }
+      }
     }
 
     console.log(`🔷 Drew ${element.elementType} shape at (${elemXPt.toFixed(1)}, ${elemYPt.toFixed(1)}) size ${elemWidthPt.toFixed(1)}×${elemHeightPt.toFixed(1)}`);
+  }
+
+  private getBadgeShapeSvgPath(shapeType: string, w: number, h: number): string {
+    switch (shapeType) {
+      case 'shield':
+        return `M ${w * 0.5} 0 L ${w} ${h * 0.15} L ${w} ${h * 0.55} Q ${w * 0.5} ${h} ${w * 0.5} ${h} Q ${w * 0.5} ${h} 0 ${h * 0.55} L 0 ${h * 0.15} Z`;
+      case 'star': {
+        const cx = w / 2, cy = h / 2;
+        const outerR = Math.min(w, h) / 2;
+        const innerR = outerR * 0.38;
+        let d = '';
+        for (let i = 0; i < 5; i++) {
+          const outerAngle = (i * 72 - 90) * Math.PI / 180;
+          const innerAngle = ((i * 72) + 36 - 90) * Math.PI / 180;
+          d += `${i === 0 ? 'M' : 'L'} ${cx + outerR * Math.cos(outerAngle)} ${cy + outerR * Math.sin(outerAngle)} `;
+          d += `L ${cx + innerR * Math.cos(innerAngle)} ${cy + innerR * Math.sin(innerAngle)} `;
+        }
+        return d + 'Z';
+      }
+      case 'hexagon': {
+        const cx = w / 2, cy = h / 2;
+        const rx = w / 2, ry = h / 2;
+        let d = '';
+        for (let i = 0; i < 6; i++) {
+          const angle = (i * 60 - 90) * Math.PI / 180;
+          d += `${i === 0 ? 'M' : 'L'} ${cx + rx * Math.cos(angle)} ${cy + ry * Math.sin(angle)} `;
+        }
+        return d + 'Z';
+      }
+      case 'pentagon': {
+        const cx = w / 2, cy = h / 2;
+        const rx = w / 2, ry = h / 2;
+        let d = '';
+        for (let i = 0; i < 5; i++) {
+          const angle = (i * 72 - 90) * Math.PI / 180;
+          d += `${i === 0 ? 'M' : 'L'} ${cx + rx * Math.cos(angle)} ${cy + ry * Math.sin(angle)} `;
+        }
+        return d + 'Z';
+      }
+      case 'triangle':
+        return `M ${w / 2} 0 L ${w} ${h} L 0 ${h} Z`;
+      case 'diamond':
+        return `M ${w / 2} 0 L ${w} ${h / 2} L ${w / 2} ${h} L 0 ${h / 2} Z`;
+      case 'banner':
+        return `M 0 0 L ${w} 0 L ${w} ${h * 0.75} L ${w * 0.5} ${h} L 0 ${h * 0.75} Z`;
+      case 'cross': {
+        const armW = w / 3;
+        const armH = h / 3;
+        return `M ${armW} 0 L ${armW * 2} 0 L ${armW * 2} ${armH} L ${w} ${armH} L ${w} ${armH * 2} L ${armW * 2} ${armH * 2} L ${armW * 2} ${h} L ${armW} ${h} L ${armW} ${armH * 2} L 0 ${armH * 2} L 0 ${armH} L ${armW} ${armH} Z`;
+      }
+      default:
+        return '';
+    }
   }
 
   private async parseGarmentColor(garmentColor: string | undefined): Promise<any> {

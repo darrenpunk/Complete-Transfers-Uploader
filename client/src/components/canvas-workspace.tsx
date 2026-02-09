@@ -4,7 +4,7 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { Project, Logo, CanvasElement, TemplateSize, ContentBounds } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Minus, Plus, Grid3X3, AlignCenter, Undo, Redo, Upload, Trash2, Maximize2, RotateCw, Move, ArrowRight, CheckSquare, Group, Ungroup, X, Loader2, Square, Circle, MinusIcon, Shapes, Scissors } from "lucide-react";
+import { Minus, Plus, Grid3X3, AlignCenter, Undo, Redo, Upload, Trash2, Maximize2, RotateCw, Move, ArrowRight, CheckSquare, Group, Ungroup, X, Loader2, Square, Circle, MinusIcon, Shapes, Scissors, Shield, Star, Hexagon, Pentagon, Triangle } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
@@ -455,11 +455,13 @@ export default function CanvasWorkspace({
   // Initialize toast
   const { toast } = useToast();
 
-  const handleAddShape = async (shapeType: 'rectangle' | 'ellipse' | 'circle' | 'line') => {
+  const handleAddShape = async (shapeType: 'rectangle' | 'ellipse' | 'circle' | 'line' | 'shield' | 'star' | 'hexagon' | 'pentagon' | 'triangle' | 'diamond' | 'banner' | 'cross') => {
     if (!project?.id) return;
     try {
-      const defaultWidth = shapeType === 'line' ? 60 : 40;
-      const defaultHeight = shapeType === 'line' ? 2 : 40;
+      const badgeShapes = ['shield', 'star', 'hexagon', 'pentagon', 'triangle', 'diamond', 'banner', 'cross'];
+      const isBadgeShape = badgeShapes.includes(shapeType);
+      const defaultWidth = shapeType === 'line' ? 60 : isBadgeShape ? 50 : 40;
+      const defaultHeight = shapeType === 'line' ? 2 : shapeType === 'banner' ? 20 : isBadgeShape ? 50 : 40;
       const centerX = Math.round(((template?.width || 100) - defaultWidth) / 2);
       const centerY = Math.round(((template?.height || 100) - defaultHeight) / 2);
       const response = await apiRequest("POST", `/api/projects/${project.id}/canvas-elements`, {
@@ -1895,36 +1897,63 @@ export default function CanvasWorkspace({
               )}
             </div>
             
-            {/* Add Shapes */}
-            <DropdownMenu>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" disabled={!project.garmentColor}>
-                      <Shapes className="w-4 h-4 mr-2" />
-                      Add Shape
-                    </Button>
-                  </DropdownMenuTrigger>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Add a shape border (rectangle, ellipse, or line) to the design</p>
-                </TooltipContent>
-              </Tooltip>
-              <DropdownMenuContent align="start">
-                <DropdownMenuItem onClick={() => handleAddShape('rectangle')}>
-                  <Square className="w-4 h-4 mr-2" />
-                  Rectangle
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleAddShape('ellipse')}>
-                  <Circle className="w-4 h-4 mr-2" />
-                  Ellipse
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleAddShape('line')}>
-                  <MinusIcon className="w-4 h-4 mr-2" />
-                  Line
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {/* Add Shapes - only in toolbar for non-applique templates */}
+            {!isAppliqueTemplate && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" disabled={!project.garmentColor}>
+                    <Shapes className="w-4 h-4 mr-2" />
+                    Add Shape
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  <DropdownMenuItem onClick={() => handleAddShape('rectangle')}>
+                    <Square className="w-4 h-4 mr-2" />
+                    Rectangle
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleAddShape('ellipse')}>
+                    <Circle className="w-4 h-4 mr-2" />
+                    Ellipse / Circle
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleAddShape('triangle')}>
+                    <Triangle className="w-4 h-4 mr-2" />
+                    Triangle
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleAddShape('shield')}>
+                    <Shield className="w-4 h-4 mr-2" />
+                    Shield
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleAddShape('star')}>
+                    <Star className="w-4 h-4 mr-2" />
+                    Star
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleAddShape('hexagon')}>
+                    <Hexagon className="w-4 h-4 mr-2" />
+                    Hexagon
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleAddShape('pentagon')}>
+                    <Pentagon className="w-4 h-4 mr-2" />
+                    Pentagon
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleAddShape('diamond')}>
+                    <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2 L22 12 L12 22 L2 12 Z" /></svg>
+                    Diamond
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleAddShape('banner')}>
+                    <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16v12l-3-2-5 3-5-3-3 2V4z" /></svg>
+                    Banner
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleAddShape('cross')}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Cross
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleAddShape('line')}>
+                    <MinusIcon className="w-4 h-4 mr-2" />
+                    Line
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
 
             <div className="h-6 w-px bg-gray-300"></div>
             
@@ -2182,15 +2211,74 @@ export default function CanvasWorkspace({
               >
                 Canvas 2: Embroidery Artwork {embroideryCount > 0 && <span className="ml-1 bg-white/20 px-1.5 py-0.5 rounded text-xs">{embroideryCount}</span>}
               </button>
-              {onSetupEmbroidery && (
-                <button
-                  className="px-3 py-1.5 rounded text-sm font-medium bg-purple-600 text-white hover:bg-purple-500 transition-colors flex items-center gap-1.5 ml-auto"
-                  onClick={onSetupEmbroidery}
-                >
-                  <Scissors className="w-3.5 h-3.5" />
-                  {activeCanvasIndex === 0 ? 'Setup Embroidery' : 'Add Artwork'}
-                </button>
-              )}
+              <div className="flex items-center gap-2 ml-auto">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      className="px-3 py-1.5 rounded text-sm font-medium bg-gray-600 text-gray-300 hover:bg-gray-500 transition-colors flex items-center gap-1.5"
+                      disabled={!project.garmentColor}
+                    >
+                      <Shapes className="w-3.5 h-3.5" />
+                      Add Shape
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => handleAddShape('rectangle')}>
+                      <Square className="w-4 h-4 mr-2" />
+                      Rectangle
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleAddShape('ellipse')}>
+                      <Circle className="w-4 h-4 mr-2" />
+                      Ellipse / Circle
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleAddShape('triangle')}>
+                      <Triangle className="w-4 h-4 mr-2" />
+                      Triangle
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleAddShape('shield')}>
+                      <Shield className="w-4 h-4 mr-2" />
+                      Shield
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleAddShape('star')}>
+                      <Star className="w-4 h-4 mr-2" />
+                      Star
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleAddShape('hexagon')}>
+                      <Hexagon className="w-4 h-4 mr-2" />
+                      Hexagon
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleAddShape('pentagon')}>
+                      <Pentagon className="w-4 h-4 mr-2" />
+                      Pentagon
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleAddShape('diamond')}>
+                      <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2 L22 12 L12 22 L2 12 Z" /></svg>
+                      Diamond
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleAddShape('banner')}>
+                      <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16v12l-3-2-5 3-5-3-3 2V4z" /></svg>
+                      Banner
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleAddShape('cross')}>
+                      <Plus className="w-4 h-4 mr-2" />
+                      Cross
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleAddShape('line')}>
+                      <MinusIcon className="w-4 h-4 mr-2" />
+                      Line
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                {onSetupEmbroidery && (
+                  <button
+                    className="px-3 py-1.5 rounded text-sm font-medium bg-purple-600 text-white hover:bg-purple-500 transition-colors flex items-center gap-1.5"
+                    onClick={onSetupEmbroidery}
+                  >
+                    <Scissors className="w-3.5 h-3.5" />
+                    {activeCanvasIndex === 0 ? 'Setup Embroidery' : 'Add Artwork'}
+                  </button>
+                )}
+              </div>
             </div>
           );
         })()}
@@ -2409,7 +2497,7 @@ export default function CanvasWorkspace({
                     transformOrigin: 'center',
                     outline: isSelected 
                       ? `2px solid #961E75` 
-                      : (element.elementType === 'rectangle' || element.elementType === 'ellipse' || element.elementType === 'circle' || element.elementType === 'line') 
+                      : (['rectangle', 'ellipse', 'circle', 'line', 'shield', 'star', 'hexagon', 'pentagon', 'triangle', 'diamond', 'banner', 'cross'].includes(element.elementType || '')) 
                         ? 'none'
                         : `1px solid #d1d5db`,
                     outlineOffset: '-2px',
@@ -2437,9 +2525,67 @@ export default function CanvasWorkspace({
                     }}
                   >
                     {/* Shape Elements */}
-                    {(element.elementType === 'rectangle' || element.elementType === 'ellipse' || element.elementType === 'circle' || element.elementType === 'line') ? (() => {
+                    {(['rectangle', 'ellipse', 'circle', 'line', 'shield', 'star', 'hexagon', 'pentagon', 'triangle', 'diamond', 'banner', 'cross'].includes(element.elementType || '')) ? (() => {
                       const strokePx = (element.strokeWidth || 1) * mmToPixelRatio * (zoom / 100);
                       const cornerPx = (element.cornerRadius || 0) * mmToPixelRatio * (zoom / 100);
+                      const w = elementWidth;
+                      const h = elementHeight;
+                      const s = strokePx / 2;
+                      const getShapePath = (type: string) => {
+                        const iw = w - strokePx;
+                        const ih = h - strokePx;
+                        switch (type) {
+                          case 'shield':
+                            return `M ${s + iw * 0.5} ${s} L ${s + iw} ${s + ih * 0.15} L ${s + iw} ${s + ih * 0.55} Q ${s + iw * 0.5} ${s + ih} ${s + iw * 0.5} ${s + ih} Q ${s + iw * 0.5} ${s + ih} ${s} ${s + ih * 0.55} L ${s} ${s + ih * 0.15} Z`;
+                          case 'star': {
+                            const cx = w / 2, cy = h / 2;
+                            const outerR = Math.min(iw, ih) / 2;
+                            const innerR = outerR * 0.38;
+                            let d = '';
+                            for (let i = 0; i < 5; i++) {
+                              const outerAngle = (i * 72 - 90) * Math.PI / 180;
+                              const innerAngle = ((i * 72) + 36 - 90) * Math.PI / 180;
+                              d += `${i === 0 ? 'M' : 'L'} ${cx + outerR * Math.cos(outerAngle)} ${cy + outerR * Math.sin(outerAngle)} `;
+                              d += `L ${cx + innerR * Math.cos(innerAngle)} ${cy + innerR * Math.sin(innerAngle)} `;
+                            }
+                            return d + 'Z';
+                          }
+                          case 'hexagon': {
+                            const cx = w / 2, cy = h / 2;
+                            const rx = iw / 2, ry = ih / 2;
+                            let d = '';
+                            for (let i = 0; i < 6; i++) {
+                              const angle = (i * 60 - 90) * Math.PI / 180;
+                              d += `${i === 0 ? 'M' : 'L'} ${cx + rx * Math.cos(angle)} ${cy + ry * Math.sin(angle)} `;
+                            }
+                            return d + 'Z';
+                          }
+                          case 'pentagon': {
+                            const cx = w / 2, cy = h / 2;
+                            const rx = iw / 2, ry = ih / 2;
+                            let d = '';
+                            for (let i = 0; i < 5; i++) {
+                              const angle = (i * 72 - 90) * Math.PI / 180;
+                              d += `${i === 0 ? 'M' : 'L'} ${cx + rx * Math.cos(angle)} ${cy + ry * Math.sin(angle)} `;
+                            }
+                            return d + 'Z';
+                          }
+                          case 'triangle':
+                            return `M ${w / 2} ${s} L ${s + iw} ${s + ih} L ${s} ${s + ih} Z`;
+                          case 'diamond':
+                            return `M ${w / 2} ${s} L ${s + iw} ${h / 2} L ${w / 2} ${s + ih} L ${s} ${h / 2} Z`;
+                          case 'banner':
+                            return `M ${s} ${s} L ${s + iw} ${s} L ${s + iw} ${s + ih * 0.75} L ${s + iw * 0.5} ${s + ih} L ${s} ${s + ih * 0.75} Z`;
+                          case 'cross': {
+                            const armW = iw / 3;
+                            return `M ${s + armW} ${s} L ${s + armW * 2} ${s} L ${s + armW * 2} ${s + armW} L ${s + iw} ${s + armW} L ${s + iw} ${s + armW * 2} L ${s + armW * 2} ${s + armW * 2} L ${s + armW * 2} ${s + ih} L ${s + armW} ${s + ih} L ${s + armW} ${s + armW * 2} L ${s} ${s + armW * 2} L ${s} ${s + armW} L ${s + armW} ${s + armW} Z`;
+                          }
+                          default:
+                            return '';
+                        }
+                      };
+                      const badgeShapeTypes = ['shield', 'star', 'hexagon', 'pentagon', 'triangle', 'diamond', 'banner', 'cross'];
+                      const isBadge = badgeShapeTypes.includes(element.elementType || '');
                       return (
                         <svg
                           width="100%"
@@ -2482,6 +2628,16 @@ export default function CanvasWorkspace({
                               y2={elementHeight / 2}
                               stroke={element.strokeColor || '#000000'}
                               strokeWidth={strokePx}
+                              opacity={element.opacity ?? 1}
+                            />
+                          )}
+                          {isBadge && (
+                            <path
+                              d={getShapePath(element.elementType || '')}
+                              fill={element.fillColor || 'none'}
+                              stroke={element.strokeColor || '#000000'}
+                              strokeWidth={strokePx}
+                              strokeLinejoin="round"
                               opacity={element.opacity ?? 1}
                             />
                           )}
