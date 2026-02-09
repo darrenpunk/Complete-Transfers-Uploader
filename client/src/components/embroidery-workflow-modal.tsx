@@ -2,8 +2,10 @@ import { useState, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Scissors, Upload, MousePointerClick, Copy, CheckSquare, FileUp, Loader2 } from "lucide-react";
+import { Scissors, Upload, MousePointerClick, Copy, CheckSquare, FileUp, Loader2, Square, Circle, Minus as MinusIcon, Triangle, Shield, Star, Hexagon, Pentagon } from "lucide-react";
 import type { CanvasElement, Logo } from "@shared/schema";
+
+const SHAPE_TYPES = ['rectangle', 'ellipse', 'circle', 'line', 'shield', 'star', 'hexagon', 'pentagon', 'triangle', 'diamond', 'banner', 'cross'];
 
 type WorkflowStep = 'choose' | 'select-elements' | 'upload';
 
@@ -234,11 +236,24 @@ export function EmbroideryWorkflowModal({
                                 (e.target as HTMLImageElement).style.display = 'none';
                               }}
                             />
-                          ) : element.elementType === 'shape' ? (
-                            <div className="w-full h-full bg-muted flex items-center justify-center text-muted-foreground">
-                              <span className="text-lg">
-                                {(element as any).shapeType === 'ellipse' ? '⬭' : (element as any).shapeType === 'line' ? '╱' : '▭'}
-                              </span>
+                          ) : SHAPE_TYPES.includes(element.elementType || '') ? (
+                            <div className="w-full h-full flex items-center justify-center text-gray-600">
+                              {(() => {
+                                switch (element.elementType) {
+                                  case 'rectangle': return <Square className="w-7 h-7" />;
+                                  case 'ellipse': case 'circle': return <Circle className="w-7 h-7" />;
+                                  case 'line': return <MinusIcon className="w-7 h-7" />;
+                                  case 'triangle': return <Triangle className="w-7 h-7" />;
+                                  case 'shield': return <Shield className="w-7 h-7" />;
+                                  case 'star': return <Star className="w-7 h-7" />;
+                                  case 'hexagon': return <Hexagon className="w-7 h-7" />;
+                                  case 'pentagon': return <Pentagon className="w-7 h-7" />;
+                                  case 'diamond': return <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2 L22 12 L12 22 L2 12 Z" /></svg>;
+                                  case 'banner': return <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16v12l-3-2-5 3-5-3-3 2V4z" /></svg>;
+                                  case 'cross': return <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8 2v8H2v4h6v8h4v-8h6v-4h-6V2H8z" /></svg>;
+                                  default: return <Square className="w-7 h-7" />;
+                                }
+                              })()}
                             </div>
                           ) : (
                             <div className="w-full h-full bg-muted flex items-center justify-center text-xs text-muted-foreground">
@@ -249,7 +264,7 @@ export function EmbroideryWorkflowModal({
 
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium truncate">
-                            {logo?.originalName || element.textContent || (element.elementType === 'shape' ? `${(element as any).shapeType || 'Shape'}` : `Element`)}
+                            {logo?.originalName || (SHAPE_TYPES.includes(element.elementType || '') ? (element.elementType || 'Shape').charAt(0).toUpperCase() + (element.elementType || 'shape').slice(1) : element.textContent || `Element`)}
                           </p>
                           <p className="text-xs text-muted-foreground">
                             {Math.round(element.width)}mm x {Math.round(element.height)}mm
