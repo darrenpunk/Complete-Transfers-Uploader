@@ -651,16 +651,33 @@ export async function registerRoutes(app: express.Application) {
 
       console.log('[Embroidery Preview] Step 1: Sending badge + embroidery overlay to Gemini');
 
+      const fsSync = await import('fs');
+      const pathMod = await import('path');
+      const stitchRefPath = pathMod.join(process.cwd(), 'server', 'assets', 'stitch-reference.png');
+      let stitchRefBase64 = '';
+      try {
+        stitchRefBase64 = fsSync.readFileSync(stitchRefPath).toString('base64');
+      } catch (e) {
+        console.log('[Embroidery Preview] Warning: stitch reference image not found');
+      }
+
+      const promptParts: any[] = [
+        { text: "I need a photorealistic preview of a finished applique badge.\n\nImage 1: The FULL badge with all printed elements.\nImage 2: ONLY the embroidery overlay elements (outlines, borders, text) that will be stitched on top.\nImage 3: A REFERENCE showing exactly how machine satin-stitch embroidery looks — notice the SINGLE thick rounded cord with fine perpendicular thread texture, 3D relief, and thread sheen. Each stitch line is ONE solid raised cord, NOT two parallel lines." },
+        { inlineData: { data: badgeBase64, mimeType: badgeMime } },
+        { inlineData: { data: embBase64, mimeType: embMime } },
+      ];
+
+      if (stitchRefBase64) {
+        promptParts.push({ inlineData: { data: stitchRefBase64, mimeType: 'image/png' } });
+      }
+
+      promptParts.push({ text: "Generate the finished badge: keep printed areas from Image 1 as smooth prints. Replace every embroidery line/border from Image 2 with a SINGLE thick satin-stitch cord exactly like Image 3 — one solid raised thread cord per line, with perpendicular stitch texture, 3D relief, and natural sheen. Do NOT render double outlines or two parallel stitch lines. Keep the exact same design, layout, colors, shapes and proportions. Output one clean image on a plain neutral background." });
+
       const response = await ai.models.generateContent({
         model: "gemini-2.5-flash-image",
         contents: [{
           role: "user",
-          parts: [
-            { text: "I have an applique badge design. Image 1 is the FULL badge with all printed elements. Image 2 shows ONLY the embroidery overlay elements (outlines, borders, text) that will be stitched on top." },
-            { inlineData: { data: badgeBase64, mimeType: badgeMime } },
-            { inlineData: { data: embBase64, mimeType: embMime } },
-            { text: "Create a photorealistic preview of this finished applique badge. The printed areas from Image 1 should remain as smooth heat-transfer prints. The embroidery elements from Image 2 should look like real machine satin-stitch embroidery: each line or border should be a SINGLE rounded satin-stitch cord (like the reference style of a single thick embroidered thread line), NOT a double outline or two parallel lines. The stitch should have fine perpendicular thread texture, subtle 3D relief, and natural thread sheen. Keep the exact same design, layout, colors, shapes and proportions. Output a single clean image of the complete badge on a plain neutral background, no extra borders or decorations." }
-          ]
+          parts: promptParts,
         }],
         config: {
           responseModalities: [Modality.TEXT, Modality.IMAGE],
