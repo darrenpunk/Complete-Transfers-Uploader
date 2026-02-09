@@ -2845,10 +2845,11 @@ export default function CanvasWorkspace({
               );
             })}
 
-            {/* Canvas Info */}
-            <div className="absolute bottom-4 left-4 text-xs text-gray-500 bg-white px-2 py-1 rounded">
-              {isAppliqueTemplate ? (activeCanvasIndex === 0 ? 'Badge Artwork' : 'Embroidery Artwork') + ' • ' : ''}{template.label} ({template.width}×{template.height}mm) • {project.garmentColor ? getColorName(project.garmentColor) : 'No Color'} Garment
-            </div>
+            {!isAppliqueTemplate && (
+              <div className="absolute bottom-4 left-4 text-xs text-gray-500 bg-white px-2 py-1 rounded">
+                {template.label} ({template.width}×{template.height}mm) • {project.garmentColor ? getColorName(project.garmentColor) : 'No Color'} Garment
+              </div>
+            )}
           </div>
         </div>
       </div>

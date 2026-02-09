@@ -154,7 +154,9 @@ export default function PDFPreviewModal({
             <div className="gap-4 flex-1 flex">
               {/* Page 1 Preview - Artwork Layout */}
               <div className="flex-1 flex flex-col">
-                <h4 className="text-sm font-medium text-muted-foreground mb-2">Page 1 - Artwork Layout</h4>
+                <h4 className="text-sm font-medium text-muted-foreground mb-2">
+                  Page 1 - {(template?.id?.includes('applique') || template?.name?.includes('applique')) ? 'Badge Artwork' : 'Artwork Layout'}
+                </h4>
                 <div className="border rounded-lg p-4 flex-1 flex items-center justify-center relative overflow-hidden" style={{backgroundColor: '#CDCECC'}}>
                   <div 
                     className="relative border border-dashed border-gray-400"
@@ -166,7 +168,12 @@ export default function PDFPreviewModal({
                     }}
                   >
                     {/* Render positioned logos that contain the artwork with color grids */}
-                    {canvasElements.map((element) => {
+                    {canvasElements
+                      .filter(el => {
+                        const isApplique = template?.id?.includes('applique') || template?.name?.includes('applique');
+                        return isApplique ? (el.canvasIndex || 0) === 0 : true;
+                      })
+                      .map((element) => {
                       const logo = logos.find(l => l.id === element.logoId);
                       if (!logo) return null;
                       
@@ -231,9 +238,66 @@ export default function PDFPreviewModal({
                 </div>
               </div>
 
-              {/* Page 2 Preview - Garment Background OR Pass-Through Pages */}
+              {/* Page 2 Preview - Embroidery Artwork (applique) OR Garment Background OR Pass-Through Pages */}
               <div className="flex-1 flex flex-col">
-                {passThroughInfo ? (
+                {(template?.id?.includes('applique') || template?.name?.includes('applique')) ? (
+                  <>
+                    <h4 className="text-sm font-medium text-muted-foreground mb-2">Page 2 - Embroidery Artwork</h4>
+                    <div className="border rounded-lg p-4 flex-1 flex items-center justify-center relative overflow-hidden" style={{backgroundColor: '#CDCECC'}}>
+                      <div 
+                        className="relative border border-dashed border-gray-400"
+                        style={{
+                          backgroundColor: '#CDCECC',
+                          aspectRatio: template ? `${template.width}/${template.height}` : '297/420',
+                          width: '90%',
+                          maxWidth: '280px'
+                        }}
+                      >
+                        {canvasElements.filter(el => (el.canvasIndex || 0) === 1).map((element) => {
+                          const logo = logos.find(l => l.id === element.logoId);
+                          if (!logo) return null;
+                          
+                          const templateWidth = template?.width || 297;
+                          const templateHeight = template?.height || 420;
+                          const centerX = templateWidth / 2;
+                          const centerY = templateHeight / 2;
+                          const elementCenterX = centerX + element.x;
+                          const elementCenterY = centerY + element.y;
+                          const leftPos = elementCenterX - element.width / 2;
+                          const topPos = elementCenterY - element.height / 2;
+                          const imageUrl = getImageUrl(logo);
+                          
+                          return (
+                            <div
+                              key={element.id}
+                              className="absolute"
+                              style={{
+                                left: `${(leftPos / templateWidth) * 100}%`,
+                                top: `${(topPos / templateHeight) * 100}%`,
+                                width: `${(element.width / templateWidth) * 100}%`,
+                                height: `${(element.height / templateHeight) * 100}%`,
+                                transform: `rotate(${element.rotation || 0}deg)`,
+                                transformOrigin: 'center',
+                                opacity: element.opacity || 1,
+                              }}
+                            >
+                              <img
+                                src={imageUrl}
+                                alt="Embroidery element"
+                                className="w-full h-full object-contain"
+                              />
+                            </div>
+                          );
+                        })}
+                        {canvasElements.filter(el => (el.canvasIndex || 0) === 1).length === 0 && (
+                          <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-sm">
+                            No embroidery elements
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                ) : passThroughInfo ? (
                   <>
                     <div className="flex items-center justify-between mb-2">
                       <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-1">
