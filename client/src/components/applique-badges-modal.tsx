@@ -109,11 +109,11 @@ export default function AppliqueBadgesModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <CompleteTransferLogo size="md" className="mb-4" />
+      <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col p-0 gap-0 overflow-hidden">
+        <div className="px-5 pt-5 pb-3 border-b border-border flex-shrink-0">
+          <CompleteTransferLogo size="sm" className="mb-2" />
           <div className="flex items-center justify-between">
-            <DialogTitle className="text-xl font-semibold">
+            <DialogTitle className="text-lg font-semibold">
               EMBROIDERY FILE OPTIONS
             </DialogTitle>
             <Button
@@ -125,18 +125,17 @@ export default function AppliqueBadgesModal({
               <X className="h-4 w-4" />
             </Button>
           </div>
-          <DialogDescription>
-            We will automatically produce a DST and EMB file for your order. If you require any additional machine file please select it below
+          <DialogDescription className="text-xs mt-1">
+            We will automatically produce a DST and EMB file for your order. Select any additional machine files below.
           </DialogDescription>
-        </DialogHeader>
+        </div>
 
-        <div className="space-y-6 py-4">
-          {/* Embroidery File Options */}
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5" style={{ overscrollBehavior: 'contain' }}>
           <div>
-            <Label className="text-base font-medium mb-3 block">
+            <Label className="text-sm font-medium mb-2 block">
               Embroidery File Options
             </Label>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {embroideryFileOptions.map((option) => (
                 <div key={option} className="flex items-center space-x-2">
                   <Checkbox
@@ -146,7 +145,7 @@ export default function AppliqueBadgesModal({
                       handleCheckboxChange('embroideryFileOptions', option, checked === true)
                     }
                   />
-                  <Label htmlFor={`file-${option}`} className="text-sm font-normal">
+                  <Label htmlFor={`file-${option}`} className="text-xs font-normal cursor-pointer">
                     {option}
                   </Label>
                 </div>
@@ -154,15 +153,14 @@ export default function AppliqueBadgesModal({
             </div>
           </div>
 
-          {/* Embroidery Thread Options */}
           <div>
-            <Label className="text-base font-medium mb-3 block">
-              EMBROIDERY THREAD OPTIONS
+            <Label className="text-sm font-medium mb-1 block">
+              Thread Options
             </Label>
-            <p className="text-sm text-muted-foreground mb-3">
-              Please select the thread type required
+            <p className="text-xs text-muted-foreground mb-2">
+              Select the thread type required
             </p>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2">
               {threadOptions.map((option) => (
                 <div key={option} className="flex items-center space-x-2">
                   <Checkbox
@@ -172,7 +170,7 @@ export default function AppliqueBadgesModal({
                       handleCheckboxChange('embroideryThreadOptions', option, checked === true)
                     }
                   />
-                  <Label htmlFor={`thread-${option}`} className="text-sm font-normal">
+                  <Label htmlFor={`thread-${option}`} className="text-xs font-normal cursor-pointer">
                     {option}
                   </Label>
                 </div>
@@ -180,12 +178,11 @@ export default function AppliqueBadgesModal({
             </div>
           </div>
 
-          {/* Position */}
           <div>
-            <Label className="text-base font-medium mb-3 block">
+            <Label className="text-sm font-medium mb-2 block">
               Position
             </Label>
-            <div className="grid grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {positionOptions.map((option) => (
                 <div key={option} className="flex items-center space-x-2">
                   <Checkbox
@@ -195,7 +192,7 @@ export default function AppliqueBadgesModal({
                       handleCheckboxChange('position', option, checked === true)
                     }
                   />
-                  <Label htmlFor={`position-${option}`} className="text-sm font-normal">
+                  <Label htmlFor={`position-${option}`} className="text-xs font-normal cursor-pointer">
                     {option}
                   </Label>
                 </div>
@@ -203,46 +200,45 @@ export default function AppliqueBadgesModal({
             </div>
           </div>
 
-          {/* Graphic Size */}
           <div>
-            <Label htmlFor="graphic-size" className="text-base font-medium mb-3 block">
+            <Label htmlFor="graphic-size" className="text-sm font-medium mb-1 block">
               Graphic Size
             </Label>
-            <p className="text-sm text-muted-foreground mb-3">
-              Please enter in mm the overall size of the graphic including the embroidery
+            <p className="text-xs text-muted-foreground mb-2">
+              Enter in mm the overall size including embroidery
             </p>
             <Textarea
               id="graphic-size"
               value={formData.graphicSize}
               onChange={(e) => handleTextChange('graphicSize', e.target.value)}
               placeholder="Enter size in mm..."
-              className="min-h-[80px]"
+              className="min-h-[50px] text-sm"
             />
           </div>
 
-          {/* Embroidered Parts */}
           <div>
-            <Label htmlFor="embroidered-parts" className="text-base font-medium mb-3 block">
+            <Label htmlFor="embroidered-parts" className="text-sm font-medium mb-1 block">
               Embroidered Parts
             </Label>
-            <p className="text-sm text-muted-foreground mb-3">
-              Please detail the parts of you graphic that you need embroidered
+            <p className="text-xs text-muted-foreground mb-2">
+              Detail the parts of your graphic that need embroidering
             </p>
             <Textarea
               id="embroidered-parts"
               value={formData.embroideredParts}
               onChange={(e) => handleTextChange('embroideredParts', e.target.value)}
               placeholder="Detail the parts that need embroidering..."
-              className="min-h-[100px]"
+              className="min-h-[60px] text-sm"
             />
           </div>
         </div>
 
-        <DialogFooter>
+        <div className="px-5 py-3 border-t border-border flex-shrink-0 flex justify-end gap-2">
           <Button
             variant="outline"
             onClick={handleCancel}
             disabled={isLoading}
+            size="sm"
             className="bg-purple-600 text-white hover:bg-purple-700 border-purple-600"
           >
             Cancel
@@ -250,11 +246,12 @@ export default function AppliqueBadgesModal({
           <Button 
             onClick={handleSubmit}
             disabled={isLoading}
+            size="sm"
             className="bg-purple-600 text-white hover:bg-purple-700"
           >
             {isLoading ? "Processing..." : "Continue"}
           </Button>
-        </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );
