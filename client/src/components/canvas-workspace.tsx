@@ -2934,7 +2934,7 @@ export default function CanvasWorkspace({
 
                     {/* Logo Elements */}
 
-                    {(element.elementType === 'logo' || (!element.elementType && element.logoId)) && logo ? (
+                    {allShapeTypes.includes(element.elementType || '') ? null : (element.elementType === 'logo' || (!element.elementType && element.logoId)) && logo ? (
                       // Check if this is an SVG file that should be rendered inline
                       logo.mimeType === 'image/svg+xml' ? (
                         <SvgInlineRenderer 
