@@ -817,33 +817,54 @@ export async function registerRoutes(app: express.Application) {
 
       const bulletPoints = embElementList.map(item => `- ${item}`).join('\n');
 
-      const promptParts: any[] = [
-        { text: `I need a photorealistic mockup of a finished applique badge/patch for custom apparel production.
+      let refBase64: string | null = null;
+      const refPath = path.join(process.cwd(), 'attached_assets', 'jones_1770648704743.png');
+      try {
+        if ((await fs.stat(refPath).catch(() => null))) {
+          const refBuffer = await fs.readFile(refPath);
+          const refResized = await sharp(refBuffer)
+            .resize(1024, 1024, { fit: 'inside', withoutEnlargement: true })
+            .png()
+            .toBuffer();
+          refBase64 = refResized.toString('base64');
+          console.log(`[Embroidery Preview] Loaded reference embroidery image: ${refResized.length} bytes`);
+        }
+      } catch (e) {
+        console.log('[Embroidery Preview] No reference image found, proceeding without');
+      }
 
-IMAGE 1 (next image): The original flat artwork — this is what gets printed onto vinyl. Preserve this EXACTLY as the base.` },
+      const promptParts: any[] = [];
+
+      if (refBase64) {
+        promptParts.push(
+          { text: `STYLE REFERENCE (next image): This is an example of what a finished embroidered badge looks like. Notice the dense satin-stitch texture, the visible parallel thread lines, the raised 3D thread relief, and the embroidered border. Your output should match this level of embroidery realism and detail.` },
+          { inlineData: { data: refBase64, mimeType: 'image/png' } }
+        );
+      }
+
+      promptParts.push(
+        { text: `ARTWORK TO PROCESS (next image): This is the original flat artwork for a new badge. Use this as the design reference — preserve its exact layout, colors, proportions, and background.` },
         { inlineData: { data: badgeBase64, mimeType: badgeData.mime } },
-        { text: `IMAGE 2 (next image): Same artwork but with RED-HIGHLIGHTED areas. The RED-TINTED elements are the parts that will be machine-embroidered with real thread ON TOP of the printed base.` },
+        { text: `EMBROIDERY MASK (next image): The RED-HIGHLIGHTED areas in this image show which elements will be machine-embroidered with real thread. Everything NOT highlighted stays flat-printed.` },
         { inlineData: { data: annotatedBase64, mimeType: 'image/png' } },
-        { text: `TASK: Generate a photorealistic image of the finished badge. The badge has two production layers:
+        { text: `TASK: Generate a photorealistic image of this badge as a finished embroidered patch, matching the quality and style of the reference image.
 
-LAYER 1 (PRINTED): Everything from Image 1 is printed flat onto vinyl — smooth, no texture. This includes the background color, any imagery, and all non-highlighted elements.
-
-LAYER 2 (EMBROIDERED): The red-highlighted elements from Image 2 are machine-embroidered ON TOP of the printed vinyl with real thread. These must show:
-- Clearly visible individual satin stitches with parallel thread lines
-- Raised 3D relief that stands up from the flat surface
-- Natural thread sheen catching light
-- The embroidery sits physically ON TOP of the flat printed surface
+The embroidered elements (shown in red in the mask) must have:
+- Dense satin-stitch texture with clearly visible parallel thread lines (like the reference)
+- Raised 3D thread relief that catches light
+- Natural thread sheen
+- An embroidered border/outline running around the badge edge (like the reference)
 
 Elements that need embroidery:
 ${bulletPoints}
 
-CRITICAL:
-1. The background and non-highlighted areas remain FLAT PRINTED vinyl (smooth, no texture). A black background stays black printed vinyl. Do NOT change the background to fabric.
-2. ONLY the red-highlighted elements get embroidery stitch texture.
-3. Keep the EXACT same colors from Image 1 — the red highlighting is just to show which areas get stitched, NOT the actual color. Use the original colors.
-4. The badge should be shown on a neutral surface with generous padding around all edges so nothing is cropped.
-5. Make the contrast between flat-printed areas and raised-embroidered areas clearly visible — this is the whole point of an applique badge.` },
-      ];
+RULES:
+1. The background stays as-is from the artwork (if black, it stays black). Non-highlighted areas remain flat-printed with no stitch texture.
+2. The red highlighting just marks WHERE to embroider — use the ORIGINAL colors from the artwork image, not red.
+3. Add a stitched border around the badge edge similar to the reference image.
+4. Show the badge on a neutral background with generous padding around all edges.
+5. Match the embroidery realism of the reference image — dense thread texture, visible individual stitches, 3D relief.` }
+      );
 
       const response = await ai.models.generateContent({
         model: "gemini-2.5-flash-image",
