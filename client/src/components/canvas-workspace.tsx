@@ -539,6 +539,29 @@ export default function CanvasWorkspace({
         }
       }
 
+      const hiddenHandles: HTMLElement[] = [];
+      const handles = canvasRef.current.querySelectorAll(
+        '.cursor-nw-resize, .cursor-n-resize, .cursor-ne-resize, .cursor-e-resize, ' +
+        '.cursor-se-resize, .cursor-s-resize, .cursor-sw-resize, .cursor-w-resize, ' +
+        '.cursor-grab, .bg-red-600, [class*="border-dashed"], [class*="border-primary"]'
+      );
+      handles.forEach((h) => {
+        const el = h as HTMLElement;
+        hiddenHandles.push(el);
+        el.style.display = 'none';
+      });
+      const selectionOutlines = canvasRef.current.querySelectorAll('[style*="border"][style*="dashed"], [style*="outline"]');
+      selectionOutlines.forEach((h) => {
+        const el = h as HTMLElement;
+        if (el.style.outline || (el.style.border && el.style.border.includes('dashed'))) {
+          hiddenHandles.push(el);
+          el.dataset.savedOutline = el.style.outline;
+          el.dataset.savedBorder = el.style.border;
+          el.style.outline = 'none';
+          el.style.border = 'none';
+        }
+      });
+
       const { default: html2canvas } = await import('html2canvas');
 
       const scrollW = canvasRef.current.scrollWidth;
@@ -562,6 +585,19 @@ export default function CanvasWorkspace({
       canvasRef.current.style.overflow = originalOverflow;
       canvasRef.current.classList.add('overflow-hidden');
       savedDisplay.forEach((display, el) => { el.style.display = display; });
+      hiddenHandles.forEach((el) => {
+        if (el.dataset.savedOutline !== undefined) {
+          el.style.outline = el.dataset.savedOutline;
+          delete el.dataset.savedOutline;
+        }
+        if (el.dataset.savedBorder !== undefined) {
+          el.style.border = el.dataset.savedBorder;
+          delete el.dataset.savedBorder;
+        }
+        if (el.style.display === 'none') {
+          el.style.display = '';
+        }
+      });
 
       return canvas.toDataURL('image/png');
     } catch (err) {
