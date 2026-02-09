@@ -1636,8 +1636,8 @@ export default function CanvasWorkspace({
     
     const targetScale = optimalScale * fillFactor;
     
-    // Cap initial zoom to 150% so the whole canvas is always visible by default
-    const optimalZoom = Math.min(Math.max(targetScale * 100, 50), 150);
+    const maxZoom = template.pixelWidth <= 300 || template.pixelHeight <= 300 ? 400 : 150;
+    const optimalZoom = Math.min(Math.max(targetScale * 100, 50), maxZoom);
     
     console.log(`Template ${template.name}: ${template.pixelWidth}x${template.pixelHeight}px, Workspace: ${workspaceWidth}x${workspaceHeight}, Zoom: ${Math.round(optimalZoom)}%`);
     
