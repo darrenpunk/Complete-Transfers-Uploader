@@ -30,6 +30,7 @@ import { DropboxUploadModal } from "@/components/dropbox-upload-modal";
 import { UploadGuidanceModal } from "@/components/upload-guidance-modal";
 import { EmbroideryElementSelector } from "@/components/embroidery-element-selector";
 import { EmbroideryWorkflowModal } from "@/components/embroidery-workflow-modal";
+import { ColorElementSelector } from "@/components/color-element-selector";
 import { UploadProgressModal } from "@/components/upload-progress-modal";
 
 export default function UploadTool() {
@@ -93,6 +94,7 @@ export default function UploadTool() {
   const [selectedSvgIndices, setSelectedSvgIndices] = useState<Set<number>>(new Set());
   const [hiddenSvgIndices, setHiddenSvgIndices] = useState<Set<number>>(new Set());
   const [hiddenIndicesHistory, setHiddenIndicesHistory] = useState<Set<number>[]>([]);
+  const [showColorSelector, setShowColorSelector] = useState(false);
   const [odooUrlFromParams, setOdooUrlFromParams] = useState<string | null>(() => {
     try { return sessionStorage.getItem('odoo_base_url'); } catch { return null; }
   });
@@ -1240,15 +1242,15 @@ export default function UploadTool() {
     setHiddenIndicesHistory(prev => prev.slice(0, -1));
   };
 
-  const handleSendSelectedToEmbroidery = async () => {
-    if (!currentProject || !elementSelectTargetId || selectedSvgIndices.size === 0) return;
+  const sendIndicesToEmbroidery = async (indices: number[]) => {
+    if (!currentProject || !elementSelectTargetId || indices.length === 0) return;
     setIsEmbroideryProcessing(true);
     try {
       const element = canvasElements.find(el => el.id === elementSelectTargetId);
       if (!element?.logoId) throw new Error('No logo found for element');
       
       const response = await apiRequest("POST", `/api/logos/${element.logoId}/extract-elements`, {
-        selectedIndices: Array.from(selectedSvgIndices),
+        selectedIndices: indices,
         projectId: currentProject.id
       });
       const data = await response.json();
@@ -1267,6 +1269,7 @@ export default function UploadTool() {
       });
 
       exitElementSelectMode();
+      setShowColorSelector(false);
       setActiveCanvasIndex(1);
       queryClient.invalidateQueries({ queryKey: ["/api/projects", currentProject.id, "canvas-elements"] });
       queryClient.invalidateQueries({ queryKey: ["/api/projects", currentProject.id, "logos"] });
@@ -1283,6 +1286,11 @@ export default function UploadTool() {
     } finally {
       setIsEmbroideryProcessing(false);
     }
+  };
+
+  const handleSendSelectedToEmbroidery = async () => {
+    if (selectedSvgIndices.size === 0) return;
+    await sendIndicesToEmbroidery(Array.from(selectedSvgIndices));
   };
 
   const handleEmbroideryFileUpload = (file: File) => {
@@ -1976,6 +1984,14 @@ export default function UploadTool() {
                   >
                     {isEmbroideryProcessing ? 'Processing...' : `Send to Embroidery (${selectedSvgIndices.size})`}
                   </button>
+                  <button
+                    onClick={() => setShowColorSelector(!showColorSelector)}
+                    className={`px-3 py-2 text-white text-sm font-medium rounded-lg shadow-lg flex items-center gap-2 transition-colors ${
+                      showColorSelector ? 'bg-purple-500 hover:bg-purple-600' : 'bg-indigo-600 hover:bg-indigo-700'
+                    }`}
+                  >
+                    Select by Color
+                  </button>
                   {hiddenIndicesHistory.length > 0 && (
                     <button
                       onClick={undoHideSvgElement}
@@ -1985,7 +2001,7 @@ export default function UploadTool() {
                     </button>
                   )}
                   <button
-                    onClick={exitElementSelectMode}
+                    onClick={() => { exitElementSelectMode(); setShowColorSelector(false); }}
                     className="px-3 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-lg shadow-lg flex items-center gap-2 transition-colors"
                   >
                     Exit
@@ -2259,6 +2275,26 @@ export default function UploadTool() {
           })}
         />
       )}
+
+      {elementSelectMode && elementSelectTargetId && (() => {
+        const targetEl = canvasElements.find(el => el.id === elementSelectTargetId);
+        const targetLogoId = targetEl?.logoId;
+        return targetLogoId ? (
+          <ColorElementSelector
+            logoId={targetLogoId}
+            open={showColorSelector}
+            onClose={() => setShowColorSelector(false)}
+            onSelectByColors={(indices) => {
+              setSelectedSvgIndices(new Set(indices));
+            }}
+            onSendToEmbroidery={(indices) => {
+              sendIndicesToEmbroidery(indices);
+            }}
+            selectedIndices={selectedSvgIndices}
+            isProcessing={isEmbroideryProcessing}
+          />
+        ) : null;
+      })()}
 
       {/* Upload Guidance Modal */}
       <UploadGuidanceModal

@@ -744,33 +744,48 @@ export async function registerRoutes(app: express.Application) {
       const badgeBase64 = badgeData.buffer.toString('base64');
       const embBase64 = embData.buffer.toString('base64');
 
-      const badgeMeta = await sharp(badgeData.buffer).metadata();
-      const embMeta = await sharp(embData.buffer).metadata();
+      const badgePng = await sharp(badgeData.buffer)
+        .resize(2048, 2048, { fit: 'inside', withoutEnlargement: false })
+        .png()
+        .toBuffer();
+      const badgeMeta = await sharp(badgePng).metadata();
       const compositeWidth = badgeMeta.width || 2048;
       const compositeHeight = badgeMeta.height || 2048;
 
       let annotatedBuffer: Buffer;
       try {
-        const embResized = await sharp(embData.buffer)
-          .resize(compositeWidth, compositeHeight, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
-          .ensureAlpha()
-          .png()
-          .toBuffer();
+        const embFilename = embLogo.canvasFallbackFilename || embLogo.previewFilename || embLogo.filename;
+        let redEmbBuffer: Buffer;
+        if (embFilename.endsWith('.svg')) {
+          let svgContent = (await fs.readFile(path.join(uploadsDir, embFilename))).toString();
+          svgContent = svgContent
+            .replace(/fill\s*=\s*"(?!none)[^"]*"/gi, 'fill="#FF0000"')
+            .replace(/stroke\s*=\s*"(?!none)[^"]*"/gi, 'stroke="#FF0000"')
+            .replace(/fill\s*:\s*(?!none)[^;}"']+/gi, 'fill:#FF0000')
+            .replace(/stroke\s*:\s*(?!none)[^;}"']+/gi, 'stroke:#FF0000');
+          redEmbBuffer = await sharp(Buffer.from(svgContent), { density: 600 })
+            .resize(compositeWidth, compositeHeight, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+            .ensureAlpha()
+            .png()
+            .toBuffer();
+          console.log(`[Embroidery Preview] Rendered red-colored SVG: ${redEmbBuffer.length} bytes`);
+        } else {
+          redEmbBuffer = await sharp(embData.buffer)
+            .resize(compositeWidth, compositeHeight, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+            .ensureAlpha()
+            .tint({ r: 255, g: 0, b: 0 })
+            .png()
+            .toBuffer();
+        }
 
-        const redTinted = await sharp(embResized)
-          .tint({ r: 255, g: 0, b: 0 })
+        annotatedBuffer = await sharp(badgePng)
+          .composite([{ input: redEmbBuffer, blend: 'over' }])
           .png()
           .toBuffer();
-
-        annotatedBuffer = await sharp(badgeData.buffer)
-          .resize(compositeWidth, compositeHeight, { fit: 'contain', background: { r: 240, g: 240, b: 240, alpha: 1 } })
-          .composite([{ input: redTinted, blend: 'over' }])
-          .png()
-          .toBuffer();
-        console.log(`[Embroidery Preview] Created annotated composite: ${annotatedBuffer.length} bytes`);
+        console.log(`[Embroidery Preview] Created annotated composite: ${compositeWidth}x${compositeHeight}, ${annotatedBuffer.length} bytes`);
       } catch (compErr) {
         console.log(`[Embroidery Preview] Composite failed, using separate images: ${compErr}`);
-        annotatedBuffer = badgeData.buffer;
+        annotatedBuffer = badgePng;
       }
       const annotatedBase64 = annotatedBuffer.toString('base64');
 
@@ -4960,6 +4975,99 @@ export async function registerRoutes(app: express.Application) {
     } catch (error) {
       console.error('Create canvas element error:', error);
       res.status(500).json({ error: 'Failed to create canvas element' });
+    }
+  });
+
+  app.get('/api/logos/:logoId/colors', async (req, res) => {
+    try {
+      const logoId = req.params.logoId;
+      const logo = await storage.getLogo(logoId);
+      if (!logo) return res.status(404).json({ error: 'Logo not found' });
+      if (logo.mimeType !== 'image/svg+xml') return res.status(400).json({ error: 'Color extraction only works with SVG files' });
+
+      const fsSync = await import('fs');
+      const pathMod = await import('path');
+      const filePath = pathMod.join('uploads', logo.filename);
+      if (!fsSync.existsSync(filePath)) return res.status(404).json({ error: 'SVG file not found' });
+
+      const svgContent = fsSync.readFileSync(filePath, 'utf-8');
+      const { JSDOM } = await import('jsdom');
+      const dom = new JSDOM(svgContent, { contentType: 'image/svg+xml' });
+      const doc = dom.window.document;
+      const svgRoot = doc.documentElement;
+
+      const colorMap = new Map<string, number[]>();
+      let elementIndex = 0;
+
+      const normalizeColor = (raw: string): string | null => {
+        if (!raw || raw === 'none' || raw === 'transparent' || raw === 'inherit' || raw === 'currentColor') return null;
+        raw = raw.trim().toLowerCase();
+        if (raw.startsWith('#')) {
+          if (raw.length === 4) {
+            return '#' + raw[1] + raw[1] + raw[2] + raw[2] + raw[3] + raw[3];
+          }
+          return raw.slice(0, 7);
+        }
+        const rgbMatch = raw.match(/rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/);
+        if (rgbMatch) {
+          const r = parseInt(rgbMatch[1]).toString(16).padStart(2, '0');
+          const g = parseInt(rgbMatch[2]).toString(16).padStart(2, '0');
+          const b = parseInt(rgbMatch[3]).toString(16).padStart(2, '0');
+          return `#${r}${g}${b}`;
+        }
+        const pctMatch = raw.match(/rgb\(\s*([\d.]+)%\s*,\s*([\d.]+)%\s*,\s*([\d.]+)%\s*\)/);
+        if (pctMatch) {
+          const r = Math.round(parseFloat(pctMatch[1]) * 2.55).toString(16).padStart(2, '0');
+          const g = Math.round(parseFloat(pctMatch[2]) * 2.55).toString(16).padStart(2, '0');
+          const b = Math.round(parseFloat(pctMatch[3]) * 2.55).toString(16).padStart(2, '0');
+          return `#${r}${g}${b}`;
+        }
+        const namedColors: Record<string, string> = {
+          white: '#ffffff', black: '#000000', red: '#ff0000', green: '#008000',
+          blue: '#0000ff', yellow: '#ffff00', orange: '#ffa500', purple: '#800080',
+        };
+        return namedColors[raw] || null;
+      };
+
+      const processElement = (el: Element) => {
+        if (el.tagName.toLowerCase() === 'defs') return;
+        const currentIndex = elementIndex++;
+        const tag = el.tagName.toLowerCase();
+        if (tag !== 'svg') {
+          const fill = el.getAttribute('fill');
+          const stroke = el.getAttribute('stroke');
+          const style = el.getAttribute('style') || '';
+          const styleFill = style.match(/fill\s*:\s*([^;]+)/i)?.[1];
+          const styleStroke = style.match(/stroke\s*:\s*([^;]+)/i)?.[1];
+
+          const colors = [fill, stroke, styleFill, styleStroke]
+            .map(c => c ? normalizeColor(c) : null)
+            .filter(Boolean) as string[];
+
+          const uniqueColors = [...new Set(colors)];
+          for (const hex of uniqueColors) {
+            if (!colorMap.has(hex)) colorMap.set(hex, []);
+            colorMap.get(hex)!.push(currentIndex);
+          }
+        }
+
+        Array.from(el.children).forEach(c => processElement(c));
+      };
+      processElement(svgRoot);
+
+      const result = Array.from(colorMap.entries())
+        .map(([hex, indices]) => ({
+          color: hex,
+          hex,
+          count: indices.length,
+          indices,
+        }))
+        .sort((a, b) => b.count - a.count);
+
+      res.json(result);
+    } catch (error) {
+      console.error('Color extraction error:', error);
+      res.status(500).json({ error: 'Failed to extract colors' });
     }
   });
 
