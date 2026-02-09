@@ -31,7 +31,10 @@ export function ColorElementSelector({
   const [colorGroups, setColorGroups] = useState<ColorGroup[]>([]);
   const [selectedColors, setSelectedColors] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
-  const [position, setPosition] = useState({ x: 20, y: 100 });
+  const [position, setPosition] = useState(() => {
+    const w = typeof window !== 'undefined' ? window.innerWidth : 1200;
+    return { x: w - 290, y: 120 };
+  });
   const [dragging, setDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
 

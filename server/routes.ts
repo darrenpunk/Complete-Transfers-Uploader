@@ -837,33 +837,29 @@ export async function registerRoutes(app: express.Application) {
 
       if (refBase64) {
         promptParts.push(
-          { text: `STYLE REFERENCE (next image): This is an example of what a finished embroidered badge looks like. Notice the dense satin-stitch texture, the visible parallel thread lines, the raised 3D thread relief, and the embroidered border. Your output should match this level of embroidery realism and detail.` },
+          { text: `Look at this photo of a real machine-embroidered patch. Notice the dense satin stitch texture on every element — the logo, the text, and the border all have clearly visible parallel thread lines with raised 3D relief. This is the EXACT style I need you to replicate.` },
           { inlineData: { data: refBase64, mimeType: 'image/png' } }
         );
       }
 
       promptParts.push(
-        { text: `ARTWORK TO PROCESS (next image): This is the original flat artwork for a new badge. Use this as the design reference — preserve its exact layout, colors, proportions, and background.` },
+        { text: `Now here is the flat vector artwork for a badge. This is the design to transform:` },
         { inlineData: { data: badgeBase64, mimeType: badgeData.mime } },
-        { text: `EMBROIDERY MASK (next image): The RED-HIGHLIGHTED areas in this image show which elements will be machine-embroidered with real thread. Everything NOT highlighted stays flat-printed.` },
+        { text: `This next image shows the same artwork but with RED-TINTED highlighting on the specific elements that need embroidery texture. Only the red-highlighted parts get stitched — everything else stays flat-printed:` },
         { inlineData: { data: annotatedBase64, mimeType: 'image/png' } },
-        { text: `TASK: Generate a photorealistic image of this badge as a finished embroidered patch, matching the quality and style of the reference image.
+        { text: `Generate a photorealistic photo of this as a finished embroidered patch, matching the embroidery quality of the reference photo.
 
-The embroidered elements (shown in red in the mask) must have:
-- Dense satin-stitch texture with clearly visible parallel thread lines (like the reference)
-- Raised 3D thread relief that catches light
-- Natural thread sheen
-- An embroidered border/outline running around the badge edge (like the reference)
-
-Elements that need embroidery:
+The RED-HIGHLIGHTED elements need dense satin-stitch embroidery texture:
 ${bulletPoints}
 
-RULES:
-1. The background stays as-is from the artwork (if black, it stays black). Non-highlighted areas remain flat-printed with no stitch texture.
-2. The red highlighting just marks WHERE to embroider — use the ORIGINAL colors from the artwork image, not red.
-3. Add a stitched border around the badge edge similar to the reference image.
-4. Show the badge on a neutral background with generous padding around all edges.
-5. Match the embroidery realism of the reference image — dense thread texture, visible individual stitches, 3D relief.` }
+Requirements:
+- The red-highlighted elements must have dense satin-stitch texture with clearly visible parallel thread lines, raised 3D relief, and thread sheen — exactly like the reference photo
+- Use the ORIGINAL colors from the artwork (not red — the red just marks where to stitch)
+- Non-highlighted areas stay flat and smooth (printed vinyl, no stitch texture)
+- Add a stitched border around the badge edge like the reference
+- Keep the same background color as the artwork
+- Show on a neutral surface with generous padding so nothing is cropped
+- Output should look like a real photograph of a finished embroidered patch` }
       );
 
       const response = await ai.models.generateContent({
