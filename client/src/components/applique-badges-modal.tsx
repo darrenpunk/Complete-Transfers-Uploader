@@ -109,7 +109,7 @@ export default function AppliqueBadgesModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col p-0 gap-0 overflow-hidden">
+      <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col p-0 gap-0 overflow-hidden top-[5vh] translate-y-0 data-[state=open]:slide-in-from-top-2">
         <div className="px-5 pt-5 pb-3 border-b border-border flex-shrink-0">
           <CompleteTransferLogo size="sm" className="mb-2" />
           <div className="flex items-center justify-between">
