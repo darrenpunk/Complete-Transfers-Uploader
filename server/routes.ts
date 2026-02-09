@@ -721,6 +721,17 @@ export async function registerRoutes(app: express.Application) {
         .png()
         .toBuffer();
 
+      const makeRGBAMask = async (grayscaleAlpha: Buffer, w: number, h: number): Promise<Buffer> => {
+        const whiteRGB = await sharp({
+          create: { width: w, height: h, channels: 3, background: { r: 255, g: 255, b: 255 } }
+        }).png().toBuffer();
+
+        return sharp(whiteRGB)
+          .joinChannel(grayscaleAlpha)
+          .png()
+          .toBuffer();
+      };
+
       let finalBuffer: Buffer;
 
       if (embAlphaMean > 240) {
@@ -728,13 +739,15 @@ export async function registerRoutes(app: express.Application) {
         console.log('[Embroidery Preview] Using badge alpha as shape mask instead');
 
         if (badgeAlphaMean < 240) {
+          const badgeMaskRGBA = await makeRGBAMask(badgeAlpha, badgeW, badgeH);
           finalBuffer = await sharp(resizedEmbroidered)
             .composite([{
-              input: badgeAlpha,
+              input: badgeMaskRGBA,
               blend: 'dest-in' as any,
             }])
             .png()
             .toBuffer();
+          console.log('[Embroidery Preview] Applied badge RGBA mask (fallback path)');
         } else {
           console.log('[Embroidery Preview] Badge alpha also opaque - returning Gemini result as-is');
           finalBuffer = resizedEmbroidered;
@@ -747,30 +760,34 @@ export async function registerRoutes(app: express.Application) {
           .png()
           .toBuffer();
 
+        const embMaskRGBA = await makeRGBAMask(dilatedMask, badgeW, badgeH);
+
         const embWithMask = await sharp(resizedEmbroidered)
           .composite([{
-            input: dilatedMask,
+            input: embMaskRGBA,
             blend: 'dest-in' as any,
           }])
           .png()
           .toBuffer();
 
         let composited = await sharp(badgeBuffer)
+          .resize(badgeW, badgeH, { fit: 'fill' })
           .ensureAlpha()
           .composite([{ input: embWithMask, blend: 'over' as any }])
           .png()
           .toBuffer();
 
         if (badgeAlphaMean < 240) {
+          const badgeMaskRGBA = await makeRGBAMask(badgeAlpha, badgeW, badgeH);
           finalBuffer = await sharp(composited)
             .ensureAlpha()
             .composite([{
-              input: badgeAlpha,
+              input: badgeMaskRGBA,
               blend: 'dest-in' as any,
             }])
             .png()
             .toBuffer();
-          console.log('[Embroidery Preview] Applied badge shape mask to final composite');
+          console.log('[Embroidery Preview] Applied badge shape RGBA mask to final composite');
         } else {
           finalBuffer = composited;
         }
