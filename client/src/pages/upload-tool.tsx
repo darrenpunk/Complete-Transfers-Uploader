@@ -773,14 +773,20 @@ export default function UploadTool() {
     }
   };
 
+  const prevLogosLengthRef = useRef(0);
   useEffect(() => {
-    // Determine current step based on project status and data
     if (currentProject) {
       if (logos.length === 0) {
         setCurrentStep(1);
       } else {
         setCurrentStep(2);
+        if (prevLogosLengthRef.current === 0 && logos.length > 0 && !document.fullscreenElement) {
+          document.documentElement.requestFullscreen().then(() => {
+            setIsFullscreen(true);
+          }).catch(() => {});
+        }
       }
+      prevLogosLengthRef.current = logos.length;
     }
   }, [currentProject, logos.length]);
 
