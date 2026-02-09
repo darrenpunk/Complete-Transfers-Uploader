@@ -631,43 +631,9 @@ export default function CanvasWorkspace({
     setIsGeneratingPreview(true);
     setEmbroideryPreviewImage(null);
     try {
-      if (!badgeCanvasSnapshot) {
-        toast({ title: "Error", description: "Please visit Canvas 1 first so the badge artwork can be captured", variant: "destructive" });
-        setIsGeneratingPreview(false);
-        return;
-      }
-
-      if (activeCanvasIndex !== 1) {
-        onActiveCanvasChange?.(1);
-        await new Promise<void>(resolve => {
-          let attempts = 0;
-          const checkReady = () => {
-            attempts++;
-            const hasCanvas2Elements = canvasRef.current?.querySelector('[data-canvas-element]');
-            if (hasCanvas2Elements || attempts > 15) {
-              resolve();
-            } else {
-              requestAnimationFrame(checkReady);
-            }
-          };
-          requestAnimationFrame(() => requestAnimationFrame(checkReady));
-        });
-      }
-      const embroideryImage = await captureCanvasTransparent();
       onActiveCanvasChange?.(2);
 
-      const embElements = canvasElements.filter(el => (el.canvasIndex || 0) === 1);
-      const embLogos = embElements
-        .map(el => el.logoId ? logos.find(l => l.id === el.logoId) : null)
-        .filter(Boolean);
-      const embDescription = embLogos.length > 0
-        ? `the embroidery overlay elements (outlines, text, and border shapes that were extracted for stitching)`
-        : 'the text and circular outline border';
-
       const response = await apiRequest("POST", "/api/embroidery-preview", {
-        badgeImage: badgeCanvasSnapshot,
-        embroideryImage: embroideryImage || null,
-        embroideryDescription: embDescription,
         projectId: project?.id || null,
         garmentColor: project?.garmentColor || '#929292',
       });
@@ -683,7 +649,7 @@ export default function CanvasWorkspace({
     } finally {
       setIsGeneratingPreview(false);
     }
-  }, [badgeCanvasSnapshot, captureCanvasTransparent, canvasElements, logos, toast, onActiveCanvasChange, activeCanvasIndex]);
+  }, [toast, onActiveCanvasChange, project]);
 
   // Automatic cleanup of orphaned canvas elements
   useCleanupOrphanedElements({
