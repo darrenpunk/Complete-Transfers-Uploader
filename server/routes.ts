@@ -837,7 +837,7 @@ export async function registerRoutes(app: express.Application) {
 
       if (refBase64) {
         promptParts.push(
-          { text: `Look at this photo of a real machine-embroidered patch. Notice the dense satin stitch texture on every element — the logo, the text, and the border all have clearly visible parallel thread lines with raised 3D relief. This is the EXACT style I need you to replicate.` },
+          { text: `Study this photo of a real machine-embroidered patch carefully. Notice the SATIN STITCH technique: threads are laid perfectly parallel and tight next to each other, creating a smooth, glossy, silk-like surface that catches the light. The threads are NOT individually visible as separate stitches — instead they form a continuous, dense, shiny fill. The surface looks almost like satin fabric. This is the ONLY stitch style to use.` },
           { inlineData: { data: refBase64, mimeType: 'image/png' } }
         );
       }
@@ -856,14 +856,15 @@ This is a DUAL-LAYER applique badge:
 The red-highlighted embroidery elements are:
 ${bulletPoints}
 
-CRITICAL embroidery rules:
-1. EVERY red-highlighted element — no matter how large or small — MUST have dense satin-stitch embroidery texture with clearly visible parallel thread lines, raised 3D relief, and light-catching thread sheen
-2. ALL text must show obvious embroidery stitching with visible thread texture, including small text
-3. Borders and outlines should be clean satin-stitch (dense parallel stitches perpendicular to the edge) — no extra run stitches, underlay stitches, or decorative stitch patterns
-4. Use the ORIGINAL colors from the artwork for embroidered elements (the red tint only marks where to stitch — ignore the red color)
-5. All non-highlighted areas must remain completely flat-printed — absolutely NO stitch texture on them
-6. Place on a neutral fabric surface with generous padding so nothing gets cropped
-7. Match the stitch quality and photorealism of the reference photo exactly` }
+CRITICAL — use ONLY satin stitch technique (NOT cross-stitch, NOT running stitch, NOT chain stitch):
+1. Satin stitch = threads laid perfectly parallel and tight together, forming a smooth, glossy, silk-like surface. It looks like satin ribbon — dense, shiny, with NO individual stitch holes or gaps visible
+2. EVERY red-highlighted element must have this satin stitch fill — smooth parallel threads with light-catching sheen and slightly raised 3D relief
+3. ALL text (large and small) must have satin-stitch fill with visible thread direction
+4. Borders and outlines: satin stitch with threads running perpendicular to the edge — clean and smooth, no extra decorative stitching
+5. Use the ORIGINAL colors from the artwork (the red tint only marks where stitching goes — ignore the red)
+6. Non-highlighted areas stay completely flat-printed — smooth fabric/vinyl with zero stitch texture
+7. Place on a neutral surface with generous padding so nothing is cropped
+8. The result must look like a real photograph of a professionally manufactured patch` }
       );
 
       const response = await ai.models.generateContent({
