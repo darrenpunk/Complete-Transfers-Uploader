@@ -2305,13 +2305,6 @@ export default function CanvasWorkspace({
                 </div>
                 <div className="flex items-center gap-4">
                   <p className="text-gray-400 text-xs">AI-generated embroidery preview — actual result may vary</p>
-                  <button
-                    onClick={generateEmbroideryPreview}
-                    className="px-3 py-1.5 bg-amber-600 text-white rounded text-xs hover:bg-amber-500 transition-colors flex items-center gap-1.5"
-                  >
-                    <Sparkles className="w-3 h-3" />
-                    Regenerate
-                  </button>
                 </div>
               </div>
             ) : (
