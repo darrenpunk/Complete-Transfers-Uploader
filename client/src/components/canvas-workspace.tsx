@@ -4,7 +4,7 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { Project, Logo, CanvasElement, TemplateSize, ContentBounds } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Minus, Plus, Grid3X3, AlignCenter, Undo, Redo, Upload, Trash2, Maximize2, RotateCw, Move, ArrowRight, CheckSquare, Group, Ungroup, Sparkles, X, Loader2, Square, Circle, MinusIcon, Shapes } from "lucide-react";
+import { Minus, Plus, Grid3X3, AlignCenter, Undo, Redo, Upload, Trash2, Maximize2, RotateCw, Move, ArrowRight, CheckSquare, Group, Ungroup, Sparkles, X, Loader2, Square, Circle, MinusIcon, Shapes, Scissors } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
@@ -135,6 +135,7 @@ interface CanvasWorkspaceProps {
   hiddenElementIndices?: Set<number>;
   selectedElementIndices?: Set<number>;
   onSvgElementClick?: (elementIndex: number, shiftKey: boolean) => void;
+  onSetupEmbroidery?: () => void;
 }
 
 // Helper function to check if logo has valid content bounds
@@ -173,7 +174,8 @@ export default function CanvasWorkspace({
   elementSelectTargetId,
   hiddenElementIndices,
   selectedElementIndices,
-  onSvgElementClick
+  onSvgElementClick,
+  onSetupEmbroidery
 }: CanvasWorkspaceProps) {
   // Helper to get first selected element (for backwards compatibility with single-select operations)
   const selectedElement = selectedElements.length > 0 ? selectedElements[0] : null;
@@ -2167,6 +2169,15 @@ export default function CanvasWorkspace({
                 >
                   {isGeneratingPreview ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
                   Preview Embroidery
+                </button>
+              )}
+              {onSetupEmbroidery && (
+                <button
+                  className="px-3 py-1.5 rounded text-sm font-medium bg-purple-600 text-white hover:bg-purple-500 transition-colors flex items-center gap-1.5 ml-auto"
+                  onClick={onSetupEmbroidery}
+                >
+                  <Scissors className="w-3.5 h-3.5" />
+                  {activeCanvasIndex === 0 ? 'Setup Embroidery' : 'Add Artwork'}
                 </button>
               )}
             </div>

@@ -1964,15 +1964,6 @@ export default function UploadTool() {
         <div className="flex-1 min-w-0 relative">
           {isAppliqueTemplate && (
             <div className="absolute top-16 left-1/2 transform -translate-x-1/2 z-20 flex gap-2 flex-wrap justify-center">
-              {activeCanvasIndex === 0 && !elementSelectMode && canvasElements.filter(el => (el.canvasIndex || 0) === 0).length > 0 && (
-                <button
-                  onClick={() => setShowEmbroideryWorkflow(true)}
-                  className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg shadow-lg flex items-center gap-2 transition-colors"
-                >
-                  <Scissors className="w-4 h-4" />
-                  Setup Embroidery Artwork
-                </button>
-              )}
               {activeCanvasIndex === 0 && elementSelectMode && (
                 <>
                   <div className="px-3 py-2 bg-green-600/90 text-white text-xs font-medium rounded-lg shadow-lg">
@@ -2001,24 +1992,13 @@ export default function UploadTool() {
                   </button>
                 </>
               )}
-              {activeCanvasIndex === 1 && (
-                <>
-                  <button
-                    onClick={() => setShowEmbroideryWorkflow(true)}
-                    className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg shadow-lg flex items-center gap-2 transition-colors"
-                  >
-                    <Scissors className="w-4 h-4" />
-                    Add Embroidery Artwork
-                  </button>
-                  {selectedElements.length > 0 && (
-                    <button
-                      onClick={handleRemoveFromEmbroidery}
-                      className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg shadow-lg flex items-center gap-2 transition-colors"
-                    >
-                      <span>🗑️</span> Remove from Embroidery ({selectedElements.length})
-                    </button>
-                  )}
-                </>
+              {activeCanvasIndex === 1 && selectedElements.length > 0 && (
+                <button
+                  onClick={handleRemoveFromEmbroidery}
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg shadow-lg flex items-center gap-2 transition-colors"
+                >
+                  <span>🗑️</span> Remove from Embroidery ({selectedElements.length})
+                </button>
               )}
             </div>
           )}
@@ -2048,6 +2028,7 @@ export default function UploadTool() {
             hiddenElementIndices={hiddenSvgIndices}
             selectedElementIndices={selectedSvgIndices}
             onSvgElementClick={handleSvgElementClick}
+            onSetupEmbroidery={() => setShowEmbroideryWorkflow(true)}
             onReenterFullscreen={() => {
               if (!document.fullscreenElement) {
                 document.documentElement.requestFullscreen().catch(() => {});
