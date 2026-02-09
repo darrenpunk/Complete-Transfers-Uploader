@@ -627,14 +627,74 @@ export async function registerRoutes(app: express.Application) {
 
   app.post('/api/embroidery-preview', async (req, res) => {
     try {
-      const { badgeImage, embroideryImage, projectId, garmentColor } = req.body;
-      if (!badgeImage || !embroideryImage) {
-        return res.status(400).json({ error: 'Both badge and embroidery images are required' });
+      const { projectId, garmentColor } = req.body;
+      if (!projectId) {
+        return res.status(400).json({ error: 'Project ID is required' });
       }
 
       const { GoogleGenAI, Modality } = await import('@google/genai');
       const fs = await import('fs/promises');
       const path = await import('path');
+      const sharp = (await import('sharp')).default;
+
+      const project = await storage.getProject(projectId);
+      if (!project) {
+        return res.status(404).json({ error: 'Project not found' });
+      }
+
+      const canvasElements = await storage.getCanvasElements(projectId);
+      const logos = await storage.getLogos(projectId);
+
+      const badgeElements = canvasElements.filter(el => (el.canvasIndex || 0) === 0);
+      const embElements = canvasElements.filter(el => (el.canvasIndex || 0) === 1);
+
+      if (badgeElements.length === 0) {
+        return res.status(400).json({ error: 'No badge artwork elements found on Canvas 1' });
+      }
+      if (embElements.length === 0) {
+        return res.status(400).json({ error: 'No embroidery elements found on Canvas 2' });
+      }
+
+      const uploadsDir = path.join(process.cwd(), 'uploads');
+
+      const loadLogoAsBuffer = async (logo: any): Promise<{ buffer: Buffer; mime: string } | null> => {
+        try {
+          const filename = logo.canvasFallbackFilename || logo.previewFilename || logo.filename;
+          const filePath = path.join(uploadsDir, filename);
+          const buffer = await fs.readFile(filePath);
+          const isSvg = filename.endsWith('.svg');
+          if (isSvg) {
+            const pngBuffer = await sharp(buffer).png().toBuffer();
+            return { buffer: pngBuffer, mime: 'image/png' };
+          }
+          const mime = logo.mimeType || (filename.endsWith('.png') ? 'image/png' : 'image/png');
+          return { buffer, mime };
+        } catch (e) {
+          console.error(`[Embroidery Preview] Failed to load logo ${logo.id}:`, e);
+          return null;
+        }
+      };
+
+      const badgeLogo = logos.find(l => l.id === badgeElements[0]?.logoId);
+      const embLogo = logos.find(l => l.id === embElements[0]?.logoId);
+
+      if (!badgeLogo || !embLogo) {
+        return res.status(400).json({ error: 'Could not find logo files for badge or embroidery elements' });
+      }
+
+      const badgeData = await loadLogoAsBuffer(badgeLogo);
+      const embData = await loadLogoAsBuffer(embLogo);
+
+      if (!badgeData || !embData) {
+        return res.status(500).json({ error: 'Failed to load logo files from disk' });
+      }
+
+      console.log('[Embroidery Preview] Step 1: Loading logo files from disk');
+      console.log(`[Embroidery Preview] Badge logo: ${badgeLogo.originalFilename} (${badgeData.buffer.length} bytes)`);
+      console.log(`[Embroidery Preview] Embroidery logo: ${embLogo.originalFilename} (${embData.buffer.length} bytes)`);
+
+      const badgeBase64 = badgeData.buffer.toString('base64');
+      const embBase64 = embData.buffer.toString('base64');
 
       const ai = new GoogleGenAI({
         apiKey: process.env.AI_INTEGRATIONS_GEMINI_API_KEY!,
@@ -644,16 +704,8 @@ export async function registerRoutes(app: express.Application) {
         },
       });
 
-      const badgeBase64 = badgeImage.replace(/^data:image\/\w+;base64,/, '');
-      const badgeMime = badgeImage.match(/^data:(image\/\w+);base64,/)?.[1] || 'image/png';
-      const embBase64 = embroideryImage.replace(/^data:image\/\w+;base64,/, '');
-      const embMime = embroideryImage.match(/^data:(image\/\w+);base64,/)?.[1] || 'image/png';
-
-      console.log('[Embroidery Preview] Step 1: Sending badge + embroidery overlay to Gemini');
-
       const fsSync = await import('fs');
-      const pathMod = await import('path');
-      const stitchRefPath = pathMod.join(process.cwd(), 'server', 'assets', 'stitch-reference.png');
+      const stitchRefPath = path.join(process.cwd(), 'server', 'assets', 'stitch-reference.png');
       let stitchRefBase64 = '';
       try {
         stitchRefBase64 = fsSync.readFileSync(stitchRefPath).toString('base64');
@@ -661,10 +713,12 @@ export async function registerRoutes(app: express.Application) {
         console.log('[Embroidery Preview] Warning: stitch reference image not found');
       }
 
+      console.log('[Embroidery Preview] Step 2: Sending to Gemini');
+
       const promptParts: any[] = [
         { text: "I need a photorealistic preview of a finished applique badge.\n\nImage 1: The FULL badge with all printed elements.\nImage 2: ONLY the embroidery overlay elements (outlines, borders, text) that will be stitched on top.\nImage 3: A REFERENCE showing exactly how machine satin-stitch embroidery looks — notice the SINGLE thick rounded cord with fine perpendicular thread texture, 3D relief, and thread sheen. Each stitch line is ONE solid raised cord, NOT two parallel lines." },
-        { inlineData: { data: badgeBase64, mimeType: badgeMime } },
-        { inlineData: { data: embBase64, mimeType: embMime } },
+        { inlineData: { data: badgeBase64, mimeType: badgeData.mime } },
+        { inlineData: { data: embBase64, mimeType: embData.mime } },
       ];
 
       if (stitchRefBase64) {
@@ -698,121 +752,10 @@ export async function registerRoutes(app: express.Application) {
         return res.status(500).json({ error: 'Failed to generate embroidery preview' });
       }
 
-      console.log('[Embroidery Preview] Step 2: Masking Gemini result using Canvas 2 alpha channel');
+      console.log('[Embroidery Preview] Step 3: Processing Gemini result');
 
-      const sharp = (await import('sharp')).default;
       const timestamp = Date.now();
-
-      const badgeBuffer = Buffer.from(badgeBase64, 'base64');
-      const embroideredBuffer = Buffer.from(imagePart.inlineData.data, 'base64');
-      const embOrigBuffer = Buffer.from(embBase64, 'base64');
-
-      const badgeMeta = await sharp(badgeBuffer).metadata();
-      const badgeW = badgeMeta.width!;
-      const badgeH = badgeMeta.height!;
-      console.log('[Embroidery Preview] Badge size:', `${badgeW}x${badgeH}`);
-
-      const embAlpha = await sharp(embOrigBuffer)
-        .resize(badgeW, badgeH, { fit: 'fill' })
-        .ensureAlpha()
-        .extractChannel(3)
-        .png()
-        .toBuffer();
-
-      const embAlphaStats = await sharp(embAlpha).stats();
-      const embAlphaMean = embAlphaStats.channels[0].mean;
-      console.log('[Embroidery Preview] Embroidery alpha mean:', embAlphaMean.toFixed(1), '(255=fully opaque, 0=fully transparent)');
-
-      const badgeAlpha = await sharp(badgeBuffer)
-        .ensureAlpha()
-        .extractChannel(3)
-        .png()
-        .toBuffer();
-      const badgeAlphaStats = await sharp(badgeAlpha).stats();
-      const badgeAlphaMean = badgeAlphaStats.channels[0].mean;
-      console.log('[Embroidery Preview] Badge alpha mean:', badgeAlphaMean.toFixed(1));
-
-      const resizedEmbroidered = await sharp(embroideredBuffer)
-        .resize(badgeW, badgeH, { fit: 'fill' })
-        .ensureAlpha()
-        .png()
-        .toBuffer();
-
-      const makeRGBAMask = async (grayscaleAlpha: Buffer, w: number, h: number): Promise<Buffer> => {
-        const whiteRGB = await sharp({
-          create: { width: w, height: h, channels: 3, background: { r: 255, g: 255, b: 255 } }
-        }).png().toBuffer();
-
-        return sharp(whiteRGB)
-          .joinChannel(grayscaleAlpha)
-          .png()
-          .toBuffer();
-      };
-
-      let finalBuffer: Buffer;
-
-      if (embAlphaMean < 1 && badgeAlphaMean < 1) {
-        console.log('[Embroidery Preview] Both alpha channels are near-zero (html2canvas transparency issue) - using Gemini result directly');
-        finalBuffer = resizedEmbroidered;
-      } else if (embAlphaMean > 240) {
-        console.log('[Embroidery Preview] WARNING: Embroidery alpha is nearly all opaque - capture may lack transparency');
-        console.log('[Embroidery Preview] Using badge alpha as shape mask instead');
-
-        if (badgeAlphaMean < 240) {
-          const badgeMaskRGBA = await makeRGBAMask(badgeAlpha, badgeW, badgeH);
-          finalBuffer = await sharp(resizedEmbroidered)
-            .composite([{
-              input: badgeMaskRGBA,
-              blend: 'dest-in' as any,
-            }])
-            .png()
-            .toBuffer();
-          console.log('[Embroidery Preview] Applied badge RGBA mask (fallback path)');
-        } else {
-          console.log('[Embroidery Preview] Badge alpha also opaque - returning Gemini result as-is');
-          finalBuffer = resizedEmbroidered;
-        }
-      } else {
-        const dilatedMask = await sharp(embAlpha)
-          .blur(2)
-          .threshold(20)
-          .blur(1)
-          .png()
-          .toBuffer();
-
-        const embMaskRGBA = await makeRGBAMask(dilatedMask, badgeW, badgeH);
-
-        const embWithMask = await sharp(resizedEmbroidered)
-          .composite([{
-            input: embMaskRGBA,
-            blend: 'dest-in' as any,
-          }])
-          .png()
-          .toBuffer();
-
-        let composited = await sharp(badgeBuffer)
-          .resize(badgeW, badgeH, { fit: 'fill' })
-          .ensureAlpha()
-          .composite([{ input: embWithMask, blend: 'over' as any }])
-          .png()
-          .toBuffer();
-
-        if (badgeAlphaMean < 240) {
-          const badgeMaskRGBA = await makeRGBAMask(badgeAlpha, badgeW, badgeH);
-          finalBuffer = await sharp(composited)
-            .ensureAlpha()
-            .composite([{
-              input: badgeMaskRGBA,
-              blend: 'dest-in' as any,
-            }])
-            .png()
-            .toBuffer();
-          console.log('[Embroidery Preview] Applied badge shape RGBA mask to final composite');
-        } else {
-          finalBuffer = composited;
-        }
-      }
-
+      const finalBuffer = Buffer.from(imagePart.inlineData.data, 'base64');
       const compositeBase64 = finalBuffer.toString('base64');
 
       if (projectId) {
