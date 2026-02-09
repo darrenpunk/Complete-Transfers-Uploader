@@ -2249,7 +2249,7 @@ export default function CanvasWorkspace({
             </div>
           );
         })()}
-        {activeCanvasIndex === 2 ? (
+        {isAppliqueTemplate && activeCanvasIndex === 2 ? (
           <div className="w-full h-full overflow-auto flex items-center justify-center" style={{ backgroundColor: '#404040' }}>
             {isGeneratingPreview ? (
               <div className="flex flex-col items-center justify-center gap-4">

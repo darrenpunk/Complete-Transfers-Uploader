@@ -1823,6 +1823,12 @@ export default function UploadTool() {
   const currentTemplate = templateSizes.find(t => t.id === currentProject.templateSize);
   const isAppliqueTemplate = currentProject.templateSize?.startsWith('applique-') || false;
 
+  useEffect(() => {
+    if (!isAppliqueTemplate && activeCanvasIndex > 0) {
+      setActiveCanvasIndex(0);
+    }
+  }, [isAppliqueTemplate, activeCanvasIndex]);
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
