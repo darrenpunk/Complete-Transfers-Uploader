@@ -2879,11 +2879,11 @@ export default function CanvasWorkspace({
       {/* Embroidery Preview Modal */}
       {showEmbroideryPreview && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={() => setShowEmbroideryPreview(false)}>
-          <div className="bg-gray-900 rounded-xl shadow-2xl max-w-lg w-full mx-4 overflow-hidden" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-gray-900 rounded-xl shadow-2xl max-w-3xl w-full mx-4 overflow-hidden" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-5 py-3 border-b border-gray-700">
               <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-amber-400" />
-                <h3 className="text-white font-semibold text-sm">AI Embroidery Preview</h3>
+                <Sparkles className="w-5 h-5 text-amber-400" />
+                <h3 className="text-white font-semibold text-base">AI Embroidery Preview</h3>
               </div>
               <button onClick={() => setShowEmbroideryPreview(false)} className="text-gray-400 hover:text-white transition-colors">
                 <X className="w-5 h-5" />
@@ -2901,7 +2901,7 @@ export default function CanvasWorkspace({
                   <img
                     src={embroideryPreviewImage}
                     alt="Embroidery Preview"
-                    className="rounded-lg max-w-full max-h-[400px] object-contain border border-gray-700"
+                    className="rounded-lg max-w-full max-h-[70vh] object-contain border border-gray-700"
                   />
                   <p className="text-gray-400 text-xs text-center">AI-generated embroidery preview on badge artwork — actual result may vary</p>
                 </div>
