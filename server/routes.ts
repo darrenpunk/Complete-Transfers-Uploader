@@ -744,6 +744,36 @@ export async function registerRoutes(app: express.Application) {
       const badgeBase64 = badgeData.buffer.toString('base64');
       const embBase64 = embData.buffer.toString('base64');
 
+      const badgeMeta = await sharp(badgeData.buffer).metadata();
+      const embMeta = await sharp(embData.buffer).metadata();
+      const compositeWidth = badgeMeta.width || 2048;
+      const compositeHeight = badgeMeta.height || 2048;
+
+      let annotatedBuffer: Buffer;
+      try {
+        const embResized = await sharp(embData.buffer)
+          .resize(compositeWidth, compositeHeight, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+          .ensureAlpha()
+          .png()
+          .toBuffer();
+
+        const redTinted = await sharp(embResized)
+          .tint({ r: 255, g: 0, b: 0 })
+          .png()
+          .toBuffer();
+
+        annotatedBuffer = await sharp(badgeData.buffer)
+          .resize(compositeWidth, compositeHeight, { fit: 'contain', background: { r: 240, g: 240, b: 240, alpha: 1 } })
+          .composite([{ input: redTinted, blend: 'over' }])
+          .png()
+          .toBuffer();
+        console.log(`[Embroidery Preview] Created annotated composite: ${annotatedBuffer.length} bytes`);
+      } catch (compErr) {
+        console.log(`[Embroidery Preview] Composite failed, using separate images: ${compErr}`);
+        annotatedBuffer = badgeData.buffer;
+      }
+      const annotatedBase64 = annotatedBuffer.toString('base64');
+
       const ai = new GoogleGenAI({
         apiKey: process.env.AI_INTEGRATIONS_GEMINI_API_KEY!,
         httpOptions: {
@@ -752,49 +782,13 @@ export async function registerRoutes(app: express.Application) {
         },
       });
 
-      const fsSync = await import('fs');
-      const stitchRefPath = path.join(process.cwd(), 'server', 'assets', 'stitch-reference.png');
-      let stitchRefBase64 = '';
-      try {
-        stitchRefBase64 = fsSync.readFileSync(stitchRefPath).toString('base64');
-      } catch (e) {
-        console.log('[Embroidery Preview] Warning: stitch reference image not found');
-      }
-
-      let embDescription = 'outlines, borders, and text';
-      try {
-        const embFilename = embLogo.canvasFallbackFilename || embLogo.previewFilename || embLogo.filename;
-        let svgContent = '';
-        if (embFilename.endsWith('.svg')) {
-          svgContent = (await fs.readFile(path.join(uploadsDir, embFilename))).toString();
-        } else if (embFilename.endsWith('.pdf')) {
-          const svgFile = embFilename.replace(/\.pdf$/, '') + '.svg';
-          try { svgContent = (await fs.readFile(path.join(uploadsDir, svgFile))).toString(); } catch {}
-        }
-        if (svgContent) {
-          const hasCircle = /circle|ellipse|rx=|ry=/.test(svgContent);
-          const hasText = /<text[\s>]/.test(svgContent);
-          const textMatches = svgContent.match(/<text[^>]*>([^<]+)<\/text>/g) || [];
-          const textContents = textMatches.map((t: string) => t.replace(/<[^>]+>/g, '').trim()).filter(Boolean);
-          const pathCount = (svgContent.match(/<path /g) || []).length;
-          const parts = [];
-          if (hasCircle) parts.push('a circular border outline');
-          if (pathCount > 0) parts.push(`${pathCount} vector path shapes (outlines, borders, text letterforms)`);
-          if (hasText && textContents.length > 0) parts.push(`text elements: "${textContents.join('", "')}"`);
-          if (parts.length > 0) embDescription = parts.join(', ');
-          console.log(`[Embroidery Preview] Detected embroidery elements: ${embDescription}`);
-        }
-      } catch (e) {
-        console.log('[Embroidery Preview] Could not analyze embroidery SVG');
-      }
-
       console.log('[Embroidery Preview] Step 2: Sending to Gemini');
 
       const promptParts: any[] = [
-        { text: `I need a photorealistic preview of a finished applique badge. This badge has TWO layers:\n\nImage 1 (PRINTED LAYER): The complete badge with all printed artwork — icons, images, text, and decorative elements. Everything in this image is FLAT PRINTED onto fabric.\n\nImage 2 (EMBROIDERY MASK): This shows ONLY the specific shapes that will be machine-embroidered on top. The embroidery layer contains: ${embDescription}. Every single element visible in Image 2 — no matter how small — will be stitched.` },
+        { text: "I need a photorealistic preview of a finished applique badge.\n\nImage 1: The badge with RED HIGHLIGHTED areas. Everything shown in RED must be rendered as machine satin-stitch embroidery. Everything NOT red stays as a smooth flat print.\n\nImage 2: The clean badge artwork without highlights (for color reference)." },
+        { inlineData: { data: annotatedBase64, mimeType: 'image/png' } },
         { inlineData: { data: badgeBase64, mimeType: badgeData.mime } },
-        { inlineData: { data: embBase64, mimeType: embData.mime } },
-        { text: `Generate one photorealistic image of the finished badge:\n\nRULE 1 — PRINTED ELEMENTS: Every element from Image 1 that is NOT in Image 2 must remain as a smooth, flat print with zero embroidery texture. They must look exactly like Image 1 — crisp, flat, and untouched.\n\nRULE 2 — EMBROIDERED ELEMENTS: EVERY element in Image 2 must be rendered as photorealistic machine satin-stitch embroidery. This explicitly includes: ${embDescription}. Even the smallest text must have visible raised thread texture. Each embroidered element should be a SINGLE thick raised cord with fine perpendicular thread texture, natural 3D relief, and subtle thread sheen.\n\nRULE 3 — NO ADDITIONS: Do NOT add any elements not present in Image 1 or Image 2.\n\nKeep the exact same design, layout, colors, shapes and proportions. Output one clean image on a plain neutral background with generous padding around ALL edges — ensure the ENTIRE badge is fully visible with nothing cropped or cut off. Leave at least 10% blank space around every edge.` },
+        { text: "Generate one photorealistic image of the finished badge:\n\n1. Every RED-highlighted area from Image 1 (including ALL text, ALL outlines, ALL borders — every red element no matter how small) must be rendered as photorealistic machine satin-stitch embroidery with raised thread texture, perpendicular stitch lines, 3D relief, and natural thread sheen. Use the original colors from Image 2, not red.\n\n2. All NON-red areas stay as smooth, flat prints exactly like Image 2.\n\n3. Do NOT add any extra elements.\n\nOutput one clean image on a plain neutral background with generous padding — ensure the ENTIRE badge is fully visible with nothing cropped." },
       ];
 
       const response = await ai.models.generateContent({
