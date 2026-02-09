@@ -845,21 +845,25 @@ export async function registerRoutes(app: express.Application) {
       promptParts.push(
         { text: `Now here is the flat vector artwork for a badge. This is the design to transform:` },
         { inlineData: { data: badgeBase64, mimeType: badgeData.mime } },
-        { text: `This next image shows the same artwork but with RED-TINTED highlighting on the specific elements that need embroidery texture. Only the red-highlighted parts get stitched — everything else stays flat-printed:` },
+        { text: `This next image shows the same artwork but with RED-TINTED highlighting on the specific elements that must become embroidered (stitched with thread). Everything NOT highlighted stays flat-printed on fabric:` },
         { inlineData: { data: annotatedBase64, mimeType: 'image/png' } },
-        { text: `Generate a photorealistic photo of this as a finished embroidered patch, matching the embroidery quality of the reference photo.
+        { text: `Generate a photorealistic photograph of this as a finished applique badge/patch.
 
-The RED-HIGHLIGHTED elements need dense satin-stitch embroidery texture:
+This is a DUAL-LAYER applique badge:
+- LAYER 1 (PRINTED): Everything in the badge artwork that is NOT red-highlighted is FLAT PRINTED on fabric — completely smooth, no texture, no stitching whatsoever.
+- LAYER 2 (EMBROIDERED): ONLY the red-highlighted elements are MACHINE EMBROIDERED with real thread on top of the printed layer.
+
+The red-highlighted embroidery elements are:
 ${bulletPoints}
 
-Requirements:
-- The red-highlighted elements must have dense satin-stitch texture with clearly visible parallel thread lines, raised 3D relief, and thread sheen — exactly like the reference photo
-- Use the ORIGINAL colors from the artwork (not red — the red just marks where to stitch)
-- Non-highlighted areas stay flat and smooth (printed vinyl, no stitch texture)
-- Add a stitched border around the badge edge like the reference
-- Keep the same background color as the artwork
-- Show on a neutral surface with generous padding so nothing is cropped
-- Output should look like a real photograph of a finished embroidered patch` }
+CRITICAL embroidery rules:
+1. EVERY red-highlighted element — no matter how large or small — MUST have dense satin-stitch embroidery texture with clearly visible parallel thread lines, raised 3D relief, and light-catching thread sheen
+2. ALL text must show obvious embroidery stitching with visible thread texture, including small text
+3. Borders and outlines should be clean satin-stitch (dense parallel stitches perpendicular to the edge) — no extra run stitches, underlay stitches, or decorative stitch patterns
+4. Use the ORIGINAL colors from the artwork for embroidered elements (the red tint only marks where to stitch — ignore the red color)
+5. All non-highlighted areas must remain completely flat-printed — absolutely NO stitch texture on them
+6. Place on a neutral fabric surface with generous padding so nothing gets cropped
+7. Match the stitch quality and photorealism of the reference photo exactly` }
       );
 
       const response = await ai.models.generateContent({
