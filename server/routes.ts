@@ -824,18 +824,18 @@ IMAGE 1 (next image): This is the COMPLETE artwork as it currently looks. This i
         { inlineData: { data: badgeBase64, mimeType: badgeData.mime } },
         { text: `IMAGE 2 (next image): This MASK shows which elements need embroidery texture added. These elements are shown on a black background for contrast. ONLY these elements should get stitch texture.` },
         { inlineData: { data: embBlackBase64, mimeType: 'image/png' } },
-        { text: `TASK: Take Image 1 exactly as-is, and add photorealistic raised satin-stitch embroidery texture ONLY to the elements shown in Image 2.
+        { text: `TASK: Take Image 1 exactly as-is, and add STRONGLY VISIBLE photorealistic raised satin-stitch machine embroidery texture to the elements shown in Image 2.
 
-These elements need embroidery texture:
+These elements MUST have clearly visible embroidery stitching:
 ${bulletPoints}
 
 RULES:
 1. START from Image 1 as your base — keep its EXACT background, colors, and layout unchanged. A black background stays black. A blue background stays blue. Do NOT replace the background with fabric or any other material.
-2. Add raised satin-stitch embroidery texture (visible thread direction, 3D relief, thread sheen) ONLY to the elements identified in Image 2.
+2. The embroidered elements (from Image 2) must have OBVIOUS, clearly visible thread texture: individual satin stitches running in parallel, raised 3D relief that catches light, and a visible thread sheen. The stitching should be dramatic and clearly distinguishable from flat areas — like a real close-up photo of machine embroidery.
 3. Everything NOT in Image 2 must remain completely flat and smooth — no stitch texture on those parts.
 4. Keep all original colors exactly the same — only add thread texture, do not change any colors.
-5. The output should look like Image 1 but with certain parts having a tactile embroidered look on top.
-6. Show on a plain neutral background with padding so the ENTIRE artwork is fully visible with nothing cropped.` },
+5. The output should look like Image 1 but with the masked elements having a strongly tactile, raised embroidered appearance.
+6. Add generous padding/margin around the entire artwork so nothing is cropped at the edges. The artwork should be centered with visible space around all sides.` },
       ];
 
       const response = await ai.models.generateContent({
