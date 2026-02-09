@@ -550,40 +550,10 @@ export default function PDFPreviewModal({
             </div>
           </div>
 
-          {/* Preflight Summary */}
-          <div className="w-80 flex flex-col min-h-0 overflow-y-auto">
-            <h3 className="text-lg font-semibold mb-3">Preflight Summary</h3>
-            
-            <div className="space-y-3 mb-6">
-              {preflightItems.map((item, index) => (
-                <div key={index} className="flex items-center gap-3 p-3 border rounded-lg">
-                  <item.icon 
-                    className={`w-5 h-5 ${
-                      item.status === 'success' ? 'text-green-600' : 
-                      item.status === 'warning' ? 'text-yellow-600' : 'text-red-600'
-                    }`}
-                  />
-                  <div className="flex-1">
-                    <div className="font-medium text-sm">{item.label}</div>
-                    <div className="text-xs text-muted-foreground">{item.value}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Project Details */}
-            <div className="space-y-2 mb-6">
-              <h4 className="font-semibold">Project Details</h4>
-              <div className="text-sm space-y-1">
-                <div>Template: {template?.name || 'business_card'}</div>
-                <div>Size: {template?.width || 295}×{template?.height || 100}mm</div>
-                <div>Elements: {canvasElements.length} positioned</div>
-                <div>Project: {project?.name || 'Untitled Project'}</div>
-              </div>
-            </div>
-
-            {/* Approval Checkboxes */}
-            <div className="space-y-4 mb-6">
+          {/* Approval & Preflight */}
+          <div className="w-80 flex flex-col min-h-0">
+            {/* Approval Checkboxes - always visible at top */}
+            <div className="space-y-3 mb-4">
               <div className="flex items-start space-x-2">
                 <Checkbox 
                   id="design-approval" 
@@ -623,8 +593,8 @@ export default function PDFPreviewModal({
               </div>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex gap-3 mt-auto pt-4 sticky bottom-0 bg-background pb-1">
+            {/* Action Buttons - always visible */}
+            <div className="flex gap-3 mb-4">
               <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
                 Cancel
               </Button>
@@ -635,6 +605,39 @@ export default function PDFPreviewModal({
               >
                 Approve & Continue
               </Button>
+            </div>
+
+            {/* Preflight Summary - scrollable below buttons */}
+            <div className="flex-1 overflow-y-auto min-h-0">
+              <h3 className="text-lg font-semibold mb-3">Preflight Summary</h3>
+              
+              <div className="space-y-3 mb-4">
+                {preflightItems.map((item, index) => (
+                  <div key={index} className="flex items-center gap-3 p-3 border rounded-lg">
+                    <item.icon 
+                      className={`w-5 h-5 ${
+                        item.status === 'success' ? 'text-green-600' : 
+                        item.status === 'warning' ? 'text-yellow-600' : 'text-red-600'
+                      }`}
+                    />
+                    <div className="flex-1">
+                      <div className="font-medium text-sm">{item.label}</div>
+                      <div className="text-xs text-muted-foreground">{item.value}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Project Details */}
+              <div className="space-y-2">
+                <h4 className="font-semibold">Project Details</h4>
+                <div className="text-sm space-y-1">
+                  <div>Template: {template?.name || 'business_card'}</div>
+                  <div>Size: {template?.width || 295}×{template?.height || 100}mm</div>
+                  <div>Elements: {canvasElements.length} positioned</div>
+                  <div>Project: {project?.name || 'Untitled Project'}</div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
