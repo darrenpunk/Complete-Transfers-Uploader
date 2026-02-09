@@ -522,6 +522,17 @@ export default function CanvasWorkspace({
   const captureBadgeSnapshot = useCallback(async () => {
     if (!canvasRef.current) return;
     try {
+      const originalBg = canvasRef.current.style.backgroundColor;
+      canvasRef.current.style.backgroundColor = 'transparent';
+      const overlays = canvasRef.current.querySelectorAll('.pointer-events-none') as NodeListOf<HTMLElement>;
+      const savedStyles: { el: HTMLElement; display: string; bg: string }[] = [];
+      overlays.forEach(el => {
+        savedStyles.push({ el, display: el.style.display, bg: el.style.backgroundColor });
+        el.style.backgroundColor = 'transparent';
+        if (el.style.backgroundImage || el.className.includes('opacity-')) {
+          el.style.display = 'none';
+        }
+      });
       const { default: html2canvas } = await import('html2canvas');
       const canvas = await html2canvas(canvasRef.current, {
         backgroundColor: null,
@@ -529,6 +540,11 @@ export default function CanvasWorkspace({
         useCORS: true,
         allowTaint: true,
         logging: false,
+      });
+      canvasRef.current.style.backgroundColor = originalBg;
+      savedStyles.forEach(({ el, display, bg }) => {
+        el.style.display = display;
+        el.style.backgroundColor = bg;
       });
       setBadgeCanvasSnapshot(canvas.toDataURL('image/png'));
     } catch (err) {
@@ -586,6 +602,23 @@ export default function CanvasWorkspace({
         setIsGeneratingPreview(false);
         return;
       }
+
+      if (activeCanvasIndex !== 1) {
+        onActiveCanvasChange?.(1);
+        await new Promise<void>(resolve => {
+          let attempts = 0;
+          const checkReady = () => {
+            attempts++;
+            const hasCanvas2Elements = canvasRef.current?.querySelector('[data-canvas-element]');
+            if (hasCanvas2Elements || attempts > 15) {
+              resolve();
+            } else {
+              requestAnimationFrame(checkReady);
+            }
+          };
+          requestAnimationFrame(() => requestAnimationFrame(checkReady));
+        });
+      }
       const embroideryImage = await captureCanvasTransparent();
       onActiveCanvasChange?.(2);
 
@@ -616,7 +649,7 @@ export default function CanvasWorkspace({
     } finally {
       setIsGeneratingPreview(false);
     }
-  }, [badgeCanvasSnapshot, captureCanvasTransparent, canvasElements, logos, toast, onActiveCanvasChange]);
+  }, [badgeCanvasSnapshot, captureCanvasTransparent, canvasElements, logos, toast, onActiveCanvasChange, activeCanvasIndex]);
 
   // Automatic cleanup of orphaned canvas elements
   useCleanupOrphanedElements({
@@ -1565,15 +1598,12 @@ export default function CanvasWorkspace({
     // Use the smaller scale factor to ensure template fits within bounds
     const optimalScale = Math.min(scaleX, scaleY);
     
-    // Convert to percentage with a more aggressive approach
-    // For smaller templates, aim to fill more of the available space
-    const sizeRatio = (template.pixelWidth * template.pixelHeight) / (600 * 600); // Compare to A3 size
-    const fillFactor = sizeRatio < 0.5 ? 0.95 : 0.85; // Fill more aggressively for smaller templates
+    const fillFactor = 0.85;
     
     const targetScale = optimalScale * fillFactor;
     
-    // Allow wider range from 50% to 400% for better flexibility
-    const optimalZoom = Math.min(Math.max(targetScale * 100, 50), 400);
+    // Cap initial zoom to 150% so the whole canvas is always visible by default
+    const optimalZoom = Math.min(Math.max(targetScale * 100, 50), 150);
     
     console.log(`Template ${template.name}: ${template.pixelWidth}x${template.pixelHeight}px, Workspace: ${workspaceWidth}x${workspaceHeight}, Zoom: ${Math.round(optimalZoom)}%`);
     
@@ -2467,6 +2497,7 @@ export default function CanvasWorkspace({
               return (
                 <div
                   key={element.id}
+                  data-canvas-element={element.id}
                   className={`canvas-element absolute ${isDragging && isSelected ? 'cursor-grabbing' : 'cursor-grab'}`}
                   style={{
                     left: elementX,
