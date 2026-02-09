@@ -745,26 +745,35 @@ export async function registerRoutes(app: express.Application) {
       const embBase64 = embData.buffer.toString('base64');
 
       let embDescription = '';
+      const embElementList: string[] = [];
       try {
         const embFilename = embLogo.canvasFallbackFilename || embLogo.previewFilename || embLogo.filename;
         if (embFilename.endsWith('.svg')) {
           const svgContent = (await fs.readFile(path.join(uploadsDir, embFilename))).toString();
-          const parts: string[] = [];
-          if (/circle|ellipse/i.test(svgContent)) parts.push('the circular border/outline ring');
+          const hasCircle = /<circle[\s>]/i.test(svgContent);
+          const hasEllipse = /<ellipse[\s>]/i.test(svgContent);
+          const hasRect = /<rect[\s>]/i.test(svgContent);
+          const hasLine = /<line[\s>]/i.test(svgContent) || /<polyline[\s>]/i.test(svgContent);
+          const hasPolygon = /<polygon[\s>]/i.test(svgContent);
           const pathCount = (svgContent.match(/<path /g) || []).length;
-          if (pathCount > 5) parts.push(`text letterforms rendered as ${pathCount} vector paths (including large "Grub" text AND smaller "Deli & Grocer" text below it)`);
-          else if (pathCount > 0) parts.push(`${pathCount} vector path shapes`);
-          const textMatches = svgContent.match(/<text[^>]*>([^<]*)<\/text>/g);
-          if (textMatches) {
-            const texts = textMatches.map((t: string) => t.replace(/<[^>]+>/g, '').trim()).filter(Boolean);
-            if (texts.length > 0) parts.push(`text: "${texts.join('", "')}"`);
+          const textMatches = svgContent.match(/<text[^>]*>([\s\S]*?)<\/text>/g) || [];
+          const textContents = textMatches.map((t: string) => t.replace(/<[^>]+>/g, '').trim()).filter(Boolean);
+
+          if (hasCircle || hasEllipse) embElementList.push('circular/oval border or outline');
+          if (hasRect) embElementList.push('rectangular border or outline');
+          if (hasLine) embElementList.push('line elements');
+          if (hasPolygon) embElementList.push('polygon shapes');
+          if (pathCount > 0) embElementList.push(`${pathCount} vector paths (these are typically text letterforms, outlines, or decorative shapes)`);
+          if (textContents.length > 0) {
+            textContents.forEach(t => embElementList.push(`text: "${t}"`));
           }
-          embDescription = parts.join(', ');
+
+          embDescription = embElementList.join('; ');
         }
       } catch (e) {
         console.log('[Embroidery Preview] Could not analyze embroidery SVG');
       }
-      if (!embDescription) embDescription = 'circular border, large text, and small text';
+      if (!embDescription) embDescription = 'borders, outlines, text, and decorative elements';
       console.log(`[Embroidery Preview] Embroidery description: ${embDescription}`);
 
       const embOnBlack = await sharp(embData.buffer)
@@ -793,25 +802,26 @@ export async function registerRoutes(app: express.Application) {
 
       console.log('[Embroidery Preview] Step 2: Sending to Gemini');
 
+      const bulletPoints = embElementList.map(item => `- ${item}`).join('\n');
+
       const promptParts: any[] = [
         { text: `You are generating a photorealistic preview of a finished applique badge/patch.
 
 IMAGE 1: The complete badge artwork showing all printed and embroidered elements together.
-IMAGE 2: ONLY the embroidery elements shown on a black background. EVERY element visible in Image 2 must be rendered as machine embroidery — this includes: ${embDescription}. Count carefully: there are multiple text elements of different sizes.` },
+IMAGE 2: ONLY the embroidery elements shown on a black background. EVERY single element visible in Image 2 — no matter how large or small — must be rendered as machine embroidery.` },
         { inlineData: { data: badgeBase64, mimeType: badgeData.mime } },
         { inlineData: { data: embBlackBase64, mimeType: 'image/png' } },
-        { text: `TASK: Generate ONE photorealistic image of the finished badge where:
+        { text: `TASK: Generate ONE photorealistic image of the finished badge.
 
-EMBROIDERED (from Image 2): Render ALL of the following as raised satin-stitch machine embroidery with visible thread texture, 3D relief, and natural sheen:
-- The circular border ring around the badge edge
-- The large "Grub" text in the center  
-- The smaller "Deli & Grocer" text below "Grub" — THIS TEXT MUST ALSO BE EMBROIDERED, not flat
+EMBROIDERED — every element from Image 2 must be rendered as raised satin-stitch machine embroidery with visible thread texture, 3D relief, and natural sheen. The embroidery layer contains:
+${bulletPoints}
 
-PRINTED (everything else): All other elements (dots, lines, abstract shapes, background) remain as smooth flat prints with zero stitch texture.
-
-CRITICAL: The "Deli & Grocer" text is SMALL but it MUST have visible embroidery stitch texture, just like the "Grub" text above it. Do NOT leave it as flat print.
-
-Keep exact same colors, layout, proportions. Output on a plain neutral background with padding so the entire badge is visible.` },
+CRITICAL RULES:
+1. EVERY element visible in Image 2 gets embroidery texture — including ALL text of ANY size. Small text must also show stitch texture.
+2. Everything NOT in Image 2 stays as a smooth, flat print with zero stitch texture.
+3. Use the original colors from Image 1, keep exact layout and proportions.
+4. Do NOT add any extra elements not present in the original artwork.
+5. Output on a plain neutral background with padding so the ENTIRE badge is fully visible with nothing cropped.` },
       ];
 
       const response = await ai.models.generateContent({
