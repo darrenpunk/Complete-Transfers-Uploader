@@ -670,8 +670,8 @@ export async function registerRoutes(app: express.Application) {
             const svgPath = path.join(uploadsDir, svgFilename);
             try {
               const svgBuffer = await fs.readFile(svgPath);
-              const pngBuffer = await sharp(svgBuffer, { density: 300 })
-                .resize(1500, 1500, { fit: 'inside', withoutEnlargement: false })
+              const pngBuffer = await sharp(svgBuffer, { density: 600 })
+                .resize(2048, 2048, { fit: 'inside', withoutEnlargement: false })
                 .png()
                 .toBuffer();
               console.log(`[Embroidery Preview] Converted SVG (from PDF) to high-res PNG: ${pngBuffer.length} bytes`);
@@ -694,11 +694,21 @@ export async function registerRoutes(app: express.Application) {
           
           const buffer = await fs.readFile(filePath);
           if (isSvg) {
-            const pngBuffer = await sharp(buffer, { density: 300 })
-              .resize(1500, 1500, { fit: 'inside', withoutEnlargement: false })
+            const svgImage = sharp(buffer, { density: 600 })
+              .resize(2048, 2048, { fit: 'inside', withoutEnlargement: false });
+            const metadata = await svgImage.metadata();
+            const pngBuffer = await sharp({
+              create: {
+                width: metadata.width || 2048,
+                height: metadata.height || 2048,
+                channels: 4,
+                background: { r: 240, g: 240, b: 240, alpha: 1 }
+              }
+            })
+              .composite([{ input: await svgImage.png().toBuffer(), gravity: 'center' }])
               .png()
               .toBuffer();
-            console.log(`[Embroidery Preview] Converted SVG to high-res PNG: ${pngBuffer.length} bytes`);
+            console.log(`[Embroidery Preview] Converted SVG to high-res PNG with background: ${pngBuffer.length} bytes`);
             return { buffer: pngBuffer, mime: 'image/png' };
           }
           const mime = logo.mimeType || 'image/png';
