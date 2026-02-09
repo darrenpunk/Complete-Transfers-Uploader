@@ -1299,7 +1299,8 @@ export default function PropertiesPanel({
                   .sort((a, b) => b.zIndex - a.zIndex)
                   .map((element) => {
                     const logo = logos.find(l => l.id === element.logoId);
-                    const isShapeElement = element.elementType === 'rectangle' || element.elementType === 'ellipse' || element.elementType === 'circle' || element.elementType === 'line';
+                    const shapeTypes = ['rectangle', 'ellipse', 'circle', 'line', 'shield', 'star', 'hexagon', 'pentagon', 'triangle', 'diamond', 'banner', 'cross'];
+                    const isShapeElement = shapeTypes.includes(element.elementType || '');
                     if (!logo && !isShapeElement) return null;
 
                     const isSelected = currentElement?.id === element.id;

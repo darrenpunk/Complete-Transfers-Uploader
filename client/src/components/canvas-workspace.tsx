@@ -4,7 +4,7 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { Project, Logo, CanvasElement, TemplateSize, ContentBounds } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Minus, Plus, Grid3X3, AlignCenter, Undo, Redo, Upload, Trash2, Maximize2, RotateCw, Move, ArrowRight, CheckSquare, Group, Ungroup, X, Loader2, Square, Circle, MinusIcon, Shapes, Scissors, Shield, Star, Hexagon, Pentagon, Triangle } from "lucide-react";
+import { Minus, Plus, Grid3X3, AlignCenter, Undo, Redo, Upload, Trash2, Maximize2, RotateCw, Move, ArrowRight, CheckSquare, Group, Ungroup, X, Loader2, Square, Circle, MinusIcon, Shapes, Scissors, Shield, Star, Hexagon, Pentagon, Triangle, Layers, Eye, EyeOff, Lock, Unlock, ChevronUp, ChevronDown, GripVertical, Image } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
@@ -261,6 +261,11 @@ export default function CanvasWorkspace({
   const [pendingRasterFile, setPendingRasterFile] = useState<{ file: File; fileName: string } | null>(null);
   const [showRasterWarning, setShowRasterWarning] = useState(false);
   const [showVectorizer, setShowVectorizer] = useState(false);
+  
+  // Layers panel state
+  const [showLayersPanel, setShowLayersPanel] = useState(false);
+  const [draggedLayerIndex, setDraggedLayerIndex] = useState<number | null>(null);
+  const [dragOverLayerIndex, setDragOverLayerIndex] = useState<number | null>(null);
 
   // Debug: Monitor state changes
   useEffect(() => {
@@ -498,6 +503,114 @@ export default function CanvasWorkspace({
         variant: "destructive",
       });
     }
+  };
+
+  const allShapeTypes = ['rectangle', 'ellipse', 'circle', 'line', 'shield', 'star', 'hexagon', 'pentagon', 'triangle', 'diamond', 'banner', 'cross'];
+
+  const getLayerElements = useCallback(() => {
+    let elements = canvasElements;
+    if (isAppliqueTemplate) {
+      elements = elements.filter(el => (el.canvasIndex || 0) === activeCanvasIndex);
+    }
+    return [...elements].sort((a, b) => b.zIndex - a.zIndex);
+  }, [canvasElements, isAppliqueTemplate, activeCanvasIndex]);
+
+  const getLayerIcon = (element: CanvasElement) => {
+    const isShape = allShapeTypes.includes(element.elementType || '');
+    if (!isShape) return <Image className="w-4 h-4 text-gray-400" />;
+    switch (element.elementType) {
+      case 'rectangle': return <Square className="w-4 h-4 text-gray-400" />;
+      case 'ellipse': case 'circle': return <Circle className="w-4 h-4 text-gray-400" />;
+      case 'line': return <MinusIcon className="w-4 h-4 text-gray-400" />;
+      case 'triangle': return <Triangle className="w-4 h-4 text-gray-400" />;
+      case 'shield': return <Shield className="w-4 h-4 text-gray-400" />;
+      case 'star': return <Star className="w-4 h-4 text-gray-400" />;
+      case 'hexagon': return <Hexagon className="w-4 h-4 text-gray-400" />;
+      case 'pentagon': return <Pentagon className="w-4 h-4 text-gray-400" />;
+      default: return <Shapes className="w-4 h-4 text-gray-400" />;
+    }
+  };
+
+  const getLayerName = (element: CanvasElement) => {
+    const isShape = allShapeTypes.includes(element.elementType || '');
+    if (isShape) {
+      return (element.elementType || 'Shape').charAt(0).toUpperCase() + (element.elementType || 'shape').slice(1);
+    }
+    const logo = logos.find(l => l.id === element.logoId);
+    return logo?.originalName || 'Artwork';
+  };
+
+  const renormalizeLayerOrder = async (orderedElements: CanvasElement[]) => {
+    const updates: Promise<void>[] = [];
+    orderedElements.forEach((el, i) => {
+      const newZ = orderedElements.length - 1 - i;
+      if (el.zIndex !== newZ) {
+        updates.push(updateElementDirect(el.id, { zIndex: newZ }, false));
+      }
+    });
+    if (updates.length > 0) {
+      await Promise.all(updates);
+      queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id, "canvas-elements"] });
+    }
+  };
+
+  const handleLayerMoveUp = async (element: CanvasElement) => {
+    const sorted = getLayerElements();
+    const idx = sorted.findIndex(el => el.id === element.id);
+    if (idx <= 0) return;
+    const newOrder = [...sorted];
+    [newOrder[idx - 1], newOrder[idx]] = [newOrder[idx], newOrder[idx - 1]];
+    await renormalizeLayerOrder(newOrder);
+  };
+
+  const handleLayerMoveDown = async (element: CanvasElement) => {
+    const sorted = getLayerElements();
+    const idx = sorted.findIndex(el => el.id === element.id);
+    if (idx < 0 || idx >= sorted.length - 1) return;
+    const newOrder = [...sorted];
+    [newOrder[idx], newOrder[idx + 1]] = [newOrder[idx + 1], newOrder[idx]];
+    await renormalizeLayerOrder(newOrder);
+  };
+
+  const handleLayerDragStart = (index: number) => {
+    setDraggedLayerIndex(index);
+  };
+
+  const handleLayerDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    setDragOverLayerIndex(index);
+  };
+
+  const handleLayerDrop = async (targetIndex: number) => {
+    if (draggedLayerIndex === null || draggedLayerIndex === targetIndex) {
+      setDraggedLayerIndex(null);
+      setDragOverLayerIndex(null);
+      return;
+    }
+    const sorted = getLayerElements();
+    const draggedElement = sorted[draggedLayerIndex];
+    if (!draggedElement) {
+      setDraggedLayerIndex(null);
+      setDragOverLayerIndex(null);
+      return;
+    }
+
+    const newOrder = [...sorted];
+    newOrder.splice(draggedLayerIndex, 1);
+    newOrder.splice(targetIndex, 0, draggedElement);
+
+    await renormalizeLayerOrder(newOrder);
+
+    setDraggedLayerIndex(null);
+    setDragOverLayerIndex(null);
+  };
+
+  const handleLayerToggleVisibility = async (element: CanvasElement) => {
+    await updateElementDirect(element.id, { isVisible: !element.isVisible }, false);
+  };
+
+  const handleLayerToggleLock = async (element: CanvasElement) => {
+    await updateElementDirect(element.id, { isLocked: !element.isLocked }, false);
   };
 
   const captureCanvasAsImage = useCallback(async (): Promise<string | null> => {
@@ -1955,6 +2068,22 @@ export default function CanvasWorkspace({
               </DropdownMenu>
             )}
 
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant={showLayersPanel ? "default" : "outline"} 
+                  size="sm" 
+                  onClick={() => setShowLayersPanel(!showLayersPanel)}
+                >
+                  <Layers className="w-4 h-4 mr-2" />
+                  Layers
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Manage layer order and visibility</p>
+              </TooltipContent>
+            </Tooltip>
+
             <div className="h-6 w-px bg-gray-300"></div>
             
             {/* Zoom Controls */}
@@ -2269,6 +2398,13 @@ export default function CanvasWorkspace({
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
+                <button
+                  className={`px-3 py-1.5 rounded text-sm font-medium transition-colors flex items-center gap-1.5 ${showLayersPanel ? 'bg-purple-600 text-white' : 'bg-gray-600 text-gray-300 hover:bg-gray-500'}`}
+                  onClick={() => setShowLayersPanel(!showLayersPanel)}
+                >
+                  <Layers className="w-3.5 h-3.5" />
+                  Layers
+                </button>
                 {onSetupEmbroidery && (
                   <button
                     className="px-3 py-1.5 rounded text-sm font-medium bg-purple-600 text-white hover:bg-purple-500 transition-colors flex items-center gap-1.5"
@@ -3020,6 +3156,113 @@ export default function CanvasWorkspace({
             )}
           </div>
         </div>
+
+        {showLayersPanel && (
+          <div 
+            className="absolute top-2 right-2 bg-gray-900 border border-gray-700 rounded-lg shadow-2xl z-50"
+            style={{ width: '260px', maxHeight: 'calc(100% - 16px)' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-3 py-2 border-b border-gray-700">
+              <div className="flex items-center gap-2">
+                <Layers className="w-4 h-4 text-gray-300" />
+                <span className="text-sm font-medium text-gray-200">Layers</span>
+                <span className="text-xs text-gray-500">({getLayerElements().length})</span>
+              </div>
+              <button
+                className="p-1 rounded hover:bg-gray-700 text-gray-400 hover:text-gray-200 transition-colors"
+                onClick={() => setShowLayersPanel(false)}
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="overflow-y-auto" style={{ maxHeight: 'calc(100% - 44px)' }}>
+              {getLayerElements().length === 0 ? (
+                <div className="text-sm text-gray-500 text-center py-6">
+                  No elements on canvas
+                </div>
+              ) : (
+                <div className="p-1">
+                  {getLayerElements().map((element, index) => {
+                    const isSelected = selectedElements.some(sel => sel.id === element.id);
+                    const isDragTarget = dragOverLayerIndex === index && draggedLayerIndex !== index;
+                    return (
+                      <div
+                        key={element.id}
+                        draggable
+                        onDragStart={() => handleLayerDragStart(index)}
+                        onDragOver={(e) => handleLayerDragOver(e, index)}
+                        onDrop={() => handleLayerDrop(index)}
+                        onDragEnd={() => { setDraggedLayerIndex(null); setDragOverLayerIndex(null); }}
+                        className={`flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer transition-colors group ${
+                          isSelected 
+                            ? 'bg-purple-600/30 border border-purple-500/50' 
+                            : 'border border-transparent hover:bg-gray-800'
+                        } ${isDragTarget ? 'border-t-2 border-t-purple-400' : ''} ${
+                          draggedLayerIndex === index ? 'opacity-50' : ''
+                        } ${!element.isVisible ? 'opacity-60' : ''}`}
+                        onClick={() => {
+                          const found = canvasElements.find(el => el.id === element.id);
+                          if (found) onElementsSelect([found]);
+                        }}
+                      >
+                        <div className="cursor-grab active:cursor-grabbing text-gray-600 hover:text-gray-400">
+                          <GripVertical className="w-3.5 h-3.5" />
+                        </div>
+                        <div className="flex-shrink-0">
+                          {getLayerIcon(element)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs font-medium text-gray-300 truncate">
+                            {getLayerName(element)}
+                          </div>
+                          <div className="text-[10px] text-gray-500">
+                            {(() => {
+                              const isRotated = element.rotation === 90 || element.rotation === 270;
+                              const w = isRotated ? element.height : element.width;
+                              const h = isRotated ? element.width : element.height;
+                              return `${Math.round(w)}×${Math.round(h)}mm`;
+                            })()}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            className="p-0.5 rounded hover:bg-gray-700 text-gray-500 hover:text-gray-300"
+                            title="Move up"
+                            onClick={(e) => { e.stopPropagation(); handleLayerMoveUp(element); }}
+                          >
+                            <ChevronUp className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            className="p-0.5 rounded hover:bg-gray-700 text-gray-500 hover:text-gray-300"
+                            title="Move down"
+                            onClick={(e) => { e.stopPropagation(); handleLayerMoveDown(element); }}
+                          >
+                            <ChevronDown className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                        <button
+                          className="p-0.5 rounded hover:bg-gray-700 text-gray-500 hover:text-gray-300"
+                          title={element.isVisible ? "Hide" : "Show"}
+                          onClick={(e) => { e.stopPropagation(); handleLayerToggleVisibility(element); }}
+                        >
+                          {element.isVisible ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5 text-gray-600" />}
+                        </button>
+                        <button
+                          className="p-0.5 rounded hover:bg-gray-700 text-gray-500 hover:text-gray-300"
+                          title={element.isLocked ? "Unlock" : "Lock"}
+                          onClick={(e) => { e.stopPropagation(); handleLayerToggleLock(element); }}
+                        >
+                          {element.isLocked ? <Lock className="w-3.5 h-3.5 text-yellow-500" /> : <Unlock className="w-3.5 h-3.5" />}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
 
