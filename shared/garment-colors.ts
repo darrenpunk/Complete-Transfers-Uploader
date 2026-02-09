@@ -307,8 +307,66 @@ export const stanleyStellaColors: ManufacturerColorGroup[] = [
   }
 ];
 
+export const solsColors: ManufacturerColorGroup[] = [
+  {
+    name: "Blues",
+    colors: [
+      { code: "106", name: "Navy", hex: "#131F3C", cmyk: { c: 100, m: 80, y: 0, k: 70 }, pantone: "282 C" },
+      { code: "148", name: "French Marine", hex: "#002958", cmyk: { c: 100, m: 74, y: 0, k: 47 }, pantone: "281 C" },
+      { code: "241", name: "Royal Blue", hex: "#00468D", cmyk: { c: 100, m: 72, y: 0, k: 6 }, pantone: "286 C" },
+      { code: "220", name: "Sky Blue", hex: "#8FC3E7", cmyk: { c: 42, m: 8, y: 0, k: 0 }, pantone: "283 C" },
+      { code: "225", name: "Atoll Blue", hex: "#00AFDD", cmyk: { c: 75, m: 0, y: 5, k: 0 }, pantone: "306 C" },
+      { code: "244", name: "Duck Blue", hex: "#006579", cmyk: { c: 86, m: 17, y: 23, k: 44 }, pantone: "3025 C" },
+      { code: "242", name: "Abyss Blue", hex: "#0F3458", cmyk: { c: 95, m: 65, y: 15, k: 55 }, pantone: "534 C" },
+    ]
+  },
+  {
+    name: "Reds, Pinks & Purples",
+    colors: [
+      { code: "145", name: "Red", hex: "#DB002D", cmyk: { c: 0, m: 100, y: 81, k: 4 }, pantone: "186 C" },
+      { code: "146", name: "Burgundy", hex: "#6B102B", cmyk: { c: 20, m: 100, y: 40, k: 58 }, pantone: "209 C" },
+      { code: "140", name: "Fuchsia", hex: "#DC0070", cmyk: { c: 8, m: 100, y: 0, k: 0 }, pantone: "219 C" },
+      { code: "136", name: "Pale Pink", hex: "#FAD4D6", cmyk: { c: 0, m: 21, y: 8, k: 0 }, pantone: "706 C" },
+      { code: "139", name: "Orchid Pink", hex: "#E479AC", cmyk: { c: 5, m: 65, y: 0, k: 0 }, pantone: "205 C" },
+      { code: "281", name: "Dark Purple", hex: "#472164", cmyk: { c: 80, m: 98, y: 5, k: 27 }, pantone: "273 C" },
+    ]
+  },
+  {
+    name: "Greens & Olives",
+    colors: [
+      { code: "272", name: "Kelly Green", hex: "#009B48", cmyk: { c: 90, m: 0, y: 95, k: 0 }, pantone: "347 C" },
+      { code: "269", name: "Bottle Green", hex: "#005445", cmyk: { c: 90, m: 30, y: 70, k: 45 }, pantone: "3435 C" },
+      { code: "280", name: "Apple Green", hex: "#82BC2B", cmyk: { c: 55, m: 0, y: 100, k: 0 }, pantone: "368 C" },
+      { code: "268", name: "Army", hex: "#64604E", cmyk: { c: 45, m: 40, y: 55, k: 40 }, pantone: "417 C" },
+      { code: "264", name: "Dark Khaki", hex: "#968A69", cmyk: { c: 35, m: 35, y: 55, k: 20 }, pantone: "451 C" },
+      { code: "273", name: "Lime", hex: "#B4D228", cmyk: { c: 35, m: 0, y: 100, k: 0 }, pantone: "382 C" },
+    ]
+  },
+  {
+    name: "Earth Tones & Yellows",
+    colors: [
+      { code: "301", name: "Gold", hex: "#FFC300", cmyk: { c: 0, m: 25, y: 100, k: 0 }, pantone: "1235 C" },
+      { code: "302", name: "Lemon", hex: "#FFE600", cmyk: { c: 0, m: 5, y: 100, k: 0 }, pantone: "Yellow C" },
+      { code: "400", name: "Orange", hex: "#F37021", cmyk: { c: 0, m: 70, y: 100, k: 0 }, pantone: "1585 C" },
+      { code: "312", name: "Sand", hex: "#E1D2B9", cmyk: { c: 8, m: 12, y: 25, k: 5 }, pantone: "7527 C" },
+      { code: "398", name: "Chocolate", hex: "#473023", cmyk: { c: 50, m: 70, y: 80, k: 60 }, pantone: "462 C" },
+    ]
+  },
+  {
+    name: "Neutrals (Greys & Basics)",
+    colors: [
+      { code: "309", name: "Deep Black", hex: "#000000", cmyk: { c: 100, m: 100, y: 100, k: 100 }, pantone: "Black 6 C" },
+      { code: "102", name: "White", hex: "#FFFFFF", cmyk: { c: 0, m: 0, y: 0, k: 0 } },
+      { code: "350", name: "Grey Melange", hex: "#B0B3B5", cmyk: { c: 30, m: 20, y: 20, k: 10 }, pantone: "422 C" },
+      { code: "384", name: "Charcoal", hex: "#465055", cmyk: { c: 65, m: 50, y: 45, k: 45 }, pantone: "446 C" },
+      { code: "300", name: "Ash", hex: "#E6E6E1", cmyk: { c: 5, m: 5, y: 10, k: 5 }, pantone: "Cool Gray 1 C" },
+    ]
+  }
+];
+
 export const manufacturerColors = {
   "Gildan": gildanColors,
   "Fruit of the Loom": fruitOfTheLoomColors,
-  "Stanley/Stella": stanleyStellaColors
+  "Stanley/Stella": stanleyStellaColors,
+  "SOL'S": solsColors
 };
