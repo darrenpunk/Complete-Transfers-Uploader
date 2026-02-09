@@ -303,8 +303,6 @@ export default function CanvasWorkspace({
   const [history, setHistory] = useState<CanvasElement[][]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
 
-  // Embroidery preview state
-  const [showEmbroideryPreview, setShowEmbroideryPreview] = useState(false);
   const [embroideryPreviewImage, setEmbroideryPreviewImage] = useState<string | null>(null);
   const [badgeCanvasSnapshot, setBadgeCanvasSnapshot] = useState<string | null>(null);
   const [isGeneratingPreview, setIsGeneratingPreview] = useState(false);
@@ -547,7 +545,6 @@ export default function CanvasWorkspace({
 
   const generateEmbroideryPreview = useCallback(async () => {
     setIsGeneratingPreview(true);
-    setShowEmbroideryPreview(true);
     setEmbroideryPreviewImage(null);
     try {
       if (!badgeCanvasSnapshot) {
@@ -556,6 +553,7 @@ export default function CanvasWorkspace({
         return;
       }
       const embroideryImage = await captureCanvasAsImage();
+      onActiveCanvasChange?.(2);
 
       const embElements = canvasElements.filter(el => (el.canvasIndex || 0) === 1);
       const embLogos = embElements
@@ -584,7 +582,7 @@ export default function CanvasWorkspace({
     } finally {
       setIsGeneratingPreview(false);
     }
-  }, [badgeCanvasSnapshot, captureCanvasAsImage, canvasElements, logos, toast]);
+  }, [badgeCanvasSnapshot, captureCanvasAsImage, canvasElements, logos, toast, onActiveCanvasChange]);
 
   // Automatic cleanup of orphaned canvas elements
   useCleanupOrphanedElements({
@@ -2161,17 +2159,23 @@ export default function CanvasWorkspace({
               >
                 Canvas 2: Embroidery Artwork {embroideryCount > 0 && <span className="ml-1 bg-white/20 px-1.5 py-0.5 rounded text-xs">{embroideryCount}</span>}
               </button>
-              {activeCanvasIndex === 1 && embroideryCount > 0 && (
+              {embroideryCount > 0 && (
                 <button
-                  className="px-3 py-1.5 rounded text-sm font-medium bg-amber-600 text-white hover:bg-amber-500 transition-colors flex items-center gap-1.5 ml-2"
-                  onClick={generateEmbroideryPreview}
-                  disabled={isGeneratingPreview}
+                  className={`px-4 py-1.5 rounded text-sm font-medium transition-colors flex items-center gap-1.5 ${activeCanvasIndex === 2 ? 'bg-amber-600 text-white' : 'bg-gray-600 text-gray-300 hover:bg-gray-500'}`}
+                  onClick={() => {
+                    if (embroideryPreviewImage || isGeneratingPreview) {
+                      onActiveCanvasChange?.(2);
+                    } else {
+                      generateEmbroideryPreview();
+                    }
+                  }}
+                  disabled={isGeneratingPreview && activeCanvasIndex === 2}
                 >
                   {isGeneratingPreview ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
-                  Preview Embroidery
+                  Canvas 3: AI Preview
                 </button>
               )}
-              {onSetupEmbroidery && (
+              {onSetupEmbroidery && activeCanvasIndex !== 2 && (
                 <button
                   className="px-3 py-1.5 rounded text-sm font-medium bg-purple-600 text-white hover:bg-purple-500 transition-colors flex items-center gap-1.5 ml-auto"
                   onClick={onSetupEmbroidery}
@@ -2183,6 +2187,46 @@ export default function CanvasWorkspace({
             </div>
           );
         })()}
+        {activeCanvasIndex === 2 ? (
+          <div className="w-full h-full flex flex-col items-center justify-center p-6" style={{ backgroundColor: '#404040' }}>
+            {isGeneratingPreview ? (
+              <div className="flex flex-col items-center justify-center gap-4">
+                <Loader2 className="w-12 h-12 text-amber-400 animate-spin" />
+                <p className="text-gray-300 text-sm">Generating AI embroidery preview...</p>
+                <p className="text-gray-500 text-xs">This may take a few moments</p>
+              </div>
+            ) : embroideryPreviewImage ? (
+              <div className="flex flex-col items-center gap-3 max-h-full">
+                <img
+                  src={embroideryPreviewImage}
+                  alt="AI Embroidery Preview"
+                  className="rounded-lg max-w-full max-h-[calc(100%-60px)] object-contain border border-gray-600 shadow-xl"
+                />
+                <div className="flex items-center gap-4">
+                  <p className="text-gray-400 text-xs">AI-generated embroidery preview — actual result may vary</p>
+                  <button
+                    onClick={generateEmbroideryPreview}
+                    className="px-3 py-1.5 bg-amber-600 text-white rounded text-xs hover:bg-amber-500 transition-colors flex items-center gap-1.5"
+                  >
+                    <Sparkles className="w-3 h-3" />
+                    Regenerate
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center gap-4">
+                <p className="text-gray-400 text-sm">Preview generation failed</p>
+                <button
+                  onClick={generateEmbroideryPreview}
+                  className="px-4 py-2 bg-amber-600 text-white rounded-lg text-sm hover:bg-amber-500 transition-colors flex items-center gap-2"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  Try Again
+                </button>
+              </div>
+            )}
+          </div>
+        ) : (
         <div 
           className="w-full h-full overflow-auto"
           style={{
@@ -2853,6 +2897,7 @@ export default function CanvasWorkspace({
           </div>
         </div>
       </div>
+    )}
     </div>
 
       {/* Raster Warning Modal */}
@@ -2875,51 +2920,6 @@ export default function CanvasWorkspace({
           imageFile={pendingRasterFile.file}
           onVectorDownload={handleVectorDownload}
         />
-      )}
-
-      {/* Embroidery Preview Modal */}
-      {showEmbroideryPreview && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" onClick={() => setShowEmbroideryPreview(false)}>
-          <div className="bg-gray-900 rounded-xl shadow-2xl max-w-3xl w-full mx-4 overflow-hidden" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-5 py-3 border-b border-gray-700">
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-amber-400" />
-                <h3 className="text-white font-semibold text-base">AI Embroidery Preview</h3>
-              </div>
-              <button onClick={() => setShowEmbroideryPreview(false)} className="text-gray-400 hover:text-white transition-colors">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="p-5">
-              {isGeneratingPreview ? (
-                <div className="flex flex-col items-center justify-center py-16 gap-4">
-                  <Loader2 className="w-10 h-10 text-amber-400 animate-spin" />
-                  <p className="text-gray-300 text-sm">Generating embroidery preview...</p>
-                  <p className="text-gray-500 text-xs">This may take a few moments</p>
-                </div>
-              ) : embroideryPreviewImage ? (
-                <div className="flex flex-col items-center gap-3">
-                  <img
-                    src={embroideryPreviewImage}
-                    alt="Embroidery Preview"
-                    className="rounded-lg max-w-full max-h-[70vh] object-contain border border-gray-700"
-                  />
-                  <p className="text-gray-400 text-xs text-center">AI-generated embroidery preview on badge artwork — actual result may vary</p>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-16 gap-3">
-                  <p className="text-gray-400 text-sm">Preview generation failed</p>
-                  <button
-                    onClick={generateEmbroideryPreview}
-                    className="px-4 py-2 bg-amber-600 text-white rounded-lg text-sm hover:bg-amber-500 transition-colors"
-                  >
-                    Try Again
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
       )}
 
     </div>
