@@ -18,7 +18,7 @@ import AddToCartModal from "@/components/add-to-cart-modal";
 import ProgressSteps from "@/components/progress-steps";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Download, RotateCcw, HelpCircle, Palette, GraduationCap, FileText, AlertCircle, Upload, ShoppingCart, Maximize2, Minimize2, PanelLeft, PanelRight, X } from "lucide-react";
+import { Download, RotateCcw, HelpCircle, Palette, GraduationCap, FileText, AlertCircle, Upload, ShoppingCart, Maximize2, Minimize2, PanelLeft, PanelRight, X, Scissors } from "lucide-react";
 import completeTransfersLogoPath from "@assets/Artboard 1@4x_1753539065182.png";
 import { HelpModal } from "@/components/help-modal";
 import { VectorizationServiceForm } from "@/components/vectorization-service-form";
@@ -29,6 +29,7 @@ import { ExternalFileLinkModal } from "@/components/external-file-link-modal";
 import { DropboxUploadModal } from "@/components/dropbox-upload-modal";
 import { UploadGuidanceModal } from "@/components/upload-guidance-modal";
 import { EmbroideryElementSelector } from "@/components/embroidery-element-selector";
+import { EmbroideryWorkflowModal } from "@/components/embroidery-workflow-modal";
 import { UploadProgressModal } from "@/components/upload-progress-modal";
 
 export default function UploadTool() {
@@ -85,6 +86,7 @@ export default function UploadTool() {
   const [isInIframe, setIsInIframe] = useState(false);
   const [activeCanvasIndex, setActiveCanvasIndex] = useState(0);
   const [showEmbroiderySelector, setShowEmbroiderySelector] = useState(false);
+  const [showEmbroideryWorkflow, setShowEmbroideryWorkflow] = useState(false);
   const [isEmbroideryProcessing, setIsEmbroideryProcessing] = useState(false);
   const [elementSelectMode, setElementSelectMode] = useState(false);
   const [elementSelectTargetId, setElementSelectTargetId] = useState<string | undefined>();
@@ -1283,6 +1285,60 @@ export default function UploadTool() {
     }
   };
 
+  const handleEmbroideryFileUpload = (file: File) => {
+    if (!currentProject) return;
+    setUploadFileName(file.name);
+    setIsUploading(true);
+    setUploadProgress(0);
+    setIsUploadProcessing(false);
+
+    const formData = new FormData();
+    formData.append('files', file);
+    formData.append('canvasIndex', '1');
+
+    const xhr = new XMLHttpRequest();
+    xhr.upload.addEventListener('progress', (event) => {
+      if (event.lengthComputable) {
+        const percentComplete = Math.round((event.loaded / event.total) * 100);
+        setUploadProgress(percentComplete);
+        if (percentComplete >= 100) {
+          setIsUploadProcessing(true);
+        }
+      }
+    });
+
+    xhr.addEventListener('load', () => {
+      if (xhr.status === 200 || xhr.status === 201) {
+        try {
+          const newLogos = JSON.parse(xhr.responseText);
+          queryClient.setQueryData(
+            ["/api/projects", currentProject.id, "logos"],
+            (oldLogos: any[] = []) => [...oldLogos, ...newLogos]
+          );
+          queryClient.invalidateQueries({ queryKey: ["/api/projects", currentProject.id, "canvas-elements"] });
+          setActiveCanvasIndex(1);
+          toast({
+            title: "Embroidery file uploaded",
+            description: `${file.name} has been added to the Embroidery Canvas.`,
+          });
+        } catch (e) {
+          console.error('Failed to parse upload response:', e);
+        }
+      }
+      setIsUploading(false);
+      setIsUploadProcessing(false);
+    });
+
+    xhr.addEventListener('error', () => {
+      toast({ title: "Upload failed", description: "Failed to upload embroidery file.", variant: "destructive" });
+      setIsUploading(false);
+      setIsUploadProcessing(false);
+    });
+
+    xhr.open('POST', `/api/projects/${currentProject.id}/logos`);
+    xhr.send(formData);
+  };
+
   // Handle applique badges form submission
   const handleAppliqueBadgesFormConfirm = (formData: any) => {
     if (pendingTemplateData) {
@@ -1909,33 +1965,13 @@ export default function UploadTool() {
           {isAppliqueTemplate && (
             <div className="absolute top-16 left-1/2 transform -translate-x-1/2 z-20 flex gap-2 flex-wrap justify-center">
               {activeCanvasIndex === 0 && !elementSelectMode && canvasElements.filter(el => (el.canvasIndex || 0) === 0).length > 0 && (
-                <>
-                  <button
-                    onClick={() => {
-                      const badgeElements = canvasElements.filter(el => (el.canvasIndex || 0) === 0 && el.logoId);
-                      const svgElement = badgeElements.find(el => {
-                        const logo = logos.find(l => l.id === el.logoId);
-                        return logo?.mimeType === 'image/svg+xml';
-                      });
-                      if (svgElement) {
-                        enterElementSelectMode(svgElement.id);
-                      } else {
-                        setShowEmbroiderySelector(true);
-                      }
-                    }}
-                    className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg shadow-lg flex items-center gap-2 transition-colors"
-                  >
-                    <span>✂️</span> Select Elements for Embroidery
-                  </button>
-                  {canvasElements.filter(el => (el.canvasIndex || 0) === 0).length > 1 && (
-                    <button
-                      onClick={() => setShowEmbroiderySelector(true)}
-                      className="px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white text-sm font-medium rounded-lg shadow-lg flex items-center gap-2 transition-colors"
-                    >
-                      Copy Whole Logos
-                    </button>
-                  )}
-                </>
+                <button
+                  onClick={() => setShowEmbroideryWorkflow(true)}
+                  className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg shadow-lg flex items-center gap-2 transition-colors"
+                >
+                  <Scissors className="w-4 h-4" />
+                  Setup Embroidery Artwork
+                </button>
               )}
               {activeCanvasIndex === 0 && elementSelectMode && (
                 <>
@@ -1965,13 +2001,24 @@ export default function UploadTool() {
                   </button>
                 </>
               )}
-              {activeCanvasIndex === 1 && selectedElements.length > 0 && (
-                <button
-                  onClick={handleRemoveFromEmbroidery}
-                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg shadow-lg flex items-center gap-2 transition-colors"
-                >
-                  <span>🗑️</span> Remove from Embroidery ({selectedElements.length})
-                </button>
+              {activeCanvasIndex === 1 && (
+                <>
+                  <button
+                    onClick={() => setShowEmbroideryWorkflow(true)}
+                    className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg shadow-lg flex items-center gap-2 transition-colors"
+                  >
+                    <Scissors className="w-4 h-4" />
+                    Add Embroidery Artwork
+                  </button>
+                  {selectedElements.length > 0 && (
+                    <button
+                      onClick={handleRemoveFromEmbroidery}
+                      className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg shadow-lg flex items-center gap-2 transition-colors"
+                    >
+                      <span>🗑️</span> Remove from Embroidery ({selectedElements.length})
+                    </button>
+                  )}
+                </>
               )}
             </div>
           )}
@@ -2201,6 +2248,34 @@ export default function UploadTool() {
           logos={logos}
           onConfirm={handleEmbroiderElements}
           isProcessing={isEmbroideryProcessing}
+        />
+      )}
+
+      {/* Embroidery Workflow Modal */}
+      {isAppliqueTemplate && (
+        <EmbroideryWorkflowModal
+          open={showEmbroideryWorkflow}
+          onClose={() => setShowEmbroideryWorkflow(false)}
+          canvasElements={canvasElements}
+          logos={logos}
+          onSelectElements={handleEmbroiderElements}
+          onEnterElementSelectMode={() => {
+            const badgeElements = canvasElements.filter(el => (el.canvasIndex || 0) === 0 && el.logoId);
+            const svgElement = badgeElements.find(el => {
+              const logo = logos.find(l => l.id === el.logoId);
+              return logo?.mimeType === 'image/svg+xml';
+            });
+            if (svgElement) {
+              enterElementSelectMode(svgElement.id);
+            }
+          }}
+          onUploadFile={handleEmbroideryFileUpload}
+          isProcessing={isEmbroideryProcessing}
+          hasSvgElements={canvasElements.some(el => {
+            if ((el.canvasIndex || 0) !== 0 || !el.logoId) return false;
+            const logo = logos.find(l => l.id === el.logoId);
+            return logo?.mimeType === 'image/svg+xml';
+          })}
         />
       )}
 

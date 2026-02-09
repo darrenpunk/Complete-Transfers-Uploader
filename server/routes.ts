@@ -4101,19 +4101,21 @@ export async function registerRoutes(app: express.Application) {
           };
         }
 
-        console.log(`🔍 DEBUG: Creating canvas element with logoId: ${updatedLogo.id}`);
+        const uploadCanvasIndex = parseInt(req.body?.canvasIndex) || 0;
+        console.log(`🔍 DEBUG: Creating canvas element with logoId: ${updatedLogo.id}, canvasIndex: ${uploadCanvasIndex}`);
         const canvasElementData = {
           projectId: projectId,
-          logoId: updatedLogo.id, // Use the updated logo ID to ensure consistency
+          logoId: updatedLogo.id,
           x: centerX,
           y: centerY,
-          width: finalDisplayWidth,  // Use scaled dimensions if auto-scaled
-          height: finalDisplayHeight, // Use scaled dimensions if auto-scaled
+          width: finalDisplayWidth,
+          height: finalDisplayHeight,
           rotation: 0,
           zIndex: logos.length - 1,
           isVisible: true,
           isLocked: false,
-          colorOverrides: colorOverrides
+          colorOverrides: colorOverrides,
+          canvasIndex: uploadCanvasIndex
         };
 
         const createdElement = await storage.createCanvasElement(canvasElementData);
