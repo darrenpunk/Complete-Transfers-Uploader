@@ -627,7 +627,7 @@ export async function registerRoutes(app: express.Application) {
 
   app.post('/api/embroidery-preview', async (req, res) => {
     try {
-      const { badgeImage, embroideryImage, projectId } = req.body;
+      const { badgeImage, embroideryImage, projectId, garmentColor } = req.body;
       if (!badgeImage || !embroideryImage) {
         return res.status(400).json({ error: 'Both badge and embroidery images are required' });
       }
@@ -699,21 +699,37 @@ export async function registerRoutes(app: express.Application) {
         .raw()
         .toBuffer();
 
-      const maskRaw = await sharp(embOrigBuffer)
+      const embOrigResized = await sharp(embOrigBuffer)
         .resize(badgeW, badgeH, { fit: 'fill' })
-        .greyscale()
-        .threshold(115)
-        .negate()
-        .blur(5)
+        .removeAlpha()
         .raw()
         .toBuffer();
+
+      const bgHex = (garmentColor || '#929292').replace('#', '');
+      const bgR = parseInt(bgHex.substring(0, 2), 16) || 0x92;
+      const bgG = parseInt(bgHex.substring(2, 4), 16) || 0x92;
+      const bgB = parseInt(bgHex.substring(4, 6), 16) || 0x92;
+      console.log('[Embroidery Preview] Background color for mask:', `RGB(${bgR},${bgG},${bgB})`);
+      const threshold = 30;
+      const maskRaw = Buffer.alloc(badgeW * badgeH);
+      for (let i = 0; i < badgeW * badgeH; i++) {
+        const r = embOrigResized[i * 3 + 0];
+        const g = embOrigResized[i * 3 + 1];
+        const b = embOrigResized[i * 3 + 2];
+        const dist = Math.sqrt((r - bgR) ** 2 + (g - bgG) ** 2 + (b - bgB) ** 2);
+        maskRaw[i] = dist > threshold ? 255 : 0;
+      }
+
+      const blurredMask = await sharp(maskRaw, {
+        raw: { width: badgeW, height: badgeH, channels: 1 }
+      }).blur(3).raw().toBuffer();
 
       const rgbaBuffer = Buffer.alloc(badgeW * badgeH * 4);
       for (let i = 0; i < badgeW * badgeH; i++) {
         rgbaBuffer[i * 4 + 0] = resizedEmbroidered[i * 3 + 0];
         rgbaBuffer[i * 4 + 1] = resizedEmbroidered[i * 3 + 1];
         rgbaBuffer[i * 4 + 2] = resizedEmbroidered[i * 3 + 2];
-        rgbaBuffer[i * 4 + 3] = maskRaw[i];
+        rgbaBuffer[i * 4 + 3] = blurredMask[i];
       }
 
       const maskedEmbroidery = await sharp(rgbaBuffer, {

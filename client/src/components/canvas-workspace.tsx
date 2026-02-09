@@ -568,6 +568,7 @@ export default function CanvasWorkspace({
         embroideryImage: embroideryImage || null,
         embroideryDescription: embDescription,
         projectId: project?.id || null,
+        garmentColor: project?.garmentColor || '#929292',
       });
       const data = await response.json();
       if (data.imageData) {
