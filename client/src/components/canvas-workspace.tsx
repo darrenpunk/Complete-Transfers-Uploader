@@ -525,6 +525,10 @@ export default function CanvasWorkspace({
       const originalBg = canvasRef.current.style.backgroundColor;
       canvasRef.current.style.backgroundColor = 'transparent';
 
+      const originalOverflow = canvasRef.current.style.overflow;
+      canvasRef.current.style.overflow = 'visible';
+      canvasRef.current.classList.remove('overflow-hidden');
+
       const savedDisplay: Map<HTMLElement, string> = new Map();
       const children = canvasRef.current.children;
       for (let i = 0; i < children.length; i++) {
@@ -536,20 +540,35 @@ export default function CanvasWorkspace({
       }
 
       const { default: html2canvas } = await import('html2canvas');
+
+      const scrollW = canvasRef.current.scrollWidth;
+      const scrollH = canvasRef.current.scrollHeight;
+      const clientW = canvasRef.current.clientWidth;
+      const clientH = canvasRef.current.clientHeight;
+      const captureW = Math.max(scrollW, clientW);
+      const captureH = Math.max(scrollH, clientH);
+
       const canvas = await html2canvas(canvasRef.current, {
         backgroundColor: null,
         scale: 2,
         useCORS: true,
         allowTaint: true,
         logging: false,
+        width: captureW,
+        height: captureH,
       });
 
       canvasRef.current.style.backgroundColor = originalBg;
+      canvasRef.current.style.overflow = originalOverflow;
+      canvasRef.current.classList.add('overflow-hidden');
       savedDisplay.forEach((display, el) => { el.style.display = display; });
 
       return canvas.toDataURL('image/png');
     } catch (err) {
       console.error('Failed to capture canvas artwork:', err);
+      if (canvasRef.current) {
+        canvasRef.current.classList.add('overflow-hidden');
+      }
       return null;
     }
   }, []);
