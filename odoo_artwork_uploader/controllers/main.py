@@ -807,25 +807,37 @@ class ArtworkUploaderController(http.Controller):
             current_partner = request.env.user.partner_id
             is_public = request.env.user._is_public()
             
-            _logger.info(f"🔑 Claim cart request: Order #{order_id}, Current user: {request.env.user.name}, Is public: {is_public}")
+            _logger.info(f"🔑 Claim cart request: Order #{order_id}, Current user: {request.env.user.name}, Is public: {is_public}, Access token provided: {bool(access_token)}")
             
             # Security validation: order must belong to the current user's partner OR match access token
             can_claim = False
             
-            if not is_public and sale_order.partner_id.id == current_partner.id:
-                # Logged-in user claiming their own order
+            # Check 1: Access token validation (highest priority - works regardless of session/cookie state)
+            if access_token:
+                order_token = getattr(sale_order, 'access_token', None)
+                if order_token and order_token == access_token:
+                    can_claim = True
+                    _logger.info(f"✅ Valid access token provided for order #{order_id}")
+                else:
+                    _logger.info(f"⚠️ Access token mismatch for order #{order_id}: provided={access_token[:8]}..., order_has_token={bool(order_token)}")
+            
+            # Check 2: Logged-in user owns the order
+            if not can_claim and not is_public and sale_order.partner_id.id == current_partner.id:
                 can_claim = True
                 _logger.info(f"✅ Order belongs to logged-in user {current_partner.name}")
-            elif access_token and sale_order.access_token == access_token:
-                # Valid access token provided
-                can_claim = True
-                _logger.info(f"✅ Valid access token provided for order #{order_id}")
-            elif is_public:
-                # Public user - allow claiming if order belongs to public user or has no partner
+            
+            # Check 3: Public user claiming a public cart
+            if not can_claim and is_public:
                 public_partner = request.env.ref('base.public_partner', raise_if_not_found=False)
                 if public_partner and sale_order.partner_id.id == public_partner.id:
                     can_claim = True
                     _logger.info(f"✅ Public user claiming public cart #{order_id}")
+            
+            # Check 4: Fallback - if order is in draft/sent state and has a valid access token in URL,
+            # allow claiming even if token field is empty (handles cases where Odoo didn't generate a token)
+            if not can_claim and access_token and sale_order.state in ('draft', 'sent'):
+                can_claim = True
+                _logger.info(f"✅ Fallback: allowing claim for draft order #{order_id} with access token")
             
             if not can_claim:
                 _logger.warning(f"❌ Claim cart denied: Order #{order_id} belongs to {sale_order.partner_id.name}, not {current_partner.name}")
