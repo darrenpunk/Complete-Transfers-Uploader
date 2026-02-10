@@ -453,3 +453,17 @@ img[alt*="vectorized"] {
 .vectorizer-color-grid::-webkit-scrollbar-thumb:hover {
   background: #5a5a5a;
 }
+
+html.app-fullscreen,
+html.app-fullscreen body,
+html.app-fullscreen #root {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 9999 !important;
+  overflow: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}

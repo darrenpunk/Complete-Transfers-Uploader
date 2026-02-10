@@ -780,10 +780,9 @@ export default function UploadTool() {
         setCurrentStep(1);
       } else {
         setCurrentStep(2);
-        if (prevLogosLengthRef.current === 0 && logos.length > 0 && !document.fullscreenElement) {
-          document.documentElement.requestFullscreen().then(() => {
-            setIsFullscreen(true);
-          }).catch(() => {});
+        if (prevLogosLengthRef.current === 0 && logos.length > 0 && !isFullscreen) {
+          document.documentElement.classList.add('app-fullscreen');
+          setIsFullscreen(true);
         }
       }
       prevLogosLengthRef.current = logos.length;
@@ -1490,31 +1489,30 @@ export default function UploadTool() {
     setShowRasterWarning(false);
   };
 
-  // Toggle fullscreen mode
+  // Toggle fullscreen mode using CSS-based approach (works inside iframes)
   const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().then(() => {
-        setIsFullscreen(true);
-      }).catch((err) => {
-        console.error('Error entering fullscreen:', err);
-      });
-    } else {
-      document.exitFullscreen().then(() => {
-        setIsFullscreen(false);
-      }).catch((err) => {
-        console.error('Error exiting fullscreen:', err);
-      });
-    }
+    setIsFullscreen(prev => {
+      const next = !prev;
+      if (next) {
+        document.documentElement.classList.add('app-fullscreen');
+      } else {
+        document.documentElement.classList.remove('app-fullscreen');
+      }
+      return next;
+    });
   };
 
-  // Listen for fullscreen changes (e.g., user presses Escape)
+  // Listen for Escape key to exit CSS fullscreen
   useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isFullscreen) {
+        setIsFullscreen(false);
+        document.documentElement.classList.remove('app-fullscreen');
+      }
     };
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
-  }, []);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isFullscreen]);
 
 
 
@@ -2052,8 +2050,9 @@ export default function UploadTool() {
             onSvgElementClick={handleSvgElementClick}
             onSetupEmbroidery={() => setShowEmbroideryWorkflow(true)}
             onReenterFullscreen={() => {
-              if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen().catch(() => {});
+              if (!isFullscreen) {
+                document.documentElement.classList.add('app-fullscreen');
+                setIsFullscreen(true);
               }
             }}
           />
