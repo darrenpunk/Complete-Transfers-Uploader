@@ -1871,6 +1871,25 @@ export async function registerRoutes(app: express.Application) {
                   const { execSync } = await import('child_process');
                   const detectedColors: Array<{color: string; colorName: string; quantity: number}> = [];
                   
+                  // Known garment color name-to-hex mapping for reorder detection
+                  const knownColorMap: Record<string, string> = {
+                    "white": "#FFFFFF", "black": "#171816", "natural cotton": "#D9D2AB",
+                    "yellow": "#F0F42A", "hi viz": "#D2E31D", "hiviz": "#D2E31D",
+                    "sports grey": "#767878", "light grey marl": "#919393",
+                    "ash grey": "#A6A9A2", "light grey": "#BCBFBB",
+                    "charcoal grey": "#353330", "sky blue": "#5998D4",
+                    "navy": "#201C3A", "royal blue": "#221866",
+                    "kelly green": "#3C8A35", "red": "#C02300",
+                    "burgundy": "#762009", "purple": "#4C0A6A",
+                    "fuchsia pink": "#C42469", "pastel blue": "#B9DBEA",
+                    "pastel green": "#B5D55E", "pastel pink": "#E7BBD0",
+                    "pastel yellow": "#F3F590", "lime green": "#90BF33",
+                    "light pink": "#D287A2", "hi viz orange": "#D98F17",
+                    "hiviz orange": "#D98F17", "hiviz green": "#388032",
+                    "hi viz green": "#388032", "hiviz pink": "#BF0072",
+                    "hi viz pink": "#BF0072",
+                  };
+                  
                   for (let p = 1; p <= pageCount; p++) {
                     try {
                       const pageText = execSync(
@@ -1878,17 +1897,42 @@ export async function registerRoutes(app: express.Application) {
                         { encoding: 'utf-8', timeout: 5000 }
                       );
                       
-                      const colorMatch = pageText.match(/Garment\s*Color:\s*(.+?)(?:\s{2,}|\n|$)/i);
+                      console.log(`📄 Page ${p} extracted text:`, pageText.trim().substring(0, 200));
+                      
+                      // Match "Garment Color: ColorName (#HEXCODE)" or "Garment Color: ColorName"
+                      const colorMatch = pageText.match(/Garment\s*Colou?r:\s*(.+?)(?:\s{2,}|\n|Quantity)/i);
                       const qtyMatch = pageText.match(/Quantity:\s*(\d+)/i);
                       
                       if (colorMatch && qtyMatch) {
-                        const colorName = colorMatch[1].trim();
+                        let rawColorPart = colorMatch[1].trim();
                         const quantity = parseInt(qtyMatch[1], 10);
+                        
+                        // Try to extract hex code from format "ColorName (#HEXCODE)"
+                        const hexInParens = rawColorPart.match(/\(#([0-9A-Fa-f]{6})\)/);
+                        // Also try standalone hex codes in the page text
+                        const standaloneHex = pageText.match(/#([0-9A-Fa-f]{6})/);
+                        
+                        let hexColor = '#000000';
+                        let colorName = rawColorPart;
+                        
+                        if (hexInParens) {
+                          hexColor = `#${hexInParens[1].toUpperCase()}`;
+                          colorName = rawColorPart.replace(/\s*\(#[0-9A-Fa-f]{6}\)/, '').trim();
+                        } else if (standaloneHex) {
+                          hexColor = `#${standaloneHex[1].toUpperCase()}`;
+                        } else {
+                          // Fall back to name-based lookup
+                          const lookupKey = colorName.toLowerCase().trim();
+                          if (knownColorMap[lookupKey]) {
+                            hexColor = knownColorMap[lookupKey];
+                          }
+                        }
+                        
                         if (colorName && quantity > 0) {
                           const existing = detectedColors.find(dc => dc.colorName === colorName);
                           if (!existing) {
                             detectedColors.push({
-                              color: '#000000',
+                              color: hexColor,
                               colorName,
                               quantity
                             });
@@ -1901,46 +1945,6 @@ export async function registerRoutes(app: express.Application) {
                   }
                   
                   if (detectedColors.length > 0) {
-                    // Try to match detected color names to known hex colors
-                    const allKnownColors = [
-                      { name: "White", color: "#FFFFFF" },
-                      { name: "Black", color: "#171816" },
-                      { name: "Natural Cotton", color: "#D9D2AB" },
-                      { name: "Yellow", color: "#F0F42A" },
-                      { name: "Hi Viz", color: "#D2E31D" },
-                      { name: "Sports Grey", color: "#767878" },
-                      { name: "Light Grey Marl", color: "#919393" },
-                      { name: "Ash Grey", color: "#A6A9A2" },
-                      { name: "Light Grey", color: "#BCBFBB" },
-                      { name: "Charcoal Grey", color: "#353330" },
-                      { name: "Sky Blue", color: "#5998D4" },
-                      { name: "Navy", color: "#201C3A" },
-                      { name: "Royal Blue", color: "#221866" },
-                      { name: "Kelly Green", color: "#3C8A35" },
-                      { name: "Red", color: "#C02300" },
-                      { name: "Burgundy", color: "#762009" },
-                      { name: "Purple", color: "#4C0A6A" },
-                      { name: "Fuchsia Pink", color: "#C42469" },
-                      { name: "Pastel Blue", color: "#B9DBEA" },
-                      { name: "Pastel Green", color: "#B5D55E" },
-                      { name: "Pastel Pink", color: "#E7BBD0" },
-                      { name: "Pastel Yellow", color: "#F3F590" },
-                      { name: "Lime Green", color: "#90BF33" },
-                      { name: "Light Pink", color: "#D287A2" },
-                      { name: "Hi Viz Orange", color: "#D98F17" },
-                      { name: "HiViz Green", color: "#388032" },
-                      { name: "HIViz Pink", color: "#BF0072" },
-                    ];
-                    
-                    for (const dc of detectedColors) {
-                      const match = allKnownColors.find(
-                        kc => kc.name.toLowerCase() === dc.colorName.toLowerCase()
-                      );
-                      if (match) {
-                        dc.color = match.color;
-                      }
-                    }
-                    
                     (file as any).detectedGarmentColors = detectedColors;
                     console.log(`🎨 Detected garment colors from PDF reorder:`, detectedColors);
                   }

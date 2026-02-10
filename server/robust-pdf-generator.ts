@@ -663,7 +663,7 @@ grestore`;
       });
       
       const labelText = `Project: ${data.projectName}`;
-      const colorText = `Garment Color: ${gcPage.colorName}   Quantity: ${gcPage.quantity}`;
+      const colorText = `Garment Color: ${gcPage.colorName} (${gcPage.color})   Quantity: ${gcPage.quantity}`;
       
       gcPage.page.drawText(labelText, {
         x: 20,
