@@ -58,6 +58,15 @@ interface PricingData {
   currency: string;
 }
 
+const getCurrencySymbol = (currency: string): string => {
+  const symbols: Record<string, string> = {
+    EUR: '€',
+    GBP: '£',
+    USD: '$',
+  };
+  return symbols[currency?.toUpperCase()] || currency || '€';
+};
+
 // Detect if running in iframe (for Odoo integration)
 const isInIframe = typeof window !== 'undefined' && window !== window.parent;
 
@@ -356,10 +365,10 @@ export default function TemplateSelectorModal({
                     ) : pricingData ? (
                       <div className="space-y-1">
                         <p className="text-sm">
-                          €{pricingData.pricePerUnit.toFixed(2)} per unit ex VAT
+                          {getCurrencySymbol(pricingData.currency)}{pricingData.pricePerUnit.toFixed(2)} per unit ex VAT
                         </p>
                         <p className="text-lg font-semibold">
-                          Total: €{pricingData.totalPrice.toFixed(2)} ex VAT
+                          Total: {getCurrencySymbol(pricingData.currency)}{pricingData.totalPrice.toFixed(2)} ex VAT
                         </p>
                       </div>
                     ) : (
