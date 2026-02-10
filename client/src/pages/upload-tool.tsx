@@ -1491,29 +1491,37 @@ export default function UploadTool() {
   };
 
   // Toggle fullscreen mode using CSS-based approach (works inside iframes)
-  const toggleFullscreen = () => {
-    setIsFullscreen(prev => {
-      const next = !prev;
-      if (next) {
+  const toggleFullscreen = async () => {
+    if (!document.fullscreenElement) {
+      try {
+        await document.documentElement.requestFullscreen();
+      } catch (err) {
+        console.warn('Fullscreen API failed, using CSS fallback:', err);
         document.documentElement.classList.add('app-fullscreen');
-      } else {
-        document.documentElement.classList.remove('app-fullscreen');
+        setIsFullscreen(true);
       }
-      return next;
-    });
+    } else {
+      try {
+        await document.exitFullscreen();
+      } catch (err) {
+        console.warn('Exit fullscreen failed:', err);
+        document.documentElement.classList.remove('app-fullscreen');
+        setIsFullscreen(false);
+      }
+    }
   };
 
-  // Listen for Escape key to exit CSS fullscreen
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isFullscreen) {
-        setIsFullscreen(false);
+    const onFullscreenChange = () => {
+      const isFs = !!document.fullscreenElement;
+      setIsFullscreen(isFs);
+      if (!isFs) {
         document.documentElement.classList.remove('app-fullscreen');
       }
     };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isFullscreen]);
+    document.addEventListener('fullscreenchange', onFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', onFullscreenChange);
+  }, []);
 
 
 
