@@ -1112,41 +1112,46 @@ grestore`;
               console.log(`📐 Using original PDF without cropping - SVG normalization should handle display`);
               logoPdfPath = originalPdfPath;
             }
-            // If bounds offset is non-zero, use pdf-lib to set MediaBox to content bounds
-            // This is more reliable than Ghostscript cropping - it preserves ALL content
-            // and just tells the PDF renderer where the visible area is
+            // If bounds offset is non-zero, create a new PDF page with content at origin
+            // by embedding the original page with translation - no Ghostscript re-encoding needed
             else if (originalPdfBounds.xMin > 1 || originalPdfBounds.yMin > 1) {
-              console.log(`📐 PDF has content offset - setting MediaBox to content bounds via pdf-lib`);
+              console.log(`📐 PDF has content offset (${originalPdfBounds.xMin.toFixed(1)}, ${originalPdfBounds.yMin.toFixed(1)}) - re-embedding with translation to origin`);
               
               try {
+                const { PDFDocument: PDFDocNew } = await import('pdf-lib');
                 const contentW = originalPdfBounds.width || (originalPdfBounds.xMax - originalPdfBounds.xMin);
                 const contentH = originalPdfBounds.height || (originalPdfBounds.yMax - originalPdfBounds.yMin);
                 
-                // Use pdf-lib to modify MediaBox instead of Ghostscript cropping
-                // This preserves CMYK colors and vectors exactly, no re-encoding
-                origPage.setMediaBox(
-                  originalPdfBounds.xMin,
-                  originalPdfBounds.yMin,
-                  contentW,
-                  contentH
-                );
-                origPage.setCropBox(
-                  originalPdfBounds.xMin,
-                  originalPdfBounds.yMin,
-                  contentW,
-                  contentH
-                );
+                // Create a new PDF with page sized to content bounds
+                const newPdfDoc = await PDFDocNew.create();
+                const newPage = newPdfDoc.addPage([contentW, contentH]);
                 
-                const boundedPdfBytes = await origPdfDoc.save();
-                const boundedPath = path.join(process.cwd(), 'uploads', `bounded_${Date.now()}.pdf`);
-                fs.writeFileSync(boundedPath, boundedPdfBytes);
+                // Embed the original page and draw it translated so content starts at (0,0)
+                const [embeddedOrigPage] = await newPdfDoc.embedPdf(origPdfDoc, [0]);
+                newPage.drawPage(embeddedOrigPage, {
+                  x: -originalPdfBounds.xMin,
+                  y: -originalPdfBounds.yMin,
+                  width: origPageSize.width,
+                  height: origPageSize.height,
+                });
                 
-                console.log(`✅ PDF MediaBox set to content bounds: (${originalPdfBounds.xMin.toFixed(1)}, ${originalPdfBounds.yMin.toFixed(1)}) size ${contentW.toFixed(1)}×${contentH.toFixed(1)}pts`);
-                logoPdfPath = boundedPath;
+                const reembeddedBytes = await newPdfDoc.save();
+                const reembeddedPath = path.join(process.cwd(), 'uploads', `reembedded_${Date.now()}.pdf`);
+                fs.writeFileSync(reembeddedPath, reembeddedBytes);
+                
+                console.log(`✅ PDF re-embedded with content at origin: ${contentW.toFixed(1)}×${contentH.toFixed(1)}pts (translated by -${originalPdfBounds.xMin.toFixed(1)}, -${originalPdfBounds.yMin.toFixed(1)})`);
+                logoPdfPath = reembeddedPath;
                 shouldCleanup = true;
-              } catch (mediaBoxError) {
-                console.log(`⚠️ pdf-lib MediaBox approach failed, using original: ${mediaBoxError}`);
-                logoPdfPath = originalPdfPath;
+              } catch (reembedError) {
+                console.log(`⚠️ Re-embedding failed, falling back to Ghostscript crop: ${reembedError}`);
+                // Fallback to Ghostscript cropping
+                const resizedPdfPath = await this.cropPdfToContentBounds(originalPdfPath, originalPdfBounds);
+                if (resizedPdfPath) {
+                  logoPdfPath = resizedPdfPath;
+                  shouldCleanup = true;
+                } else {
+                  logoPdfPath = originalPdfPath;
+                }
               }
             } else {
               console.log(`✅ PDF content starts at origin - safe to use original PDF`);
