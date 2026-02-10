@@ -568,7 +568,15 @@ export default function PropertiesPanel({
   };
 
   const toggleLock = (element: CanvasElement) => {
-    updateElementDirect(element.id, { isLocked: !element.isLocked });
+    const newLocked = !element.isLocked;
+    if (element.groupId) {
+      const groupMembers = canvasElements.filter(el => el.groupId === element.groupId);
+      groupMembers.forEach(el => {
+        updateElementDirect(el.id, { isLocked: newLocked });
+      });
+    } else {
+      updateElementDirect(element.id, { isLocked: newLocked });
+    }
   };
 
 
