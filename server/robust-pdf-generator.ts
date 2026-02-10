@@ -1112,21 +1112,40 @@ grestore`;
               console.log(`📐 Using original PDF without cropping - SVG normalization should handle display`);
               logoPdfPath = originalPdfPath;
             }
-            // If bounds offset is non-zero, resize PDF page to content bounds
-            // This preserves CMYK colors while fixing dimensions
+            // If bounds offset is non-zero, use pdf-lib to set MediaBox to content bounds
+            // This is more reliable than Ghostscript cropping - it preserves ALL content
+            // and just tells the PDF renderer where the visible area is
             else if (originalPdfBounds.xMin > 1 || originalPdfBounds.yMin > 1) {
-              console.log(`📐 PDF has content offset - resizing page to content bounds while preserving CMYK`);
+              console.log(`📐 PDF has content offset - setting MediaBox to content bounds via pdf-lib`);
               
-              // Resize the original PDF to content bounds using Ghostscript
-              const resizedPdfPath = await this.cropPdfToContentBounds(originalPdfPath, originalPdfBounds);
-              if (resizedPdfPath) {
-                console.log(`✅ PDF resized to content bounds: ${resizedPdfPath}`);
-                logoPdfPath = resizedPdfPath;
-                shouldCleanup = true; // Clean up resized PDF after embedding
-                // Mark that PDF was cropped - aspect ratio fix may be needed
-                (element as any)._pdfWasCropped = true;
-              } else {
-                console.log(`⚠️ PDF resizing failed, using original (may have dimension issues)`);
+              try {
+                const contentW = originalPdfBounds.width || (originalPdfBounds.xMax - originalPdfBounds.xMin);
+                const contentH = originalPdfBounds.height || (originalPdfBounds.yMax - originalPdfBounds.yMin);
+                
+                // Use pdf-lib to modify MediaBox instead of Ghostscript cropping
+                // This preserves CMYK colors and vectors exactly, no re-encoding
+                origPage.setMediaBox(
+                  originalPdfBounds.xMin,
+                  originalPdfBounds.yMin,
+                  contentW,
+                  contentH
+                );
+                origPage.setCropBox(
+                  originalPdfBounds.xMin,
+                  originalPdfBounds.yMin,
+                  contentW,
+                  contentH
+                );
+                
+                const boundedPdfBytes = await origPdfDoc.save();
+                const boundedPath = path.join(process.cwd(), 'uploads', `bounded_${Date.now()}.pdf`);
+                fs.writeFileSync(boundedPath, boundedPdfBytes);
+                
+                console.log(`✅ PDF MediaBox set to content bounds: (${originalPdfBounds.xMin.toFixed(1)}, ${originalPdfBounds.yMin.toFixed(1)}) size ${contentW.toFixed(1)}×${contentH.toFixed(1)}pts`);
+                logoPdfPath = boundedPath;
+                shouldCleanup = true;
+              } catch (mediaBoxError) {
+                console.log(`⚠️ pdf-lib MediaBox approach failed, using original: ${mediaBoxError}`);
                 logoPdfPath = originalPdfPath;
               }
             } else {
@@ -1269,17 +1288,8 @@ grestore`;
         console.log(`📄 Full-page override: Using template dimensions ${contentWidthMM}×${contentHeightMM}mm instead of element ${element.width.toFixed(2)}×${element.height.toFixed(2)}mm`);
       }
       
-      // CRITICAL: Check if actual PDF dimensions differ significantly from element dimensions
-      // This can happen when Inkscape reports larger bounds (including masks/clipping paths)
-      // but Ghostscript crops to actual visible content
-      // ONLY apply this fix when the PDF was actually cropped (not when using full page)
-      const pdfWasCropped = (element as any)._pdfWasCropped === true;
-      
-      if (pdfWasCropped) {
-        console.log(`📄 PDF was cropped to content bounds - using canvas element dimensions: ${contentWidthMM.toFixed(2)}×${contentHeightMM.toFixed(2)}mm`);
-        console.log(`📄 Cropped PDF actual size: ${(actualPdfWidth / MM_TO_POINTS).toFixed(2)}×${(actualPdfHeight / MM_TO_POINTS).toFixed(2)}mm - will be scaled to fit element`);
-      } else if (!isFullPagePdf) {
-        console.log(`📄 PDF not cropped - using element dimensions directly: ${contentWidthMM.toFixed(2)}×${contentHeightMM.toFixed(2)}mm`);
+      if (!isFullPagePdf) {
+        console.log(`📄 Using element dimensions: ${contentWidthMM.toFixed(2)}×${contentHeightMM.toFixed(2)}mm, embedded PDF: ${(actualPdfWidth / MM_TO_POINTS).toFixed(2)}×${(actualPdfHeight / MM_TO_POINTS).toFixed(2)}mm`);
       }
       
       console.log(`🔍 CANVAS DIMENSIONS: ${element.width.toFixed(2)}×${element.height.toFixed(2)}mm`);
