@@ -246,7 +246,7 @@ export default function TemplateSelectorModal({
   
   return (
     <Dialog open={open} onOpenChange={() => {}} modal={true}>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col z-50 top-[5%] translate-y-0">
+      <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col top-[5%] translate-y-0">
         <DialogHeader>
           <CompleteTransferLogo size="xl" className="mb-6 transform scale-125" />
           <DialogTitle className="text-2xl font-bold text-center">
@@ -400,7 +400,7 @@ export default function TemplateSelectorModal({
 
       {/* Login Required Modal */}
       <Dialog open={showLoginRequired} onOpenChange={setShowLoginRequired}>
-        <DialogContent className="max-w-md z-[60]">
+        <DialogContent className="max-w-md z-[10002]">
           <DialogHeader>
             <CompleteTransferLogo size="lg" className="mb-4" />
             <DialogTitle className="flex items-center gap-2 text-xl">
