@@ -84,6 +84,10 @@ export default function UploadTool() {
   const [showPassThroughModal, setShowPassThroughModal] = useState(false);
   const [pendingPassThroughLogo, setPendingPassThroughLogo] = useState<{ logoId: string; pageCount: number; fileName: string } | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [autoFullscreen, setAutoFullscreen] = useState(() => {
+    const saved = localStorage.getItem('autoFullscreen');
+    return saved !== null ? saved === 'true' : true;
+  });
   const [isInIframe, setIsInIframe] = useState(false);
   const [activeCanvasIndex, setActiveCanvasIndex] = useState(0);
   const [showEmbroiderySelector, setShowEmbroiderySelector] = useState(false);
@@ -780,7 +784,7 @@ export default function UploadTool() {
         setCurrentStep(1);
       } else {
         setCurrentStep(2);
-        if (prevLogosLengthRef.current === 0 && logos.length > 0 && !isFullscreen) {
+        if (prevLogosLengthRef.current === 0 && logos.length > 0 && !isFullscreen && autoFullscreen) {
           document.documentElement.classList.add('app-fullscreen');
           setIsFullscreen(true);
         }
@@ -1872,13 +1876,31 @@ export default function UploadTool() {
               <RotateCcw className="w-4 h-4" />
               <span className="hidden md:inline ml-2">Restart</span>
             </Button>
-            <Button variant="outline" size="sm" className="hidden sm:flex" onClick={toggleFullscreen}>
-              {isFullscreen ? (
-                <Minimize2 className="w-4 h-4" />
-              ) : (
-                <Maximize2 className="w-4 h-4" />
-              )}
-            </Button>
+            <div className="hidden sm:flex items-center gap-1">
+              <Button variant="outline" size="sm" onClick={toggleFullscreen} title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}>
+                {isFullscreen ? (
+                  <Minimize2 className="w-4 h-4" />
+                ) : (
+                  <Maximize2 className="w-4 h-4" />
+                )}
+              </Button>
+              <button
+                type="button"
+                onClick={() => {
+                  const next = !autoFullscreen;
+                  setAutoFullscreen(next);
+                  localStorage.setItem('autoFullscreen', String(next));
+                }}
+                title={autoFullscreen ? "Auto-fullscreen is ON — click to disable" : "Auto-fullscreen is OFF — click to enable"}
+                className={`w-7 h-7 rounded-md border flex items-center justify-center text-xs font-bold transition-colors ${
+                  autoFullscreen
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'bg-muted text-muted-foreground border-border hover:bg-accent'
+                }`}
+              >
+                A
+              </button>
+            </div>
           </div>
         </div>
       </header>
