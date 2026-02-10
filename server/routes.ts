@@ -1864,6 +1864,90 @@ export async function registerRoutes(app: express.Application) {
               (file as any).pageCount = pageCount;
               (file as any).hasGarmentPages = pageCount > 1;
               console.log(`📄 PDF page count detected: ${pageCount} pages (hasGarmentPages: ${pageCount > 1})`);
+              
+              // Extract garment colors and quantities from PDF footer text (for reorder detection)
+              if (pageCount > 1) {
+                try {
+                  const { execSync } = await import('child_process');
+                  const detectedColors: Array<{color: string; colorName: string; quantity: number}> = [];
+                  
+                  for (let p = 1; p <= pageCount; p++) {
+                    try {
+                      const pageText = execSync(
+                        `pdftotext -f ${p} -l ${p} "${sourcePdfPath}" -`,
+                        { encoding: 'utf-8', timeout: 5000 }
+                      );
+                      
+                      const colorMatch = pageText.match(/Garment\s*Color:\s*(.+?)(?:\s{2,}|\n|$)/i);
+                      const qtyMatch = pageText.match(/Quantity:\s*(\d+)/i);
+                      
+                      if (colorMatch && qtyMatch) {
+                        const colorName = colorMatch[1].trim();
+                        const quantity = parseInt(qtyMatch[1], 10);
+                        if (colorName && quantity > 0) {
+                          const existing = detectedColors.find(dc => dc.colorName === colorName);
+                          if (!existing) {
+                            detectedColors.push({
+                              color: '#000000',
+                              colorName,
+                              quantity
+                            });
+                          }
+                        }
+                      }
+                    } catch (pageErr) {
+                      // Skip pages that fail text extraction
+                    }
+                  }
+                  
+                  if (detectedColors.length > 0) {
+                    // Try to match detected color names to known hex colors
+                    const allKnownColors = [
+                      { name: "White", color: "#FFFFFF" },
+                      { name: "Black", color: "#171816" },
+                      { name: "Natural Cotton", color: "#D9D2AB" },
+                      { name: "Yellow", color: "#F0F42A" },
+                      { name: "Hi Viz", color: "#D2E31D" },
+                      { name: "Sports Grey", color: "#767878" },
+                      { name: "Light Grey Marl", color: "#919393" },
+                      { name: "Ash Grey", color: "#A6A9A2" },
+                      { name: "Light Grey", color: "#BCBFBB" },
+                      { name: "Charcoal Grey", color: "#353330" },
+                      { name: "Sky Blue", color: "#5998D4" },
+                      { name: "Navy", color: "#201C3A" },
+                      { name: "Royal Blue", color: "#221866" },
+                      { name: "Kelly Green", color: "#3C8A35" },
+                      { name: "Red", color: "#C02300" },
+                      { name: "Burgundy", color: "#762009" },
+                      { name: "Purple", color: "#4C0A6A" },
+                      { name: "Fuchsia Pink", color: "#C42469" },
+                      { name: "Pastel Blue", color: "#B9DBEA" },
+                      { name: "Pastel Green", color: "#B5D55E" },
+                      { name: "Pastel Pink", color: "#E7BBD0" },
+                      { name: "Pastel Yellow", color: "#F3F590" },
+                      { name: "Lime Green", color: "#90BF33" },
+                      { name: "Light Pink", color: "#D287A2" },
+                      { name: "Hi Viz Orange", color: "#D98F17" },
+                      { name: "HiViz Green", color: "#388032" },
+                      { name: "HIViz Pink", color: "#BF0072" },
+                    ];
+                    
+                    for (const dc of detectedColors) {
+                      const match = allKnownColors.find(
+                        kc => kc.name.toLowerCase() === dc.colorName.toLowerCase()
+                      );
+                      if (match) {
+                        dc.color = match.color;
+                      }
+                    }
+                    
+                    (file as any).detectedGarmentColors = detectedColors;
+                    console.log(`🎨 Detected garment colors from PDF reorder:`, detectedColors);
+                  }
+                } catch (extractErr) {
+                  console.log('⚠️ Could not extract garment info from PDF:', extractErr);
+                }
+              }
             } catch (pageCountError) {
               console.log('⚠️ Could not detect PDF page count:', pageCountError);
               (file as any).pageCount = 1;
@@ -2738,6 +2822,12 @@ export async function registerRoutes(app: express.Application) {
           logoData.pageCount = (file as any).pageCount;
           logoData.hasGarmentPages = (file as any).hasGarmentPages;
           console.log(`💾 PDF page info: pageCount=${logoData.pageCount}, hasGarmentPages=${logoData.hasGarmentPages}`);
+        }
+        
+        // REORDER DETECTION: Add detected garment colors from PDF footer
+        if ((file as any).detectedGarmentColors) {
+          logoData.detectedGarmentColors = (file as any).detectedGarmentColors;
+          console.log(`🎨 Detected garment colors attached to logo:`, logoData.detectedGarmentColors);
         }
         
         // COMPLEX FILE PNG FALLBACK: Mark files using PNG preview with original PDF for output

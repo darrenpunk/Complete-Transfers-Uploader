@@ -260,7 +260,8 @@ export class MemStorage implements IStorage {
       isComplexVector: insertLogo.isComplexVector || false,
       vectorComplexityMetrics: insertLogo.vectorComplexityMetrics || null,
       canvasFallbackFilename: insertLogo.canvasFallbackFilename || null,
-      isComplexFilePngFallback: insertLogo.isComplexFilePngFallback || false
+      isComplexFilePngFallback: insertLogo.isComplexFilePngFallback || false,
+      detectedGarmentColors: insertLogo.detectedGarmentColors || null
     };
     this.logos.set(id, logo);
     return logo;

@@ -63,6 +63,7 @@ export const logos = pgTable("logos", {
   originalPdfBounds: jsonb("original_pdf_bounds"), // Original PDF content bounds BEFORE normalization (for cropping during PDF generation)
   pageCount: integer("page_count").default(1), // Number of pages in PDF (for multi-page pass-through detection)
   hasGarmentPages: boolean("has_garment_pages").default(false), // True if PDF already has garment color pages (pages 2+)
+  detectedGarmentColors: jsonb("detected_garment_colors"), // Detected garment colors and quantities from reorder PDF footer
 });
 
 export const canvasElements = pgTable("canvas_elements", {

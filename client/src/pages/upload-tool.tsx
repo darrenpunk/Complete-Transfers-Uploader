@@ -83,6 +83,7 @@ export default function UploadTool() {
   const [authStatus, setAuthStatus] = useState<'checking' | 'authenticated' | 'not-authenticated'>('checking');
   const [showPassThroughModal, setShowPassThroughModal] = useState(false);
   const [pendingPassThroughLogo, setPendingPassThroughLogo] = useState<{ logoId: string; pageCount: number; fileName: string } | null>(null);
+  const [detectedReorderColors, setDetectedReorderColors] = useState<Array<{color: string; colorName: string; quantity: number}>>([]);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const autoFullscreen = false;
   const [isInIframe, setIsInIframe] = useState(false);
@@ -1662,6 +1663,14 @@ export default function UploadTool() {
           } else {
             // Check for multi-page PDFs that might have garment color pages
             const multiPagePdf = newLogos.find((logo: any) => logo.hasGarmentPages === true && logo.pageCount > 1);
+            
+            // Check for reorder detected garment colors
+            const reorderLogo = newLogos.find((logo: any) => logo.detectedGarmentColors && logo.detectedGarmentColors.length > 0);
+            if (reorderLogo) {
+              console.log('🎨 Reorder detected - garment colors from PDF:', reorderLogo.detectedGarmentColors);
+              setDetectedReorderColors(reorderLogo.detectedGarmentColors);
+            }
+            
             if (multiPagePdf && currentProject && !(currentProject as any).useOriginalGarmentPages) {
               console.log('Multi-page PDF detected:', multiPagePdf.originalName, 'with', multiPagePdf.pageCount, 'pages');
               // Show pass-through modal to ask user what to do
@@ -2198,6 +2207,7 @@ export default function UploadTool() {
         inkColor={currentProject?.inkColor || undefined}
         inkColorName={currentProject?.inkColor ? getInkColorName(currentProject.inkColor) : undefined}
         originalQuantity={currentProject?.quantity || 10}
+        detectedReorderColors={detectedReorderColors}
       />
 
       {/* Applique Badges Modal */}

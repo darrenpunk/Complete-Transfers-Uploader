@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,6 +36,7 @@ interface ProjectNameModalProps {
   inkColor?: string;
   inkColorName?: string;
   originalQuantity?: number; // Original order quantity from template selection
+  detectedReorderColors?: Array<{color: string; colorName: string; quantity: number}>; // Pre-detected garment colors from reorder PDF
 }
 
 export default function ProjectNameModal({
@@ -51,7 +52,8 @@ export default function ProjectNameModal({
   garmentColorName,
   inkColor,
   inkColorName,
-  originalQuantity = 10 // Default to 10 if not provided
+  originalQuantity = 10, // Default to 10 if not provided
+  detectedReorderColors = []
 }: ProjectNameModalProps) {
   const [projectName, setProjectName] = useState(currentName);
   const [comments, setComments] = useState("");
@@ -61,12 +63,42 @@ export default function ProjectNameModal({
   const [garmentColors, setGarmentColors] = useState<GarmentColorItem[]>([]);
   const [hasInitializedMultiColor, setHasInitializedMultiColor] = useState(false);
   
+  // Auto-enable multi-color and pre-populate when reorder colors are detected
+  const hasReorderColors = detectedReorderColors.length > 0;
+  
+  // Reset state when modal opens fresh
+  useEffect(() => {
+    if (open) {
+      setProjectName(currentName);
+      setComments("");
+      setErrorType('none');
+      if (hasReorderColors) {
+        setUseMultiColor(true);
+        setGarmentColors(detectedReorderColors.map(dc => ({
+          color: dc.color,
+          colorName: dc.colorName,
+          quantity: dc.quantity
+        })));
+        setHasInitializedMultiColor(true);
+      } else {
+        setUseMultiColor(false);
+        setGarmentColors([]);
+        setHasInitializedMultiColor(false);
+      }
+    }
+  }, [open]);
+  
   // When multi-color is enabled for the first time, pre-populate with original garment color and quantity
   const handleMultiColorToggle = (enabled: boolean) => {
     setUseMultiColor(enabled);
     if (enabled && !hasInitializedMultiColor && garmentColors.length === 0) {
-      // Pre-populate with original garment color and full quantity
-      if (garmentColor && garmentColorName) {
+      if (hasReorderColors) {
+        setGarmentColors(detectedReorderColors.map(dc => ({
+          color: dc.color,
+          colorName: dc.colorName,
+          quantity: dc.quantity
+        })));
+      } else if (garmentColor && garmentColorName) {
         setGarmentColors([{
           color: garmentColor,
           colorName: garmentColorName,
