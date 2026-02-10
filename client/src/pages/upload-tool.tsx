@@ -84,10 +84,7 @@ export default function UploadTool() {
   const [showPassThroughModal, setShowPassThroughModal] = useState(false);
   const [pendingPassThroughLogo, setPendingPassThroughLogo] = useState<{ logoId: string; pageCount: number; fileName: string } | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [autoFullscreen, setAutoFullscreen] = useState(() => {
-    const saved = localStorage.getItem('autoFullscreen');
-    return saved !== null ? saved === 'true' : true;
-  });
+  const autoFullscreen = false;
   const [isInIframe, setIsInIframe] = useState(false);
   const [activeCanvasIndex, setActiveCanvasIndex] = useState(0);
   const [showEmbroiderySelector, setShowEmbroiderySelector] = useState(false);
@@ -1884,22 +1881,6 @@ export default function UploadTool() {
                   <Maximize2 className="w-4 h-4" />
                 )}
               </Button>
-              <button
-                type="button"
-                onClick={() => {
-                  const next = !autoFullscreen;
-                  setAutoFullscreen(next);
-                  localStorage.setItem('autoFullscreen', String(next));
-                }}
-                title={autoFullscreen ? "Auto-fullscreen is ON — click to disable" : "Auto-fullscreen is OFF — click to enable"}
-                className={`w-7 h-7 rounded-md border flex items-center justify-center text-xs font-bold transition-colors ${
-                  autoFullscreen
-                    ? 'bg-primary text-primary-foreground border-primary'
-                    : 'bg-muted text-muted-foreground border-border hover:bg-accent'
-                }`}
-              >
-                A
-              </button>
             </div>
           </div>
         </div>
