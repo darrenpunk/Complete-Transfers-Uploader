@@ -1085,15 +1085,31 @@ grestore`;
             console.log(`📋 Original PDF bounds: (${originalPdfBounds.xMin.toFixed(1)}, ${originalPdfBounds.yMin.toFixed(1)}) to (${originalPdfBounds.xMax.toFixed(1)}, ${originalPdfBounds.yMax.toFixed(1)})`);
             console.log(`📐 Content size: ${contentWidthPts.toFixed(1)}×${contentHeightPts.toFixed(1)}pts`);
             
+            // FULL-PAGE PDF DETECTION: If original PDF page size matches template size,
+            // skip all cropping and use the full page directly. This prevents clipping
+            // when artwork fills the entire template page (e.g., A3 PDF on A3 template)
+            const { PDFDocument: PDFDocCheck } = await import('pdf-lib');
+            const origPdfBytes = fs.readFileSync(originalPdfPath);
+            const origPdfDoc = await PDFDocCheck.load(origPdfBytes);
+            const [origPage] = origPdfDoc.getPages();
+            const origPageSize = origPage.getSize();
+            const MM_TO_PTS_CHECK = 2.834645669;
+            const templateWPts = (templateSize?.width || 297) * MM_TO_PTS_CHECK;
+            const templateHPts = (templateSize?.height || 420) * MM_TO_PTS_CHECK;
+            const isFullPageMatch = Math.abs(origPageSize.width - templateWPts) < 10 && 
+                                     Math.abs(origPageSize.height - templateHPts) < 10;
+            
+            if (isFullPageMatch) {
+              console.log(`📄 FULL-PAGE PDF MATCH: PDF page (${origPageSize.width.toFixed(1)}×${origPageSize.height.toFixed(1)}pts) matches template (${templateWPts.toFixed(1)}×${templateHPts.toFixed(1)}pts)`);
+              console.log(`📄 Skipping content-bounds cropping - embedding full page to prevent clipping`);
+              logoPdfPath = originalPdfPath;
+              (element as any)._isFullPagePdf = true;
+            }
             // Check if bounds are too small (Ghostscript bbox failed or returned minimal bounds)
             // but we have proper Inkscape-detected bounds stored
-            if (contentWidthPts < 1 && contentHeightPts < 1) {
+            else if (contentWidthPts < 1 && contentHeightPts < 1) {
               console.log(`⚠️ Ghostscript bbox failed (0×0) - content will be at wrong position`);
               console.log(`📐 Using original PDF without cropping - SVG normalization should handle display`);
-              // When Ghostscript fails AND we don't have Inkscape bounds saved,
-              // the SVG was already normalized for display but PDF needs cropping
-              // at the correct position which should now be stored in originalPdfBounds
-              // from Inkscape detection during upload
               logoPdfPath = originalPdfPath;
             }
             // If bounds offset is non-zero, resize PDF page to content bounds
@@ -1204,18 +1220,11 @@ grestore`;
       // Calculate exact position using user's actual element dimensions
       const MM_TO_POINTS = 2.834645669;
       
-      // CRITICAL FIX: Check if original PDF page size matches the template size
-      // If so, this is a full-page artwork (e.g., A3 PDF on A3 template) - embed at full template size
-      // to avoid clipping due to content-bounds-based element dimensions being slightly smaller
-      const templateWidthPts = (templateSize?.width || 297) * MM_TO_POINTS;
-      const templateHeightPts2 = (templateSize?.height || 420) * MM_TO_POINTS;
-      const isFullPagePdf = !shouldCleanup && // Only for original PDFs, not converted SVGs
-        Math.abs(actualPdfWidth - templateWidthPts) < 10 && 
-        Math.abs(actualPdfHeight - templateHeightPts2) < 10;
+      // Check if this is a full-page PDF (detected earlier in the cropping logic)
+      const isFullPagePdf = (element as any)._isFullPagePdf === true;
       
       if (isFullPagePdf) {
-        console.log(`📄 FULL-PAGE PDF DETECTED: PDF size (${actualPdfWidth.toFixed(1)}×${actualPdfHeight.toFixed(1)}pts) matches template (${templateWidthPts.toFixed(1)}×${templateHeightPts2.toFixed(1)}pts)`);
-        console.log(`📄 Embedding at full template size to prevent clipping`);
+        console.log(`📄 FULL-PAGE PDF: Embedding at full template size (${(templateSize?.width || 297)}×${(templateSize?.height || 420)}mm) to prevent clipping`);
       }
       
       // CRITICAL FIX: Check if this is from a tight content SVG with viewBox offset
