@@ -915,7 +915,7 @@ export default function PropertiesPanel({
             </div>
 
             {/* Shape Properties - only show for shape elements */}
-            {(currentElement.elementType === 'rectangle' || currentElement.elementType === 'ellipse' || currentElement.elementType === 'circle' || currentElement.elementType === 'line') && (
+            {(['rectangle', 'ellipse', 'circle', 'line', 'shield', 'star', 'hexagon', 'pentagon', 'triangle', 'diamond', 'banner', 'cross', 'oval', 'heart', 'octagon', 'arch', 'malteseCross', 'chevron', 'arrow', 'ribbon'].includes(currentElement.elementType || '')) && (
               <div className="space-y-3">
                 <Label className="text-sm font-medium mb-2 block">Shape Properties</Label>
                 
