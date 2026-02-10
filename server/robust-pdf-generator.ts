@@ -1276,26 +1276,8 @@ grestore`;
       const pdfWasCropped = (element as any)._pdfWasCropped === true;
       
       if (pdfWasCropped) {
-        const actualPdfWidthMM = actualPdfWidth / MM_TO_POINTS;
-        const actualPdfHeightMM = actualPdfHeight / MM_TO_POINTS;
-        const elementPdfWidthPts = contentWidthMM * MM_TO_POINTS;
-        const elementPdfHeightPts = contentHeightMM * MM_TO_POINTS;
-        
-        // If aspect ratios differ significantly (more than 10%), use actual PDF dimensions to preserve aspect ratio
-        const pdfAspect = actualPdfWidth / actualPdfHeight;
-        const elementAspect = elementPdfWidthPts / elementPdfHeightPts;
-        const aspectDiff = Math.abs(pdfAspect - elementAspect) / pdfAspect;
-        
-        if (aspectDiff > 0.1) {
-          console.log(`⚠️ ASPECT RATIO MISMATCH (cropped PDF): PDF=${pdfAspect.toFixed(3)}, Element=${elementAspect.toFixed(3)}, Diff=${(aspectDiff*100).toFixed(1)}%`);
-          console.log(`🔧 Using actual PDF dimensions to preserve aspect ratio: ${actualPdfWidthMM.toFixed(2)}×${actualPdfHeightMM.toFixed(2)}mm`);
-          const scaleX = contentWidthMM / actualPdfWidthMM;
-          const scaleY = contentHeightMM / actualPdfHeightMM;
-          const scale = Math.min(scaleX, scaleY);
-          contentWidthMM = actualPdfWidthMM * scale;
-          contentHeightMM = actualPdfHeightMM * scale;
-          console.log(`📐 Scaled to fit element bounds: ${contentWidthMM.toFixed(2)}×${contentHeightMM.toFixed(2)}mm (scale=${scale.toFixed(3)})`);
-        }
+        console.log(`📄 PDF was cropped to content bounds - using canvas element dimensions: ${contentWidthMM.toFixed(2)}×${contentHeightMM.toFixed(2)}mm`);
+        console.log(`📄 Cropped PDF actual size: ${(actualPdfWidth / MM_TO_POINTS).toFixed(2)}×${(actualPdfHeight / MM_TO_POINTS).toFixed(2)}mm - will be scaled to fit element`);
       } else if (!isFullPagePdf) {
         console.log(`📄 PDF not cropped - using element dimensions directly: ${contentWidthMM.toFixed(2)}×${contentHeightMM.toFixed(2)}mm`);
       }
