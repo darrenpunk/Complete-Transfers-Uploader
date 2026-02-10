@@ -1204,6 +1204,20 @@ grestore`;
       // Calculate exact position using user's actual element dimensions
       const MM_TO_POINTS = 2.834645669;
       
+      // CRITICAL FIX: Check if original PDF page size matches the template size
+      // If so, this is a full-page artwork (e.g., A3 PDF on A3 template) - embed at full template size
+      // to avoid clipping due to content-bounds-based element dimensions being slightly smaller
+      const templateWidthPts = (templateSize?.width || 297) * MM_TO_POINTS;
+      const templateHeightPts2 = (templateSize?.height || 420) * MM_TO_POINTS;
+      const isFullPagePdf = !shouldCleanup && // Only for original PDFs, not converted SVGs
+        Math.abs(actualPdfWidth - templateWidthPts) < 10 && 
+        Math.abs(actualPdfHeight - templateHeightPts2) < 10;
+      
+      if (isFullPagePdf) {
+        console.log(`📄 FULL-PAGE PDF DETECTED: PDF size (${actualPdfWidth.toFixed(1)}×${actualPdfHeight.toFixed(1)}pts) matches template (${templateWidthPts.toFixed(1)}×${templateHeightPts2.toFixed(1)}pts)`);
+        console.log(`📄 Embedding at full template size to prevent clipping`);
+      }
+      
       // CRITICAL FIX: Check if this is from a tight content SVG with viewBox offset
       let viewBoxOffsetX = 0;
       let viewBoxOffsetY = 0;
@@ -1217,7 +1231,6 @@ grestore`;
             if (viewBoxMatch) {
               const [offsetX, offsetY] = viewBoxMatch[1].split(' ').map(Number);
               if (offsetX !== 0 || offsetY !== 0) {
-                // Direct SVG coordinate to PDF points conversion (SVG pixels are 1:1 with PDF points for vector content)
                 viewBoxOffsetX = -offsetX; 
                 viewBoxOffsetY = -offsetY;
                 console.log(`🔧 CRITICAL POSITIONING FIX: Applying viewBox offset compensation: X=${viewBoxOffsetX.toFixed(2)}pt, Y=${viewBoxOffsetY.toFixed(2)}pt`);
@@ -1239,6 +1252,14 @@ grestore`;
       let contentWidthMM = element.width;
       let contentHeightMM = element.height;
       
+      // FULL-PAGE PDF: Override element dimensions with template dimensions
+      // This prevents clipping when the original PDF fills the entire template page
+      if (isFullPagePdf) {
+        contentWidthMM = templateSize?.width || 297;
+        contentHeightMM = templateSize?.height || 420;
+        console.log(`📄 Full-page override: Using template dimensions ${contentWidthMM}×${contentHeightMM}mm instead of element ${element.width.toFixed(2)}×${element.height.toFixed(2)}mm`);
+      }
+      
       // CRITICAL: Check if actual PDF dimensions differ significantly from element dimensions
       // This can happen when Inkscape reports larger bounds (including masks/clipping paths)
       // but Ghostscript crops to actual visible content
@@ -1259,16 +1280,14 @@ grestore`;
         if (aspectDiff > 0.1) {
           console.log(`⚠️ ASPECT RATIO MISMATCH (cropped PDF): PDF=${pdfAspect.toFixed(3)}, Element=${elementAspect.toFixed(3)}, Diff=${(aspectDiff*100).toFixed(1)}%`);
           console.log(`🔧 Using actual PDF dimensions to preserve aspect ratio: ${actualPdfWidthMM.toFixed(2)}×${actualPdfHeightMM.toFixed(2)}mm`);
-          // Use the actual PDF dimensions (preserving aspect ratio)
-          // Scale to fit within element bounds while maintaining aspect ratio
           const scaleX = contentWidthMM / actualPdfWidthMM;
           const scaleY = contentHeightMM / actualPdfHeightMM;
-          const scale = Math.min(scaleX, scaleY); // Use smaller scale to fit within bounds
+          const scale = Math.min(scaleX, scaleY);
           contentWidthMM = actualPdfWidthMM * scale;
           contentHeightMM = actualPdfHeightMM * scale;
           console.log(`📐 Scaled to fit element bounds: ${contentWidthMM.toFixed(2)}×${contentHeightMM.toFixed(2)}mm (scale=${scale.toFixed(3)})`);
         }
-      } else {
+      } else if (!isFullPagePdf) {
         console.log(`📄 PDF not cropped - using element dimensions directly: ${contentWidthMM.toFixed(2)}×${contentHeightMM.toFixed(2)}mm`);
       }
       
@@ -1384,7 +1403,12 @@ grestore`;
       let drawX: number;
       let drawY: number;
       
-      if (element.rotation === 90) {
+      if (isFullPagePdf) {
+        // Full-page PDF: place at origin (0, 0) to cover the entire template page
+        drawX = 0;
+        drawY = 0;
+        console.log(`📄 Full-page PDF: Placing at origin (0, 0) to cover full template`);
+      } else if (element.rotation === 90) {
         // 90° CCW rotation: content rotates so width becomes height
         // After rotation, visual size is height×width
         // Drawing position for pdf-lib to center visually:
