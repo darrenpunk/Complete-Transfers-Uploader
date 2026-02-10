@@ -1690,6 +1690,12 @@ export async function registerRoutes(app: express.Application) {
 
       const logos = [];
       
+      // Get existing canvas elements for proper z-index ordering (use max+1, not count, to avoid collisions after reordering)
+      const existingCanvasElements = await storage.getCanvasElementsByProject(projectId);
+      let nextZIndex = existingCanvasElements.length > 0 
+        ? Math.max(...existingCanvasElements.map(el => el.zIndex ?? 0)) + 1 
+        : 0;
+      
       for (const file of files) {
         let finalFilename = file.filename;
         let finalMimeType = file.mimetype;
@@ -4013,7 +4019,7 @@ export async function registerRoutes(app: express.Application) {
           width: finalDisplayWidth,
           height: finalDisplayHeight,
           rotation: 0,
-          zIndex: logos.length - 1,
+          zIndex: nextZIndex++,
           isVisible: true,
           isLocked: false,
           colorOverrides: colorOverrides,

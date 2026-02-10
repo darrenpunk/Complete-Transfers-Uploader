@@ -1089,6 +1089,9 @@ export default function CanvasWorkspace({
     event.preventDefault();
     event.stopPropagation();
     
+    // Prevent resizing locked elements
+    if (element.isLocked) return;
+    
     if (!canvasRef.current || !template) return;
     
     const rect = canvasRef.current.getBoundingClientRect();
@@ -1186,6 +1189,15 @@ export default function CanvasWorkspace({
 
   const handleMouseDown = (element: CanvasElement, event: React.MouseEvent) => {
     if (!element) return;
+    
+    // Prevent dragging locked elements
+    if (element.isLocked) {
+      event.preventDefault();
+      event.stopPropagation();
+      // Still allow selection of locked elements (so user can see properties/unlock)
+      onElementsSelect([element]);
+      return;
+    }
     
     console.log(`🎯 Mouse down on element ${element.id}, starting drag, shiftKey=${event.shiftKey}`);
     event.preventDefault();
@@ -2743,7 +2755,7 @@ export default function CanvasWorkspace({
                 <div
                   key={element.id}
                   data-canvas-element={element.id}
-                  className={`canvas-element absolute ${isDragging && isSelected ? 'cursor-grabbing' : 'cursor-grab'}`}
+                  className={`canvas-element absolute ${element.isLocked ? 'cursor-not-allowed' : isDragging && isSelected ? 'cursor-grabbing' : 'cursor-grab'}`}
                   style={{
                     left: elementX,
                     top: elementY,
@@ -3030,8 +3042,8 @@ export default function CanvasWorkspace({
 
                   </div>
 
-                  {/* Transformation Handles */}
-                  {isSelected && (() => {
+                  {/* Transformation Handles - hidden for locked elements */}
+                  {isSelected && !element.isLocked && (() => {
                     // Calculate scaled handle size and positioning
                     const handleSize = 12; // Fixed 12px size
                     const handleOffset = 6; // Fixed 6px offset

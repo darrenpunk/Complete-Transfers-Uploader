@@ -55,6 +55,32 @@ export function processSvgForSelection(
   return new XMLSerializer().serializeToString(svgRoot);
 }
 
+function namespaceSvgIds(svgString: string, elementId: string): string {
+  const prefix = `e${elementId.replace(/[^a-zA-Z0-9]/g, '').slice(0, 8)}_`;
+  
+  const idRegex = /\bid\s*=\s*["']([^"']+)["']/g;
+  const ids = new Set<string>();
+  let match;
+  while ((match = idRegex.exec(svgString)) !== null) {
+    ids.add(match[1]);
+  }
+  
+  if (ids.size === 0) return svgString;
+  
+  let result = svgString;
+  ids.forEach(id => {
+    const escapedId = id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    result = result.replace(new RegExp(`id=["']${escapedId}["']`, 'g'), `id="${prefix}${id}"`);
+    result = result.replace(new RegExp(`url\\(#${escapedId}\\)`, 'g'), `url(#${prefix}${id})`);
+    result = result.replace(new RegExp(`url\\(&quot;#${escapedId}&quot;\\)`, 'g'), `url(&quot;#${prefix}${id}&quot;)`);
+    result = result.replace(new RegExp(`href=["']#${escapedId}["']`, 'g'), `href="#${prefix}${id}"`);
+    result = result.replace(new RegExp(`xlink:href=["']#${escapedId}["']`, 'g'), `xlink:href="#${prefix}${id}"`);
+    result = result.replace(new RegExp(`#${escapedId}(?=[\\s{,;)])`, 'g'), `#${prefix}${id}`);
+  });
+  
+  return result;
+}
+
 interface SvgInlineRendererProps {
   element: CanvasElement;
   logo: Logo;
@@ -223,6 +249,11 @@ export default function SvgInlineRenderer({
             return;
           }
         }
+        
+        // CRITICAL FIX: Namespace all SVG internal IDs to prevent cross-element collisions
+        // When multiple SVGs are rendered inline, identical IDs for gradients, clip paths,
+        // masks, and filters cause incorrect rendering (one logo uses another's definitions)
+        cleanedSvg = namespaceSvgIds(cleanedSvg, element.id);
         
         setSvgContent(cleanedSvg);
       } catch (error) {
