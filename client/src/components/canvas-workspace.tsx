@@ -1804,7 +1804,7 @@ export default function CanvasWorkspace({
     }
     
     // Calculate safety margins - DTF templates need more generous scaling
-    const isDTFTemplate = template.id === 'dtf-large' || template.name === 'large_dtf';
+    const isDTFTemplate = template.id === 'dtf-large' || template.id === 'dtf-SRA3' || template.name === 'large_dtf';
     const safetyMarginMm = 3; // Keep standard 3mm for all templates
     const safeWidth = template.width - (safetyMarginMm * 2);
     const safeHeight = template.height - (safetyMarginMm * 2);

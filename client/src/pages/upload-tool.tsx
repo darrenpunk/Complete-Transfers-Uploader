@@ -740,7 +740,7 @@ export default function UploadTool() {
         (selectedTemplate.label?.includes("Single Colour") || selectedTemplate.label?.includes("Zero"));
       const isCustomBadgesTemplate = selectedTemplate.group === "Digital Transfers" && 
         (selectedTemplate.label?.includes("Applique") || selectedTemplate.label?.includes("Woven"));
-      const isDTFTemplate = selectedTemplate.group === "Digital Transfers" && selectedTemplate.label?.includes("DTF");
+      const isDTFTemplate = selectedTemplate.group === "Digital Transfers" && (selectedTemplate.id?.startsWith("dtf-") || selectedTemplate.label?.includes("DTF"));
       
       console.log('Template checks:', { isFullColourTemplate, isSingleColourTemplate, isCustomBadgesTemplate, isDTFTemplate, actualGroup: selectedTemplate.group });
       
@@ -1104,7 +1104,7 @@ export default function UploadTool() {
     const templateHeight = template.height;
     
     // DTF template-specific positioning
-    const isDTFTemplate = template.id === 'dtf-large' || template.name === 'large_dtf';
+    const isDTFTemplate = template.id === 'dtf-large' || template.id === 'dtf-SRA3' || template.name === 'large_dtf';
     
     let targetCenterX, targetCenterY;
     
