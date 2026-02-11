@@ -39,6 +39,10 @@ waitForPort = 5000
 localPort = 5000
 externalPort = 80
 
+[[ports]]
+localPort = 5001
+externalPort = 3000
+
 [agent]
 integrations = ["dropbox:1.0.0", "github:1.0.0", "javascript_gemini_ai_integrations:2.0.0"]
 
