@@ -683,8 +683,10 @@ grestore`;
     }
     
     // PASS-THROUGH MODE: Append original PDF pages 2+ from customer's file
+    // BUT only if the user hasn't set their own garment colors (which means they modified the order)
+    const hasExplicitGarmentColors = data.garmentColors && Array.isArray(data.garmentColors) && data.garmentColors.length > 0;
     let passThroughSucceeded = false;
-    if (usePassThrough) {
+    if (usePassThrough && !hasExplicitGarmentColors) {
       console.log(`📄 PASS-THROUGH MODE: Looking for multi-page PDF to append pages 2+`);
       
       // Find a logo with hasGarmentPages=true that has original PDF
@@ -731,8 +733,8 @@ grestore`;
       }
     }
     
-    // FALLBACK: If pass-through was enabled but failed, generate standard garment page
-    if (usePassThrough && !passThroughSucceeded) {
+    // FALLBACK: If pass-through was enabled but failed (and no explicit garment colors), generate standard garment page
+    if (usePassThrough && !passThroughSucceeded && !hasExplicitGarmentColors) {
       console.log(`⚠️ PASS-THROUGH FAILED: Generating fallback garment color page`);
       
       // Create fallback page 2 with garment color background
