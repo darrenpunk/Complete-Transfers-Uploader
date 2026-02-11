@@ -1882,7 +1882,7 @@ export default function UploadTool() {
               <FileText className="w-4 h-4 md:mr-2" />
               <span className="hidden md:inline">Requirements</span>
             </Button>
-            <a href="/order-history">
+            <a href={partnerEmail ? `/order-history?email=${encodeURIComponent(partnerEmail)}` : '/order-history'}>
               <Button variant="outline" size="sm" className="hidden lg:flex">
                 <ClipboardList className="w-4 h-4 md:mr-2" />
                 <span className="hidden md:inline">Orders</span>
