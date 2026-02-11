@@ -1,7 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { createServer } from "http";
 import { registerRoutes } from "./routes";
-import { setupVite, serveStatic, log } from "./vite";
+import { setupVite, log } from "./vite";
 import dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
@@ -98,11 +98,10 @@ const port = parseInt(process.env.PORT || '5000', 10);
 const isProduction = process.env.NODE_ENV === 'production';
 
 if (isProduction) {
-  try {
-    serveStatic(app);
-    console.log('[SERVER] Static file serving configured for production');
-  } catch (e) {
-    console.error('[SERVER] Failed to set up static serving:', e);
+  const distPath = path.resolve(import.meta.dirname, "public");
+  if (fs.existsSync(distPath)) {
+    app.use(express.static(distPath));
+    console.log('[SERVER] Static asset serving configured (no catch-all yet)');
   }
 }
 
@@ -127,7 +126,15 @@ async function initializeApp() {
     res.status(status).json({ message });
   });
 
-  if (!isProduction) {
+  if (isProduction) {
+    const distPath = path.resolve(import.meta.dirname, "public");
+    if (fs.existsSync(distPath)) {
+      app.use("*", (_req, res) => {
+        res.sendFile(path.resolve(distPath, "index.html"));
+      });
+      console.log('[SERVER] SPA catch-all configured');
+    }
+  } else {
     console.log('[SERVER] Setting up Vite for development...');
     await setupVite(app, server);
     console.log('[SERVER] Vite setup complete');
