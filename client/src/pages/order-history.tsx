@@ -281,13 +281,16 @@ export default function OrderHistory() {
           </Card>
         )}
 
-        {isError && !isLoginRequired && (
+        {((isError && !isLoginRequired) || (data && !data.success && !isLoginRequired)) && (
           <Card className="bg-gray-900 border-gray-800">
             <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-              <p className="text-red-400">
-                Unable to load order history. Please try again later.
+              <Package className="w-12 h-12 text-gray-600 mb-4" />
+              <h2 className="text-lg font-semibold text-gray-300 mb-2">Unable to Load Orders</h2>
+              <p className="text-gray-500 max-w-md">
+                We couldn't retrieve your order history right now. This may be a temporary issue — please try again.
               </p>
               <Button variant="outline" className="mt-4" onClick={() => refetch()}>
+                <RefreshCw className="w-4 h-4 mr-1" />
                 Try Again
               </Button>
             </CardContent>
