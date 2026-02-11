@@ -424,11 +424,15 @@ export default function TemplateSelectorModal({
             <Button 
               className="w-full"
               onClick={() => {
+                const loginUrl = 'https://www.completetransfers.com/web/login';
                 const isInIframe = window !== window.parent;
                 if (isInIframe) {
                   window.parent.postMessage({ type: 'redirect-to-login' }, '*');
+                  setTimeout(() => {
+                    window.open(loginUrl, '_top');
+                  }, 300);
                 } else {
-                  window.location.href = 'https://www.completetransfers.com/web/login';
+                  window.location.href = loginUrl;
                 }
               }}
             >
