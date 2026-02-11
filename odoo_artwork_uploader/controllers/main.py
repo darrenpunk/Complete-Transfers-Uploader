@@ -1452,7 +1452,7 @@ class ArtworkUploaderController(http.Controller):
         return self._get_garment_colors()  # Same as garment colors for now
     
     @http.route('/artwork/api/order-history', type='http', auth='public', methods=['GET', 'OPTIONS'], cors='*', csrf=False)
-    def get_order_history(self, page=1, limit=20, **kwargs):
+    def get_order_history(self, page=1, limit=20, email=None, **kwargs):
         origin = request.httprequest.headers.get('Origin', '*')
         
         if request.httprequest.method == 'OPTIONS':
@@ -1471,14 +1471,24 @@ class ArtworkUploaderController(http.Controller):
         ]
         
         try:
+            partner = None
             user = request.env.user
-            if user.id == request.env.ref('base.public_user').id:
+            
+            if user.id != request.env.ref('base.public_user').id:
+                partner = user.partner_id
+            
+            if not partner and email:
+                partner = request.env['res.partner'].sudo().search([
+                    ('email', '=ilike', email)
+                ], limit=1)
+                _logger.info(f"📋 Order history lookup by email: {email} -> partner: {partner.id if partner else 'not found'}")
+            
+            if not partner:
                 return request.make_response(json.dumps({
                     'success': False,
                     'error': 'Login required to view order history'
                 }), headers=headers, status=401)
             
-            partner = user.partner_id
             page = int(page)
             limit = int(limit)
             offset = (page - 1) * limit
@@ -1558,7 +1568,7 @@ class ArtworkUploaderController(http.Controller):
             }), headers=headers, status=500)
     
     @http.route('/artwork/api/order-pdf/<int:line_id>', type='http', auth='public', methods=['GET', 'OPTIONS'], csrf=False)
-    def download_order_pdf(self, line_id, **kwargs):
+    def download_order_pdf(self, line_id, email=None, **kwargs):
         origin = request.httprequest.headers.get('Origin', '*')
         
         if request.httprequest.method == 'OPTIONS':
@@ -1571,11 +1581,19 @@ class ArtworkUploaderController(http.Controller):
             return request.make_response('', headers=headers)
         
         try:
+            partner = None
             user = request.env.user
-            if user.id == request.env.ref('base.public_user').id:
+            if user.id != request.env.ref('base.public_user').id:
+                partner = user.partner_id
+            
+            if not partner and email:
+                partner = request.env['res.partner'].sudo().search([
+                    ('email', '=ilike', email)
+                ], limit=1)
+            
+            if not partner:
                 return request.make_response('Login required', status=401)
             
-            partner = user.partner_id
             line = request.env['sale.order.line'].sudo().browse(line_id)
             
             if not line.exists():

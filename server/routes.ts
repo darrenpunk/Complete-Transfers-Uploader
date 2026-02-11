@@ -5566,10 +5566,15 @@ export async function registerRoutes(app: express.Application) {
   app.get('/api/order-history', async (req, res) => {
     try {
       const odooBaseUrl = process.env.VITE_ODOO_URL || 'https://www.completetransfers.com';
-      const { page = '1', limit = '20' } = req.query;
+      const { page = '1', limit = '20', email = '' } = req.query;
       const clientCookies = req.headers.cookie || '';
       
-      const odooUrl = `${odooBaseUrl}/artwork/api/order-history?page=${page}&limit=${limit}`;
+      const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+      if (email) {
+        params.append('email', String(email));
+      }
+      
+      const odooUrl = `${odooBaseUrl}/artwork/api/order-history?${params.toString()}`;
       console.log(`📋 Fetching order history from Odoo: ${odooUrl}`);
       
       const response = await fetch(odooUrl, {
@@ -5580,8 +5585,14 @@ export async function registerRoutes(app: express.Application) {
         },
       });
       
-      const data = await response.json();
-      res.status(response.status).json(data);
+      const text = await response.text();
+      try {
+        const data = JSON.parse(text);
+        res.status(response.status).json(data);
+      } catch {
+        console.error('❌ Non-JSON response from Odoo:', text.substring(0, 200));
+        res.status(500).json({ success: false, error: 'Invalid response from order service' });
+      }
     } catch (error) {
       console.error('❌ Order history fetch error:', error);
       res.status(500).json({ success: false, error: 'Failed to fetch order history' });
@@ -5593,9 +5604,11 @@ export async function registerRoutes(app: express.Application) {
     try {
       const odooBaseUrl = process.env.VITE_ODOO_URL || 'https://www.completetransfers.com';
       const { lineId } = req.params;
+      const { email = '' } = req.query;
       const clientCookies = req.headers.cookie || '';
       
-      const odooUrl = `${odooBaseUrl}/artwork/api/order-pdf/${lineId}`;
+      const params = email ? `?email=${encodeURIComponent(String(email))}` : '';
+      const odooUrl = `${odooBaseUrl}/artwork/api/order-pdf/${lineId}${params}`;
       console.log(`📄 Downloading order PDF from Odoo: ${odooUrl}`);
       
       const response = await fetch(odooUrl, {

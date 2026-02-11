@@ -100,17 +100,36 @@ function ColorSwatch({ color, name, quantity }: { color: string; name: string; q
   );
 }
 
+function getUserEmail(): string | null {
+  const urlParams = new URLSearchParams(window.location.search);
+  const emailFromUrl = urlParams.get('email');
+  if (emailFromUrl) {
+    try { sessionStorage.setItem('partner_email', emailFromUrl); } catch {}
+    return emailFromUrl;
+  }
+  try {
+    return sessionStorage.getItem('partner_email');
+  } catch {
+    return null;
+  }
+}
+
 export default function OrderHistory() {
   const [, setLocation] = useLocation();
   const [page, setPage] = useState(1);
   const [reorderingLineId, setReorderingLineId] = useState<number | null>(null);
   const limit = 10;
   const { toast } = useToast();
+  const userEmail = getUserEmail();
 
   const { data, isLoading, isError, error, refetch } = useQuery<OrderHistoryResponse>({
-    queryKey: ["/api/order-history", page],
+    queryKey: ["/api/order-history", page, userEmail],
     queryFn: async () => {
-      const res = await fetch(`/api/order-history?page=${page}&limit=${limit}`, {
+      const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+      if (userEmail) {
+        params.append('email', userEmail);
+      }
+      const res = await fetch(`/api/order-history?${params.toString()}`, {
         credentials: "include",
       });
       const text = await res.text();
@@ -121,13 +140,15 @@ export default function OrderHistory() {
       }
     },
     retry: false,
+    enabled: !!userEmail,
   });
 
   const isLoginRequired = data?.success === false && data?.error?.includes("Login required");
 
   const handleDownloadPdf = async (lineId: number, fileName: string) => {
     try {
-      const response = await fetch(`/api/order-pdf/${lineId}`, {
+      const emailParam = userEmail ? `?email=${encodeURIComponent(userEmail)}` : '';
+      const response = await fetch(`/api/order-pdf/${lineId}${emailParam}`, {
         credentials: "include",
       });
       if (!response.ok) {
@@ -157,7 +178,8 @@ export default function OrderHistory() {
     
     setReorderingLineId(line.lineId);
     try {
-      const response = await fetch(`/api/order-pdf/${line.lineId}`, {
+      const emailParam = userEmail ? `?email=${encodeURIComponent(userEmail)}` : '';
+      const response = await fetch(`/api/order-pdf/${line.lineId}${emailParam}`, {
         credentials: "include",
       });
       if (!response.ok) throw new Error("Download failed");
@@ -219,7 +241,20 @@ export default function OrderHistory() {
           </p>
         </div>
 
-        {isLoading && (
+        {!userEmail && (
+          <Card className="bg-gray-900 border-gray-800">
+            <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+              <LogIn className="w-12 h-12 text-gray-600 mb-4" />
+              <h2 className="text-lg font-semibold text-gray-300 mb-2">Login Required</h2>
+              <p className="text-gray-500 max-w-md">
+                Please access the designer from the website to view your order history.
+                Your past transfer orders will appear here once you're identified.
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
+        {userEmail && isLoading && (
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (
               <Card key={i} className="bg-gray-900 border-gray-800">
@@ -238,10 +273,9 @@ export default function OrderHistory() {
           <Card className="bg-gray-900 border-gray-800">
             <CardContent className="flex flex-col items-center justify-center py-12 text-center">
               <LogIn className="w-12 h-12 text-gray-600 mb-4" />
-              <h2 className="text-lg font-semibold text-gray-300 mb-2">Login Required</h2>
+              <h2 className="text-lg font-semibold text-gray-300 mb-2">No Orders Found</h2>
               <p className="text-gray-500 max-w-md">
-                Please log in to your account on the website to view your order history.
-                Your past transfer orders will appear here once you're signed in.
+                No order history was found for your account. Orders will appear here after they've been confirmed.
               </p>
             </CardContent>
           </Card>
