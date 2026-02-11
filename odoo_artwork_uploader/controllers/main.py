@@ -1451,6 +1451,159 @@ class ArtworkUploaderController(http.Controller):
         """Get available ink colors for single color templates"""
         return self._get_garment_colors()  # Same as garment colors for now
     
+    @http.route('/artwork/api/order-history', type='http', auth='public', methods=['GET', 'OPTIONS'], cors='*', csrf=False)
+    def get_order_history(self, page=1, limit=20, **kwargs):
+        origin = request.httprequest.headers.get('Origin', '*')
+        
+        if request.httprequest.method == 'OPTIONS':
+            headers = [
+                ('Access-Control-Allow-Origin', origin),
+                ('Access-Control-Allow-Methods', 'GET, OPTIONS'),
+                ('Access-Control-Allow-Headers', 'Content-Type'),
+                ('Access-Control-Allow-Credentials', 'true'),
+            ]
+            return request.make_response('', headers=headers)
+        
+        headers = [
+            ('Content-Type', 'application/json'),
+            ('Access-Control-Allow-Origin', origin),
+            ('Access-Control-Allow-Credentials', 'true'),
+        ]
+        
+        try:
+            user = request.env.user
+            if user.id == request.env.ref('base.public_user').id:
+                return request.make_response(json.dumps({
+                    'success': False,
+                    'error': 'Login required to view order history'
+                }), headers=headers, status=401)
+            
+            partner = user.partner_id
+            page = int(page)
+            limit = int(limit)
+            offset = (page - 1) * limit
+            
+            domain = [
+                ('partner_id', '=', partner.id),
+                ('state', 'in', ['sale', 'done']),
+            ]
+            
+            total = request.env['sale.order'].sudo().search_count(domain)
+            orders = request.env['sale.order'].sudo().search(
+                domain, order='date_order desc', limit=limit, offset=offset
+            )
+            
+            order_list = []
+            for order in orders:
+                artwork_lines = []
+                for line in order.order_line:
+                    if not line.artwork_project_id:
+                        continue
+                    
+                    project = line.artwork_project_id
+                    garment_colors = []
+                    if project.garment_colors_json:
+                        try:
+                            garment_colors = json.loads(project.garment_colors_json)
+                        except (json.JSONDecodeError, TypeError):
+                            pass
+                    
+                    if not garment_colors and project.garment_color_name:
+                        garment_colors = [{
+                            'colorName': project.garment_color_name,
+                            'color': project.garment_color or '#000000',
+                            'quantity': project.quantity or 1
+                        }]
+                    
+                    artwork_lines.append({
+                        'lineId': line.id,
+                        'projectName': project.name,
+                        'projectUuid': project.uuid,
+                        'templateSize': project.template_size or '',
+                        'quantity': project.total_quantity or project.quantity or 1,
+                        'garmentColors': garment_colors,
+                        'garmentColorName': project.garment_color_name or '',
+                        'inkColorName': project.ink_color_name or '',
+                        'hasPdf': bool(line.artwork_files_datas if hasattr(line, 'artwork_files_datas') else False),
+                        'pdfFileName': line.artwork_file_name if hasattr(line, 'artwork_file_name') else '',
+                        'state': project.state or 'draft',
+                        'createdDate': project.create_date.isoformat() if project.create_date else '',
+                    })
+                
+                if artwork_lines:
+                    order_list.append({
+                        'orderId': order.id,
+                        'orderName': order.name,
+                        'dateOrder': order.date_order.isoformat() if order.date_order else '',
+                        'state': order.state,
+                        'amountTotal': order.amount_total,
+                        'currencySymbol': order.currency_id.symbol if order.currency_id else '',
+                        'artworkLines': artwork_lines,
+                    })
+            
+            return request.make_response(json.dumps({
+                'success': True,
+                'orders': order_list,
+                'total': total,
+                'page': page,
+                'limit': limit,
+                'totalPages': (total + limit - 1) // limit if limit > 0 else 1,
+            }), headers=headers)
+            
+        except Exception as e:
+            _logger.error(f"Error fetching order history: {e}")
+            return request.make_response(json.dumps({
+                'success': False,
+                'error': str(e)
+            }), headers=headers, status=500)
+    
+    @http.route('/artwork/api/order-pdf/<int:line_id>', type='http', auth='public', methods=['GET', 'OPTIONS'], csrf=False)
+    def download_order_pdf(self, line_id, **kwargs):
+        origin = request.httprequest.headers.get('Origin', '*')
+        
+        if request.httprequest.method == 'OPTIONS':
+            headers = [
+                ('Access-Control-Allow-Origin', origin),
+                ('Access-Control-Allow-Methods', 'GET, OPTIONS'),
+                ('Access-Control-Allow-Headers', 'Content-Type'),
+                ('Access-Control-Allow-Credentials', 'true'),
+            ]
+            return request.make_response('', headers=headers)
+        
+        try:
+            user = request.env.user
+            if user.id == request.env.ref('base.public_user').id:
+                return request.make_response('Login required', status=401)
+            
+            partner = user.partner_id
+            line = request.env['sale.order.line'].sudo().browse(line_id)
+            
+            if not line.exists():
+                return request.make_response('Order line not found', status=404)
+            
+            if line.order_id.partner_id.id != partner.id:
+                return request.make_response('Access denied', status=403)
+            
+            if not hasattr(line, 'artwork_files_datas') or not line.artwork_files_datas:
+                return request.make_response('No PDF available', status=404)
+            
+            pdf_data = base64.b64decode(line.artwork_files_datas)
+            filename = line.artwork_file_name if hasattr(line, 'artwork_file_name') and line.artwork_file_name else 'artwork.pdf'
+            
+            headers = [
+                ('Content-Type', 'application/pdf'),
+                ('Content-Disposition', f'attachment; filename="{filename}"'),
+                ('Content-Length', str(len(pdf_data))),
+                ('Access-Control-Allow-Origin', origin),
+                ('Access-Control-Allow-Credentials', 'true'),
+            ]
+            
+            return request.make_response(pdf_data, headers=headers)
+            
+        except Exception as e:
+            _logger.error(f"Error downloading order PDF: {e}")
+            return request.make_response(f'Error: {str(e)}', status=500)
+    
     def _get_template_type(self, template_size):
         """Get template type from template size"""
         if 'dtf' in template_size.lower():

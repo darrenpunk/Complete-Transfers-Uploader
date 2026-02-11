@@ -18,7 +18,7 @@ import AddToCartModal from "@/components/add-to-cart-modal";
 import ProgressSteps from "@/components/progress-steps";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Download, RotateCcw, HelpCircle, Palette, GraduationCap, FileText, AlertCircle, Upload, ShoppingCart, Maximize2, Minimize2, PanelLeft, PanelRight, X, Scissors } from "lucide-react";
+import { Download, RotateCcw, HelpCircle, Palette, GraduationCap, FileText, AlertCircle, Upload, ShoppingCart, Maximize2, Minimize2, PanelLeft, PanelRight, X, Scissors, ClipboardList } from "lucide-react";
 import completeTransfersLogoPath from "@assets/Artboard 1@4x_1753539065182.png";
 import { HelpModal } from "@/components/help-modal";
 import { VectorizationServiceForm } from "@/components/vectorization-service-form";
@@ -1882,6 +1882,12 @@ export default function UploadTool() {
               <FileText className="w-4 h-4 md:mr-2" />
               <span className="hidden md:inline">Requirements</span>
             </Button>
+            <a href="/order-history">
+              <Button variant="outline" size="sm" className="hidden lg:flex">
+                <ClipboardList className="w-4 h-4 md:mr-2" />
+                <span className="hidden md:inline">Orders</span>
+              </Button>
+            </a>
             <Button variant="outline" size="sm" onClick={() => setShowHelpModal(true)}>
               <HelpCircle className="w-4 h-4" />
               <span className="hidden md:inline ml-2">Help</span>

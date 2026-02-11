@@ -5562,6 +5562,68 @@ export async function registerRoutes(app: express.Application) {
     });
   });
 
+  // Order history endpoint - proxy to Odoo
+  app.get('/api/order-history', async (req, res) => {
+    try {
+      const odooBaseUrl = process.env.VITE_ODOO_URL || 'https://www.completetransfers.com';
+      const { page = '1', limit = '20' } = req.query;
+      const clientCookies = req.headers.cookie || '';
+      
+      const odooUrl = `${odooBaseUrl}/artwork/api/order-history?page=${page}&limit=${limit}`;
+      console.log(`📋 Fetching order history from Odoo: ${odooUrl}`);
+      
+      const response = await fetch(odooUrl, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Cookie': clientCookies,
+        },
+      });
+      
+      const data = await response.json();
+      res.status(response.status).json(data);
+    } catch (error) {
+      console.error('❌ Order history fetch error:', error);
+      res.status(500).json({ success: false, error: 'Failed to fetch order history' });
+    }
+  });
+  
+  // Order PDF download - proxy to Odoo
+  app.get('/api/order-pdf/:lineId', async (req, res) => {
+    try {
+      const odooBaseUrl = process.env.VITE_ODOO_URL || 'https://www.completetransfers.com';
+      const { lineId } = req.params;
+      const clientCookies = req.headers.cookie || '';
+      
+      const odooUrl = `${odooBaseUrl}/artwork/api/order-pdf/${lineId}`;
+      console.log(`📄 Downloading order PDF from Odoo: ${odooUrl}`);
+      
+      const response = await fetch(odooUrl, {
+        method: 'GET',
+        headers: {
+          'Cookie': clientCookies,
+        },
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        return res.status(response.status).send(errorText);
+      }
+      
+      const contentDisposition = response.headers.get('content-disposition');
+      res.setHeader('Content-Type', 'application/pdf');
+      if (contentDisposition) {
+        res.setHeader('Content-Disposition', contentDisposition);
+      }
+      
+      const buffer = Buffer.from(await response.arrayBuffer());
+      res.send(buffer);
+    } catch (error) {
+      console.error('❌ Order PDF download error:', error);
+      res.status(500).send('Failed to download PDF');
+    }
+  });
+
   // Pricing endpoint - fetch from Odoo
   app.get('/api/pricing', async (req, res) => {
     console.log('💰 PRICING ENDPOINT CALLED:', { query: req.query });
