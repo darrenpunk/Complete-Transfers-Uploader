@@ -1507,38 +1507,54 @@ class ArtworkUploaderController(http.Controller):
             for order in orders:
                 artwork_lines = []
                 for line in order.order_line:
-                    if not line.artwork_project_id:
-                        continue
+                    has_artwork_project = hasattr(line, 'artwork_project_id') and line.artwork_project_id
+                    has_artwork_file = hasattr(line, 'artwork_files_datas') and line.artwork_files_datas
                     
-                    project = line.artwork_project_id
-                    garment_colors = []
-                    if project.garment_colors_json:
-                        try:
-                            garment_colors = json.loads(project.garment_colors_json)
-                        except (json.JSONDecodeError, TypeError):
-                            pass
-                    
-                    if not garment_colors and project.garment_color_name:
-                        garment_colors = [{
-                            'colorName': project.garment_color_name,
-                            'color': project.garment_color or '#000000',
-                            'quantity': project.quantity or 1
-                        }]
-                    
-                    artwork_lines.append({
-                        'lineId': line.id,
-                        'projectName': project.name,
-                        'projectUuid': project.uuid,
-                        'templateSize': project.template_size or '',
-                        'quantity': project.total_quantity or project.quantity or 1,
-                        'garmentColors': garment_colors,
-                        'garmentColorName': project.garment_color_name or '',
-                        'inkColorName': project.ink_color_name or '',
-                        'hasPdf': bool(line.artwork_files_datas if hasattr(line, 'artwork_files_datas') else False),
-                        'pdfFileName': line.artwork_file_name if hasattr(line, 'artwork_file_name') else '',
-                        'state': project.state or 'draft',
-                        'createdDate': project.create_date.isoformat() if project.create_date else '',
-                    })
+                    if has_artwork_project:
+                        project = line.artwork_project_id
+                        garment_colors = []
+                        if project.garment_colors_json:
+                            try:
+                                garment_colors = json.loads(project.garment_colors_json)
+                            except (json.JSONDecodeError, TypeError):
+                                pass
+                        
+                        if not garment_colors and project.garment_color_name:
+                            garment_colors = [{
+                                'colorName': project.garment_color_name,
+                                'color': project.garment_color or '#000000',
+                                'quantity': project.quantity or 1
+                            }]
+                        
+                        artwork_lines.append({
+                            'lineId': line.id,
+                            'projectName': project.name,
+                            'projectUuid': project.uuid,
+                            'templateSize': project.template_size or '',
+                            'quantity': project.total_quantity or project.quantity or 1,
+                            'garmentColors': garment_colors,
+                            'garmentColorName': project.garment_color_name or '',
+                            'inkColorName': project.ink_color_name or '',
+                            'hasPdf': bool(has_artwork_file),
+                            'pdfFileName': line.artwork_file_name if hasattr(line, 'artwork_file_name') else '',
+                            'state': project.state or 'draft',
+                            'createdDate': project.create_date.isoformat() if project.create_date else '',
+                        })
+                    elif has_artwork_file:
+                        artwork_lines.append({
+                            'lineId': line.id,
+                            'projectName': line.name or 'Artwork Order',
+                            'projectUuid': '',
+                            'templateSize': '',
+                            'quantity': int(line.product_uom_qty) if line.product_uom_qty else 1,
+                            'garmentColors': [],
+                            'garmentColorName': '',
+                            'inkColorName': '',
+                            'hasPdf': True,
+                            'pdfFileName': line.artwork_file_name if hasattr(line, 'artwork_file_name') else '',
+                            'state': order.state or 'draft',
+                            'createdDate': order.date_order.isoformat() if order.date_order else '',
+                        })
                 
                 if artwork_lines:
                     order_list.append({
