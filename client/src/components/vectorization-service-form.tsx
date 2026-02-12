@@ -838,9 +838,9 @@ export function VectorizationServiceForm({ open, onOpenChange, partnerEmail }: V
           // Define exact template IDs for each product type (matching upload-tool.tsx)
           const productTemplates: { [key: string]: string[] } = {
             "full-colour-transfers": ["template-A3", "template-A4", "template-A5", "template-A6", "template-transfer-size", "template-square", "template-badge", "template-small", "template-295x300"],
-            "full-colour-metallic": ["metallic-A3", "metallic-A4", "metallic-A5", "metallic-A6", "metallic-transfer-size", "metallic-square", "metallic-badge", "metallic-small", "metallic-295x300"],
-            "full-colour-hd": ["hd-A3", "hd-A4", "hd-295x300"],
-            "single-colour-transfers": ["single-A3", "single-A4", "single-A5", "single-A6", "single-transfer-size", "single-square", "single-badge", "single-small", "single-295x300"],
+            "full-colour-metallic": ["metallic-A3", "metallic-A4", "metallic-A5", "metallic-A6", "metallic-transfer-size", "metallic-square", "metallic-badge", "metallic-small"],
+            "full-colour-hd": ["hd-A3", "hd-A4"],
+            "single-colour-transfers": ["single-A3", "single-A4", "single-A5", "single-A6", "single-transfer-size", "single-square", "single-badge", "single-small"],
             "dtf-transfers": ["dtf-SRA3", "dtf-large"],
             "uv-dtf": ["uvdtf-A3"],
             "custom-badges": ["woven-A6", "woven-square", "woven-badge", "woven-small"],
