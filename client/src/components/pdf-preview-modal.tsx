@@ -513,7 +513,7 @@ export default function PDFPreviewModal({
                           if (!logo) return null;
                           
                           // Use element's individual garment color or fall back to project color
-                          const garmentColor = element.garmentColor || project?.garmentColor || '#D2E31D';
+                          const garmentColor = element.garmentColor || project?.garmentColor || '#d7da14';
                           
                           // Convert center-based coordinates to top-left for CSS positioning
                           const templateWidth = template?.width || 297;

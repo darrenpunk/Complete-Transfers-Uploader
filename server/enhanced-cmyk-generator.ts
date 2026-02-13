@@ -34,7 +34,7 @@ export class EnhancedCMYKGenerator {
     { name: "Red", hex: "#C02300" },
     { name: "Yellow", hex: "#F0F42A" },
     { name: "Purple", hex: "#4C0A6A" },
-    { name: "Hi Viz", hex: "#D2E31D" },
+    { name: "Hi Viz", hex: "#d7da14" },
     { name: "Hi Viz Orange", hex: "#D98F17" }
   ];
 

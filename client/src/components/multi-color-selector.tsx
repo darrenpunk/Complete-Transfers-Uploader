@@ -20,7 +20,7 @@ const GARMENT_COLORS = [
   { name: "Natural Cotton", color: "#D9D2AB" },
   { name: "Pastel Yellow", color: "#F3F590" },
   { name: "Yellow", color: "#F0F42A" },
-  { name: "Hi Viz", color: "#D2E31D" },
+  { name: "Hi Viz", color: "#d7da14" },
   { name: "Hi Viz Orange", color: "#D98F17" },
   { name: "HiViz Green", color: "#388032" },
   { name: "HIViz Pink", color: "#BF0072" },

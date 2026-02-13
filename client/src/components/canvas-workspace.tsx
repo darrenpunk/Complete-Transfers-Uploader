@@ -26,7 +26,7 @@ function getColorName(hex: string): string {
     { name: "Natural", hex: "#F3F0E4" },
     { name: "Pastel Yellow", hex: "#F3F590" },
     { name: "Yellow", hex: "#F0F42A" },
-    { name: "Hi Viz", hex: "#D2E31D" },
+    { name: "Hi Viz", hex: "#d7da14" },
     { name: "Hi Viz Orange", hex: "#D98F17" },
     { name: "HiViz Green", hex: "#388032" },
     { name: "HIViz Pink", hex: "#BF0072" },

@@ -824,7 +824,7 @@ export async function registerRoutes(app: express.Application) {
                  color === '#8B4513' ? 'Brown' :
                  color === '#4169E1' ? 'Royal Blue' :
                  color === '#DC143C' ? 'Red' :
-                 color === '#D2E31D' ? 'Hi Viz' :
+                 color === '#d7da14' ? 'Hi Viz' :
                  color === '#90BF33' ? 'Lime Green' :
                  color === '#228B22' ? 'Green' :
                  color === '#C42469' ? 'Heliconia Pink' : `Custom (${color})`;
@@ -1874,7 +1874,7 @@ export async function registerRoutes(app: express.Application) {
                   // Known garment color name-to-hex mapping for reorder detection
                   const knownColorMap: Record<string, string> = {
                     "white": "#FFFFFF", "black": "#171816", "natural cotton": "#D9D2AB",
-                    "yellow": "#F0F42A", "hi viz": "#D2E31D", "hiviz": "#D2E31D",
+                    "yellow": "#F0F42A", "hi viz": "#d7da14", "hiviz": "#d7da14",
                     "sports grey": "#767878", "light grey marl": "#919393",
                     "ash grey": "#A6A9A2", "light grey": "#BCBFBB",
                     "charcoal grey": "#353330", "sky blue": "#5998D4",
