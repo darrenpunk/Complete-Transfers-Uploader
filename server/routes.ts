@@ -53,29 +53,42 @@ async function extractOriginalPNG(pdfPath: string, outputPrefix: string): Promis
   try {
     console.log('📸 Extracting NATIVE EMBEDDED PNG from PDF RASTER FILE at original size and DPI');
     
+    // Determine file size to pick appropriate DPI and timeout
+    const fileSizeBytes = fs.existsSync(pdfPath) ? fs.statSync(pdfPath).size : 0;
+    const fileSizeMB = fileSizeBytes / (1024 * 1024);
+    
+    // Scale DPI based on file size to prevent memory exhaustion
+    let renderDPI = 300;
+    let gsTimeout = 60000; // 60 seconds default
+    if (fileSizeMB > 20) {
+      renderDPI = 150;
+      gsTimeout = 90000; // 90 seconds for large files
+      console.log(`⚠️ Large file detected (${fileSizeMB.toFixed(1)}MB) - using ${renderDPI} DPI to prevent memory issues`);
+    } else if (fileSizeMB > 10) {
+      renderDPI = 200;
+      gsTimeout = 75000;
+      console.log(`📦 Medium file (${fileSizeMB.toFixed(1)}MB) - using ${renderDPI} DPI`);
+    }
+    
     // Method 1: Try direct PDF-to-PNG conversion using Ghostscript
     try {
-      console.log('🎯 DIRECT PDF RENDERING: Using Ghostscript at 150 DPI for optimal vectorization quality');
+      console.log(`🎯 DIRECT PDF RENDERING: Using Ghostscript at ${renderDPI} DPI for optimal vectorization quality`);
       
       const timestamp = Date.now();
       const outputPath = path.join(path.dirname(pdfPath), `${path.basename(outputPrefix)}_direct_${timestamp}.png`);
       
-      // Use Ghostscript to render PDF directly as PNG with TRANSPARENCY
-      // CRITICAL: Use pngalpha device to preserve transparent backgrounds
-      // Using 300 DPI for maximum detail
-      const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r300 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${outputPath}" "${pdfPath}"`;
+      const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r${renderDPI} -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -dMaxBitmap=500000000 -sOutputFile="${outputPath}" "${pdfPath}"`;
       
       console.log('📋 Ghostscript direct rendering command:', gsCommand);
-      const { stdout, stderr } = await execAsync(gsCommand);
+      const { stdout, stderr } = await execAsync(gsCommand, { timeout: gsTimeout });
       
       if (fs.existsSync(outputPath)) {
         const stats = fs.statSync(outputPath);
         console.log(`✅ DIRECT GHOSTSCRIPT RENDERING SUCCESS: ${outputPath} (${stats.size} bytes)`);
         
-        // Check dimensions to ensure quality
         const dimensions = await getPNGDimensions(outputPath);
         if (dimensions) {
-          console.log(`📏 Direct rendered dimensions: ${dimensions.width}×${dimensions.height}px at 300 DPI (crisp edges for vectorization)`);
+          console.log(`📏 Direct rendered dimensions: ${dimensions.width}×${dimensions.height}px at ${renderDPI} DPI`);
         }
         
         return outputPath;
@@ -84,6 +97,24 @@ async function extractOriginalPNG(pdfPath: string, outputPrefix: string): Promis
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       console.log('⚠️ Direct Ghostscript rendering failed:', errorMessage);
+      
+      // If 300 DPI failed, retry at lower DPI
+      if (renderDPI > 150) {
+        try {
+          console.log('🔄 Retrying at 150 DPI as fallback...');
+          const timestamp = Date.now();
+          const fallbackPath = path.join(path.dirname(pdfPath), `${path.basename(outputPrefix)}_direct_${timestamp}.png`);
+          const fallbackCmd = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r150 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -dMaxBitmap=500000000 -sOutputFile="${fallbackPath}" "${pdfPath}"`;
+          await execAsync(fallbackCmd, { timeout: 90000 });
+          if (fs.existsSync(fallbackPath)) {
+            const stats = fs.statSync(fallbackPath);
+            console.log(`✅ FALLBACK 150 DPI RENDERING SUCCESS: ${fallbackPath} (${stats.size} bytes)`);
+            return fallbackPath;
+          }
+        } catch (fallbackError) {
+          console.log('⚠️ Fallback 150 DPI rendering also failed');
+        }
+      }
     }
     
     // Method 2: Fallback to pdfimages (but this may still have sizing issues)
@@ -2048,7 +2079,7 @@ export async function registerRoutes(app: express.Application) {
                           
                           if (!isValidPng) {
                             console.log(`⚠️ PNG corrupted, regenerating...`);
-                            execSync(`gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r150 -dMaxBitmap=500000000 -dAlignToPixels=0 -dGridFitTT=2 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`, { encoding: 'buffer' });
+                            execSync(`gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r150 -dMaxBitmap=500000000 -dAlignToPixels=0 -dGridFitTT=2 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`, { encoding: 'buffer', timeout: 120000 });
                             const regenBuffer = fs.readFileSync(pngPath);
                             const regenSig = regenBuffer.slice(0, 8).toString('hex');
                             console.log(`🔍 Regenerated PNG: signature=${regenSig}, valid=${regenSig === '89504e470d0a1a0a'}`);
@@ -2221,7 +2252,7 @@ export async function registerRoutes(app: express.Application) {
                         
                         if (!isValidPng) {
                           console.log(`⚠️ PNG corrupted, regenerating...`);
-                          execSync(`gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r150 -dMaxBitmap=500000000 -dAlignToPixels=0 -dGridFitTT=2 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`, { encoding: 'buffer' });
+                          execSync(`gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r150 -dMaxBitmap=500000000 -dAlignToPixels=0 -dGridFitTT=2 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`, { encoding: 'buffer', timeout: 120000 });
                         }
                         
                         // Store original PDF path for final output
