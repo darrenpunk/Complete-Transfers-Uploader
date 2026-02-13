@@ -640,7 +640,7 @@ export default function OrderHistory() {
                             )}
                             <Button
                               size="sm"
-                              className="text-xs bg-blue-600 hover:bg-blue-700"
+                              className="text-xs bg-primary hover:bg-primary/90"
                               disabled={reorderingLineId === line.lineId}
                               onClick={() => handleReorder(line)}
                             >
@@ -790,7 +790,7 @@ export default function OrderHistory() {
             <Button variant="outline" className="border-gray-600" onClick={() => setReorderModalLine(null)}>
               Cancel
             </Button>
-            <Button className="bg-blue-600 hover:bg-blue-700" onClick={confirmReorder}>
+            <Button className="bg-primary hover:bg-primary/90" onClick={confirmReorder}>
               <RefreshCw className="w-4 h-4 mr-1" />
               Confirm Reorder
             </Button>
