@@ -692,7 +692,31 @@ export default function UploadTool() {
 
   useEffect(() => {
     if (!id && templateSizes.length > 0 && !currentProject && !hasInitialized) {
-      // Show product launcher modal on launch for new projects (only once)
+      try {
+        const reorderJson = sessionStorage.getItem('reorder_data');
+        if (reorderJson) {
+          sessionStorage.removeItem('reorder_data');
+          const reorderData = JSON.parse(reorderJson);
+          console.log('📦 Reorder data found:', reorderData);
+          
+          if (reorderData.templateSize) {
+            const matchedTemplate = templateSizes.find(t => t.id === reorderData.templateSize);
+            if (matchedTemplate) {
+              console.log('📦 Auto-selecting template for reorder:', matchedTemplate.id);
+              setHasInitialized(true);
+              handleTemplateSelect(matchedTemplate.id, reorderData.quantity || 1);
+              return;
+            }
+          }
+          
+          setHasInitialized(true);
+          setShowProductLauncher(true);
+          return;
+        }
+      } catch (e) {
+        console.log('Could not parse reorder data');
+      }
+      
       console.log('Showing product launcher modal', { templateSizesLength: templateSizes.length, currentProject });
       setShowProductLauncher(true);
       setHasInitialized(true);

@@ -171,33 +171,39 @@ export default function OrderHistory() {
   };
 
   const handleReorder = async (line: ArtworkLine) => {
-    if (!line.hasPdf) {
-      toast({ title: "No PDF available", description: "This order doesn't have a downloadable PDF for reordering", variant: "destructive" });
-      return;
-    }
-    
     setReorderingLineId(line.lineId);
     try {
-      const emailParam = userEmail ? `?email=${encodeURIComponent(userEmail)}` : '';
-      const response = await fetch(`/api/order-pdf/${line.lineId}${emailParam}`, {
-        credentials: "include",
-      });
-      if (!response.ok) throw new Error("Download failed");
-      const blob = await response.blob();
-      const file = new File([blob], line.pdfFileName || "reorder.pdf", { type: "application/pdf" });
+      const reorderData: Record<string, any> = {
+        projectName: line.projectName,
+        templateSize: line.templateSize || '',
+        garmentColors: line.garmentColors || [],
+        garmentColorName: line.garmentColorName || '',
+        inkColorName: line.inkColorName || '',
+        quantity: line.quantity || 1,
+      };
 
-      const formData = new FormData();
-      formData.append("file", file);
-      const uploadRes = await fetch("/api/logos", {
-        method: "POST",
-        body: formData,
-      });
-      if (uploadRes.ok) {
-        toast({ title: "PDF loaded", description: "Your previous order PDF has been loaded. You can now adjust and reorder." });
-        setLocation("/");
-      } else {
-        toast({ title: "Upload failed", description: "Could not load the PDF for reordering", variant: "destructive" });
+      if (line.hasPdf) {
+        const emailParam = userEmail ? `?email=${encodeURIComponent(userEmail)}` : '';
+        const response = await fetch(`/api/order-pdf/${line.lineId}${emailParam}`, {
+          credentials: "include",
+        });
+        if (!response.ok) throw new Error("Download failed");
+        const blob = await response.blob();
+        const file = new File([blob], line.pdfFileName || "reorder.pdf", { type: "application/pdf" });
+
+        const formData = new FormData();
+        formData.append("file", file);
+        const uploadRes = await fetch("/api/logos", {
+          method: "POST",
+          body: formData,
+        });
+        if (uploadRes.ok) {
+          reorderData.pdfUploaded = true;
+        }
       }
+
+      sessionStorage.setItem('reorder_data', JSON.stringify(reorderData));
+      setLocation("/");
     } catch (err) {
       console.error("Reorder error:", err);
       toast({ title: "Reorder failed", description: "An error occurred while loading your previous order", variant: "destructive" });
