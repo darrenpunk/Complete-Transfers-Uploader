@@ -690,6 +690,8 @@ export default function UploadTool() {
     }
   }, [project]);
 
+  const pendingReorderRef = useRef<any>(null);
+
   useEffect(() => {
     if (!id && templateSizes.length > 0 && !currentProject && !hasInitialized) {
       try {
@@ -698,6 +700,8 @@ export default function UploadTool() {
           sessionStorage.removeItem('reorder_data');
           const reorderData = JSON.parse(reorderJson);
           console.log('📦 Reorder data found:', reorderData);
+          
+          pendingReorderRef.current = reorderData;
           
           if (reorderData.templateSize) {
             const matchedTemplate = templateSizes.find(t => t.id === reorderData.templateSize);
@@ -722,6 +726,58 @@ export default function UploadTool() {
       setHasInitialized(true);
     }
   }, [id, templateSizes, currentProject, hasInitialized]);
+
+  useEffect(() => {
+    if (currentProject && pendingReorderRef.current) {
+      const reorderData = pendingReorderRef.current;
+      pendingReorderRef.current = null;
+      
+      if (reorderData.pdfLineId) {
+        console.log('📦 Downloading reorder PDF for line:', reorderData.pdfLineId);
+        (async () => {
+          try {
+            const emailParam = reorderData.email ? `?email=${encodeURIComponent(reorderData.email)}` : '';
+            const response = await fetch(`/api/order-pdf/${reorderData.pdfLineId}${emailParam}`, {
+              credentials: "include",
+            });
+            if (!response.ok) {
+              console.error('📦 Failed to download reorder PDF:', response.status);
+              return;
+            }
+            const blob = await response.blob();
+            const file = new File([blob], reorderData.pdfFileName || "reorder.pdf", { type: "application/pdf" });
+
+            const formData = new FormData();
+            formData.append("files", file);
+            
+            const uploadRes = await fetch(`/api/projects/${currentProject.id}/logos`, {
+              method: "POST",
+              body: formData,
+            });
+            if (uploadRes.ok) {
+              console.log('📦 Reorder PDF uploaded successfully');
+              queryClient.invalidateQueries({ queryKey: ["/api/logos"] });
+              queryClient.invalidateQueries({ queryKey: [`/api/projects/${currentProject.id}/logos`] });
+              queryClient.invalidateQueries({ queryKey: ["/api/projects", currentProject.id] });
+            } else {
+              console.error('📦 Failed to upload reorder PDF:', await uploadRes.text());
+            }
+          } catch (err) {
+            console.error('📦 Reorder PDF error:', err);
+          }
+        })();
+      }
+      
+      if (reorderData.projectName && reorderData.projectName !== currentProject.name) {
+        fetch(`/api/projects/${currentProject.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: reorderData.projectName }),
+        }).catch(() => {});
+        queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
+      }
+    }
+  }, [currentProject]);
 
   // Handle product selection from launcher modal
   const handleProductSelect = (productId: string) => {

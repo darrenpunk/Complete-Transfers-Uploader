@@ -266,50 +266,29 @@ export default function OrderHistory() {
     setReorderQty(line.quantity || 1);
   };
 
-  const confirmReorder = async () => {
+  const confirmReorder = () => {
     const line = reorderModalLine;
     if (!line) return;
     
     setReorderModalLine(null);
-    setReorderingLineId(line.lineId);
-    try {
-      const reorderData: Record<string, any> = {
-        projectName: line.projectName,
-        templateSize: line.templateSize || '',
-        garmentColors: line.garmentColors || [],
-        garmentColorName: line.garmentColorName || '',
-        inkColorName: line.inkColorName || '',
-        quantity: reorderQty,
-      };
+    
+    const reorderData: Record<string, any> = {
+      projectName: line.projectName,
+      templateSize: line.templateSize || '',
+      garmentColors: line.garmentColors || [],
+      garmentColorName: line.garmentColorName || '',
+      inkColorName: line.inkColorName || '',
+      quantity: reorderQty,
+    };
 
-      if (line.hasPdf) {
-        const emailParam = userEmail ? `?email=${encodeURIComponent(userEmail)}` : '';
-        const response = await fetch(`/api/order-pdf/${line.lineId}${emailParam}`, {
-          credentials: "include",
-        });
-        if (!response.ok) throw new Error("Download failed");
-        const blob = await response.blob();
-        const file = new File([blob], line.pdfFileName || "reorder.pdf", { type: "application/pdf" });
-
-        const formData = new FormData();
-        formData.append("file", file);
-        const uploadRes = await fetch("/api/logos", {
-          method: "POST",
-          body: formData,
-        });
-        if (uploadRes.ok) {
-          reorderData.pdfUploaded = true;
-        }
-      }
-
-      sessionStorage.setItem('reorder_data', JSON.stringify(reorderData));
-      setLocation("/");
-    } catch (err) {
-      console.error("Reorder error:", err);
-      toast({ title: "Reorder failed", description: "An error occurred while loading your previous order", variant: "destructive" });
-    } finally {
-      setReorderingLineId(null);
+    if (line.hasPdf) {
+      reorderData.pdfLineId = line.lineId;
+      reorderData.pdfFileName = line.pdfFileName || 'reorder.pdf';
+      reorderData.email = userEmail || '';
     }
+
+    sessionStorage.setItem('reorder_data', JSON.stringify(reorderData));
+    setLocation("/");
   };
 
   return (
