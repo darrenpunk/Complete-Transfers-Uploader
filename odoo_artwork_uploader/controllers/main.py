@@ -1489,12 +1489,21 @@ class ArtworkUploaderController(http.Controller):
                     'error': 'Login required to view order history'
                 }), headers=headers, status=401)
             
+            partner_ids = [partner.id]
+            if partner.child_ids:
+                partner_ids += partner.child_ids.ids
+            if partner.parent_id:
+                partner_ids.append(partner.parent_id.id)
+                partner_ids += partner.parent_id.child_ids.ids
+            partner_ids = list(set(partner_ids))
+            _logger.info(f"📋 Order history partner IDs (incl. parent/children): {partner_ids}")
+            
             page = int(page)
             limit = int(limit)
             offset = (page - 1) * limit
             
             domain = [
-                ('partner_id', '=', partner.id),
+                ('partner_id', 'in', partner_ids),
                 ('state', 'in', ['sale', 'done']),
             ]
             
