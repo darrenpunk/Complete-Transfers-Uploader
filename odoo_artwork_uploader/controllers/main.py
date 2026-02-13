@@ -1508,8 +1508,10 @@ class ArtworkUploaderController(http.Controller):
                 ('state', 'in', ['sale', 'done']),
             ]
             
+            search_term = ''
             if search:
-                search_term = search.strip()
+                search_term = str(search).strip() if search else ''
+            if search_term:
                 try:
                     search_domain = ['|', '|', '|',
                         ('name', 'ilike', search_term),

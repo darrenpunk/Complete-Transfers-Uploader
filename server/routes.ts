@@ -5606,8 +5606,9 @@ export async function registerRoutes(app: express.Application) {
       if (email) {
         params.append('email', String(email));
       }
-      if (search) {
-        params.append('search', String(search));
+      const searchStr = String(search || '').trim();
+      if (searchStr) {
+        params.append('search', searchStr);
       }
       
       const odooUrl = `${odooBaseUrl}/artwork/api/order-history?${params.toString()}`;
