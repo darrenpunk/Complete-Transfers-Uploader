@@ -336,11 +336,41 @@ grestore`;
     
     // Calculate correct page dimensions from template size (mm to points conversion)
     const MM_TO_POINTS = 2.834645669;
-    const pageWidth = data.templateSize.width * MM_TO_POINTS;
-    const pageHeight = data.templateSize.height * MM_TO_POINTS;
+    let pageWidth = data.templateSize.width * MM_TO_POINTS;
+    let pageHeight = data.templateSize.height * MM_TO_POINTS;
+    
+    // PRE-DETECT LANDSCAPE ORIENTATION: Check if any original PDF has landscape dimensions
+    // matching the template (width/height swapped). If so, use the PDF's orientation for output.
+    let isLandscapeOutput = false;
+    for (const logo of data.logos) {
+      if (logo.originalFilename && logo.originalMimeType === 'application/pdf') {
+        const origPdfPath = path.join(process.cwd(), 'uploads', logo.originalFilename);
+        if (fs.existsSync(origPdfPath)) {
+          try {
+            const origPdfBytes = fs.readFileSync(origPdfPath);
+            const origPdfDoc = await PDFDocument.load(origPdfBytes, { ignoreEncryption: true });
+            const [firstPage] = origPdfDoc.getPages();
+            const origSize = firstPage.getSize();
+            const templateWPts = data.templateSize.width * MM_TO_POINTS;
+            const templateHPts = data.templateSize.height * MM_TO_POINTS;
+            const isRotatedMatch = Math.abs(origSize.width - templateHPts) < 10 && 
+                                   Math.abs(origSize.height - templateWPts) < 10;
+            if (isRotatedMatch && origSize.width > origSize.height) {
+              console.log(`📄 LANDSCAPE PDF DETECTED: ${logo.originalFilename} (${origSize.width.toFixed(1)}×${origSize.height.toFixed(1)}pts)`);
+              console.log(`📄 Switching output to landscape orientation: ${origSize.width.toFixed(1)}×${origSize.height.toFixed(1)}pts`);
+              pageWidth = origSize.width;
+              pageHeight = origSize.height;
+              isLandscapeOutput = true;
+            }
+          } catch (e) {
+            console.warn(`⚠️ Failed to pre-scan PDF orientation: ${e}`);
+          }
+        }
+      }
+    }
     
     console.log(`📐 Template dimensions: ${data.templateSize.width}×${data.templateSize.height}mm`);
-    console.log(`📐 PDF page dimensions: ${pageWidth.toFixed(1)}×${pageHeight.toFixed(1)}pt`);
+    console.log(`📐 PDF page dimensions: ${pageWidth.toFixed(1)}×${pageHeight.toFixed(1)}pt${isLandscapeOutput ? ' (LANDSCAPE)' : ''}`);
     
     // Detect applique template and split elements by canvas
     const isAppliqueTemplate = data.templateSize?.id?.includes('applique') || 
@@ -1090,6 +1120,7 @@ grestore`;
             // FULL-PAGE PDF DETECTION: If original PDF page size matches template size,
             // skip all cropping and use the full page directly. This prevents clipping
             // when artwork fills the entire template page (e.g., A3 PDF on A3 template)
+            // Also handles landscape orientation (width/height swapped vs template)
             const { PDFDocument: PDFDocCheck } = await import('pdf-lib');
             const origPdfBytes = fs.readFileSync(originalPdfPath);
             const origPdfDoc = await PDFDocCheck.load(origPdfBytes);
@@ -1098,14 +1129,23 @@ grestore`;
             const MM_TO_PTS_CHECK = 2.834645669;
             const templateWPts = (templateSize?.width || 297) * MM_TO_PTS_CHECK;
             const templateHPts = (templateSize?.height || 420) * MM_TO_PTS_CHECK;
-            const isFullPageMatch = Math.abs(origPageSize.width - templateWPts) < 10 && 
+            const isFullPageMatchDirect = Math.abs(origPageSize.width - templateWPts) < 10 && 
                                      Math.abs(origPageSize.height - templateHPts) < 10;
+            const isFullPageMatchRotated = Math.abs(origPageSize.width - templateHPts) < 10 && 
+                                     Math.abs(origPageSize.height - templateWPts) < 10;
+            const isFullPageMatch = isFullPageMatchDirect || isFullPageMatchRotated;
             
             if (isFullPageMatch) {
-              console.log(`📄 FULL-PAGE PDF MATCH: PDF page (${origPageSize.width.toFixed(1)}×${origPageSize.height.toFixed(1)}pts) matches template (${templateWPts.toFixed(1)}×${templateHPts.toFixed(1)}pts)`);
+              const orientationNote = isFullPageMatchRotated ? ' (LANDSCAPE - rotated orientation)' : '';
+              console.log(`📄 FULL-PAGE PDF MATCH${orientationNote}: PDF page (${origPageSize.width.toFixed(1)}×${origPageSize.height.toFixed(1)}pts) matches template (${templateWPts.toFixed(1)}×${templateHPts.toFixed(1)}pts)`);
               console.log(`📄 Skipping content-bounds cropping - embedding full page to prevent clipping`);
               logoPdfPath = originalPdfPath;
               (element as any)._isFullPagePdf = true;
+              if (isFullPageMatchRotated) {
+                (element as any)._isLandscapePdf = true;
+                (element as any)._origPageWidth = origPageSize.width;
+                (element as any)._origPageHeight = origPageSize.height;
+              }
             }
             // Check if bounds are too small (Ghostscript bbox failed or returned minimal bounds)
             // but we have proper Inkscape-detected bounds stored
@@ -1289,10 +1329,20 @@ grestore`;
       
       // FULL-PAGE PDF: Override element dimensions with template dimensions
       // This prevents clipping when the original PDF fills the entire template page
+      // For landscape PDFs, use the original PDF's dimensions (swapped from template)
+      const isLandscapePdf = (element as any)._isLandscapePdf === true;
       if (isFullPagePdf) {
-        contentWidthMM = templateSize?.width || 297;
-        contentHeightMM = templateSize?.height || 420;
-        console.log(`📄 Full-page override: Using template dimensions ${contentWidthMM}×${contentHeightMM}mm instead of element ${element.width.toFixed(2)}×${element.height.toFixed(2)}mm`);
+        if (isLandscapePdf) {
+          const origW = (element as any)._origPageWidth || 0;
+          const origH = (element as any)._origPageHeight || 0;
+          contentWidthMM = origW / MM_TO_POINTS;
+          contentHeightMM = origH / MM_TO_POINTS;
+          console.log(`📄 Full-page LANDSCAPE override: Using original PDF dimensions ${contentWidthMM.toFixed(1)}×${contentHeightMM.toFixed(1)}mm instead of element ${element.width.toFixed(2)}×${element.height.toFixed(2)}mm`);
+        } else {
+          contentWidthMM = templateSize?.width || 297;
+          contentHeightMM = templateSize?.height || 420;
+          console.log(`📄 Full-page override: Using template dimensions ${contentWidthMM}×${contentHeightMM}mm instead of element ${element.width.toFixed(2)}×${element.height.toFixed(2)}mm`);
+        }
       }
       
       if (!isFullPagePdf) {
@@ -1412,10 +1462,9 @@ grestore`;
       let drawY: number;
       
       if (isFullPagePdf) {
-        // Full-page PDF: place at origin (0, 0) to cover the entire template page
         drawX = 0;
         drawY = 0;
-        console.log(`📄 Full-page PDF: Placing at origin (0, 0) to cover full template`);
+        console.log(`📄 Full-page PDF: Placing at origin (0, 0) to cover full page${isLandscapePdf ? ' (LANDSCAPE)' : ''}`);
       } else if (element.rotation === 90) {
         // 90° CCW rotation: content rotates so width becomes height
         // After rotation, visual size is height×width
