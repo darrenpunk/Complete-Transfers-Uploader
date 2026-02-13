@@ -98,10 +98,26 @@ app.use((req, res, next) => {
 
 const server = createServer(app);
 const port = parseInt(process.env.PORT || '5000', 10);
-
 const isProduction = process.env.NODE_ENV === 'production';
 
-async function startServer() {
+if (isProduction) {
+  const distPath = path.resolve(__dirname, "public");
+  if (fs.existsSync(distPath)) {
+    app.use(express.static(distPath));
+    console.log('[SERVER] Static asset serving configured');
+  }
+}
+
+server.listen(port, "0.0.0.0", () => {
+  log(`serving on port ${port}`);
+  console.log('[SERVER] Health check available at /health');
+
+  initializeApp().catch(error => {
+    console.error('[SERVER] Initialization error:', error);
+  });
+});
+
+async function initializeApp() {
   console.log('[SERVER] Starting route registration...');
   await registerRoutes(app);
   console.log('[SERVER] Routes registered successfully');
@@ -116,11 +132,10 @@ async function startServer() {
   if (isProduction) {
     const distPath = path.resolve(__dirname, "public");
     if (fs.existsSync(distPath)) {
-      app.use(express.static(distPath));
       app.use("*", (_req, res) => {
         res.sendFile(path.resolve(distPath, "index.html"));
       });
-      console.log('[SERVER] Static assets and SPA catch-all configured');
+      console.log('[SERVER] SPA catch-all configured');
     }
   } else {
     console.log('[SERVER] Setting up Vite for development...');
@@ -128,14 +143,5 @@ async function startServer() {
     console.log('[SERVER] Vite setup complete');
   }
 
-  server.listen(port, "0.0.0.0", () => {
-    log(`serving on port ${port}`);
-    console.log('[SERVER] Health check available at /health');
-    console.log('[SERVER] Server fully initialized');
-  });
+  console.log('[SERVER] Server fully initialized');
 }
-
-startServer().catch(error => {
-  console.error('[SERVER] Failed to start:', error);
-  process.exit(1);
-});
