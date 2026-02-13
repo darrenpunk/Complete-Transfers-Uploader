@@ -1536,8 +1536,13 @@ class ArtworkUploaderController(http.Controller):
             )
             
             order_list = []
+            seen_order_ids = set()
             transfer_keywords = ['transfer', 'colour', 'color', 'dtf', 'metallic', 'single colour', 'full colour', 'applique', 'badge', 'sublimation', 'reflective', 'uv dtf', 'zero']
             for order in orders:
+                if order.id in seen_order_ids:
+                    _logger.info(f"📋 Skipping duplicate order {order.name} (id={order.id})")
+                    continue
+                seen_order_ids.add(order.id)
                 artwork_lines = []
                 _logger.info(f"📋 Processing order {order.name} with {len(order.order_line)} lines")
                 for line in order.order_line:

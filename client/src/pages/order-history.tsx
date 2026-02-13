@@ -542,7 +542,9 @@ export default function OrderHistory() {
 
         {data?.success && data.orders.length > 0 && (
           <div className="space-y-4">
-            {data.orders.map((order) => (
+            {data.orders
+              .filter((order, index, self) => self.findIndex(o => o.orderId === order.orderId) === index)
+              .map((order) => (
               <Card key={order.orderId} className="bg-gray-900 border-gray-800">
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
