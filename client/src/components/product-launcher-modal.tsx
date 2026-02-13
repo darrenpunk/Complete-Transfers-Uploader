@@ -147,20 +147,23 @@ export default function ProductLauncherModal({
             Choose the type of product you want to create artwork for
           </DialogDescription>
         </DialogHeader>
-        
-        <div className="relative px-6 pt-6 pb-0">
-          {onViewOrders && (
+
+        {onViewOrders && (
+          <div className="flex justify-end px-6 -mt-2 mb-2">
             <Button
               variant="outline"
               size="sm"
-              className="absolute -top-12 right-6 flex flex-col items-center gap-0.5 h-auto py-2 px-4 bg-gray-900 border-gray-600 text-white hover:bg-gray-800 hover:border-gray-500"
+              className="flex flex-col items-center gap-0.5 h-auto py-2 px-4 bg-gray-900 border-gray-600 text-white hover:bg-gray-800 hover:border-gray-500"
               onClick={onViewOrders}
             >
               <ShoppingBag className="w-5 h-5" />
               <span className="text-xs font-bold uppercase tracking-wide">My Orders</span>
               <span className="text-[10px] text-gray-400 uppercase tracking-wider">View Orders and Reorder</span>
             </Button>
-          )}
+          </div>
+        )}
+        
+        <div className="relative px-6 pt-2 pb-0">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {productCategories.map((product) => (
               <Card 
