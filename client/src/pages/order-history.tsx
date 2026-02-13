@@ -102,6 +102,79 @@ function ColorSwatch({ color, name, quantity }: { color: string; name: string; q
   );
 }
 
+function getTemplateName(templateId: string): string {
+  const templateNames: Record<string, string> = {
+    'template-A3': 'Full Colour A3',
+    'template-A4': 'Full Colour A4',
+    'template-A5': 'Full Colour A5',
+    'template-A6': 'Full Colour A6',
+    'template-transfer-size': 'Full Colour 295×100mm',
+    'template-square': 'Full Colour 95×95mm',
+    'template-badge': 'Full Colour 100×70mm',
+    'template-small': 'Full Colour 60×60mm',
+    'template-295x300': 'Full Colour 295×300mm',
+    'metallic-A3': 'Metallic A3',
+    'metallic-A4': 'Metallic A4',
+    'metallic-A5': 'Metallic A5',
+    'metallic-A6': 'Metallic A6',
+    'metallic-transfer-size': 'Metallic 295×100mm',
+    'metallic-square': 'Metallic 95×95mm',
+    'metallic-badge': 'Metallic 100×70mm',
+    'metallic-small': 'Metallic 60×60mm',
+    'hd-A3': 'HD A3',
+    'hd-A4': 'HD A4',
+    'single-A3': 'Single Colour A3',
+    'single-A4': 'Single Colour A4',
+    'single-A5': 'Single Colour A5',
+    'single-A6': 'Single Colour A6',
+    'single-transfer-size': 'Single Colour 295×100mm',
+    'single-square': 'Single Colour 95×95mm',
+    'single-badge': 'Single Colour 100×70mm',
+    'single-small': 'Single Colour 60×60mm',
+    'zero-A3': 'Zero A3',
+    'zero-A4': 'Zero A4',
+    'zero-A5': 'Zero A5',
+    'zero-A6': 'Zero A6',
+    'zero-transfer-size': 'Zero 295×100mm',
+    'zero-square': 'Zero 95×95mm',
+    'zero-badge': 'Zero 100×70mm',
+    'zero-small': 'Zero 60×60mm',
+    'dtf-SRA3': 'DTF SRA3',
+    'dtf-large': 'DTF 1000×550mm',
+    'uvdtf-A3': 'UV DTF A3',
+    'woven-A6': 'Woven A6',
+    'woven-square': 'Woven 95×95mm',
+    'woven-badge': 'Woven 100×70mm',
+    'woven-small': 'Woven 60×60mm',
+    'applique-square': 'Applique 95×95mm',
+    'applique-badge': 'Applique 100×70mm',
+    'applique-small': 'Applique 60×60mm',
+    'reflective-A3': 'Reflective A3',
+    'reflective-A4': 'Reflective A4',
+    'reflective-A5': 'Reflective A5',
+    'reflective-A6': 'Reflective A6',
+    'reflective-transfer-size': 'Reflective 295×100mm',
+    'reflective-square': 'Reflective 95×95mm',
+    'reflective-badge': 'Reflective 100×70mm',
+    'reflective-small': 'Reflective 60×60mm',
+    'sublimation-A2-fabric': 'Sublimation A2 Fabric',
+    'sublimation-A3-fabric': 'Sublimation A3 Fabric',
+    'sublimation-A4-fabric': 'Sublimation A4 Fabric',
+    'sublimation-A3': 'Sublimation A3 Hard Surface',
+    'sublimation-A4': 'Sublimation A4 Hard Surface',
+    'sublimation-mug': 'Sublimation Mug',
+    'sublimation-A5': 'Sublimation A5',
+    'sublimation-A6': 'Sublimation A6',
+    'sublimation-transfer-size': 'Sublimation 295×100mm',
+    'sublimation-square': 'Sublimation 95×95mm',
+    'sublimation-badge': 'Sublimation 100×70mm',
+    'sublimation-small': 'Sublimation 60×60mm',
+    'sublimation-1100x1000-fabric': 'Sublimation 1100×1000mm Fabric',
+    'sublimation-1100x1000-hard': 'Sublimation 1100×1000mm Hard Surface',
+  };
+  return templateNames[templateId] || templateId;
+}
+
 function getUserEmail(): string | null {
   const urlParams = new URLSearchParams(window.location.search);
   const emailFromUrl = urlParams.get('email');
@@ -381,7 +454,7 @@ export default function OrderHistory() {
                             </h3>
                             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-xs text-gray-500">
                               {line.templateSize && (
-                                <span>Template: {line.templateSize}</span>
+                                <span>{getTemplateName(line.templateSize)}</span>
                               )}
                               <span className="flex items-center gap-1">
                                 <Package className="w-3 h-3" />
