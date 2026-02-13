@@ -1505,7 +1505,7 @@ class ArtworkUploaderController(http.Controller):
             
             domain = [
                 ('partner_id', 'in', partner_ids),
-                ('state', 'in', ['sale', 'done']),
+                ('state', 'in', ['sale', 'done', 'locked']),
             ]
             
             search_term = ''

@@ -98,6 +98,7 @@ function getStateLabel(state: string): string {
   const stateMap: Record<string, string> = {
     sale: "Confirmed",
     done: "Completed",
+    locked: "Completed",
     draft: "Draft",
     cancel: "Cancelled",
   };
@@ -105,7 +106,7 @@ function getStateLabel(state: string): string {
 }
 
 function getStateBadgeVariant(state: string): "default" | "secondary" | "destructive" | "outline" {
-  if (state === "done") return "default";
+  if (state === "done" || state === "locked") return "default";
   if (state === "sale") return "secondary";
   if (state === "cancel") return "destructive";
   return "outline";
