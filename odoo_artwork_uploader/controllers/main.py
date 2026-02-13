@@ -1515,9 +1515,14 @@ class ArtworkUploaderController(http.Controller):
             order_list = []
             for order in orders:
                 artwork_lines = []
+                transfer_keywords = ['transfer', 'colour', 'color', 'dtf', 'metallic', 'single colour', 'full colour', 'applique', 'badge', 'sublimation', 'reflective', 'uv dtf', 'zero']
                 for line in order.order_line:
                     has_artwork_project = hasattr(line, 'artwork_project_id') and line.artwork_project_id
                     has_artwork_file = hasattr(line, 'artwork_files_datas') and line.artwork_files_datas
+                    
+                    product_name = (line.product_id.name or '').lower() if line.product_id else ''
+                    line_name = (line.name or '').lower()
+                    is_transfer_product = any(kw in product_name or kw in line_name for kw in transfer_keywords)
                     
                     if has_artwork_project:
                         project = line.artwork_project_id
@@ -1561,6 +1566,21 @@ class ArtworkUploaderController(http.Controller):
                             'inkColorName': '',
                             'hasPdf': True,
                             'pdfFileName': line.artwork_file_name if hasattr(line, 'artwork_file_name') else '',
+                            'state': order.state or 'draft',
+                            'createdDate': order.date_order.isoformat() if order.date_order else '',
+                        })
+                    elif is_transfer_product:
+                        artwork_lines.append({
+                            'lineId': line.id,
+                            'projectName': line.name or line.product_id.name or 'Transfer Order',
+                            'projectUuid': '',
+                            'templateSize': '',
+                            'quantity': int(line.product_uom_qty) if line.product_uom_qty else 1,
+                            'garmentColors': [],
+                            'garmentColorName': '',
+                            'inkColorName': '',
+                            'hasPdf': False,
+                            'pdfFileName': '',
                             'state': order.state or 'draft',
                             'createdDate': order.date_order.isoformat() if order.date_order else '',
                         })
