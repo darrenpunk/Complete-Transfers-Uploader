@@ -138,20 +138,8 @@ export default function ProductLauncherModal({
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader className="relative">
+        <DialogHeader>
           <CompleteTransferLogo size="md" className="mb-4" />
-          {onViewOrders && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="absolute top-0 right-0 flex flex-col items-center gap-0.5 h-auto py-2 px-4 bg-gray-900 border-gray-600 text-white hover:bg-gray-800 hover:border-gray-500"
-              onClick={onViewOrders}
-            >
-              <ShoppingBag className="w-5 h-5" />
-              <span className="text-xs font-bold uppercase tracking-wide">My Orders</span>
-              <span className="text-[10px] text-gray-400 uppercase tracking-wider">View Orders and Reorder</span>
-            </Button>
-          )}
           <DialogTitle className="text-2xl font-bold text-center mb-2">
             Select Product Type
           </DialogTitle>
@@ -205,6 +193,42 @@ export default function ProductLauncherModal({
               </CardContent>
             </Card>
           ))}
+          
+          {onViewOrders && (
+            <Card 
+              className="cursor-pointer hover:shadow-lg transition-shadow duration-200 border border-primary bg-gray-900 hover:border-primary/80"
+              onClick={onViewOrders}
+              data-testid="product-card-my-orders"
+            >
+              <CardContent className="p-4 text-center space-y-3 bg-[#020202] flex flex-col items-center justify-center h-full">
+                <div className="mx-auto w-16 h-16 flex items-center justify-center">
+                  <ShoppingBag className="w-12 h-12 text-primary" />
+                </div>
+                
+                <div className="space-y-2">
+                  <h3 className="font-semibold text-sm text-white">
+                    My Orders
+                  </h3>
+                  <p className="text-xs text-gray-400 leading-relaxed">
+                    View orders and reorder
+                  </p>
+                </div>
+                
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="w-full text-xs bg-transparent border-primary text-primary hover:bg-primary/10"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onViewOrders();
+                  }}
+                  data-testid="button-view-orders"
+                >
+                  View Orders
+                </Button>
+              </CardContent>
+            </Card>
+          )}
         </div>
         
         <div className="flex justify-center pt-4 border-t border-gray-700">
