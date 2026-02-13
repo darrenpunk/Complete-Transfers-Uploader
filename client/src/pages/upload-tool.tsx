@@ -706,9 +706,21 @@ export default function UploadTool() {
           if (reorderData.templateSize) {
             const matchedTemplate = templateSizes.find(t => t.id === reorderData.templateSize);
             if (matchedTemplate) {
-              console.log('📦 Auto-selecting template for reorder:', matchedTemplate.id);
+              console.log('📦 Reorder: creating project directly, bypassing modals');
               setHasInitialized(true);
-              handleTemplateSelect(matchedTemplate.id, reorderData.quantity || 1);
+              setUploadGuidanceTriggered(true);
+              
+              const garmentColor = (reorderData.garmentColors && reorderData.garmentColors.length > 0)
+                ? reorderData.garmentColors[0].color || '#929292'
+                : '#929292';
+              
+              createProjectMutation.mutate({
+                name: reorderData.projectName || "Untitled Project",
+                templateSize: matchedTemplate.id,
+                garmentColor: garmentColor,
+                inkColor: reorderData.inkColorName || undefined,
+                quantity: reorderData.quantity || 1,
+              });
               return;
             }
           }
@@ -768,11 +780,28 @@ export default function UploadTool() {
         })();
       }
       
+      const updates: Record<string, any> = {};
       if (reorderData.projectName && reorderData.projectName !== currentProject.name) {
+        updates.name = reorderData.projectName;
+      }
+      if (reorderData.garmentColors && reorderData.garmentColors.length > 0) {
+        updates.garmentColors = reorderData.garmentColors;
+        updates.garmentColorName = reorderData.garmentColors[0].colorName || '';
+      }
+      if (reorderData.garmentColorName) {
+        updates.garmentColorName = reorderData.garmentColorName;
+      }
+      if (reorderData.inkColorName) {
+        updates.inkColorName = reorderData.inkColorName;
+      }
+      if (Object.keys(updates).length > 0) {
         fetch(`/api/projects/${currentProject.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: reorderData.projectName }),
+          body: JSON.stringify(updates),
+        }).then(res => res.json()).then(updated => {
+          setCurrentProject(updated);
+          queryClient.setQueryData(["/api/projects", currentProject.id], updated);
         }).catch(() => {});
         queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
       }
