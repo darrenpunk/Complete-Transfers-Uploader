@@ -70,6 +70,9 @@ export default function UploadTool() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploadProcessing, setIsUploadProcessing] = useState(false);
   const [uploadFileName, setUploadFileName] = useState("");
+  const [isReorderLoading, setIsReorderLoading] = useState(false);
+  const [reorderStage, setReorderStage] = useState<'downloading' | 'uploading' | 'processing'>('downloading');
+  const [reorderProgress, setReorderProgress] = useState(0);
   const [complexityError, setComplexityError] = useState<{
     message: string;
     details: string;
@@ -746,6 +749,9 @@ export default function UploadTool() {
       
       if (reorderData.pdfLineId) {
         console.log('📦 Downloading reorder PDF for line:', reorderData.pdfLineId);
+        setIsReorderLoading(true);
+        setReorderStage('downloading');
+        setReorderProgress(10);
         (async () => {
           try {
             const emailParam = reorderData.email ? `?email=${encodeURIComponent(reorderData.email)}` : '';
@@ -754,28 +760,40 @@ export default function UploadTool() {
             });
             if (!response.ok) {
               console.error('📦 Failed to download reorder PDF:', response.status);
+              setIsReorderLoading(false);
               return;
             }
+            setReorderProgress(40);
             const blob = await response.blob();
             const file = new File([blob], reorderData.pdfFileName || "reorder.pdf", { type: "application/pdf" });
+
+            setReorderStage('uploading');
+            setReorderProgress(50);
 
             const formData = new FormData();
             formData.append("files", file);
             
+            setReorderStage('processing');
+            setReorderProgress(60);
+
             const uploadRes = await fetch(`/api/projects/${currentProject.id}/logos`, {
               method: "POST",
               body: formData,
             });
             if (uploadRes.ok) {
               console.log('📦 Reorder PDF uploaded successfully');
+              setReorderProgress(100);
               queryClient.invalidateQueries({ queryKey: ["/api/logos"] });
               queryClient.invalidateQueries({ queryKey: [`/api/projects/${currentProject.id}/logos`] });
               queryClient.invalidateQueries({ queryKey: ["/api/projects", currentProject.id] });
+              queryClient.invalidateQueries({ queryKey: ["/api/projects", currentProject.id, "canvas-elements"] });
             } else {
               console.error('📦 Failed to upload reorder PDF:', await uploadRes.text());
             }
           } catch (err) {
             console.error('📦 Reorder PDF error:', err);
+          } finally {
+            setTimeout(() => setIsReorderLoading(false), 500);
           }
         })();
       }
@@ -2634,6 +2652,50 @@ export default function UploadTool() {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Reorder Progress Modal */}
+      <Dialog open={isReorderLoading} onOpenChange={() => {}}>
+        <DialogContent className="max-w-md" onPointerDownOutside={(e) => e.preventDefault()}>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <RefreshCw className={`h-5 w-5 text-primary ${reorderProgress < 100 ? 'animate-spin' : ''}`} />
+              {reorderProgress >= 100 ? "Reorder Complete" : "Loading Previous Artwork"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="flex items-center gap-3">
+              {reorderProgress >= 100 ? (
+                <CheckCircle2 className="h-8 w-8 text-green-500" />
+              ) : (
+                <Loader2 className="h-8 w-8 text-primary animate-spin" />
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium">
+                  {reorderStage === 'downloading' && "Downloading artwork from your previous order..."}
+                  {reorderStage === 'uploading' && "Preparing artwork for canvas..."}
+                  {reorderStage === 'processing' && "Processing artwork — this may take a moment for large files..."}
+                  {reorderProgress >= 100 && "Artwork loaded successfully!"}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {reorderStage === 'downloading' && "Step 1 of 3 — Fetching your file"}
+                  {reorderStage === 'uploading' && "Step 2 of 3 — Uploading to workspace"}
+                  {reorderStage === 'processing' && reorderProgress < 100 && "Step 3 of 3 — Analyzing and placing artwork"}
+                  {reorderProgress >= 100 && "All done!"}
+                </p>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Progress value={reorderProgress} className="h-2" />
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>
+                  {reorderProgress >= 100 ? "Complete" : reorderStage === 'downloading' ? "Downloading..." : reorderStage === 'uploading' ? "Uploading..." : "Processing..."}
+                </span>
+                <span>{Math.round(reorderProgress)}%</span>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Upload Progress Modal */}
       <UploadProgressModal
