@@ -7,6 +7,14 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import {
   ArrowLeft,
   Download,
@@ -20,6 +28,8 @@ import {
   LogIn,
   ShoppingBag,
   Search,
+  Minus,
+  Plus,
 } from "lucide-react";
 
 interface GarmentColor {
@@ -194,6 +204,8 @@ export default function OrderHistory() {
   const [page, setPage] = useState(1);
   const [reorderingLineId, setReorderingLineId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [reorderModalLine, setReorderModalLine] = useState<ArtworkLine | null>(null);
+  const [reorderQty, setReorderQty] = useState(1);
   const limit = 10;
   const { toast } = useToast();
   const userEmail = getUserEmail();
@@ -249,7 +261,16 @@ export default function OrderHistory() {
     }
   };
 
-  const handleReorder = async (line: ArtworkLine) => {
+  const handleReorder = (line: ArtworkLine) => {
+    setReorderModalLine(line);
+    setReorderQty(line.quantity || 1);
+  };
+
+  const confirmReorder = async () => {
+    const line = reorderModalLine;
+    if (!line) return;
+    
+    setReorderModalLine(null);
     setReorderingLineId(line.lineId);
     try {
       const reorderData: Record<string, any> = {
@@ -258,7 +279,7 @@ export default function OrderHistory() {
         garmentColors: line.garmentColors || [],
         garmentColorName: line.garmentColorName || '',
         inkColorName: line.inkColorName || '',
-        quantity: line.quantity || 1,
+        quantity: reorderQty,
       };
 
       if (line.hasPdf) {
@@ -538,6 +559,76 @@ export default function OrderHistory() {
           </div>
         )}
       </div>
+
+      <Dialog open={!!reorderModalLine} onOpenChange={(open) => { if (!open) setReorderModalLine(null); }}>
+        <DialogContent className="bg-gray-900 border-gray-700 text-white sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-lg">Reorder</DialogTitle>
+          </DialogHeader>
+          {reorderModalLine && (
+            <div className="space-y-4 py-2">
+              <div>
+                <Label className="text-gray-400 text-xs">Project</Label>
+                <p className="font-medium text-gray-200">{reorderModalLine.projectName}</p>
+              </div>
+              {reorderModalLine.templateSize && (
+                <div>
+                  <Label className="text-gray-400 text-xs">Product</Label>
+                  <p className="text-gray-200">{getTemplateName(reorderModalLine.templateSize)}</p>
+                </div>
+              )}
+              {reorderModalLine.garmentColors.length > 0 && (
+                <div>
+                  <Label className="text-gray-400 text-xs">Garment Colours</Label>
+                  <div className="flex flex-wrap gap-2 mt-1">
+                    {reorderModalLine.garmentColors.map((gc, idx) => (
+                      <ColorSwatch key={idx} color={gc.color} name={gc.colorName} quantity={gc.quantity} />
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div>
+                <Label className="text-gray-400 text-xs mb-2 block">Quantity</Label>
+                <div className="flex items-center gap-3">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-9 w-9 border-gray-600"
+                    onClick={() => setReorderQty((q) => Math.max(1, q - 1))}
+                    disabled={reorderQty <= 1}
+                  >
+                    <Minus className="w-4 h-4" />
+                  </Button>
+                  <Input
+                    type="number"
+                    min={1}
+                    value={reorderQty}
+                    onChange={(e) => setReorderQty(Math.max(1, parseInt(e.target.value) || 1))}
+                    className="w-20 text-center bg-gray-800 border-gray-600 text-white"
+                  />
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-9 w-9 border-gray-600"
+                    onClick={() => setReorderQty((q) => q + 1)}
+                  >
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" className="border-gray-600" onClick={() => setReorderModalLine(null)}>
+              Cancel
+            </Button>
+            <Button className="bg-blue-600 hover:bg-blue-700" onClick={confirmReorder}>
+              <RefreshCw className="w-4 h-4 mr-1" />
+              Confirm Reorder
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
