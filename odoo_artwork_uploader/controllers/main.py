@@ -1510,9 +1510,23 @@ class ArtworkUploaderController(http.Controller):
             
             if search:
                 search_term = search.strip()
-                domain.append('|')
-                domain.append(('name', 'ilike', search_term))
-                domain.append(('order_line.name', 'ilike', search_term))
+                try:
+                    search_domain = ['|', '|', '|',
+                        ('name', 'ilike', search_term),
+                        ('order_line.name', 'ilike', search_term),
+                        ('order_line.product_id.name', 'ilike', search_term),
+                        ('order_line.artwork_project_id.name', 'ilike', search_term),
+                    ]
+                    test_count = request.env['sale.order'].sudo().search_count(domain + search_domain)
+                    domain = domain + search_domain
+                except Exception:
+                    search_domain = ['|', '|',
+                        ('name', 'ilike', search_term),
+                        ('order_line.name', 'ilike', search_term),
+                        ('order_line.product_id.name', 'ilike', search_term),
+                    ]
+                    domain = domain + search_domain
+                _logger.info(f"📋 Search domain for '{search_term}': {domain}")
             
             total = request.env['sale.order'].sudo().search_count(domain)
             orders = request.env['sale.order'].sudo().search(

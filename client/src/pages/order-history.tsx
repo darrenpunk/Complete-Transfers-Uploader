@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation, Link } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -242,21 +242,29 @@ export default function OrderHistory() {
   const [page, setPage] = useState(1);
   const [reorderingLineId, setReorderingLineId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [reorderModalLine, setReorderModalLine] = useState<ArtworkLine | null>(null);
   const [reorderQty, setReorderQty] = useState(1);
   const limit = 10;
   const { toast } = useToast();
   const userEmail = getUserEmail();
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   const { data, isLoading, isError, error, refetch } = useQuery<OrderHistoryResponse>({
-    queryKey: ["/api/order-history", page, userEmail, searchQuery],
+    queryKey: ["/api/order-history", page, userEmail, debouncedSearch],
     queryFn: async () => {
       const params = new URLSearchParams({ page: String(page), limit: String(limit) });
       if (userEmail) {
         params.append('email', userEmail);
       }
-      if (searchQuery.trim()) {
-        params.append('search', searchQuery.trim());
+      if (debouncedSearch.trim()) {
+        params.append('search', debouncedSearch.trim());
       }
       const res = await fetch(`/api/order-history?${params.toString()}`, {
         credentials: "include",
