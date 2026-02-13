@@ -439,7 +439,7 @@ export default function OrderHistory() {
 
         <div className="mb-6">
           <h1 className="text-2xl font-bold flex items-center gap-3">
-            <ShoppingBag className="w-7 h-7 text-blue-400" />
+            <ShoppingBag className="w-7 h-7 text-primary" />
             Order History
           </h1>
           <p className="text-gray-400 mt-1">
@@ -550,7 +550,7 @@ export default function OrderHistory() {
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-base font-semibold text-gray-200 flex items-center gap-2">
-                      <FileText className="w-4 h-4 text-blue-400" />
+                      <FileText className="w-4 h-4 text-primary" />
                       {order.orderName}
                     </CardTitle>
                     <div className="flex items-center gap-3">
@@ -694,7 +694,7 @@ export default function OrderHistory() {
           <div className="flex-1 min-h-0 flex items-center justify-center overflow-auto py-4">
             {previewLoading ? (
               <div className="flex flex-col items-center gap-3">
-                <Loader2 className="w-8 h-8 animate-spin text-blue-400" />
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
                 <p className="text-sm text-gray-400">Loading preview...</p>
               </div>
             ) : previewUrl ? (
