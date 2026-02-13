@@ -5,6 +5,10 @@ import { setupVite, log } from "./vite";
 import dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 dotenv.config();
 
@@ -98,7 +102,7 @@ const port = parseInt(process.env.PORT || '5000', 10);
 const isProduction = process.env.NODE_ENV === 'production';
 
 if (isProduction) {
-  const distPath = path.resolve(import.meta.dirname, "public");
+  const distPath = path.resolve(__dirname, "public");
   if (fs.existsSync(distPath)) {
     app.use(express.static(distPath));
     console.log('[SERVER] Static asset serving configured (no catch-all yet)');
@@ -127,7 +131,7 @@ async function initializeApp() {
   });
 
   if (isProduction) {
-    const distPath = path.resolve(import.meta.dirname, "public");
+    const distPath = path.resolve(__dirname, "public");
     if (fs.existsSync(distPath)) {
       app.use("*", (_req, res) => {
         res.sendFile(path.resolve(distPath, "index.html"));
