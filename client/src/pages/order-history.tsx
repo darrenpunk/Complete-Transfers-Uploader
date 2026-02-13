@@ -231,10 +231,23 @@ function getUserEmail(): string | null {
     return emailFromUrl;
   }
   try {
-    return sessionStorage.getItem('partner_email');
-  } catch {
-    return null;
-  }
+    const stored = sessionStorage.getItem('partner_email');
+    if (stored) return stored;
+  } catch {}
+  
+  try {
+    const hash = window.location.hash;
+    if (hash) {
+      const hashParams = new URLSearchParams(hash.replace('#', '?'));
+      const hashEmail = hashParams.get('email');
+      if (hashEmail) {
+        try { sessionStorage.setItem('partner_email', hashEmail); } catch {}
+        return hashEmail;
+      }
+    }
+  } catch {}
+  
+  return null;
 }
 
 export default function OrderHistory() {

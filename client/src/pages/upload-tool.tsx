@@ -1906,7 +1906,8 @@ export default function UploadTool() {
           onOpenVectorizationForm={() => setShowVectorizationForm(true)}
           onViewOrders={() => {
             setShowProductLauncher(false);
-            navigate("/order-history");
+            const email = sessionStorage.getItem('partner_email') || '';
+            navigate(email ? `/order-history?email=${encodeURIComponent(email)}` : "/order-history");
           }}
         />
         
