@@ -4062,13 +4062,15 @@ export async function registerRoutes(app: express.Application) {
         // Get template size for centering
         const templateSize = await storage.getTemplateSize(project.templateSize);
         if (!templateSize) {
-          throw new Error('Template size not found');
+          console.log(`⚠️ Template size '${project.templateSize}' not found - using default dimensions for placement`);
         }
 
         // Calculate usable area (template minus 3mm safety margins on each side)
         const safetyMargin = 3; // 3mm safety margin
-        const usableWidth = templateSize.width - (safetyMargin * 2);
-        const usableHeight = templateSize.height - (safetyMargin * 2);
+        const templateWidth = templateSize?.width ?? 1000;
+        const templateHeight = templateSize?.height ?? 550;
+        const usableWidth = templateWidth - (safetyMargin * 2);
+        const usableHeight = templateHeight - (safetyMargin * 2);
 
         // DISABLED AUTO-SCALE: Per user requirement, artwork must retain exact original dimensions
         // Content that exceeds template bounds will extend beyond but retain true size
@@ -4090,7 +4092,7 @@ export async function registerRoutes(app: express.Application) {
         let centerY = 0;  // Center of template
         
         console.log(`📐 Center-based positioning: content at (${centerX}, ${centerY}) - template center`);
-        console.log(`📐 Template: ${templateSize.width}×${templateSize.height}mm, Content: ${finalDisplayWidth.toFixed(1)}×${finalDisplayHeight.toFixed(1)}mm${wasAutoScaled ? ' (auto-scaled)' : ''}`);
+        console.log(`📐 Template: ${templateWidth}×${templateHeight}mm, Content: ${finalDisplayWidth.toFixed(1)}×${finalDisplayHeight.toFixed(1)}mm${wasAutoScaled ? ' (auto-scaled)' : ''}`);
 
         // Set color overrides for single colour templates with ink color
         let colorOverrides = null;
