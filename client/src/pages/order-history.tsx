@@ -35,6 +35,9 @@ import {
   CheckCircle2,
   XCircle,
   PackageCheck,
+  Eye,
+  Loader2,
+  X,
 } from "lucide-react";
 
 interface GarmentColor {
@@ -280,6 +283,9 @@ export default function OrderHistory() {
   }, []);
   const [reorderModalLine, setReorderModalLine] = useState<ArtworkLine | null>(null);
   const [reorderQty, setReorderQty] = useState(1);
+  const [previewLine, setPreviewLine] = useState<ArtworkLine | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
   const limit = 10;
   const { toast } = useToast();
 
@@ -339,6 +345,40 @@ export default function OrderHistory() {
       console.error("PDF download error:", err);
       toast({ title: "Download failed", description: "An error occurred", variant: "destructive" });
     }
+  };
+
+  const handlePreviewPdf = async (line: ArtworkLine) => {
+    setPreviewLine(line);
+    setPreviewLoading(true);
+    setPreviewUrl(null);
+    try {
+      const emailParam = userEmail ? `?email=${encodeURIComponent(userEmail)}` : '';
+      const response = await fetch(`/api/order-pdf/${line.lineId}${emailParam}`, {
+        credentials: "include",
+      });
+      if (!response.ok) {
+        toast({ title: "Preview failed", description: "Could not load the PDF preview", variant: "destructive" });
+        setPreviewLine(null);
+        return;
+      }
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      setPreviewUrl(url);
+    } catch (err) {
+      console.error("PDF preview error:", err);
+      toast({ title: "Preview failed", description: "An error occurred loading the preview", variant: "destructive" });
+      setPreviewLine(null);
+    } finally {
+      setPreviewLoading(false);
+    }
+  };
+
+  const closePreview = () => {
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    setPreviewLine(null);
+    setPreviewUrl(null);
   };
 
   const handleReorder = (line: ArtworkLine) => {
@@ -574,15 +614,26 @@ export default function OrderHistory() {
 
                           <div className="flex items-center gap-2 flex-shrink-0">
                             {line.hasPdf && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="text-xs"
-                                onClick={() => handleDownloadPdf(line.lineId, line.pdfFileName)}
-                              >
-                                <Download className="w-3 h-3 mr-1" />
-                                PDF
-                              </Button>
+                              <>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="text-xs"
+                                  onClick={() => handlePreviewPdf(line)}
+                                >
+                                  <Eye className="w-3 h-3 mr-1" />
+                                  Preview
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="text-xs"
+                                  onClick={() => handleDownloadPdf(line.lineId, line.pdfFileName)}
+                                >
+                                  <Download className="w-3 h-3 mr-1" />
+                                  PDF
+                                </Button>
+                              </>
                             )}
                             <Button
                               size="sm"
@@ -628,6 +679,51 @@ export default function OrderHistory() {
           </div>
         )}
       </div>
+
+      <Dialog open={!!previewLine} onOpenChange={(open) => { if (!open) closePreview(); }}>
+        <DialogContent className="bg-gray-900 border-gray-700 text-white sm:max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Eye className="w-5 h-5" />
+              {previewLine?.projectName || 'Artwork Preview'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 min-h-0 flex items-center justify-center overflow-auto py-4">
+            {previewLoading ? (
+              <div className="flex flex-col items-center gap-3">
+                <Loader2 className="w-8 h-8 animate-spin text-blue-400" />
+                <p className="text-sm text-gray-400">Loading preview...</p>
+              </div>
+            ) : previewUrl ? (
+              <iframe
+                src={previewUrl}
+                className="w-full border-0 rounded-lg bg-white"
+                style={{ height: '70vh' }}
+                title="PDF Preview"
+              />
+            ) : (
+              <p className="text-sm text-gray-400">Preview unavailable</p>
+            )}
+          </div>
+          <DialogFooter className="flex gap-2 sm:justify-between">
+            {previewLine?.hasPdf && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (previewLine) handleDownloadPdf(previewLine.lineId, previewLine.pdfFileName);
+                }}
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Download PDF
+              </Button>
+            )}
+            <Button variant="outline" size="sm" onClick={closePreview}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={!!reorderModalLine} onOpenChange={(open) => { if (!open) setReorderModalLine(null); }}>
         <DialogContent className="bg-gray-900 border-gray-700 text-white sm:max-w-md">
