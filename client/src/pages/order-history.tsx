@@ -116,7 +116,7 @@ function DeliveryBadge({ status, date, trackingRef }: { status?: string; date?: 
   
   const config: Record<string, { label: string; icon: any; className: string }> = {
     delivered: { label: "Shipped", icon: CheckCircle2, className: "bg-green-900/50 text-green-400 border-green-700" },
-    ready: { label: "Ready to Ship", icon: PackageCheck, className: "bg-blue-900/50 text-blue-400 border-blue-700" },
+    ready: { label: "Processing", icon: PackageCheck, className: "bg-blue-900/50 text-blue-400 border-blue-700" },
     processing: { label: "Processing", icon: Clock, className: "bg-yellow-900/50 text-yellow-400 border-yellow-700" },
     pending: { label: "Pending", icon: Clock, className: "bg-gray-800 text-gray-400 border-gray-700" },
     cancelled: { label: "Cancelled", icon: XCircle, className: "bg-red-900/50 text-red-400 border-red-700" },
