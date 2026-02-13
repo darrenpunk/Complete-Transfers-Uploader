@@ -128,32 +128,29 @@ function renderShapePreview(element: any, templateWidth: number, templateHeight:
   );
 }
 
-// Helper function to get the correct image URL for display (matches canvas-workspace logic)
 const getImageUrl = (logo: any): string => {
-  // For complex files using PNG fallback
   if (logo.isComplexFilePngFallback) {
     return `/uploads/${logo.filename}`;
   }
   
-  // Check for canvas fallback filename (for complex vectors)
   if (logo.canvasFallbackFilename) {
     return `/uploads/${logo.canvasFallbackFilename}`;
   }
   
-  // For PDF files, check if we have a preview image or SVG conversion
+  if (logo.previewFilename) {
+    return `/uploads/${logo.previewFilename}`;
+  }
+  
   if (logo.mimeType === 'application/pdf' || logo.originalMimeType === 'application/pdf') {
-    if (logo.previewFilename) {
-      return `/uploads/${logo.previewFilename}`;
-    }
-    // Check if SVG conversion exists
     if (logo.filename && logo.filename.endsWith('.svg')) {
       return `/uploads/${logo.filename}`;
     }
-    // Try .svg version
+    if (logo.filename && logo.filename.endsWith('.png')) {
+      return `/uploads/${logo.filename}`;
+    }
     return `/uploads/${logo.filename}.svg`;
   }
   
-  // For SVG and other image files
   return `/uploads/${logo.filename}`;
 };
 
@@ -354,10 +351,14 @@ export default function PDFPreviewModal({
                               console.log('✅ Image loaded for preview');
                             }}
                             onError={(e) => {
-                              console.error('Image failed to load:', imageUrl);
+                              console.error('Preview image failed to load:', imageUrl, 'logo:', logo.filename, 'mimeType:', logo.mimeType, 'isComplexFilePngFallback:', logo.isComplexFilePngFallback);
                               const currentSrc = e.currentTarget.src;
-                              if (!currentSrc.includes('retry=')) {
-                                e.currentTarget.src = `${imageUrl}${imageUrl.includes('?') ? '&' : '?'}retry=${Date.now()}`;
+                              if (currentSrc.endsWith('.svg') && !currentSrc.includes('_fallback')) {
+                                const pngUrl = `/uploads/${logo.filename}`;
+                                console.log('Trying PNG fallback:', pngUrl);
+                                e.currentTarget.src = pngUrl;
+                              } else if (!currentSrc.includes('retry=')) {
+                                e.currentTarget.src = `/uploads/${logo.filename}?retry=${Date.now()}`;
                               }
                             }}
                             style={{ 
@@ -555,6 +556,14 @@ export default function PDFPreviewModal({
                                 alt={logo.originalName}
                                 className="w-full h-full object-contain relative z-10"
                                 key={`garment-preview-${element.id}-${project?.inkColor || ''}`}
+                                onError={(e) => {
+                                  const currentSrc = e.currentTarget.src;
+                                  if (currentSrc.endsWith('.svg') && !currentSrc.includes('_fallback')) {
+                                    e.currentTarget.src = `/uploads/${logo.filename}`;
+                                  } else if (!currentSrc.includes('retry=')) {
+                                    e.currentTarget.src = `/uploads/${logo.filename}?retry=${Date.now()}`;
+                                  }
+                                }}
                                 style={{ 
                                   filter: element.opacity !== undefined && element.opacity < 1 ? `opacity(${element.opacity})` : 'none'
                                 }}
