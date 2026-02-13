@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { Input } from "@/components/ui/input";
 import {
   ArrowLeft,
   Download,
@@ -18,6 +19,7 @@ import {
   ChevronRight,
   LogIn,
   ShoppingBag,
+  Search,
 } from "lucide-react";
 
 interface GarmentColor {
@@ -118,16 +120,20 @@ export default function OrderHistory() {
   const [, setLocation] = useLocation();
   const [page, setPage] = useState(1);
   const [reorderingLineId, setReorderingLineId] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const limit = 10;
   const { toast } = useToast();
   const userEmail = getUserEmail();
 
   const { data, isLoading, isError, error, refetch } = useQuery<OrderHistoryResponse>({
-    queryKey: ["/api/order-history", page, userEmail],
+    queryKey: ["/api/order-history", page, userEmail, searchQuery],
     queryFn: async () => {
       const params = new URLSearchParams({ page: String(page), limit: String(limit) });
       if (userEmail) {
         params.append('email', userEmail);
+      }
+      if (searchQuery.trim()) {
+        params.append('search', searchQuery.trim());
       }
       const res = await fetch(`/api/order-history?${params.toString()}`, {
         credentials: "include",
@@ -237,7 +243,7 @@ export default function OrderHistory() {
           </Button>
         </div>
 
-        <div className="mb-8">
+        <div className="mb-6">
           <h1 className="text-2xl font-bold flex items-center gap-3">
             <ShoppingBag className="w-7 h-7 text-blue-400" />
             Order History
@@ -246,6 +252,21 @@ export default function OrderHistory() {
             View your past transfer orders and quickly reorder
           </p>
         </div>
+
+        {userEmail && (
+          <div className="relative mb-6">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+            <Input
+              placeholder="Search by order number or product name..."
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setPage(1);
+              }}
+              className="pl-10 bg-gray-900 border-gray-700 text-white placeholder:text-gray-500"
+            />
+          </div>
+        )}
 
         {!userEmail && (
           <Card className="bg-gray-900 border-gray-800">

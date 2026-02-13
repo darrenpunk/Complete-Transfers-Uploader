@@ -1452,7 +1452,7 @@ class ArtworkUploaderController(http.Controller):
         return self._get_garment_colors()  # Same as garment colors for now
     
     @http.route('/artwork/api/order-history', type='http', auth='public', methods=['GET', 'OPTIONS'], cors='*', csrf=False)
-    def get_order_history(self, page=1, limit=20, email=None, **kwargs):
+    def get_order_history(self, page=1, limit=20, email=None, search=None, **kwargs):
         origin = request.httprequest.headers.get('Origin', '*')
         
         if request.httprequest.method == 'OPTIONS':
@@ -1471,7 +1471,7 @@ class ArtworkUploaderController(http.Controller):
         ]
         
         try:
-            _logger.info(f"🔍 ORDER HISTORY v47.8 - Request received for email: {email}, page: {page}, limit: {limit}")
+            _logger.info(f"🔍 ORDER HISTORY v47.9 - Request received for email: {email}, page: {page}, limit: {limit}, search: {search}")
             partner = None
             user = request.env.user
             
@@ -1507,6 +1507,12 @@ class ArtworkUploaderController(http.Controller):
                 ('partner_id', 'in', partner_ids),
                 ('state', 'in', ['sale', 'done']),
             ]
+            
+            if search:
+                search_term = search.strip()
+                domain.append('|')
+                domain.append(('name', 'ilike', search_term))
+                domain.append(('order_line.name', 'ilike', search_term))
             
             total = request.env['sale.order'].sudo().search_count(domain)
             orders = request.env['sale.order'].sudo().search(

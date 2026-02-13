@@ -5566,12 +5566,15 @@ export async function registerRoutes(app: express.Application) {
   app.get('/api/order-history', async (req, res) => {
     try {
       const odooBaseUrl = process.env.VITE_ODOO_URL || 'https://www.completetransfers.com';
-      const { page = '1', limit = '20', email = '' } = req.query;
+      const { page = '1', limit = '20', email = '', search = '' } = req.query;
       const clientCookies = req.headers.cookie || '';
       
       const params = new URLSearchParams({ page: String(page), limit: String(limit) });
       if (email) {
         params.append('email', String(email));
+      }
+      if (search) {
+        params.append('search', String(search));
       }
       
       const odooUrl = `${odooBaseUrl}/artwork/api/order-history?${params.toString()}`;
