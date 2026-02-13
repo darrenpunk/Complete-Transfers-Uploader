@@ -1488,15 +1488,19 @@ grestore`;
       console.log(`🎯 ROTATION CENTERING: target center=(${targetCenterX.toFixed(1)}, ${targetCenterY.toFixed(1)}), rotation=${element.rotation || 0}°`);
       console.log(`📍 DRAW POSITION: (${drawX.toFixed(1)}, ${drawY.toFixed(1)}) with size ${contentWidthPts.toFixed(1)}×${contentHeightPts.toFixed(1)}pts`);
       
+      const shouldSkipRotation = isFullPagePdf && isLandscapePdf;
       const drawOptions = {
         x: drawX,
         y: drawY,
-        width: contentWidthPts,  // Use actual element width
-        height: contentHeightPts, // Use actual element height
-        rotate: element.rotation ? degrees(element.rotation) : undefined,
+        width: contentWidthPts,
+        height: contentHeightPts,
+        rotate: (element.rotation && !shouldSkipRotation) ? degrees(element.rotation) : undefined,
       };
       
-      console.log(`📐 FINAL EMBEDDING: Position=(${drawX.toFixed(1)}, ${drawY.toFixed(1)}) Size=${contentWidthPts.toFixed(1)}×${contentHeightPts.toFixed(1)}pts, Rotation=${element.rotation || 0}°`);
+      if (shouldSkipRotation && element.rotation) {
+        console.log(`📄 LANDSCAPE FULL-PAGE: Skipping element rotation (${element.rotation}°) - output page already matches PDF orientation`);
+      }
+      console.log(`📐 FINAL EMBEDDING: Position=(${drawX.toFixed(1)}, ${drawY.toFixed(1)}) Size=${contentWidthPts.toFixed(1)}×${contentHeightPts.toFixed(1)}pts, Rotation=${shouldSkipRotation ? 0 : (element.rotation || 0)}°`);
       
       if (page1) {
         page1.drawPage(logoPage, drawOptions);
