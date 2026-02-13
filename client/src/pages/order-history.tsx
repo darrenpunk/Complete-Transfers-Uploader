@@ -223,7 +223,7 @@ function getTemplateName(templateId: string): string {
   return templateNames[templateId] || templateId;
 }
 
-function getUserEmail(): string | null {
+function getInitialEmail(): string | null {
   const urlParams = new URLSearchParams(window.location.search);
   const emailFromUrl = urlParams.get('email');
   if (emailFromUrl) {
@@ -234,19 +234,6 @@ function getUserEmail(): string | null {
     const stored = sessionStorage.getItem('partner_email');
     if (stored) return stored;
   } catch {}
-  
-  try {
-    const hash = window.location.hash;
-    if (hash) {
-      const hashParams = new URLSearchParams(hash.replace('#', '?'));
-      const hashEmail = hashParams.get('email');
-      if (hashEmail) {
-        try { sessionStorage.setItem('partner_email', hashEmail); } catch {}
-        return hashEmail;
-      }
-    }
-  } catch {}
-  
   return null;
 }
 
@@ -256,11 +243,45 @@ export default function OrderHistory() {
   const [reorderingLineId, setReorderingLineId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [userEmail, setUserEmail] = useState<string | null>(getInitialEmail());
+  const [emailLoading, setEmailLoading] = useState(!getInitialEmail());
+
+  useEffect(() => {
+    if (userEmail) {
+      setEmailLoading(false);
+      return;
+    }
+    
+    const isInIframe = window.parent !== window;
+    if (isInIframe) {
+      const timeout = setTimeout(() => {
+        setEmailLoading(false);
+      }, 3000);
+      
+      const handleMessage = (event: MessageEvent) => {
+        if (event.data?.type === 'odoo-user-data' && event.data.email) {
+          clearTimeout(timeout);
+          setUserEmail(event.data.email);
+          setEmailLoading(false);
+          try { sessionStorage.setItem('partner_email', event.data.email); } catch {}
+        }
+      };
+      
+      window.addEventListener('message', handleMessage);
+      window.parent.postMessage({ type: 'request-user-data' }, '*');
+      
+      return () => {
+        clearTimeout(timeout);
+        window.removeEventListener('message', handleMessage);
+      };
+    } else {
+      setEmailLoading(false);
+    }
+  }, []);
   const [reorderModalLine, setReorderModalLine] = useState<ArtworkLine | null>(null);
   const [reorderQty, setReorderQty] = useState(1);
   const limit = 10;
   const { toast } = useToast();
-  const userEmail = getUserEmail();
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -293,7 +314,7 @@ export default function OrderHistory() {
     enabled: !!userEmail,
   });
 
-  const isLoginRequired = data?.success === false && data?.error?.includes("Login required");
+  const isLoginRequired = !emailLoading && !userEmail;
 
   const handleDownloadPdf = async (lineId: number, fileName: string) => {
     try {
@@ -425,6 +446,13 @@ export default function OrderHistory() {
                 </CardContent>
               </Card>
             ))}
+          </div>
+        )}
+
+        {emailLoading && (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            <span className="ml-3 text-gray-400">Connecting to your account...</span>
           </div>
         )}
 
