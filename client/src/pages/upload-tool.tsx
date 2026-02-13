@@ -1875,6 +1875,10 @@ export default function UploadTool() {
           onClose={() => setShowProductLauncher(false)}
           onSelectProduct={handleProductSelect}
           onOpenVectorizationForm={() => setShowVectorizationForm(true)}
+          onViewOrders={() => {
+            setShowProductLauncher(false);
+            navigate("/order-history");
+          }}
         />
         
         {/* Template Selector Modal */}

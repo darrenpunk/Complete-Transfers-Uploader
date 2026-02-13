@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import CompleteTransferLogo from "./complete-transfer-logo";
-import { Palette } from "lucide-react";
+import { Palette, ShoppingBag } from "lucide-react";
 import type { TemplateSize } from "@shared/schema";
 
 // Import product icons
@@ -115,13 +115,15 @@ interface ProductLauncherModalProps {
   onClose: () => void;
   onSelectProduct: (productId: string) => void;
   onOpenVectorizationForm?: () => void;
+  onViewOrders?: () => void;
 }
 
 export default function ProductLauncherModal({ 
   open, 
   onClose, 
   onSelectProduct,
-  onOpenVectorizationForm
+  onOpenVectorizationForm,
+  onViewOrders
 }: ProductLauncherModalProps) {
   
   const handleProductSelect = (productId: string) => {
@@ -136,8 +138,20 @@ export default function ProductLauncherModal({
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+        <DialogHeader className="relative">
           <CompleteTransferLogo size="md" className="mb-4" />
+          {onViewOrders && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="absolute top-0 right-0 flex flex-col items-center gap-0.5 h-auto py-2 px-4 bg-gray-900 border-gray-600 text-white hover:bg-gray-800 hover:border-gray-500"
+              onClick={onViewOrders}
+            >
+              <ShoppingBag className="w-5 h-5" />
+              <span className="text-xs font-bold uppercase tracking-wide">My Orders</span>
+              <span className="text-[10px] text-gray-400 uppercase tracking-wider">View Orders and Reorder</span>
+            </Button>
+          )}
           <DialogTitle className="text-2xl font-bold text-center mb-2">
             Select Product Type
           </DialogTitle>
