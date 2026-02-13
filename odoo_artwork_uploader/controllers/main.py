@@ -1595,6 +1595,29 @@ class ArtworkUploaderController(http.Controller):
                         })
                 
                 if artwork_lines:
+                    delivery_status = 'pending'
+                    delivery_date = ''
+                    tracking_ref = ''
+                    try:
+                        pickings = order.picking_ids.filtered(lambda p: p.picking_type_code == 'outgoing')
+                        if pickings:
+                            done_pickings = pickings.filtered(lambda p: p.state == 'done')
+                            if done_pickings:
+                                delivery_status = 'delivered'
+                                latest = done_pickings.sorted('date_done', reverse=True)[0]
+                                delivery_date = latest.date_done.isoformat() if latest.date_done else ''
+                                tracking_ref = latest.carrier_tracking_ref or ''
+                            elif any(p.state == 'assigned' for p in pickings):
+                                delivery_status = 'ready'
+                            elif any(p.state == 'confirmed' for p in pickings):
+                                delivery_status = 'processing'
+                            elif any(p.state == 'cancel' for p in pickings):
+                                delivery_status = 'cancelled'
+                        elif order.state == 'sale':
+                            delivery_status = 'processing'
+                    except Exception as e:
+                        _logger.warning(f"Could not get delivery status for {order.name}: {e}")
+                    
                     order_list.append({
                         'orderId': order.id,
                         'orderName': order.name,
@@ -1602,6 +1625,9 @@ class ArtworkUploaderController(http.Controller):
                         'state': order.state,
                         'amountTotal': order.amount_total,
                         'currencySymbol': order.currency_id.symbol if order.currency_id else '',
+                        'deliveryStatus': delivery_status,
+                        'deliveryDate': delivery_date,
+                        'trackingRef': tracking_ref,
                         'artworkLines': artwork_lines,
                     })
             

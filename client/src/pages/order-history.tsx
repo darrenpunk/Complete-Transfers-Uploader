@@ -30,6 +30,11 @@ import {
   Search,
   Minus,
   Plus,
+  Truck,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  PackageCheck,
 } from "lucide-react";
 
 interface GarmentColor {
@@ -60,6 +65,9 @@ interface Order {
   state: string;
   amountTotal: number;
   currencySymbol: string;
+  deliveryStatus?: string;
+  deliveryDate?: string;
+  trackingRef?: string;
   artworkLines: ArtworkLine[];
 }
 
@@ -98,6 +106,36 @@ function getStateBadgeVariant(state: string): "default" | "secondary" | "destruc
   if (state === "sale") return "secondary";
   if (state === "cancel") return "destructive";
   return "outline";
+}
+
+function DeliveryBadge({ status, date, trackingRef }: { status?: string; date?: string; trackingRef?: string }) {
+  if (!status) return null;
+  
+  const config: Record<string, { label: string; icon: any; className: string }> = {
+    delivered: { label: "Shipped", icon: CheckCircle2, className: "bg-green-900/50 text-green-400 border-green-700" },
+    ready: { label: "Ready to Ship", icon: PackageCheck, className: "bg-blue-900/50 text-blue-400 border-blue-700" },
+    processing: { label: "Processing", icon: Clock, className: "bg-yellow-900/50 text-yellow-400 border-yellow-700" },
+    pending: { label: "Pending", icon: Clock, className: "bg-gray-800 text-gray-400 border-gray-700" },
+    cancelled: { label: "Cancelled", icon: XCircle, className: "bg-red-900/50 text-red-400 border-red-700" },
+  };
+  
+  const c = config[status] || config.pending;
+  const Icon = c.icon;
+  
+  return (
+    <div className="flex items-center gap-2">
+      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium border ${c.className}`}>
+        <Icon className="w-3 h-3" />
+        {c.label}
+      </span>
+      {status === "delivered" && date && (
+        <span className="text-xs text-gray-500">{formatDate(date)}</span>
+      )}
+      {trackingRef && (
+        <span className="text-xs text-blue-400">{trackingRef}</span>
+      )}
+    </div>
+  );
 }
 
 function ColorSwatch({ color, name, quantity }: { color: string; name: string; quantity: number }) {
@@ -434,9 +472,12 @@ export default function OrderHistory() {
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-1 text-xs text-gray-500">
-                    <Calendar className="w-3 h-3" />
-                    {formatDate(order.dateOrder)}
+                  <div className="flex items-center gap-3 text-xs text-gray-500">
+                    <span className="flex items-center gap-1">
+                      <Calendar className="w-3 h-3" />
+                      {formatDate(order.dateOrder)}
+                    </span>
+                    <DeliveryBadge status={order.deliveryStatus} date={order.deliveryDate} trackingRef={order.trackingRef} />
                   </div>
                 </CardHeader>
                 <CardContent className="pt-0">
