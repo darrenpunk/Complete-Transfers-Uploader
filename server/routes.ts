@@ -5,7 +5,7 @@ import os from 'os';
 import fs from 'fs';
 import crypto from 'crypto';
 import { promisify } from 'util';
-import { exec, execSync } from 'child_process';
+import { exec, execSync, execFile } from 'child_process';
 import FormData from 'form-data';
 import fetch from 'node-fetch';
 import { IStorage } from './storage';
@@ -6300,7 +6300,7 @@ export async function registerRoutes(app: express.Application) {
         console.log(`  Region ${i + 1}: (${ci.bbox.x0.toFixed(0)},${ci.bbox.y0.toFixed(0)})-(${ci.bbox.x1.toFixed(0)},${ci.bbox.y1.toFixed(0)}) ${w.toFixed(0)}×${h.toFixed(0)}`);
       }
 
-      // Extract each cluster as a separate SVG
+      // Render high-resolution PNG from source, then crop each region as a clean isolated PNG
       const existingElements = await storage.getCanvasElementsByProject(logo.projectId);
       let nextZIndex = existingElements.length > 0 ? Math.max(...existingElements.map(e => e.zIndex || 0)) + 1 : 1;
 
@@ -6310,99 +6310,83 @@ export async function registerRoutes(app: express.Application) {
       const origElemW = originalElement ? Number(originalElement.width) : (svgWidth * 25.4 / 72);
       const origElemH = originalElement ? Number(originalElement.height) : (svgHeight * 25.4 / 72);
 
-      // Extract root transform if present (defs/content inside <g transform>)
-      const rootTransformMatch = svgContent.match(/<g\s+transform="translate\(([-\d.]+),\s*([-\d.]+)\)">/);
-      const tx = rootTransformMatch ? parseFloat(rootTransformMatch[1]) : 0;
-      const ty = rootTransformMatch ? parseFloat(rootTransformMatch[2]) : 0;
-
       const newLogos: any[] = [];
       const newElements: any[] = [];
-      // Generous padding (3% of page dimension) to account for gradient edges and anti-aliasing
-      const PADDING = Math.max(15, Math.min(vbOrigW, vbOrigH) * 0.03);
+      const PADDING_PX = Math.max(5, Math.floor(Math.min(renderW, renderH) * 0.02));
+
+      // Render the source file at high resolution for clean cropping
+      const hiResScale = 8;
+      const hiResW = renderW * hiResScale;
+      const hiResH = renderH * hiResScale;
+      const hiResTmp = path.join(uploadDir, `hires_split_${Date.now()}.png`);
+
+      try {
+        await new Promise<void>((resolve, reject) => {
+          execFile('convert', [
+            svgPath, '-resize', `${hiResW}x${hiResH}!`,
+            '-background', 'transparent', '-flatten',
+            hiResTmp
+          ], { timeout: 30000 }, (err) => err ? reject(err) : resolve());
+        });
+      } catch (hiResErr) {
+        console.error('✂️ SPLIT-REGIONS: Hi-res render failed, trying alternative...', hiResErr);
+        await new Promise<void>((resolve, reject) => {
+          execFile('convert', [
+            svgPath, '-resize', `${hiResW}x${hiResH}!`,
+            hiResTmp
+          ], { timeout: 30000 }, (err) => err ? reject(err) : resolve());
+        });
+      }
+
+      console.log(`✂️ SPLIT-REGIONS: Rendered hi-res PNG at ${hiResW}×${hiResH} for clean cropping`);
 
       for (let ci = 0; ci < clusterInfos.length; ci++) {
         const cluster = clusterInfos[ci];
         const regionNum = ci + 1;
 
-        // Region bbox is already in SVG viewport space (from rasterization analysis)
-        const vbX = Math.max(0, cluster.bbox.x0 - PADDING);
-        const vbY = Math.max(0, cluster.bbox.y0 - PADDING);
-        const vbW = (cluster.bbox.x1 - cluster.bbox.x0) + PADDING * 2;
-        const vbH = (cluster.bbox.y1 - cluster.bbox.y0) + PADDING * 2;
+        // Region coordinates are in detection-resolution pixel space
+        // Scale up to hi-res coordinates with padding
+        const padX0 = Math.max(0, Math.floor((cluster.bbox.x0 - vbOrigX) / vbOrigW * renderW - PADDING_PX) * hiResScale);
+        const padY0 = Math.max(0, Math.floor((cluster.bbox.y0 - vbOrigY) / vbOrigH * renderH - PADDING_PX) * hiResScale);
+        const rawX1 = Math.ceil((cluster.bbox.x1 - vbOrigX) / vbOrigW * renderW + PADDING_PX) * hiResScale;
+        const rawY1 = Math.ceil((cluster.bbox.y1 - vbOrigY) / vbOrigH * renderH + PADDING_PX) * hiResScale;
+        const padX1 = Math.min(hiResW, rawX1);
+        const padY1 = Math.min(hiResH, rawY1);
+        const cropW = padX1 - padX0;
+        const cropH = padY1 - padY0;
 
-        // Clip rect needs group-local coordinates (inverse of root transform)
-        const clipX = vbX - tx;
-        const clipY = vbY - ty;
-        const clipW = vbW;
-        const clipH = vbH;
+        if (cropW <= 0 || cropH <= 0) continue;
 
-        const uniquePrefix = `r${regionNum}_${Date.now()}_`;
-        let croppedSvg = svgContent;
-
-        // PREFIX ALL SVG IDs to prevent collisions when multiple split SVGs render inline
-        // Find all id="..." definitions and url(#...) references
-        const idMap = new Map<string, string>();
-        const idRegex = /\bid="([^"]+)"/g;
-        let idMatch;
-        while ((idMatch = idRegex.exec(croppedSvg)) !== null) {
-          const oldId = idMatch[1];
-          if (!idMap.has(oldId)) {
-            idMap.set(oldId, `${uniquePrefix}${oldId}`);
-          }
-        }
-        // Replace all id definitions and url(#...) references
-        for (const [oldId, newId] of Array.from(idMap.entries())) {
-          croppedSvg = croppedSvg.replace(new RegExp(`id="${oldId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"`, 'g'), `id="${newId}"`);
-          croppedSvg = croppedSvg.replace(new RegExp(`url\\(#${oldId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\)`, 'g'), `url(#${newId})`);
-          croppedSvg = croppedSvg.replace(new RegExp(`xlink:href="#${oldId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"`, 'g'), `xlink:href="#${newId}"`);
-        }
-
-        // Update SVG dimensions and viewBox
-        croppedSvg = croppedSvg.replace(
-          /(<svg[^>]*)(width="[\d.]+")/,
-          `$1width="${vbW.toFixed(2)}"`
-        );
-        croppedSvg = croppedSvg.replace(
-          /(<svg[^>]*)(height="[\d.]+")/,
-          `$1height="${vbH.toFixed(2)}"`
-        );
-        croppedSvg = croppedSvg.replace(
-          /(<svg[^>]*)viewBox="[^"]+"/,
-          `$1viewBox="${vbX.toFixed(2)} ${vbY.toFixed(2)} ${vbW.toFixed(2)} ${vbH.toFixed(2)}"`
-        );
-        // Add overflow:hidden to prevent content outside viewBox from bleeding
-        croppedSvg = croppedSvg.replace(
-          /<svg([^>]*)>/,
-          '<svg$1 overflow="hidden">'
-        );
-        const regionClipId = `${uniquePrefix}region-clip`;
-        const clipDef = `<clipPath id="${regionClipId}"><rect x="${clipX.toFixed(2)}" y="${clipY.toFixed(2)}" width="${clipW.toFixed(2)}" height="${clipH.toFixed(2)}"/></clipPath>`;
-        croppedSvg = croppedSvg.replace(
-          '</defs>',
-          `${clipDef}</defs>`
-        );
-        croppedSvg = croppedSvg.replace(
-          /(<\/defs>\s*)/,
-          `$1<g clip-path="url(#${regionClipId})">`
-        );
-        croppedSvg = croppedSvg.replace(/<\/svg>\s*$/, '</g></svg>');
-
-        const regionFilename = `region_${Date.now()}_r${regionNum}_${logo.originalName?.replace(/\.[^.]+$/, '')}.svg`;
+        const regionFilename = `region_${Date.now()}_r${regionNum}_${logo.originalName?.replace(/\.[^.]+$/, '')}.png`;
         const regionPath = path.join(uploadDir, regionFilename);
-        fs.writeFileSync(regionPath, croppedSvg);
 
-        const displayWidthMm = vbW * 25.4 / 72;
-        const displayHeightMm = vbH * 25.4 / 72;
+        // Crop the specific region from the hi-res render
+        await new Promise<void>((resolve, reject) => {
+          execFile('convert', [
+            hiResTmp, '-crop', `${cropW}x${cropH}+${padX0}+${padY0}`, '+repage',
+            regionPath
+          ], { timeout: 15000 }, (err) => err ? reject(err) : resolve());
+        });
+
+        // Get actual dimensions of the cropped PNG
+        const identifyOutput = await new Promise<string>((resolve, reject) => {
+          execFile('identify', ['-format', '%w %h', regionPath], (err, stdout) => err ? reject(err) : resolve(stdout.trim()));
+        });
+        const [pngW, pngH] = identifyOutput.split(' ').map(Number);
+
+        // Convert pixel dimensions to mm (based on proportion of original element)
+        const displayWidthMm = (cropW / hiResW) * origElemW;
+        const displayHeightMm = (cropH / hiResH) * origElemH;
 
         const stats = fs.statSync(regionPath);
         const newLogo = await storage.createLogo({
           projectId: logo.projectId,
           filename: regionFilename,
           originalName: `${logo.originalName} - Region ${regionNum}`,
-          mimeType: 'image/svg+xml',
+          mimeType: 'image/png',
           size: stats.size,
-          width: Math.round(displayWidthMm),
-          height: Math.round(displayHeightMm),
+          width: pngW,
+          height: pngH,
           url: `/uploads/${regionFilename}`,
           originalFilename: logo.originalFilename || logo.filename,
           originalMimeType: logo.originalMimeType || logo.mimeType,
@@ -6411,23 +6395,22 @@ export async function registerRoutes(app: express.Application) {
           originalHeight: displayHeightMm,
           pageCount: 1,
           hasGarmentPages: false,
-          contentBounds: JSON.stringify({ x: 0, y: 0, width: vbW, height: vbH }),
+          contentBounds: JSON.stringify({ x: 0, y: 0, width: pngW, height: pngH }),
         });
 
-        console.log(`✂️ SPLIT-REGIONS: Created logo ${newLogo.id} for region ${regionNum} (${displayWidthMm.toFixed(1)}×${displayHeightMm.toFixed(1)}mm)`);
+        console.log(`✂️ SPLIT-REGIONS: Created PNG logo ${newLogo.id} for region ${regionNum} (${pngW}×${pngH}px, ${displayWidthMm.toFixed(1)}×${displayHeightMm.toFixed(1)}mm)`);
 
-        // Size each region proportionally to the original element
-        const regionW = (vbW / vbOrigW) * origElemW;
-        const regionH = (vbH / vbOrigH) * origElemH;
-        // Position: stack split logos starting from top-center of the original element area
-        // First logo at original position, subsequent logos below with 10mm gap
-        const regionX = origElemX + (origElemW - regionW) / 2;
-        const stackOffset = newLogos.reduce((sum, _, idx) => {
-          const prevCluster = clusterInfos[idx];
-          const prevH = ((prevCluster.bbox.y1 - prevCluster.bbox.y0 + PADDING * 2) / vbOrigH) * origElemH;
-          return sum + prevH + 10;
+        // Size each region to fit reasonably on canvas, max 120mm in largest dimension
+        const maxDim = 120;
+        const scale = Math.min(1, maxDim / Math.max(displayWidthMm, displayHeightMm));
+        const regionW = displayWidthMm * scale;
+        const regionH = displayHeightMm * scale;
+        // Stack vertically centered, starting near top of canvas
+        const regionX = 10;
+        const stackOffset = newLogos.reduce((sum: number, _: any, idx: number) => {
+          return sum + Number(newElements[idx]?.height || 50) + 10;
         }, 0);
-        const regionY = origElemY + stackOffset;
+        const regionY = 10 + stackOffset;
 
         const newElement = await storage.createCanvasElement({
           projectId: logo.projectId,
@@ -6454,10 +6437,11 @@ export async function registerRoutes(app: express.Application) {
       await storage.deleteLogo(logo.id);
       console.log(`✂️ SPLIT-REGIONS: Removed original logo ${logo.id}`);
 
-      // Clean up temp SVG if we created one from PDF conversion
+      // Clean up temp files
       if (svgPath && svgPath.includes('temp_split_')) {
         try { fs.unlinkSync(svgPath); } catch (_e) { /* ignore */ }
       }
+      try { fs.unlinkSync(hiResTmp); } catch (_e) { /* ignore */ }
 
       console.log(`✅ SPLIT-REGIONS: Successfully split into ${newLogos.length} individual logos`);
       res.json({
