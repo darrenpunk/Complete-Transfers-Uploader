@@ -6110,119 +6110,181 @@ export async function registerRoutes(app: express.Application) {
       const svgWidth = svgWidthMatch ? parseFloat(svgWidthMatch[1]) : 841.89;
       const svgHeight = svgHeightMatch ? parseFloat(svgHeightMatch[1]) : 1190.55;
 
+      const viewBoxMatch = svgContent.match(/viewBox="([\d.\-]+)\s+([\d.\-]+)\s+([\d.\-]+)\s+([\d.\-]+)"/);
+      const vbOrigX = viewBoxMatch ? parseFloat(viewBoxMatch[1]) : 0;
+      const vbOrigY = viewBoxMatch ? parseFloat(viewBoxMatch[2]) : 0;
+      const vbOrigW = viewBoxMatch ? parseFloat(viewBoxMatch[3]) : svgWidth;
+      const vbOrigH = viewBoxMatch ? parseFloat(viewBoxMatch[4]) : svgHeight;
+
       interface BBox { x0: number; y0: number; x1: number; y1: number; }
 
-      // Strategy: Extract rectangular clip paths from <defs> as logo region boundaries
-      // These are the most reliable indicators since they explicitly define artwork bounding areas
-      const clipRects: BBox[] = [];
-      const defsMatch = svgContent.match(/<defs>([\s\S]*?)<\/defs>/);
-      if (defsMatch) {
-        const defsContent = defsMatch[1];
-        const clipPathRegex = /<clipPath[^>]*>[\s\S]*?<path[^>]*\bd="([^"]+)"[^>]*\/>[\s\S]*?<\/clipPath>/g;
-        let clipMatch;
-        while ((clipMatch = clipPathRegex.exec(defsContent)) !== null) {
-          const d = clipMatch[1];
-          const rectMatch = d.match(/M\s+([\d.]+)\s+([\d.]+)\s+L\s+([\d.]+)\s+([\d.]+)\s+L\s+([\d.]+)\s+([\d.]+)\s+L\s+([\d.]+)\s+([\d.]+)/);
-          if (rectMatch) {
-            const coords = [];
-            for (let k = 1; k <= 8; k++) coords.push(parseFloat(rectMatch[k]));
-            const xs = coords.filter((_: number, i: number) => i % 2 === 0);
-            const ys = coords.filter((_: number, i: number) => i % 2 === 1);
-            const rect: BBox = { x0: Math.min(...xs), y0: Math.min(...ys), x1: Math.max(...xs), y1: Math.max(...ys) };
-            if ((rect.x1 - rect.x0) > 5 && (rect.y1 - rect.y0) > 5) {
-              clipRects.push(rect);
+      // Use rasterization-based region detection for robust results
+      // Render SVG to low-res PNG with alpha channel and find content regions
+      const renderW = Math.round(Math.min(300, svgWidth * 0.3));
+      const renderH = Math.round(renderW * (svgHeight / svgWidth));
+      const tempPng = path.join(uploadDir, `temp_split_render_${Date.now()}.gray`);
+
+      // Render to grayscale and detect non-white pixels (handles both transparent and white-bg SVGs)
+      try {
+        await execAsync(`convert "${svgPath}" -resize ${renderW}x${renderH}! -colorspace Gray gray:${tempPng}`, { timeout: 15000 });
+      } catch (renderErr) {
+        return res.status(500).json({ error: 'Failed to analyze image for region detection' });
+      }
+
+      let grayData: Buffer;
+      try {
+        grayData = fs.readFileSync(tempPng);
+        fs.unlinkSync(tempPng);
+      } catch (readErr) {
+        return res.status(500).json({ error: 'Failed to read rendered analysis data' });
+      }
+
+      if (grayData.length < renderW * renderH) {
+        return res.status(500).json({ error: 'Rendered image data size mismatch' });
+      }
+
+      // Invert: make content pixels >0 (white bg becomes 0, colored content becomes non-zero)
+      const alphaData = Buffer.alloc(renderW * renderH);
+      for (let i = 0; i < renderW * renderH; i++) {
+        alphaData[i] = 255 - grayData[i];
+      }
+
+      // Recursive region detection: find horizontal gaps, then vertical gaps within each band
+      const findRegions = (
+        alpha: Buffer, imgW: number, imgH: number,
+        x0: number, y0: number, x1: number, y1: number,
+        minGapPx: number,
+        depth: number = 0
+      ): BBox[] => {
+        if (depth > 3) return [{ x0, y0, x1, y1 }];
+        // Find horizontal gaps (rows with no content) within this region
+        const hGaps: { start: number; end: number; size: number }[] = [];
+        let inGap = false;
+        let gapStart = 0;
+        for (let y = y0; y < y1; y++) {
+          let rowHasContent = false;
+          for (let x = x0; x < x1; x++) {
+            if (alpha[y * imgW + x] > 10) { rowHasContent = true; break; }
+          }
+          if (!rowHasContent) {
+            if (!inGap) { gapStart = y; inGap = true; }
+          } else {
+            if (inGap) { hGaps.push({ start: gapStart, end: y, size: y - gapStart }); inGap = false; }
+          }
+        }
+        if (inGap) hGaps.push({ start: gapStart, end: y1, size: y1 - gapStart });
+
+        // Find horizontal bands
+        const hBands: { y0: number; y1: number }[] = [];
+        let bandStart = y0;
+        const significantHGaps = hGaps.filter(g => g.size >= minGapPx);
+        significantHGaps.sort((a, b) => a.start - b.start);
+
+        for (const gap of significantHGaps) {
+          if (gap.start > bandStart) {
+            hBands.push({ y0: bandStart, y1: gap.start });
+          }
+          bandStart = gap.end;
+        }
+        if (bandStart < y1) hBands.push({ y0: bandStart, y1: y1 });
+
+        if (hBands.length === 0) return [];
+
+        // For each horizontal band, find vertical gaps
+        const regions: BBox[] = [];
+        for (const band of hBands) {
+          const vGaps: { start: number; end: number; size: number }[] = [];
+          let vInGap = false;
+          let vGapStart = 0;
+          for (let x = x0; x < x1; x++) {
+            let colHasContent = false;
+            for (let y = band.y0; y < band.y1; y++) {
+              if (alpha[y * imgW + x] > 10) { colHasContent = true; break; }
+            }
+            if (!colHasContent) {
+              if (!vInGap) { vGapStart = x; vInGap = true; }
+            } else {
+              if (vInGap) { vGaps.push({ start: vGapStart, end: x, size: x - vGapStart }); vInGap = false; }
+            }
+          }
+          if (vInGap) vGaps.push({ start: vGapStart, end: x1, size: x1 - vGapStart });
+
+          const significantVGaps = vGaps.filter(g => g.size >= minGapPx);
+          significantVGaps.sort((a, b) => a.start - b.start);
+
+          const vBands: { x0: number; x1: number }[] = [];
+          let vBandStart = x0;
+          for (const gap of significantVGaps) {
+            if (gap.start > vBandStart) {
+              vBands.push({ x0: vBandStart, x1: gap.start });
+            }
+            vBandStart = gap.end;
+          }
+          if (vBandStart < x1) vBands.push({ x0: vBandStart, x1: x1 });
+
+          for (const vBand of vBands) {
+            // Compute tight bounding box using row/col scans (faster than full pixel scan)
+            let tightY0 = band.y1, tightY1 = band.y0;
+            let tightX0 = vBand.x1, tightX1 = vBand.x0;
+            for (let y = band.y0; y < band.y1; y++) {
+              for (let x = vBand.x0; x < vBand.x1; x++) {
+                if (alpha[y * imgW + x] > 10) {
+                  if (y < tightY0) tightY0 = y;
+                  if (y > tightY1) tightY1 = y;
+                  if (x < tightX0) tightX0 = x;
+                  if (x > tightX1) tightX1 = x;
+                }
+              }
+            }
+            if (tightX1 > tightX0 && tightY1 > tightY0) {
+              regions.push({ x0: tightX0, y0: tightY0, x1: tightX1 + 1, y1: tightY1 + 1 });
             }
           }
         }
-      }
 
-      // Also extract element bounding boxes from content area as fallback
-      const defsEnd = svgContent.indexOf('</defs>');
-      const contentSvg = defsEnd > -1 ? svgContent.substring(defsEnd) : svgContent;
-      const elementBBoxes: BBox[] = [];
-      const pathDRegex = /<path[^>]*\bd="([^"]+)"[^>]*>/g;
-      let pathMatch;
-      while ((pathMatch = pathDRegex.exec(contentSvg)) !== null) {
-        const d = pathMatch[1];
-        const coords: number[] = [];
-        let numMatch;
-        const numRegex = /[-+]?\d*\.?\d+/g;
-        while ((numMatch = numRegex.exec(d)) !== null) {
-          coords.push(parseFloat(numMatch[0]));
-        }
-        if (coords.length >= 4) {
-          const xs = coords.filter((_: number, i: number) => i % 2 === 0);
-          const ys = coords.filter((_: number, i: number) => i % 2 === 1);
-          const x0 = Math.min(...xs);
-          const y0 = Math.min(...ys);
-          const x1 = Math.max(...xs);
-          const y1 = Math.max(...ys);
-          if ((x1 - x0) > 2 && (y1 - y0) > 2) {
-            elementBBoxes.push({ x0, y0, x1, y1 });
+        // Recursively try to split any large regions that might contain multiple logos
+        // Check if sub-regions can be further split with smaller gap thresholds
+        const finalRegions: BBox[] = [];
+        for (const r of regions) {
+          const subW = r.x1 - r.x0;
+          const subH = r.y1 - r.y0;
+          if (subW > imgW * 0.3 && subH > imgH * 0.3) {
+            const subRegions = findRegions(alpha, imgW, imgH, r.x0, r.y0, r.x1, r.y1, Math.max(2, Math.floor(minGapPx * 0.6)), depth + 1);
+            if (subRegions.length > 1) {
+              finalRegions.push(...subRegions);
+              continue;
+            }
           }
+          finalRegions.push(r);
         }
-      }
 
-      // Use clip rects as primary regions, cluster them to merge overlapping ones
-      const rects = clipRects.length >= 2 ? clipRects : elementBBoxes;
-      if (rects.length < 2) {
-        return res.status(400).json({ error: 'Could not detect multiple logos on this page' });
-      }
-
-      console.log(`✂️ SPLIT-REGIONS: Found ${rects.length} region candidates (${clipRects.length} clip rects, ${elementBBoxes.length} path elements)`);
-
-      // Cluster overlapping/adjacent rectangles using Union-Find
-      const n = rects.length;
-      const parent = Array.from({ length: n }, (_, i) => i);
-      const find = (i: number): number => {
-        while (parent[i] !== i) { parent[i] = parent[parent[i]]; i = parent[i]; }
-        return i;
+        return finalRegions;
       };
-      const union = (i: number, j: number) => { parent[find(i)] = find(j); };
 
-      // Use a small gap for clip rects (they are tight), larger for path elements
-      const GAP = clipRects.length >= 2 ? Math.max(svgHeight * 0.025, 20) : Math.max(svgHeight * 0.04, 30);
+      const minGapPx = Math.max(3, Math.floor(renderH * 0.015));
+      console.log(`✂️ SPLIT-REGIONS: Rasterized at ${renderW}x${renderH}, min gap: ${minGapPx}px`);
 
-      for (let i = 0; i < n; i++) {
-        for (let j = i + 1; j < n; j++) {
-          const a = rects[i];
-          const b = rects[j];
-          const xClose = !(a.x1 + GAP < b.x0 || b.x1 + GAP < a.x0);
-          const yClose = !(a.y1 + GAP < b.y0 || b.y1 + GAP < a.y0);
-          if (xClose && yClose) {
-            union(i, j);
-          }
-        }
-      }
+      let detectedRegions = findRegions(alphaData, renderW, renderH, 0, 0, renderW, renderH, minGapPx);
 
-      const clusters = new Map<number, number[]>();
-      for (let i = 0; i < n; i++) {
-        const root = find(i);
-        if (!clusters.has(root)) clusters.set(root, []);
-        clusters.get(root)!.push(i);
-      }
-
+      // Convert pixel coordinates back to SVG viewBox coordinates
       interface ClusterInfo {
         bbox: BBox;
         elementCount: number;
         indices: number[];
       }
-      const clusterInfos: ClusterInfo[] = [];
-      const clusterKeys = Array.from(clusters.keys());
-      for (const key of clusterKeys) {
-        const members = clusters.get(key)!;
-        if (members.length < 1) continue;
-        const bbox: BBox = {
-          x0: Math.min(...members.map((i: number) => rects[i].x0)),
-          y0: Math.min(...members.map((i: number) => rects[i].y0)),
-          x1: Math.max(...members.map((i: number) => rects[i].x1)),
-          y1: Math.max(...members.map((i: number) => rects[i].y1)),
-        };
-        clusterInfos.push({ bbox, elementCount: members.length, indices: members });
-      }
+      const clusterInfos: ClusterInfo[] = detectedRegions.map((r, i) => ({
+        bbox: {
+          x0: vbOrigX + (r.x0 / renderW) * vbOrigW,
+          y0: vbOrigY + (r.y0 / renderH) * vbOrigH,
+          x1: vbOrigX + (r.x1 / renderW) * vbOrigW,
+          y1: vbOrigY + (r.y1 / renderH) * vbOrigH,
+        },
+        elementCount: 1,
+        indices: [i],
+      }));
 
       // Sort by Y position then X
-      clusterInfos.sort((a, b) => a.bbox.y0 - b.bbox.y0 || a.bbox.x0 - b.bbox.x0);
+      clusterInfos.sort((a: ClusterInfo, b: ClusterInfo) => a.bbox.y0 - b.bbox.y0 || a.bbox.x0 - b.bbox.x0);
 
       if (clusterInfos.length <= 1) {
         return res.status(400).json({ error: 'Only one logo region detected — nothing to split' });
@@ -6233,16 +6295,23 @@ export async function registerRoutes(app: express.Application) {
         const ci = clusterInfos[i];
         const w = ci.bbox.x1 - ci.bbox.x0;
         const h = ci.bbox.y1 - ci.bbox.y0;
-        console.log(`  Region ${i + 1}: (${ci.bbox.x0.toFixed(0)},${ci.bbox.y0.toFixed(0)})-(${ci.bbox.x1.toFixed(0)},${ci.bbox.y1.toFixed(0)}) ${w.toFixed(0)}×${h.toFixed(0)} (${ci.elementCount} clip rects)`);
+        console.log(`  Region ${i + 1}: (${ci.bbox.x0.toFixed(0)},${ci.bbox.y0.toFixed(0)})-(${ci.bbox.x1.toFixed(0)},${ci.bbox.y1.toFixed(0)}) ${w.toFixed(0)}×${h.toFixed(0)}`);
       }
 
       // Extract each cluster as a separate SVG
-      const templateSize = await storage.getTemplateSize(project.templateSize);
-      const templateWidth = templateSize?.width ?? 1000;
-      const templateHeight = templateSize?.height ?? 550;
-
       const existingElements = await storage.getCanvasElementsByProject(logo.projectId);
       let nextZIndex = existingElements.length > 0 ? Math.max(...existingElements.map(e => e.zIndex || 0)) + 1 : 1;
+
+      const originalElement = existingElements.find(e => e.logoId === logo.id);
+      const origElemX = originalElement ? Number(originalElement.x) : 0;
+      const origElemY = originalElement ? Number(originalElement.y) : 0;
+      const origElemW = originalElement ? Number(originalElement.width) : (svgWidth * 25.4 / 72);
+      const origElemH = originalElement ? Number(originalElement.height) : (svgHeight * 25.4 / 72);
+
+      // Extract root transform if present (defs/content inside <g transform>)
+      const rootTransformMatch = svgContent.match(/<g\s+transform="translate\(([-\d.]+),\s*([-\d.]+)\)">/);
+      const tx = rootTransformMatch ? parseFloat(rootTransformMatch[1]) : 0;
+      const ty = rootTransformMatch ? parseFloat(rootTransformMatch[2]) : 0;
 
       const newLogos: any[] = [];
       const newElements: any[] = [];
@@ -6251,12 +6320,20 @@ export async function registerRoutes(app: express.Application) {
       for (let ci = 0; ci < clusterInfos.length; ci++) {
         const cluster = clusterInfos[ci];
         const regionNum = ci + 1;
+
+        // Region bbox is already in SVG viewport space (from rasterization analysis)
         const vbX = Math.max(0, cluster.bbox.x0 - PADDING);
         const vbY = Math.max(0, cluster.bbox.y0 - PADDING);
         const vbW = (cluster.bbox.x1 - cluster.bbox.x0) + PADDING * 2;
         const vbH = (cluster.bbox.y1 - cluster.bbox.y0) + PADDING * 2;
 
-        // Create new SVG with cropped viewBox but same internal content
+        // Clip rect needs group-local coordinates (inverse of root transform)
+        const clipX = vbX - tx;
+        const clipY = vbY - ty;
+        const clipW = vbW;
+        const clipH = vbH;
+
+        const regionClipId = `region-clip-${regionNum}`;
         let croppedSvg = svgContent.replace(
           /(<svg[^>]*)(width="[\d.]+")/,
           `$1width="${vbW.toFixed(2)}"`
@@ -6269,6 +6346,16 @@ export async function registerRoutes(app: express.Application) {
           /(<svg[^>]*)viewBox="[^"]+"/,
           `$1viewBox="${vbX.toFixed(2)} ${vbY.toFixed(2)} ${vbW.toFixed(2)} ${vbH.toFixed(2)}"`
         );
+        const clipDef = `<clipPath id="${regionClipId}"><rect x="${clipX.toFixed(2)}" y="${clipY.toFixed(2)}" width="${clipW.toFixed(2)}" height="${clipH.toFixed(2)}"/></clipPath>`;
+        croppedSvg = croppedSvg.replace(
+          '</defs>',
+          `${clipDef}</defs>`
+        );
+        croppedSvg = croppedSvg.replace(
+          /(<\/defs>\s*)/,
+          `$1<g clip-path="url(#${regionClipId})">`
+        );
+        croppedSvg = croppedSvg.replace(/<\/svg>\s*$/, '</g></svg>');
 
         const regionFilename = `region_${Date.now()}_r${regionNum}_${logo.originalName?.replace(/\.[^.]+$/, '')}.svg`;
         const regionPath = path.join(uploadDir, regionFilename);
@@ -6299,14 +6386,19 @@ export async function registerRoutes(app: express.Application) {
 
         console.log(`✂️ SPLIT-REGIONS: Created logo ${newLogo.id} for region ${regionNum} (${displayWidthMm.toFixed(1)}×${displayHeightMm.toFixed(1)}mm)`);
 
-        const spreadX = (ci - (clusterInfos.length - 1) / 2) * Math.min(displayWidthMm + 10, templateWidth / clusterInfos.length);
+        // Region bbox is in SVG viewport space - map proportionally to canvas position
+        const regionX = origElemX + (cluster.bbox.x0 / vbOrigW) * origElemW;
+        const regionY = origElemY + (cluster.bbox.y0 / vbOrigH) * origElemH;
+        const regionW = ((cluster.bbox.x1 - cluster.bbox.x0) / vbOrigW) * origElemW;
+        const regionH = ((cluster.bbox.y1 - cluster.bbox.y0) / vbOrigH) * origElemH;
+
         const newElement = await storage.createCanvasElement({
           projectId: logo.projectId,
           logoId: newLogo.id,
-          x: spreadX,
-          y: 0,
-          width: displayWidthMm,
-          height: displayHeightMm,
+          x: regionX,
+          y: regionY,
+          width: regionW,
+          height: regionH,
           rotation: 0,
           zIndex: nextZIndex++,
           isVisible: true,
@@ -6318,8 +6410,6 @@ export async function registerRoutes(app: express.Application) {
         newElements.push(newElement);
       }
 
-      // Remove the original logo and its canvas element
-      const originalElement = existingElements.find(e => e.logoId === logo.id);
       if (originalElement) {
         await storage.deleteCanvasElement(originalElement.id);
         console.log(`✂️ SPLIT-REGIONS: Removed original canvas element ${originalElement.id}`);
