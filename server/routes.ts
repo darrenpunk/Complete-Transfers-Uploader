@@ -6119,154 +6119,198 @@ export async function registerRoutes(app: express.Application) {
       interface BBox { x0: number; y0: number; x1: number; y1: number; }
 
       // Use rasterization-based region detection for robust results
-      // Render SVG to low-res PNG with alpha channel and find content regions
-      const renderW = Math.round(Math.min(300, svgWidth * 0.3));
+      // Render SVG to low-res PNG and find content regions
+      const renderW = Math.round(Math.min(500, svgWidth * 0.5));
       const renderH = Math.round(renderW * (svgHeight / svgWidth));
-      const tempPng = path.join(uploadDir, `temp_split_render_${Date.now()}.gray`);
+      const tempPng = path.join(uploadDir, `temp_split_render_${Date.now()}.png`);
+      const tempGray = path.join(uploadDir, `temp_split_gray_${Date.now()}.gray`);
 
-      // Render to grayscale with morphological dilation to catch gradient edges
-      // Then detect non-white pixels (handles both transparent and white-bg SVGs)
+      // Use rsvg-convert for SVG rendering (handles embedded fonts, complex gradients, etc.)
+      // Extract alpha channel with dilation for connected component analysis
       try {
-        await execAsync(`convert "${svgPath}" -resize ${renderW}x${renderH}! -background white -flatten -colorspace Gray -morphology Dilate Square:1 gray:${tempPng}`, { timeout: 15000 });
+        await execAsync(`rsvg-convert -w ${renderW} -h ${renderH} -f png "${svgPath}" -o "${tempPng}"`, { timeout: 15000 });
+        // Extract alpha channel with anisotropic rectangular dilation
+        // Rectangle:13x7 = 6px horizontal, 3px vertical radius
+        // Bridges ~12px horizontal gaps (connecting text on same line) 
+        // Bridges ~6px vertical gaps (connecting adjacent content rows)
+        // Keeps separate sections with >6px vertical gaps apart
+        await execAsync(`convert "${tempPng}" -channel Alpha -separate -morphology Dilate 'Rectangle:13x7' -depth 8 gray:${tempGray}`, { timeout: 15000 });
       } catch (renderErr) {
+        console.error('rsvg-convert/convert error:', renderErr);
         return res.status(500).json({ error: 'Failed to analyze image for region detection' });
       }
 
-      let grayData: Buffer;
+      let alphaRaw: Buffer;
       try {
-        grayData = fs.readFileSync(tempPng);
-        fs.unlinkSync(tempPng);
+        alphaRaw = fs.readFileSync(tempGray);
+        try { fs.unlinkSync(tempPng); } catch (_e) { /* ignore */ }
+        try { fs.unlinkSync(tempGray); } catch (_e) { /* ignore */ }
       } catch (readErr) {
         return res.status(500).json({ error: 'Failed to read rendered analysis data' });
       }
 
-      if (grayData.length < renderW * renderH) {
+      if (alphaRaw.length < renderW * renderH) {
         return res.status(500).json({ error: 'Rendered image data size mismatch' });
       }
 
-      // Invert: make content pixels >0 (white bg becomes 0, colored content becomes non-zero)
-      // Use very low threshold (>2) to catch light gradients and subtle colors
-      const alphaData = Buffer.alloc(renderW * renderH);
+      // Connected component analysis using flood fill on the dilated alpha mask
+      // Each connected blob of content becomes a separate region
+      const mask = Buffer.alloc(renderW * renderH);
       for (let i = 0; i < renderW * renderH; i++) {
-        alphaData[i] = 255 - grayData[i];
+        mask[i] = alphaRaw[i] > 10 ? 1 : 0;
       }
 
-      // Recursive region detection: find horizontal gaps, then vertical gaps within each band
-      const findRegions = (
-        alpha: Buffer, imgW: number, imgH: number,
-        x0: number, y0: number, x1: number, y1: number,
-        minGapPx: number,
-        depth: number = 0
-      ): BBox[] => {
-        if (depth > 3) return [{ x0, y0, x1, y1 }];
-        // Find horizontal gaps (rows with no content) within this region
-        const hGaps: { start: number; end: number; size: number }[] = [];
-        let inGap = false;
-        let gapStart = 0;
-        for (let y = y0; y < y1; y++) {
-          let rowHasContent = false;
-          for (let x = x0; x < x1; x++) {
-            if (alpha[y * imgW + x] > 2) { rowHasContent = true; break; }
-          }
-          if (!rowHasContent) {
-            if (!inGap) { gapStart = y; inGap = true; }
-          } else {
-            if (inGap) { hGaps.push({ start: gapStart, end: y, size: y - gapStart }); inGap = false; }
-          }
-        }
-        if (inGap) hGaps.push({ start: gapStart, end: y1, size: y1 - gapStart });
+      const componentLabels = new Int32Array(renderW * renderH);
+      let nextLabel = 1;
+      const componentBoxes = new Map<number, BBox & { size: number }>();
 
-        // Find horizontal bands
-        const hBands: { y0: number; y1: number }[] = [];
-        let bandStart = y0;
-        const significantHGaps = hGaps.filter(g => g.size >= minGapPx);
-        significantHGaps.sort((a, b) => a.start - b.start);
+      for (let y = 0; y < renderH; y++) {
+        for (let x = 0; x < renderW; x++) {
+          const idx = y * renderW + x;
+          if (mask[idx] === 1 && componentLabels[idx] === 0) {
+            const label = nextLabel++;
+            const queue: [number, number][] = [[x, y]];
+            componentLabels[idx] = label;
+            let minX = x, maxX = x, minY = y, maxY = y, size = 0;
 
-        for (const gap of significantHGaps) {
-          if (gap.start > bandStart) {
-            hBands.push({ y0: bandStart, y1: gap.start });
-          }
-          bandStart = gap.end;
-        }
-        if (bandStart < y1) hBands.push({ y0: bandStart, y1: y1 });
+            while (queue.length > 0) {
+              const [cx, cy] = queue.pop()!;
+              size++;
+              if (cx < minX) minX = cx;
+              if (cx > maxX) maxX = cx;
+              if (cy < minY) minY = cy;
+              if (cy > maxY) maxY = cy;
 
-        if (hBands.length === 0) return [];
-
-        // For each horizontal band, find vertical gaps
-        const regions: BBox[] = [];
-        for (const band of hBands) {
-          const vGaps: { start: number; end: number; size: number }[] = [];
-          let vInGap = false;
-          let vGapStart = 0;
-          for (let x = x0; x < x1; x++) {
-            let colHasContent = false;
-            for (let y = band.y0; y < band.y1; y++) {
-              if (alpha[y * imgW + x] > 2) { colHasContent = true; break; }
-            }
-            if (!colHasContent) {
-              if (!vInGap) { vGapStart = x; vInGap = true; }
-            } else {
-              if (vInGap) { vGaps.push({ start: vGapStart, end: x, size: x - vGapStart }); vInGap = false; }
-            }
-          }
-          if (vInGap) vGaps.push({ start: vGapStart, end: x1, size: x1 - vGapStart });
-
-          const significantVGaps = vGaps.filter(g => g.size >= minGapPx);
-          significantVGaps.sort((a, b) => a.start - b.start);
-
-          const vBands: { x0: number; x1: number }[] = [];
-          let vBandStart = x0;
-          for (const gap of significantVGaps) {
-            if (gap.start > vBandStart) {
-              vBands.push({ x0: vBandStart, x1: gap.start });
-            }
-            vBandStart = gap.end;
-          }
-          if (vBandStart < x1) vBands.push({ x0: vBandStart, x1: x1 });
-
-          for (const vBand of vBands) {
-            // Compute tight bounding box using row/col scans (faster than full pixel scan)
-            let tightY0 = band.y1, tightY1 = band.y0;
-            let tightX0 = vBand.x1, tightX1 = vBand.x0;
-            for (let y = band.y0; y < band.y1; y++) {
-              for (let x = vBand.x0; x < vBand.x1; x++) {
-                if (alpha[y * imgW + x] > 2) {
-                  if (y < tightY0) tightY0 = y;
-                  if (y > tightY1) tightY1 = y;
-                  if (x < tightX0) tightX0 = x;
-                  if (x > tightX1) tightX1 = x;
+              for (const [dx, dy] of [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]]) {
+                const nx = cx + dx, ny = cy + dy;
+                if (nx >= 0 && nx < renderW && ny >= 0 && ny < renderH) {
+                  const ni = ny * renderW + nx;
+                  if (mask[ni] === 1 && componentLabels[ni] === 0) {
+                    componentLabels[ni] = label;
+                    queue.push([nx, ny]);
+                  }
                 }
               }
             }
-            if (tightX1 > tightX0 && tightY1 > tightY0) {
-              regions.push({ x0: tightX0, y0: tightY0, x1: tightX1 + 1, y1: tightY1 + 1 });
-            }
+
+            componentBoxes.set(label, { x0: minX, y0: minY, x1: maxX + 1, y1: maxY + 1, size });
           }
         }
+      }
 
-        // Recursively try to split any large regions that might contain multiple logos
-        // Check if sub-regions can be further split with smaller gap thresholds
-        const finalRegions: BBox[] = [];
-        for (const r of regions) {
-          const subW = r.x1 - r.x0;
-          const subH = r.y1 - r.y0;
-          if (subW > imgW * 0.3 && subH > imgH * 0.3) {
-            const subRegions = findRegions(alpha, imgW, imgH, r.x0, r.y0, r.x1, r.y1, Math.max(2, Math.floor(minGapPx * 0.6)), depth + 1);
-            if (subRegions.length > 1) {
-              finalRegions.push(...subRegions);
-              continue;
+      // Filter out tiny components (noise) - keep only those > 0.5% of total image area
+      const minComponentSize = Math.max(50, renderW * renderH * 0.005);
+      let significantComponents = [...componentBoxes.values()]
+        .filter(c => c.size >= minComponentSize)
+        .sort((a, b) => b.size - a.size);
+
+      console.log(`✂️ SPLIT-REGIONS: Rasterized at ${renderW}x${renderH}, found ${componentBoxes.size} raw components, ${significantComponents.length} significant (>${minComponentSize.toFixed(0)}px)`);
+
+      // Merge components that are on the same horizontal line (vertically overlapping by >50%)
+      // This connects text fragments that belong to the same line without cascading vertically
+      if (significantComponents.length > 1) {
+        let changed = true;
+        while (changed) {
+          changed = false;
+          for (let i = 0; i < significantComponents.length; i++) {
+            for (let j = i + 1; j < significantComponents.length; j++) {
+              const a = significantComponents[i];
+              const b = significantComponents[j];
+              const overlapY = Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0);
+              const minH = Math.min(a.y1 - a.y0, b.y1 - b.y0);
+              // Only merge if they overlap vertically by >50% of the smaller component's height
+              // (meaning they're on the same horizontal line)
+              if (overlapY > minH * 0.5) {
+                const xGap = Math.max(0, Math.max(a.x0 - b.x1, b.x0 - a.x1));
+                // And horizontally very close (gap < 1% of image width)
+                // Tight threshold prevents merging adjacent but distinct logo groups
+                if (xGap < renderW * 0.01) {
+                  a.x0 = Math.min(a.x0, b.x0);
+                  a.y0 = Math.min(a.y0, b.y0);
+                  a.x1 = Math.max(a.x1, b.x1);
+                  a.y1 = Math.max(a.y1, b.y1);
+                  a.size += b.size;
+                  significantComponents.splice(j, 1);
+                  changed = true;
+                  break;
+                }
+              }
             }
+            if (changed) break;
           }
-          finalRegions.push(r);
         }
+      }
 
-        return finalRegions;
-      };
+      console.log(`✂️ SPLIT-REGIONS: After same-line merge: ${significantComponents.length} regions`);
 
-      const minGapPx = Math.max(3, Math.floor(renderH * 0.015));
-      console.log(`✂️ SPLIT-REGIONS: Rasterized at ${renderW}x${renderH}, min gap: ${minGapPx}px`);
+      // Second pass: merge vertically-stacked components that share similar horizontal extent
+      // This connects rows of content (like stacked logos) without cascade merging
+      {
+        let changed = true;
+        while (changed) {
+          changed = false;
+          significantComponents.sort((a, b) => a.y0 - b.y0);
+          for (let i = 0; i < significantComponents.length; i++) {
+            for (let j = i + 1; j < significantComponents.length; j++) {
+              const a = significantComponents[i];
+              const b = significantComponents[j];
+              const yGap = b.y0 - a.y1;
+              if (yGap < 0 || yGap > renderH * 0.02) continue;
+              // Check horizontal alignment: both must share >60% of the SMALLER width
+              const overlapX = Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0);
+              const smallerW = Math.min(a.x1 - a.x0, b.x1 - b.x0);
+              const largerW = Math.max(a.x1 - a.x0, b.x1 - b.x0);
+              if (overlapX > smallerW * 0.6) {
+                // Prevent cascade: only merge if both have similar width (ratio < 1.5)
+                // This prevents a full-width text line from bridging two different sections
+                const widthRatio = largerW / Math.max(1, smallerW);
+                if (widthRatio < 1.5) {
+                  a.x0 = Math.min(a.x0, b.x0);
+                  a.y0 = Math.min(a.y0, b.y0);
+                  a.x1 = Math.max(a.x1, b.x1);
+                  a.y1 = Math.max(a.y1, b.y1);
+                  a.size += b.size;
+                  significantComponents.splice(j, 1);
+                  changed = true;
+                  break;
+                }
+              }
+            }
+            if (changed) break;
+          }
+        }
+      }
 
-      let detectedRegions = findRegions(alphaData, renderW, renderH, 0, 0, renderW, renderH, minGapPx);
+      console.log(`✂️ SPLIT-REGIONS: After vertical stack merge: ${significantComponents.length} regions`);
+
+      // Absorb tiny fragments (< 2% of image area) into nearest large region
+      const tinyThreshold = renderW * renderH * 0.02;
+      if (significantComponents.length > 1) {
+        const large = significantComponents.filter(c => c.size >= tinyThreshold);
+        const tiny = significantComponents.filter(c => c.size < tinyThreshold);
+        for (const t of tiny) {
+          let bestDist = Infinity, bestIdx = -1;
+          for (let j = 0; j < large.length; j++) {
+            const l = large[j];
+            const dx = Math.max(0, Math.max(t.x0 - l.x1, l.x0 - t.x1));
+            const dy = Math.max(0, Math.max(t.y0 - l.y1, l.y0 - t.y1));
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < bestDist) { bestDist = dist; bestIdx = j; }
+          }
+          if (bestIdx >= 0 && bestDist < renderW * 0.15) {
+            large[bestIdx].x0 = Math.min(large[bestIdx].x0, t.x0);
+            large[bestIdx].y0 = Math.min(large[bestIdx].y0, t.y0);
+            large[bestIdx].x1 = Math.max(large[bestIdx].x1, t.x1);
+            large[bestIdx].y1 = Math.max(large[bestIdx].y1, t.y1);
+            large[bestIdx].size += t.size;
+          }
+        }
+        significantComponents = large;
+      }
+
+      let detectedRegions: BBox[] = significantComponents.map(c => ({
+        x0: c.x0, y0: c.y0, x1: c.x1, y1: c.y1
+      }));
 
       // Convert pixel coordinates back to SVG viewBox coordinates
       interface ClusterInfo {
@@ -6401,9 +6445,15 @@ export async function registerRoutes(app: express.Application) {
         const regionPath = path.join(uploadDir, regionFilename);
         fs.writeFileSync(regionPath, regionSvg, 'utf8');
 
-        // Compute display dimensions in mm
+        // Compute display dimensions in mm, proportional to the original element's display size
         const displayWidthMm = (clipW / vbOrigW) * origElemW;
         const displayHeightMm = (clipH / vbOrigH) * origElemH;
+
+        // Compute the position on canvas proportional to where this region was in the original
+        const origElemX = originalElement ? Number(originalElement.x) : 10;
+        const origElemY = originalElement ? Number(originalElement.y) : 10;
+        const regionX = origElemX + ((clipX - vbOrigX) / vbOrigW) * origElemW;
+        const regionY = origElemY + ((clipY - vbOrigY) / vbOrigH) * origElemH;
 
         const stats = fs.statSync(regionPath);
         const newLogo = await storage.createLogo({
@@ -6425,18 +6475,10 @@ export async function registerRoutes(app: express.Application) {
           contentBounds: JSON.stringify({ x: 0, y: 0, width: clipW, height: clipH }),
         });
 
-        console.log(`✂️ SPLIT-REGIONS: Created SVG logo ${newLogo.id} for region ${regionNum} (${clipW.toFixed(1)}×${clipH.toFixed(1)} viewBox, ${displayWidthMm.toFixed(1)}×${displayHeightMm.toFixed(1)}mm)`);
+        console.log(`✂️ SPLIT-REGIONS: Created SVG logo ${newLogo.id} for region ${regionNum} (${clipW.toFixed(1)}×${clipH.toFixed(1)} viewBox, ${displayWidthMm.toFixed(1)}×${displayHeightMm.toFixed(1)}mm, pos=${regionX.toFixed(1)},${regionY.toFixed(1)}mm)`);
 
-        // Size each region to fit reasonably on canvas, max 120mm in largest dimension
-        const maxDim = 120;
-        const scale = Math.min(1, maxDim / Math.max(displayWidthMm, displayHeightMm));
-        const regionW = displayWidthMm * scale;
-        const regionH = displayHeightMm * scale;
-        const regionX = 10;
-        const stackOffset = newLogos.reduce((sum: number, _: any, idx: number) => {
-          return sum + Number(newElements[idx]?.height || 50) + 10;
-        }, 0);
-        const regionY = 10 + stackOffset;
+        const regionW = displayWidthMm;
+        const regionH = displayHeightMm;
 
         const newElement = await storage.createCanvasElement({
           projectId: logo.projectId,
