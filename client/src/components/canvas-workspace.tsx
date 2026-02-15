@@ -261,6 +261,7 @@ export default function CanvasWorkspace({
   const [pendingRasterFile, setPendingRasterFile] = useState<{ file: File; fileName: string } | null>(null);
   const [showRasterWarning, setShowRasterWarning] = useState(false);
   const [showVectorizer, setShowVectorizer] = useState(false);
+  const [isSplittingLogos, setIsSplittingLogos] = useState(false);
   
   // Layers panel state
   const [showLayersPanel, setShowLayersPanel] = useState(false);
@@ -2356,6 +2357,67 @@ export default function CanvasWorkspace({
                   </TooltipTrigger>
                   <TooltipContent>
                     <p>Ungroup elements so they can be moved individually</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+
+              {/* Split Logos Button - show when a single element is selected and its logo is from PDF/SVG */}
+              {selectedElements.length === 1 && (() => {
+                const selectedLogo = logos.find(l => l.id === selectedElements[0].logoId);
+                const canSplit = selectedLogo && (
+                  selectedLogo.mimeType === 'image/svg+xml' ||
+                  selectedLogo.originalMimeType === 'application/pdf'
+                );
+                return canSplit;
+              })() && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={isSplittingLogos}
+                      onClick={async () => {
+                        const selectedLogo = logos.find(l => l.id === selectedElements[0].logoId);
+                        if (!selectedLogo) return;
+                        setIsSplittingLogos(true);
+                        try {
+                          const response = await apiRequest("POST", `/api/logos/${selectedLogo.id}/split`, {
+                            canvasIndex: activeCanvasIndex,
+                          });
+                          const result = await response.json();
+                          if (result.success) {
+                            queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id, "logos"] });
+                            queryClient.invalidateQueries({ queryKey: ["/api/projects", project.id, "canvas-elements"] });
+                            onElementsSelect([]);
+                            toast({
+                              title: "Split Successful",
+                              description: `Detected and split into ${result.pagesSplit} individual logos.`,
+                            });
+                          } else {
+                            throw new Error(result.error || 'Split failed');
+                          }
+                        } catch (error: any) {
+                          toast({
+                            title: "Split Failed",
+                            description: error.message || "Could not detect multiple logos to split.",
+                            variant: "destructive",
+                          });
+                        } finally {
+                          setIsSplittingLogos(false);
+                        }
+                      }}
+                      data-testid="button-split-logos"
+                    >
+                      {isSplittingLogos ? (
+                        <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                      ) : (
+                        <Scissors className="w-4 h-4 mr-1" />
+                      )}
+                      {isSplittingLogos ? 'Splitting...' : 'Split Logos'}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Split a page with multiple logos into individual logos</p>
                   </TooltipContent>
                 </Tooltip>
               )}

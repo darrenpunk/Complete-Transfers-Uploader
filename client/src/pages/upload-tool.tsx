@@ -87,7 +87,6 @@ export default function UploadTool() {
   const [authStatus, setAuthStatus] = useState<'checking' | 'authenticated' | 'not-authenticated'>('checking');
   const [showPassThroughModal, setShowPassThroughModal] = useState(false);
   const [pendingPassThroughLogo, setPendingPassThroughLogo] = useState<{ logoId: string; pageCount: number; fileName: string } | null>(null);
-  const [isSplittingPdf, setIsSplittingPdf] = useState(false);
   const [detectedReorderColors, setDetectedReorderColors] = useState<Array<{color: string; colorName: string; quantity: number}>>([]);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const autoFullscreen = false;
@@ -2559,54 +2558,10 @@ export default function UploadTool() {
                   No, generate new garment pages for me
                 </Button>
 
-                <Button
-                  className="w-full justify-start"
-                  variant="outline"
-                  disabled={isSplittingPdf}
-                  onClick={async () => {
-                    if (!pendingPassThroughLogo || !currentProject) return;
-                    setIsSplittingPdf(true);
-                    try {
-                      const response = await apiRequest("POST", `/api/logos/${pendingPassThroughLogo.logoId}/split`, {
-                        canvasIndex: 0,
-                      });
-                      const result = await response.json();
-                      if (result.success) {
-                        queryClient.invalidateQueries({ queryKey: ["/api/projects", currentProject.id, "logos"] });
-                        queryClient.invalidateQueries({ queryKey: ["/api/projects", currentProject.id, "canvas-elements"] });
-                        toast({
-                          title: "PDF Split Successfully",
-                          description: `Split into ${result.pagesSplit} individual logos. Each can be resized, rotated, and managed independently.`,
-                        });
-                      } else {
-                        throw new Error(result.error || 'Split failed');
-                      }
-                    } catch (error: any) {
-                      console.error('Split PDF error:', error);
-                      toast({
-                        title: "Split Failed",
-                        description: error.message || "Failed to split PDF into individual logos.",
-                        variant: "destructive",
-                      });
-                    } finally {
-                      setIsSplittingPdf(false);
-                      setShowPassThroughModal(false);
-                      setPendingPassThroughLogo(null);
-                    }
-                  }}
-                  data-testid="button-split-into-logos"
-                >
-                  {isSplittingPdf ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <Scissors className="h-4 w-4 mr-2 text-primary" />
-                  )}
-                  {isSplittingPdf ? 'Splitting...' : 'Split into individual logos'}
-                </Button>
               </div>
               
               <p className="text-xs text-muted-foreground">
-                Note: "Use my original pages" preserves garment color pages. "Generate new pages" creates them for you. "Split into individual logos" separates each page into its own logo on the canvas for independent editing.
+                Note: "Use my original pages" preserves your garment color pages. "Generate new pages" creates them for you.
               </p>
             </div>
           </DialogContent>

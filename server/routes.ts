@@ -6062,26 +6062,12 @@ export async function registerRoutes(app: express.Application) {
     }
   });
 
-  // Split multi-page PDF into individual logos
+  // Split single-page PDF/SVG with multiple logos into individual logos via spatial clustering
   app.post('/api/logos/:logoId/split', async (req, res) => {
     try {
       const logo = await storage.getLogo(req.params.logoId);
       if (!logo) {
         return res.status(404).json({ error: 'Logo not found' });
-      }
-
-      const pageCount = (logo as any).pageCount || 1;
-      if (pageCount <= 1) {
-        return res.status(400).json({ error: 'PDF has only one page, nothing to split' });
-      }
-
-      if (!logo.originalFilename || logo.originalMimeType !== 'application/pdf') {
-        return res.status(400).json({ error: 'Logo is not a PDF file' });
-      }
-
-      const pdfPath = path.join(uploadDir, logo.originalFilename);
-      if (!fs.existsSync(pdfPath)) {
-        return res.status(404).json({ error: 'PDF file not found on disk' });
       }
 
       const canvasIndex = parseInt(req.body?.canvasIndex) || 0;
@@ -6090,12 +6076,167 @@ export async function registerRoutes(app: express.Application) {
         return res.status(404).json({ error: 'Project not found' });
       }
 
-      console.log(`✂️ SPLIT: Splitting PDF ${logo.originalName} (${pageCount} pages) into individual logos`);
+      let svgContent: string;
+      let svgPath: string | null = null;
 
-      const { PDFDocument } = await import('pdf-lib');
-      const pdfBytes = fs.readFileSync(pdfPath);
-      const srcDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
+      if (logo.mimeType === 'image/svg+xml') {
+        svgPath = path.join(uploadDir, logo.filename);
+        if (!fs.existsSync(svgPath)) {
+          return res.status(404).json({ error: 'SVG file not found on disk' });
+        }
+        svgContent = fs.readFileSync(svgPath, 'utf8');
+      } else if (logo.originalMimeType === 'application/pdf' || logo.mimeType === 'application/pdf') {
+        const pdfFile = logo.originalFilename || logo.filename;
+        const pdfPath = path.join(uploadDir, pdfFile);
+        if (!fs.existsSync(pdfPath)) {
+          return res.status(404).json({ error: 'PDF file not found on disk' });
+        }
+        const tempSvgPath = path.join(uploadDir, `temp_split_${Date.now()}.svg`);
+        try {
+          await execAsync(`pdftocairo -svg "${pdfPath}" "${tempSvgPath}"`, { timeout: 30000 });
+          svgContent = fs.readFileSync(tempSvgPath, 'utf8');
+          svgPath = tempSvgPath;
+        } catch (convErr) {
+          return res.status(500).json({ error: 'Failed to convert PDF to SVG for analysis' });
+        }
+      } else {
+        return res.status(400).json({ error: 'Logo must be SVG or PDF to split' });
+      }
 
+      console.log(`✂️ SPLIT-REGIONS: Analyzing ${logo.originalName} for separate logo regions`);
+
+      const svgWidthMatch = svgContent.match(/width="([\d.]+)"/);
+      const svgHeightMatch = svgContent.match(/height="([\d.]+)"/);
+      const svgWidth = svgWidthMatch ? parseFloat(svgWidthMatch[1]) : 841.89;
+      const svgHeight = svgHeightMatch ? parseFloat(svgHeightMatch[1]) : 1190.55;
+
+      interface BBox { x0: number; y0: number; x1: number; y1: number; }
+
+      // Strategy: Extract rectangular clip paths from <defs> as logo region boundaries
+      // These are the most reliable indicators since they explicitly define artwork bounding areas
+      const clipRects: BBox[] = [];
+      const defsMatch = svgContent.match(/<defs>([\s\S]*?)<\/defs>/);
+      if (defsMatch) {
+        const defsContent = defsMatch[1];
+        const clipPathRegex = /<clipPath[^>]*>[\s\S]*?<path[^>]*\bd="([^"]+)"[^>]*\/>[\s\S]*?<\/clipPath>/g;
+        let clipMatch;
+        while ((clipMatch = clipPathRegex.exec(defsContent)) !== null) {
+          const d = clipMatch[1];
+          const rectMatch = d.match(/M\s+([\d.]+)\s+([\d.]+)\s+L\s+([\d.]+)\s+([\d.]+)\s+L\s+([\d.]+)\s+([\d.]+)\s+L\s+([\d.]+)\s+([\d.]+)/);
+          if (rectMatch) {
+            const coords = [];
+            for (let k = 1; k <= 8; k++) coords.push(parseFloat(rectMatch[k]));
+            const xs = coords.filter((_: number, i: number) => i % 2 === 0);
+            const ys = coords.filter((_: number, i: number) => i % 2 === 1);
+            const rect: BBox = { x0: Math.min(...xs), y0: Math.min(...ys), x1: Math.max(...xs), y1: Math.max(...ys) };
+            if ((rect.x1 - rect.x0) > 5 && (rect.y1 - rect.y0) > 5) {
+              clipRects.push(rect);
+            }
+          }
+        }
+      }
+
+      // Also extract element bounding boxes from content area as fallback
+      const defsEnd = svgContent.indexOf('</defs>');
+      const contentSvg = defsEnd > -1 ? svgContent.substring(defsEnd) : svgContent;
+      const elementBBoxes: BBox[] = [];
+      const pathDRegex = /<path[^>]*\bd="([^"]+)"[^>]*>/g;
+      let pathMatch;
+      while ((pathMatch = pathDRegex.exec(contentSvg)) !== null) {
+        const d = pathMatch[1];
+        const coords: number[] = [];
+        let numMatch;
+        const numRegex = /[-+]?\d*\.?\d+/g;
+        while ((numMatch = numRegex.exec(d)) !== null) {
+          coords.push(parseFloat(numMatch[0]));
+        }
+        if (coords.length >= 4) {
+          const xs = coords.filter((_: number, i: number) => i % 2 === 0);
+          const ys = coords.filter((_: number, i: number) => i % 2 === 1);
+          const x0 = Math.min(...xs);
+          const y0 = Math.min(...ys);
+          const x1 = Math.max(...xs);
+          const y1 = Math.max(...ys);
+          if ((x1 - x0) > 2 && (y1 - y0) > 2) {
+            elementBBoxes.push({ x0, y0, x1, y1 });
+          }
+        }
+      }
+
+      // Use clip rects as primary regions, cluster them to merge overlapping ones
+      const rects = clipRects.length >= 2 ? clipRects : elementBBoxes;
+      if (rects.length < 2) {
+        return res.status(400).json({ error: 'Could not detect multiple logos on this page' });
+      }
+
+      console.log(`✂️ SPLIT-REGIONS: Found ${rects.length} region candidates (${clipRects.length} clip rects, ${elementBBoxes.length} path elements)`);
+
+      // Cluster overlapping/adjacent rectangles using Union-Find
+      const n = rects.length;
+      const parent = Array.from({ length: n }, (_, i) => i);
+      const find = (i: number): number => {
+        while (parent[i] !== i) { parent[i] = parent[parent[i]]; i = parent[i]; }
+        return i;
+      };
+      const union = (i: number, j: number) => { parent[find(i)] = find(j); };
+
+      // Use a small gap for clip rects (they are tight), larger for path elements
+      const GAP = clipRects.length >= 2 ? Math.max(svgHeight * 0.025, 20) : Math.max(svgHeight * 0.04, 30);
+
+      for (let i = 0; i < n; i++) {
+        for (let j = i + 1; j < n; j++) {
+          const a = rects[i];
+          const b = rects[j];
+          const xClose = !(a.x1 + GAP < b.x0 || b.x1 + GAP < a.x0);
+          const yClose = !(a.y1 + GAP < b.y0 || b.y1 + GAP < a.y0);
+          if (xClose && yClose) {
+            union(i, j);
+          }
+        }
+      }
+
+      const clusters = new Map<number, number[]>();
+      for (let i = 0; i < n; i++) {
+        const root = find(i);
+        if (!clusters.has(root)) clusters.set(root, []);
+        clusters.get(root)!.push(i);
+      }
+
+      interface ClusterInfo {
+        bbox: BBox;
+        elementCount: number;
+        indices: number[];
+      }
+      const clusterInfos: ClusterInfo[] = [];
+      const clusterKeys = Array.from(clusters.keys());
+      for (const key of clusterKeys) {
+        const members = clusters.get(key)!;
+        if (members.length < 1) continue;
+        const bbox: BBox = {
+          x0: Math.min(...members.map((i: number) => rects[i].x0)),
+          y0: Math.min(...members.map((i: number) => rects[i].y0)),
+          x1: Math.max(...members.map((i: number) => rects[i].x1)),
+          y1: Math.max(...members.map((i: number) => rects[i].y1)),
+        };
+        clusterInfos.push({ bbox, elementCount: members.length, indices: members });
+      }
+
+      // Sort by Y position then X
+      clusterInfos.sort((a, b) => a.bbox.y0 - b.bbox.y0 || a.bbox.x0 - b.bbox.x0);
+
+      if (clusterInfos.length <= 1) {
+        return res.status(400).json({ error: 'Only one logo region detected — nothing to split' });
+      }
+
+      console.log(`✂️ SPLIT-REGIONS: Detected ${clusterInfos.length} separate logo regions`);
+      for (let i = 0; i < clusterInfos.length; i++) {
+        const ci = clusterInfos[i];
+        const w = ci.bbox.x1 - ci.bbox.x0;
+        const h = ci.bbox.y1 - ci.bbox.y0;
+        console.log(`  Region ${i + 1}: (${ci.bbox.x0.toFixed(0)},${ci.bbox.y0.toFixed(0)})-(${ci.bbox.x1.toFixed(0)},${ci.bbox.y1.toFixed(0)}) ${w.toFixed(0)}×${h.toFixed(0)} (${ci.elementCount} clip rects)`);
+      }
+
+      // Extract each cluster as a separate SVG
       const templateSize = await storage.getTemplateSize(project.templateSize);
       const templateWidth = templateSize?.width ?? 1000;
       const templateHeight = templateSize?.height ?? 550;
@@ -6105,95 +6246,67 @@ export async function registerRoutes(app: express.Application) {
 
       const newLogos: any[] = [];
       const newElements: any[] = [];
+      const PADDING = 5;
 
-      for (let pageIdx = 0; pageIdx < pageCount; pageIdx++) {
-        const pageNum = pageIdx + 1;
-        console.log(`✂️ SPLIT: Extracting page ${pageNum}/${pageCount}`);
+      for (let ci = 0; ci < clusterInfos.length; ci++) {
+        const cluster = clusterInfos[ci];
+        const regionNum = ci + 1;
+        const vbX = Math.max(0, cluster.bbox.x0 - PADDING);
+        const vbY = Math.max(0, cluster.bbox.y0 - PADDING);
+        const vbW = (cluster.bbox.x1 - cluster.bbox.x0) + PADDING * 2;
+        const vbH = (cluster.bbox.y1 - cluster.bbox.y0) + PADDING * 2;
 
-        const newDoc = await PDFDocument.create();
-        const [copiedPage] = await newDoc.copyPages(srcDoc, [pageIdx]);
-        newDoc.addPage(copiedPage);
+        // Create new SVG with cropped viewBox but same internal content
+        let croppedSvg = svgContent.replace(
+          /(<svg[^>]*)(width="[\d.]+")/,
+          `$1width="${vbW.toFixed(2)}"`
+        );
+        croppedSvg = croppedSvg.replace(
+          /(<svg[^>]*)(height="[\d.]+")/,
+          `$1height="${vbH.toFixed(2)}"`
+        );
+        croppedSvg = croppedSvg.replace(
+          /(<svg[^>]*)viewBox="[^"]+"/,
+          `$1viewBox="${vbX.toFixed(2)} ${vbY.toFixed(2)} ${vbW.toFixed(2)} ${vbH.toFixed(2)}"`
+        );
 
-        const pageSize = copiedPage.getSize();
-        const pdfWidthPts = pageSize.width;
-        const pdfHeightPts = pageSize.height;
-        const pdfWidthMm = pdfWidthPts * 25.4 / 72;
-        const pdfHeightMm = pdfHeightPts * 25.4 / 72;
+        const regionFilename = `region_${Date.now()}_r${regionNum}_${logo.originalName?.replace(/\.[^.]+$/, '')}.svg`;
+        const regionPath = path.join(uploadDir, regionFilename);
+        fs.writeFileSync(regionPath, croppedSvg);
 
-        const splitPdfFilename = `split_${Date.now()}_p${pageNum}_${logo.originalName}`;
-        const splitPdfPath = path.join(uploadDir, splitPdfFilename);
-        const splitPdfBytes = await newDoc.save();
-        fs.writeFileSync(splitPdfPath, splitPdfBytes);
+        const displayWidthMm = vbW * 25.4 / 72;
+        const displayHeightMm = vbH * 25.4 / 72;
 
-        const svgFilename = splitPdfFilename.replace(/\.pdf$/i, '.svg');
-        const svgPath = path.join(uploadDir, svgFilename);
-        let finalFilename = svgFilename;
-        let finalMimeType = 'image/svg+xml';
-        let displayWidth = pdfWidthMm;
-        let displayHeight = pdfHeightMm;
-
-        try {
-          const convertCmd = `pdftocairo -svg "${splitPdfPath}" "${svgPath}"`;
-          await execAsync(convertCmd, { timeout: 30000 });
-
-          if (!fs.existsSync(svgPath)) {
-            throw new Error('SVG conversion failed');
-          }
-
-          const svgContent = fs.readFileSync(svgPath, 'utf8');
-          const viewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
-          if (viewBoxMatch) {
-            const parts = viewBoxMatch[1].split(/[\s,]+/).map(Number);
-            if (parts.length === 4 && parts[2] > 0 && parts[3] > 0) {
-              displayWidth = parts[2] * 25.4 / 72;
-              displayHeight = parts[3] * 25.4 / 72;
-            }
-          }
-          console.log(`✂️ SPLIT: Page ${pageNum} converted to SVG: ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm`);
-        } catch (convErr) {
-          console.log(`⚠️ SPLIT: SVG conversion failed for page ${pageNum}, using PNG fallback`);
-          const pngFilename = splitPdfFilename.replace(/\.pdf$/i, '.png');
-          const pngPath = path.join(uploadDir, pngFilename);
-          try {
-            const gsCmd = `gs -sDEVICE=png16m -dNOPAUSE -dBATCH -dSAFER -r200 -sOutputFile="${pngPath}" "${splitPdfPath}"`;
-            await execAsync(gsCmd, { timeout: 30000 });
-            finalFilename = pngFilename;
-            finalMimeType = 'image/png';
-          } catch (gsErr) {
-            console.error(`❌ SPLIT: Failed to extract page ${pageNum}:`, gsErr);
-            continue;
-          }
-        }
-
-        const stats = fs.statSync(path.join(uploadDir, finalFilename));
+        const stats = fs.statSync(regionPath);
         const newLogo = await storage.createLogo({
           projectId: logo.projectId,
-          filename: finalFilename,
-          originalName: `${logo.originalName} - Page ${pageNum}`,
-          mimeType: finalMimeType,
+          filename: regionFilename,
+          originalName: `${logo.originalName} - Region ${regionNum}`,
+          mimeType: 'image/svg+xml',
           size: stats.size,
-          width: Math.round(displayWidth),
-          height: Math.round(displayHeight),
-          url: `/uploads/${finalFilename}`,
-          originalFilename: splitPdfFilename,
-          originalMimeType: 'application/pdf',
-          originalUrl: `/uploads/${splitPdfFilename}`,
-          originalWidth: displayWidth,
-          originalHeight: displayHeight,
+          width: Math.round(displayWidthMm),
+          height: Math.round(displayHeightMm),
+          url: `/uploads/${regionFilename}`,
+          originalFilename: logo.originalFilename || logo.filename,
+          originalMimeType: logo.originalMimeType || logo.mimeType,
+          originalUrl: logo.originalUrl || logo.url,
+          originalWidth: displayWidthMm,
+          originalHeight: displayHeightMm,
           pageCount: 1,
           hasGarmentPages: false,
+          contentBounds: JSON.stringify({ x: 0, y: 0, width: vbW, height: vbH }),
         });
 
-        console.log(`✂️ SPLIT: Created logo ${newLogo.id} for page ${pageNum}`);
+        console.log(`✂️ SPLIT-REGIONS: Created logo ${newLogo.id} for region ${regionNum} (${displayWidthMm.toFixed(1)}×${displayHeightMm.toFixed(1)}mm)`);
 
-        const spreadX = (pageIdx - (pageCount - 1) / 2) * Math.min(displayWidth + 10, templateWidth / pageCount);
+        const spreadX = (ci - (clusterInfos.length - 1) / 2) * Math.min(displayWidthMm + 10, templateWidth / clusterInfos.length);
         const newElement = await storage.createCanvasElement({
           projectId: logo.projectId,
           logoId: newLogo.id,
           x: spreadX,
           y: 0,
-          width: displayWidth,
-          height: displayHeight,
+          width: displayWidthMm,
+          height: displayHeightMm,
           rotation: 0,
           zIndex: nextZIndex++,
           isVisible: true,
@@ -6205,15 +6318,21 @@ export async function registerRoutes(app: express.Application) {
         newElements.push(newElement);
       }
 
+      // Remove the original logo and its canvas element
       const originalElement = existingElements.find(e => e.logoId === logo.id);
       if (originalElement) {
         await storage.deleteCanvasElement(originalElement.id);
-        console.log(`✂️ SPLIT: Removed original canvas element ${originalElement.id}`);
+        console.log(`✂️ SPLIT-REGIONS: Removed original canvas element ${originalElement.id}`);
       }
       await storage.deleteLogo(logo.id);
-      console.log(`✂️ SPLIT: Removed original logo ${logo.id}`);
+      console.log(`✂️ SPLIT-REGIONS: Removed original logo ${logo.id}`);
 
-      console.log(`✅ SPLIT: Successfully split into ${newLogos.length} individual logos`);
+      // Clean up temp SVG if we created one from PDF conversion
+      if (svgPath && svgPath.includes('temp_split_')) {
+        try { fs.unlinkSync(svgPath); } catch (_e) { /* ignore */ }
+      }
+
+      console.log(`✅ SPLIT-REGIONS: Successfully split into ${newLogos.length} individual logos`);
       res.json({
         success: true,
         logos: newLogos,
@@ -6222,8 +6341,8 @@ export async function registerRoutes(app: express.Application) {
         pagesSplit: newLogos.length,
       });
     } catch (error) {
-      console.error('❌ Split PDF error:', error);
-      res.status(500).json({ error: 'Failed to split PDF' });
+      console.error('❌ Split regions error:', error);
+      res.status(500).json({ error: 'Failed to split logos' });
     }
   });
 
