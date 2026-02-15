@@ -6336,8 +6336,29 @@ export async function registerRoutes(app: express.Application) {
         const clipW = vbW;
         const clipH = vbH;
 
-        const regionClipId = `region-clip-${regionNum}`;
-        let croppedSvg = svgContent.replace(
+        const uniquePrefix = `r${regionNum}_${Date.now()}_`;
+        let croppedSvg = svgContent;
+
+        // PREFIX ALL SVG IDs to prevent collisions when multiple split SVGs render inline
+        // Find all id="..." definitions and url(#...) references
+        const idMap = new Map<string, string>();
+        const idRegex = /\bid="([^"]+)"/g;
+        let idMatch;
+        while ((idMatch = idRegex.exec(croppedSvg)) !== null) {
+          const oldId = idMatch[1];
+          if (!idMap.has(oldId)) {
+            idMap.set(oldId, `${uniquePrefix}${oldId}`);
+          }
+        }
+        // Replace all id definitions and url(#...) references
+        for (const [oldId, newId] of Array.from(idMap.entries())) {
+          croppedSvg = croppedSvg.replace(new RegExp(`id="${oldId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"`, 'g'), `id="${newId}"`);
+          croppedSvg = croppedSvg.replace(new RegExp(`url\\(#${oldId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\)`, 'g'), `url(#${newId})`);
+          croppedSvg = croppedSvg.replace(new RegExp(`xlink:href="#${oldId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"`, 'g'), `xlink:href="#${newId}"`);
+        }
+
+        // Update SVG dimensions and viewBox
+        croppedSvg = croppedSvg.replace(
           /(<svg[^>]*)(width="[\d.]+")/,
           `$1width="${vbW.toFixed(2)}"`
         );
@@ -6349,6 +6370,12 @@ export async function registerRoutes(app: express.Application) {
           /(<svg[^>]*)viewBox="[^"]+"/,
           `$1viewBox="${vbX.toFixed(2)} ${vbY.toFixed(2)} ${vbW.toFixed(2)} ${vbH.toFixed(2)}"`
         );
+        // Add overflow:hidden to prevent content outside viewBox from bleeding
+        croppedSvg = croppedSvg.replace(
+          /<svg([^>]*)>/,
+          '<svg$1 overflow="hidden">'
+        );
+        const regionClipId = `${uniquePrefix}region-clip`;
         const clipDef = `<clipPath id="${regionClipId}"><rect x="${clipX.toFixed(2)}" y="${clipY.toFixed(2)}" width="${clipW.toFixed(2)}" height="${clipH.toFixed(2)}"/></clipPath>`;
         croppedSvg = croppedSvg.replace(
           '</defs>',

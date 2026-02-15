@@ -407,7 +407,10 @@ export default function SvgInlineRenderer({
           }
           // Override width/height to fill container exactly, use preserveAspectRatio="none" 
           // since element dimensions already match content aspect ratio
-          return `<svg${newAttrs} preserveAspectRatio="none" style="width:100%;height:100%;overflow:visible">`;
+          // Respect overflow="hidden" if explicitly set (e.g., split region SVGs)
+          const hasOverflowHidden = attrs.includes('overflow="hidden"');
+          const overflowStyle = hasOverflowHidden ? 'hidden' : 'visible';
+          return `<svg${newAttrs} preserveAspectRatio="none" style="width:100%;height:100%;overflow:${overflowStyle}">`;
         }
       );
       
