@@ -6062,6 +6062,171 @@ export async function registerRoutes(app: express.Application) {
     }
   });
 
+  // Split multi-page PDF into individual logos
+  app.post('/api/logos/:logoId/split', async (req, res) => {
+    try {
+      const logo = await storage.getLogo(req.params.logoId);
+      if (!logo) {
+        return res.status(404).json({ error: 'Logo not found' });
+      }
+
+      const pageCount = (logo as any).pageCount || 1;
+      if (pageCount <= 1) {
+        return res.status(400).json({ error: 'PDF has only one page, nothing to split' });
+      }
+
+      if (!logo.originalFilename || logo.originalMimeType !== 'application/pdf') {
+        return res.status(400).json({ error: 'Logo is not a PDF file' });
+      }
+
+      const pdfPath = path.join(uploadDir, logo.originalFilename);
+      if (!fs.existsSync(pdfPath)) {
+        return res.status(404).json({ error: 'PDF file not found on disk' });
+      }
+
+      const canvasIndex = parseInt(req.body?.canvasIndex) || 0;
+      const project = await storage.getProject(logo.projectId);
+      if (!project) {
+        return res.status(404).json({ error: 'Project not found' });
+      }
+
+      console.log(`✂️ SPLIT: Splitting PDF ${logo.originalName} (${pageCount} pages) into individual logos`);
+
+      const { PDFDocument } = await import('pdf-lib');
+      const pdfBytes = fs.readFileSync(pdfPath);
+      const srcDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
+
+      const templateSize = await storage.getTemplateSize(project.templateSize);
+      const templateWidth = templateSize?.width ?? 1000;
+      const templateHeight = templateSize?.height ?? 550;
+
+      const existingElements = await storage.getCanvasElementsByProject(logo.projectId);
+      let nextZIndex = existingElements.length > 0 ? Math.max(...existingElements.map(e => e.zIndex || 0)) + 1 : 1;
+
+      const newLogos: any[] = [];
+      const newElements: any[] = [];
+
+      for (let pageIdx = 0; pageIdx < pageCount; pageIdx++) {
+        const pageNum = pageIdx + 1;
+        console.log(`✂️ SPLIT: Extracting page ${pageNum}/${pageCount}`);
+
+        const newDoc = await PDFDocument.create();
+        const [copiedPage] = await newDoc.copyPages(srcDoc, [pageIdx]);
+        newDoc.addPage(copiedPage);
+
+        const pageSize = copiedPage.getSize();
+        const pdfWidthPts = pageSize.width;
+        const pdfHeightPts = pageSize.height;
+        const pdfWidthMm = pdfWidthPts * 25.4 / 72;
+        const pdfHeightMm = pdfHeightPts * 25.4 / 72;
+
+        const splitPdfFilename = `split_${Date.now()}_p${pageNum}_${logo.originalName}`;
+        const splitPdfPath = path.join(uploadDir, splitPdfFilename);
+        const splitPdfBytes = await newDoc.save();
+        fs.writeFileSync(splitPdfPath, splitPdfBytes);
+
+        const svgFilename = splitPdfFilename.replace(/\.pdf$/i, '.svg');
+        const svgPath = path.join(uploadDir, svgFilename);
+        let finalFilename = svgFilename;
+        let finalMimeType = 'image/svg+xml';
+        let displayWidth = pdfWidthMm;
+        let displayHeight = pdfHeightMm;
+
+        try {
+          const convertCmd = `pdftocairo -svg "${splitPdfPath}" "${svgPath}"`;
+          await execAsync(convertCmd, { timeout: 30000 });
+
+          if (!fs.existsSync(svgPath)) {
+            throw new Error('SVG conversion failed');
+          }
+
+          const svgContent = fs.readFileSync(svgPath, 'utf8');
+          const viewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
+          if (viewBoxMatch) {
+            const parts = viewBoxMatch[1].split(/[\s,]+/).map(Number);
+            if (parts.length === 4 && parts[2] > 0 && parts[3] > 0) {
+              displayWidth = parts[2] * 25.4 / 72;
+              displayHeight = parts[3] * 25.4 / 72;
+            }
+          }
+          console.log(`✂️ SPLIT: Page ${pageNum} converted to SVG: ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm`);
+        } catch (convErr) {
+          console.log(`⚠️ SPLIT: SVG conversion failed for page ${pageNum}, using PNG fallback`);
+          const pngFilename = splitPdfFilename.replace(/\.pdf$/i, '.png');
+          const pngPath = path.join(uploadDir, pngFilename);
+          try {
+            const gsCmd = `gs -sDEVICE=png16m -dNOPAUSE -dBATCH -dSAFER -r200 -sOutputFile="${pngPath}" "${splitPdfPath}"`;
+            await execAsync(gsCmd, { timeout: 30000 });
+            finalFilename = pngFilename;
+            finalMimeType = 'image/png';
+          } catch (gsErr) {
+            console.error(`❌ SPLIT: Failed to extract page ${pageNum}:`, gsErr);
+            continue;
+          }
+        }
+
+        const stats = fs.statSync(path.join(uploadDir, finalFilename));
+        const newLogo = await storage.createLogo({
+          projectId: logo.projectId,
+          filename: finalFilename,
+          originalName: `${logo.originalName} - Page ${pageNum}`,
+          mimeType: finalMimeType,
+          size: stats.size,
+          width: Math.round(displayWidth),
+          height: Math.round(displayHeight),
+          url: `/uploads/${finalFilename}`,
+          originalFilename: splitPdfFilename,
+          originalMimeType: 'application/pdf',
+          originalUrl: `/uploads/${splitPdfFilename}`,
+          originalWidth: displayWidth,
+          originalHeight: displayHeight,
+          pageCount: 1,
+          hasGarmentPages: false,
+        });
+
+        console.log(`✂️ SPLIT: Created logo ${newLogo.id} for page ${pageNum}`);
+
+        const spreadX = (pageIdx - (pageCount - 1) / 2) * Math.min(displayWidth + 10, templateWidth / pageCount);
+        const newElement = await storage.createCanvasElement({
+          projectId: logo.projectId,
+          logoId: newLogo.id,
+          x: spreadX,
+          y: 0,
+          width: displayWidth,
+          height: displayHeight,
+          rotation: 0,
+          zIndex: nextZIndex++,
+          isVisible: true,
+          isLocked: false,
+          canvasIndex: canvasIndex,
+        });
+
+        newLogos.push(newLogo);
+        newElements.push(newElement);
+      }
+
+      const originalElement = existingElements.find(e => e.logoId === logo.id);
+      if (originalElement) {
+        await storage.deleteCanvasElement(originalElement.id);
+        console.log(`✂️ SPLIT: Removed original canvas element ${originalElement.id}`);
+      }
+      await storage.deleteLogo(logo.id);
+      console.log(`✂️ SPLIT: Removed original logo ${logo.id}`);
+
+      console.log(`✅ SPLIT: Successfully split into ${newLogos.length} individual logos`);
+      res.json({
+        success: true,
+        logos: newLogos,
+        elements: newElements,
+        originalLogoId: logo.id,
+        pagesSplit: newLogos.length,
+      });
+    } catch (error) {
+      console.error('❌ Split PDF error:', error);
+      res.status(500).json({ error: 'Failed to split PDF' });
+    }
+  });
+
   // AI Vectorization endpoint
   app.post('/api/vectorize', upload.single('image'), async (req, res) => {
     try {
