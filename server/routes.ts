@@ -6124,9 +6124,10 @@ export async function registerRoutes(app: express.Application) {
       const renderH = Math.round(renderW * (svgHeight / svgWidth));
       const tempPng = path.join(uploadDir, `temp_split_render_${Date.now()}.gray`);
 
-      // Render to grayscale and detect non-white pixels (handles both transparent and white-bg SVGs)
+      // Render to grayscale with morphological dilation to catch gradient edges
+      // Then detect non-white pixels (handles both transparent and white-bg SVGs)
       try {
-        await execAsync(`convert "${svgPath}" -resize ${renderW}x${renderH}! -colorspace Gray gray:${tempPng}`, { timeout: 15000 });
+        await execAsync(`convert "${svgPath}" -resize ${renderW}x${renderH}! -background white -flatten -colorspace Gray -morphology Dilate Square:1 gray:${tempPng}`, { timeout: 15000 });
       } catch (renderErr) {
         return res.status(500).json({ error: 'Failed to analyze image for region detection' });
       }
@@ -6144,6 +6145,7 @@ export async function registerRoutes(app: express.Application) {
       }
 
       // Invert: make content pixels >0 (white bg becomes 0, colored content becomes non-zero)
+      // Use very low threshold (>2) to catch light gradients and subtle colors
       const alphaData = Buffer.alloc(renderW * renderH);
       for (let i = 0; i < renderW * renderH; i++) {
         alphaData[i] = 255 - grayData[i];
@@ -6164,7 +6166,7 @@ export async function registerRoutes(app: express.Application) {
         for (let y = y0; y < y1; y++) {
           let rowHasContent = false;
           for (let x = x0; x < x1; x++) {
-            if (alpha[y * imgW + x] > 10) { rowHasContent = true; break; }
+            if (alpha[y * imgW + x] > 2) { rowHasContent = true; break; }
           }
           if (!rowHasContent) {
             if (!inGap) { gapStart = y; inGap = true; }
@@ -6199,7 +6201,7 @@ export async function registerRoutes(app: express.Application) {
           for (let x = x0; x < x1; x++) {
             let colHasContent = false;
             for (let y = band.y0; y < band.y1; y++) {
-              if (alpha[y * imgW + x] > 10) { colHasContent = true; break; }
+              if (alpha[y * imgW + x] > 2) { colHasContent = true; break; }
             }
             if (!colHasContent) {
               if (!vInGap) { vGapStart = x; vInGap = true; }
@@ -6228,7 +6230,7 @@ export async function registerRoutes(app: express.Application) {
             let tightX0 = vBand.x1, tightX1 = vBand.x0;
             for (let y = band.y0; y < band.y1; y++) {
               for (let x = vBand.x0; x < vBand.x1; x++) {
-                if (alpha[y * imgW + x] > 10) {
+                if (alpha[y * imgW + x] > 2) {
                   if (y < tightY0) tightY0 = y;
                   if (y > tightY1) tightY1 = y;
                   if (x < tightX0) tightX0 = x;
@@ -6315,7 +6317,8 @@ export async function registerRoutes(app: express.Application) {
 
       const newLogos: any[] = [];
       const newElements: any[] = [];
-      const PADDING = 5;
+      // Generous padding (3% of page dimension) to account for gradient edges and anti-aliasing
+      const PADDING = Math.max(15, Math.min(vbOrigW, vbOrigH) * 0.03);
 
       for (let ci = 0; ci < clusterInfos.length; ci++) {
         const cluster = clusterInfos[ci];
@@ -6386,11 +6389,18 @@ export async function registerRoutes(app: express.Application) {
 
         console.log(`✂️ SPLIT-REGIONS: Created logo ${newLogo.id} for region ${regionNum} (${displayWidthMm.toFixed(1)}×${displayHeightMm.toFixed(1)}mm)`);
 
-        // Region bbox is in SVG viewport space - map proportionally to canvas position
-        const regionX = origElemX + (cluster.bbox.x0 / vbOrigW) * origElemW;
-        const regionY = origElemY + (cluster.bbox.y0 / vbOrigH) * origElemH;
-        const regionW = ((cluster.bbox.x1 - cluster.bbox.x0) / vbOrigW) * origElemW;
-        const regionH = ((cluster.bbox.y1 - cluster.bbox.y0) / vbOrigH) * origElemH;
+        // Size each region proportionally to the original element
+        const regionW = (vbW / vbOrigW) * origElemW;
+        const regionH = (vbH / vbOrigH) * origElemH;
+        // Position: stack split logos starting from top-center of the original element area
+        // First logo at original position, subsequent logos below with 10mm gap
+        const regionX = origElemX + (origElemW - regionW) / 2;
+        const stackOffset = newLogos.reduce((sum, _, idx) => {
+          const prevCluster = clusterInfos[idx];
+          const prevH = ((prevCluster.bbox.y1 - prevCluster.bbox.y0 + PADDING * 2) / vbOrigH) * origElemH;
+          return sum + prevH + 10;
+        }, 0);
+        const regionY = origElemY + stackOffset;
 
         const newElement = await storage.createCanvasElement({
           projectId: logo.projectId,
