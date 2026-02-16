@@ -1136,15 +1136,26 @@ grestore`;
             const isFullPageMatch = isFullPageMatchDirect || isFullPageMatchRotated;
             
             if (isFullPageMatch) {
+              const pageArea = origPageSize.width * origPageSize.height;
+              const contentArea = contentWidthPts * contentHeightPts;
+              const coverageRatio = contentArea / pageArea;
               const orientationNote = isFullPageMatchRotated ? ' (LANDSCAPE - rotated orientation)' : '';
-              console.log(`📄 FULL-PAGE PDF MATCH${orientationNote}: PDF page (${origPageSize.width.toFixed(1)}×${origPageSize.height.toFixed(1)}pts) matches template (${templateWPts.toFixed(1)}×${templateHPts.toFixed(1)}pts)`);
-              console.log(`📄 Skipping content-bounds cropping - embedding full page to prevent clipping`);
-              logoPdfPath = originalPdfPath;
-              (element as any)._isFullPagePdf = true;
-              if (isFullPageMatchRotated) {
-                (element as any)._isLandscapePdf = true;
-                (element as any)._origPageWidth = origPageSize.width;
-                (element as any)._origPageHeight = origPageSize.height;
+              console.log(`📄 FULL-PAGE PDF CHECK${orientationNote}: PDF page (${origPageSize.width.toFixed(1)}×${origPageSize.height.toFixed(1)}pts) matches template (${templateWPts.toFixed(1)}×${templateHPts.toFixed(1)}pts)`);
+              console.log(`📄 Content coverage: ${(coverageRatio * 100).toFixed(1)}% (${contentWidthPts.toFixed(1)}×${contentHeightPts.toFixed(1)} content in ${origPageSize.width.toFixed(1)}×${origPageSize.height.toFixed(1)} page)`);
+              
+              if (coverageRatio > 0.5) {
+                console.log(`📄 Content fills >50% of page - treating as full-page PDF`);
+                console.log(`📄 Skipping content-bounds cropping - embedding full page to prevent clipping`);
+                logoPdfPath = originalPdfPath;
+                (element as any)._isFullPagePdf = true;
+                if (isFullPageMatchRotated) {
+                  (element as any)._isLandscapePdf = true;
+                  (element as any)._origPageWidth = origPageSize.width;
+                  (element as any)._origPageHeight = origPageSize.height;
+                }
+              } else {
+                console.log(`📄 Content only covers ${(coverageRatio * 100).toFixed(1)}% of page - NOT treating as full-page PDF`);
+                console.log(`📄 Page dimensions match template but content is small - will use content bounds and apply rotation normally`);
               }
             }
             // Check if bounds are too small (Ghostscript bbox failed or returned minimal bounds)
