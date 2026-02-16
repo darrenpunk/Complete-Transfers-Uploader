@@ -5625,6 +5625,11 @@ export async function registerRoutes(app: express.Application) {
       const text = await response.text();
       try {
         const data = JSON.parse(text);
+        if (data.orders) {
+          for (const o of data.orders.slice(0, 3)) {
+            console.log(`📋 Order ${o.orderName}: deliveryStatus=${o.deliveryStatus || 'MISSING'}, state=${o.state}`);
+          }
+        }
         res.status(response.status).json(data);
       } catch {
         console.error('❌ Non-JSON response from Odoo:', text.substring(0, 200));

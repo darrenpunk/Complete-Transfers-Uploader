@@ -1620,7 +1620,8 @@ class ArtworkUploaderController(http.Controller):
                     delivery_date = ''
                     tracking_ref = ''
                     try:
-                        pickings = order.picking_ids.filtered(lambda p: p.picking_type_code == 'outgoing')
+                        pickings = order.sudo().picking_ids.filtered(lambda p: p.picking_type_code == 'outgoing')
+                        _logger.info(f"  🚚 {order.name}: {len(pickings)} outgoing pickings, states: {[p.state for p in pickings]}")
                         if pickings:
                             done_pickings = pickings.filtered(lambda p: p.state == 'done')
                             if done_pickings:
@@ -1634,10 +1635,13 @@ class ArtworkUploaderController(http.Controller):
                                 delivery_status = 'processing'
                             elif any(p.state == 'cancel' for p in pickings):
                                 delivery_status = 'cancelled'
-                        elif order.state == 'sale':
+                        elif order.state in ('sale', 'done', 'locked'):
                             delivery_status = 'processing'
                     except Exception as e:
                         _logger.warning(f"Could not get delivery status for {order.name}: {e}")
+                        if order.state in ('sale', 'done', 'locked'):
+                            delivery_status = 'processing'
+                    _logger.info(f"  🚚 {order.name}: deliveryStatus={delivery_status}")
                     
                     order_list.append({
                         'orderId': order.id,
