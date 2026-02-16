@@ -6120,7 +6120,9 @@ export async function registerRoutes(app: express.Application) {
 
       // Use rasterization-based region detection for robust results
       // Render SVG to low-res PNG and find content regions
-      const renderW = Math.round(Math.min(500, svgWidth * 0.5));
+      // Fixed render width of 500px ensures consistent gap-to-dilation ratio
+      // regardless of source SVG dimensions
+      const renderW = 500;
       const renderH = Math.round(renderW * (svgHeight / svgWidth));
       const tempPng = path.join(uploadDir, `temp_split_render_${Date.now()}.png`);
       const tempGray = path.join(uploadDir, `temp_split_gray_${Date.now()}.gray`);
@@ -6388,7 +6390,9 @@ export async function registerRoutes(app: express.Application) {
 
         let regionSvg = svgContent;
 
-        // Step 1: Replace root SVG attributes (viewBox, width, height)
+        // Step 1: Replace root SVG attributes (viewBox, width, height, overflow)
+        // overflow="hidden" is critical - it ensures the browser clips content to the viewBox
+        // Without it, the SVG inline renderer's overflow:visible would show the full artwork
         regionSvg = regionSvg.replace(
           /(<svg\b[^>]*?)(\bviewBox="[^"]*")/i,
           `$1viewBox="${clipX} ${clipY} ${clipW} ${clipH}"`
@@ -6401,6 +6405,11 @@ export async function registerRoutes(app: express.Application) {
           /(<svg\b[^>]*?)(\bheight="[^"]*")/i,
           `$1height="${clipH}"`
         );
+        if (regionSvg.includes('overflow=')) {
+          regionSvg = regionSvg.replace(/overflow="[^"]*"/, 'overflow="hidden"');
+        } else {
+          regionSvg = regionSvg.replace(/<svg(\b)/, '<svg overflow="hidden"$1');
+        }
 
         // Step 2: Inject clipPath into the first <defs> block
         // Use content-space coordinates (accounting for translate offset) so the clip
@@ -6445,15 +6454,17 @@ export async function registerRoutes(app: express.Application) {
         const regionPath = path.join(uploadDir, regionFilename);
         fs.writeFileSync(regionPath, regionSvg, 'utf8');
 
-        // Compute display dimensions in mm, proportional to the original element's display size
-        const displayWidthMm = (clipW / vbOrigW) * origElemW;
-        const displayHeightMm = (clipH / vbOrigH) * origElemH;
+        // Use raw region bounds (without padding) for display dimensions and positioning
+        // Padding is only for clip-path to avoid hairline gaps, not for layout
+        const rawW = cluster.bbox.x1 - cluster.bbox.x0;
+        const rawH = cluster.bbox.y1 - cluster.bbox.y0;
+        const displayWidthMm = (rawW / vbOrigW) * origElemW;
+        const displayHeightMm = (rawH / vbOrigH) * origElemH;
 
-        // Compute the position on canvas proportional to where this region was in the original
         const origElemX = originalElement ? Number(originalElement.x) : 10;
         const origElemY = originalElement ? Number(originalElement.y) : 10;
-        const regionX = origElemX + ((clipX - vbOrigX) / vbOrigW) * origElemW;
-        const regionY = origElemY + ((clipY - vbOrigY) / vbOrigH) * origElemH;
+        const regionX = origElemX + ((cluster.bbox.x0 - vbOrigX) / vbOrigW) * origElemW;
+        const regionY = origElemY + ((cluster.bbox.y0 - vbOrigY) / vbOrigH) * origElemH;
 
         const stats = fs.statSync(regionPath);
         const newLogo = await storage.createLogo({
