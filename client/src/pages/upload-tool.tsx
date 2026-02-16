@@ -406,7 +406,7 @@ export default function UploadTool() {
         garmentColorName: currentProject.garmentColor, // Use color hex as fallback for name
         garmentColors: currentProject.garmentColors || [],
         inkColor: currentProject.inkColor || '',
-        inkColorName: currentProject.inkColor || '', // Use color hex as fallback for name
+        inkColorName: currentProject.inkColor ? getInkColorName(currentProject.inkColor) : '',
         quantity: currentProject.quantity,
         totalQuantity: currentProject.quantity, // Use regular quantity as fallback
         comments: currentProject.comments || '', // Send user comments from modal

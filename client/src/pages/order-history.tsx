@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation, Link } from "wouter";
+import { getColorName as getInkColorName } from "@/components/ink-color-modal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -596,7 +597,7 @@ export default function OrderHistory() {
                               {line.inkColorName && (
                                 <span className="flex items-center gap-1">
                                   <Palette className="w-3 h-3" />
-                                  Ink: {line.inkColorName}
+                                  Ink: {line.inkColorName.startsWith('#') ? getInkColorName(line.inkColorName) : line.inkColorName}
                                 </span>
                               )}
                             </div>
