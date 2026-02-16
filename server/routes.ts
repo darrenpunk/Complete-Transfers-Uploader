@@ -5625,7 +5625,29 @@ export async function registerRoutes(app: express.Application) {
       const text = await response.text();
       try {
         const data = JSON.parse(text);
-        if (data.orders) {
+        if (data.orders && Array.isArray(data.orders)) {
+          const seen = new Map<number, any>();
+          for (const o of data.orders) {
+            const existing = seen.get(o.orderId);
+            if (!existing) {
+              seen.set(o.orderId, o);
+            } else {
+              if (o.deliveryStatus && !existing.deliveryStatus) {
+                existing.deliveryStatus = o.deliveryStatus;
+                existing.deliveryDate = o.deliveryDate;
+                existing.trackingRef = o.trackingRef;
+              }
+              if (o.artworkLines?.length) {
+                const existingLineIds = new Set((existing.artworkLines || []).map((l: any) => l.lineId));
+                for (const line of o.artworkLines) {
+                  if (!existingLineIds.has(line.lineId)) {
+                    existing.artworkLines.push(line);
+                  }
+                }
+              }
+            }
+          }
+          data.orders = Array.from(seen.values());
           for (const o of data.orders.slice(0, 3)) {
             console.log(`📋 Order ${o.orderName}: deliveryStatus=${o.deliveryStatus || 'MISSING'}, state=${o.state}`);
           }
