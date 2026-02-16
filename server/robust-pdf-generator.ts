@@ -341,6 +341,8 @@ grestore`;
     
     // PRE-DETECT LANDSCAPE ORIENTATION: Check if any original PDF has landscape dimensions
     // matching the template (width/height swapped). If so, use the PDF's orientation for output.
+    // IMPORTANT: Skip landscape switch if ANY element using this logo has manual rotation applied,
+    // because the user has already handled the orientation themselves.
     let isLandscapeOutput = false;
     for (const logo of data.logos) {
       if (logo.originalFilename && logo.originalMimeType === 'application/pdf') {
@@ -355,12 +357,20 @@ grestore`;
             const templateHPts = data.templateSize.height * MM_TO_POINTS;
             const isRotatedMatch = Math.abs(origSize.width - templateHPts) < 10 && 
                                    Math.abs(origSize.height - templateWPts) < 10;
-            if (isRotatedMatch && origSize.width > origSize.height) {
+            
+            const hasElementRotation = data.canvasElements.some(
+              el => el.logoId === logo.id && el.rotation && el.rotation !== 0
+            );
+            
+            if (isRotatedMatch && origSize.width > origSize.height && !hasElementRotation) {
               console.log(`📄 LANDSCAPE PDF DETECTED: ${logo.originalFilename} (${origSize.width.toFixed(1)}×${origSize.height.toFixed(1)}pts)`);
               console.log(`📄 Switching output to landscape orientation: ${origSize.width.toFixed(1)}×${origSize.height.toFixed(1)}pts`);
               pageWidth = origSize.width;
               pageHeight = origSize.height;
               isLandscapeOutput = true;
+            } else if (isRotatedMatch && hasElementRotation) {
+              console.log(`📄 LANDSCAPE PDF DETECTED but element has manual rotation - keeping template orientation`);
+              console.log(`📄 User rotated content on canvas, respecting their layout choice`);
             }
           } catch (e) {
             console.warn(`⚠️ Failed to pre-scan PDF orientation: ${e}`);
