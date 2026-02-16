@@ -71,6 +71,7 @@ interface Order {
   currencySymbol: string;
   deliveryStatus?: string;
   deliveryDate?: string;
+  carrierName?: string;
   trackingRef?: string;
   artworkLines: ArtworkLine[];
 }
@@ -113,7 +114,7 @@ function getStateBadgeVariant(state: string): "default" | "secondary" | "destruc
   return "outline";
 }
 
-function DeliveryBadge({ status, date, trackingRef }: { status?: string; date?: string; trackingRef?: string }) {
+function DeliveryBadge({ status, date, carrierName, trackingRef }: { status?: string; date?: string; carrierName?: string; trackingRef?: string }) {
   if (!status) return null;
   
   const config: Record<string, { label: string; icon: any; className: string }> = {
@@ -135,6 +136,9 @@ function DeliveryBadge({ status, date, trackingRef }: { status?: string; date?: 
       </span>
       {status === "delivered" && date && (
         <span className="text-xs text-gray-500">{formatDate(date)}</span>
+      )}
+      {carrierName && (
+        <span className="text-xs text-gray-400 font-medium">{carrierName}</span>
       )}
       {trackingRef && (
         <span className="text-xs text-blue-400">{trackingRef}</span>
@@ -570,7 +574,7 @@ export default function OrderHistory() {
                       <Calendar className="w-3 h-3" />
                       {formatDate(order.dateOrder)}
                     </span>
-                    <DeliveryBadge status={order.deliveryStatus} date={order.deliveryDate} trackingRef={order.trackingRef} />
+                    <DeliveryBadge status={order.deliveryStatus} date={order.deliveryDate} carrierName={order.carrierName} trackingRef={order.trackingRef} />
                   </div>
                 </CardHeader>
                 <CardContent className="pt-0">

@@ -5635,6 +5635,7 @@ export async function registerRoutes(app: express.Application) {
               if (o.deliveryStatus && !existing.deliveryStatus) {
                 existing.deliveryStatus = o.deliveryStatus;
                 existing.deliveryDate = o.deliveryDate;
+                existing.carrierName = o.carrierName;
                 existing.trackingRef = o.trackingRef;
               }
               if (o.artworkLines?.length) {

@@ -1619,6 +1619,7 @@ class ArtworkUploaderController(http.Controller):
                     delivery_status = 'pending'
                     delivery_date = ''
                     tracking_ref = ''
+                    carrier_name = ''
                     try:
                         pickings = order.sudo().picking_ids.filtered(lambda p: p.picking_type_code == 'outgoing')
                         _logger.info(f"  🚚 {order.name}: {len(pickings)} outgoing pickings, states: {[p.state for p in pickings]}")
@@ -1629,6 +1630,7 @@ class ArtworkUploaderController(http.Controller):
                                 latest = done_pickings.sorted('date_done', reverse=True)[0]
                                 delivery_date = latest.date_done.isoformat() if latest.date_done else ''
                                 tracking_ref = latest.carrier_tracking_ref or ''
+                                carrier_name = latest.carrier_id.name if latest.carrier_id else ''
                             elif any(p.state == 'assigned' for p in pickings):
                                 delivery_status = 'ready'
                             elif any(p.state == 'confirmed' for p in pickings):
@@ -1652,6 +1654,7 @@ class ArtworkUploaderController(http.Controller):
                         'currencySymbol': order.currency_id.symbol if order.currency_id else '',
                         'deliveryStatus': delivery_status,
                         'deliveryDate': delivery_date,
+                        'carrierName': carrier_name,
                         'trackingRef': tracking_ref,
                         'artworkLines': artwork_lines,
                     })
