@@ -784,6 +784,48 @@ export default function UploadTool() {
             if (uploadRes.ok) {
               console.log('📦 Reorder PDF uploaded successfully');
               setReorderProgress(100);
+              
+              try {
+                const uploadedLogos = await uploadRes.json();
+                const logos = Array.isArray(uploadedLogos) ? uploadedLogos : [uploadedLogos];
+                const multiPageLogo = logos.find((logo: any) => logo.hasGarmentPages === true && logo.pageCount > 1);
+                
+                if (multiPageLogo) {
+                  console.log('📦 Reorder PDF has garment colour pages - auto-enabling pass-through mode');
+                  await fetch(`/api/projects/${currentProject.id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ useOriginalGarmentPages: true }),
+                  });
+                }
+                
+                const reorderLogoWithColors = logos.find((logo: any) => logo.detectedGarmentColors && logo.detectedGarmentColors.length > 0);
+                const alreadyHasColors = reorderData.garmentColors && reorderData.garmentColors.length > 0;
+                if (reorderLogoWithColors && reorderLogoWithColors.detectedGarmentColors.length > 0 && !alreadyHasColors) {
+                  console.log('🎨 Reorder PDF detected garment colours (no order history colours):', reorderLogoWithColors.detectedGarmentColors);
+                  const garmentColorsUpdate = reorderLogoWithColors.detectedGarmentColors.map((dc: any) => ({
+                    color: dc.color,
+                    colorName: dc.colorName,
+                    quantity: dc.quantity || 1,
+                  }));
+                  await fetch(`/api/projects/${currentProject.id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                      garmentColors: garmentColorsUpdate,
+                      garmentColorName: garmentColorsUpdate[0]?.colorName || '',
+                    }),
+                  }).then(res => res.json()).then(updated => {
+                    setCurrentProject(updated);
+                    queryClient.setQueryData(["/api/projects", currentProject.id], updated);
+                  });
+                } else if (alreadyHasColors) {
+                  console.log('🎨 Skipping PDF colour detection - order history already provided garment colours');
+                }
+              } catch (parseErr) {
+                console.log('📦 Could not parse reorder upload response for garment detection:', parseErr);
+              }
+              
               queryClient.invalidateQueries({ queryKey: ["/api/logos"] });
               queryClient.invalidateQueries({ queryKey: [`/api/projects/${currentProject.id}/logos`] });
               queryClient.invalidateQueries({ queryKey: ["/api/projects", currentProject.id] });
