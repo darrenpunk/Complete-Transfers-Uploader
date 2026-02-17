@@ -6841,9 +6841,11 @@ ${svgClose}`;
             source: 'completetransfers',
             website_id: parseInt(ctWebsiteId, 10),
             template_id: 'vector-service',
-            partnerEmail: partnerEmail,  // Pass customer email for cart linking
-            pdfBase64: customerFileBase64,  // Customer's uploaded file
-            artworkFilename: customerFileName,  // Original filename
+            partnerEmail: partnerEmail,
+            pdfBase64: customerFileBase64,
+            artworkFilename: customerFileName,
+            comments: `Vectorization Request #${vectorizationRequest.id}\nFile: ${customerFileName}\nPrint Size: ${req.body.printSize}\nRequirements: ${req.body.comments}`,
+            printSize: req.body.printSize || '',
           }),
         });
         

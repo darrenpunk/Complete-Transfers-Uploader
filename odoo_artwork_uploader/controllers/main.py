@@ -674,23 +674,63 @@ class ArtworkUploaderController(http.Controller):
                 # On serigraf.com or other - keep cart's current pricelist
                 _logger.info(f"📋 Using cart's assigned pricelist: {sale_order.pricelist_id.name}")
             
-            # Add to cart
-            _logger.info(f"🛒 Calling _cart_update with qty={project.quantity}")
-            cart_result = sale_order.sudo()._cart_update(
-                product_id=product.id,
-                add_qty=project.quantity,
-                set_qty=0,
-                attributes={},
-                no_variant_attribute_values={}
-            )
-            _logger.info(f"✅ Cart updated: {cart_result}")
+            # Determine if this is a vectorization service request that needs a separate line
+            is_vectorization = template_for_lookup == 'vector-service' or data.get('serviceType') == 'vectorization-only'
+            
+            if is_vectorization:
+                # VECTORIZATION SERVICE: Always create a SEPARATE order line
+                # Each vectorization request has unique artwork and info, so they must not be merged
+                _logger.info(f"🔬 VECTORIZATION SERVICE: Creating separate order line (not merging)")
+                
+                # Get the correct unit price from the pricelist
+                product_price = sale_order.pricelist_id._get_product_price(
+                    product, 1, partner
+                )
+                _logger.info(f"💰 Product price from pricelist: {product_price}")
+                
+                # Build line description with artwork filename for identification
+                artwork_name = data.get('artworkFilename', '') or project.name or ''
+                base_name = ''
+                if artwork_name:
+                    base_name = artwork_name.rsplit('.', 1)[0] if '.' in artwork_name else artwork_name
+                
+                line_name = f"{product.name} {base_name}" if base_name else product.name
+                
+                # Get fiscal position for correct tax mapping
+                fpos = sale_order.fiscal_position_id
+                taxes = product.taxes_id
+                if fpos:
+                    taxes = fpos.map_tax(taxes)
+                
+                line_vals = {
+                    'order_id': sale_order.id,
+                    'product_id': product.id,
+                    'product_uom_qty': project.quantity or 1,
+                    'product_uom': product.uom_id.id,
+                    'price_unit': product_price,
+                    'name': line_name,
+                    'tax_id': [(6, 0, taxes.ids)],
+                }
+                order_line = request.env['sale.order.line'].sudo().create(line_vals)
+                _logger.info(f"✅ Created separate vectorization line #{order_line.id}: {line_name}")
+            else:
+                # STANDARD PRODUCT: Use normal cart update (may merge with existing line)
+                _logger.info(f"🛒 Calling _cart_update with qty={project.quantity}")
+                cart_result = sale_order.sudo()._cart_update(
+                    product_id=product.id,
+                    add_qty=project.quantity,
+                    set_qty=0,
+                    attributes={},
+                    no_variant_attribute_values={}
+                )
+                _logger.info(f"✅ Cart updated: {cart_result}")
+                
+                # Find the order line created/updated by _cart_update
+                order_line = sale_order.order_line.filtered(lambda l: l.product_id.id == product.id)[-1]
             
             # Link project to order
             project.sale_order_id = sale_order.id
             _logger.info(f"✅ Linked project to sale order #{sale_order.id}")
-            
-            # Find the created order line and link it to the project
-            order_line = sale_order.order_line.filtered(lambda l: l.product_id.id == product.id)[-1]
             if order_line:
                 order_line.artwork_project_id = project.id
                 order_line._update_artwork_comments()
