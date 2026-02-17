@@ -3,7 +3,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import CompleteTransferLogo from "./complete-transfer-logo";
-import { Palette, ShoppingBag } from "lucide-react";
+import { OnboardingTutorial } from "./onboarding-tutorial";
+import { Palette, ShoppingBag, GraduationCap } from "lucide-react";
 import type { TemplateSize } from "@shared/schema";
 
 // Import product icons
@@ -125,7 +126,8 @@ export default function ProductLauncherModal({
   onOpenVectorizationForm,
   onViewOrders
 }: ProductLauncherModalProps) {
-  
+  const [showTutorial, setShowTutorial] = useState(false);
+
   const handleProductSelect = (productId: string) => {
     if (productId === "vectorization-service" && onOpenVectorizationForm) {
       onClose();
@@ -136,6 +138,7 @@ export default function ProductLauncherModal({
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
@@ -148,8 +151,18 @@ export default function ProductLauncherModal({
           </DialogDescription>
         </DialogHeader>
 
-        {onViewOrders && (
-          <div className="flex justify-end px-6 -mt-2 mb-2">
+        <div className="flex justify-end gap-2 px-6 -mt-2 mb-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex flex-col items-center gap-0.5 h-auto py-2 px-4 bg-gray-900 border-gray-600 text-white hover:bg-gray-800 hover:border-gray-500"
+            onClick={() => setShowTutorial(true)}
+          >
+            <GraduationCap className="w-5 h-5" />
+            <span className="text-xs font-bold uppercase tracking-wide">Quick Start</span>
+            <span className="text-[10px] text-gray-400 uppercase tracking-wider">How It Works</span>
+          </Button>
+          {onViewOrders && (
             <Button
               variant="outline"
               size="sm"
@@ -160,8 +173,8 @@ export default function ProductLauncherModal({
               <span className="text-xs font-bold uppercase tracking-wide">My Orders</span>
               <span className="text-[10px] text-gray-400 uppercase tracking-wider">View Orders and Reorder</span>
             </Button>
-          </div>
-        )}
+          )}
+        </div>
         
         <div className="relative px-6 pt-2 pb-0">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -219,5 +232,8 @@ export default function ProductLauncherModal({
         </div>
       </DialogContent>
     </Dialog>
+
+    <OnboardingTutorial open={showTutorial} onOpenChange={setShowTutorial} />
+    </>
   );
 }
