@@ -1270,7 +1270,7 @@ class ArtworkUploaderController(http.Controller):
                         date=False,
                         uom=product.uom_id
                     )
-                    _logger.info(f"✅ {pricelist.name} - Qty {copies}: €{price_per_unit}")
+                    _logger.info(f"✅ {pricelist.name} - Qty {copies}: {pricelist.currency_id.name} {price_per_unit}")
                 except Exception as e:
                     _logger.error(f"❌ Pricing failed: {str(e)}")
                     price_per_unit = base_list_price
@@ -1286,7 +1286,7 @@ class ArtworkUploaderController(http.Controller):
             response_data = {
                 'pricePerUnit': round(price_per_unit, 2),
                 'totalPrice': round(total_price, 2),
-                'currency': product.currency_id.name if product.currency_id else 'EUR',
+                'currency': pricelist.currency_id.name if pricelist and pricelist.currency_id else (product.currency_id.name if product.currency_id else 'EUR'),
                 'productName': product.name,
             }
             headers = [
