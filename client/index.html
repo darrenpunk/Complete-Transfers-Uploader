@@ -8,8 +8,6 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Artwork Tool" />
-    <link rel="manifest" href="/manifest.json" />
-    <link rel="apple-touch-icon" href="/icon-192.png" />
     <title>Complete Transfers - Artwork Uploader</title>
   </head>
   <body class="dark">
@@ -17,15 +15,20 @@
     <script type="module" src="/src/main.tsx"></script>
     <script>
       if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js')
-            .then((registration) => {
-              console.log('PWA: Service Worker registered with scope:', registration.scope);
-            })
-            .catch((error) => {
-              console.log('PWA: Service Worker registration failed:', error);
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          for (var registration of registrations) {
+            registration.unregister().then(function() {
+              console.log('PWA: Cleared stale service worker');
             });
+          }
         });
+        if ('caches' in window) {
+          caches.keys().then(function(names) {
+            for (var name of names) {
+              caches.delete(name);
+            }
+          });
+        }
       }
     </script>
     <script type="text/javascript" src="https://replit.com/public/js/replit-dev-banner.js"></script>
