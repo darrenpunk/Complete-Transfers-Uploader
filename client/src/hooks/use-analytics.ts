@@ -56,7 +56,9 @@ export function useAnalytics(userEmail?: string | null) {
   }, [userEmail]);
 
   useEffect(() => {
-    trackEvent("page_view", { page: window.location.pathname });
+    if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/admin')) {
+      trackEvent("login", { page: window.location.pathname });
+    }
   }, [trackEvent]);
 
   return { trackEvent };

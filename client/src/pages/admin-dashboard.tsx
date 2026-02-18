@@ -99,13 +99,14 @@ function timeSince(ts: string) {
   } catch { return ""; }
 }
 
+const HIDDEN_EVENT_TYPES = new Set(["page_view"]);
+
 const eventColors: Record<string, string> = {
-  page_view: "bg-blue-500/20 text-blue-400 border-blue-500/30",
+  login: "bg-blue-500/20 text-blue-400 border-blue-500/30",
   upload: "bg-green-500/20 text-green-400 border-green-500/30",
   pdf_generate: "bg-purple-500/20 text-purple-400 border-purple-500/30",
   add_to_cart: "bg-orange-500/20 text-orange-400 border-orange-500/30",
   template_select: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
-  template_change: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
 };
 
 function Dashboard() {
@@ -137,25 +138,27 @@ function Dashboard() {
     refetchStats();
   };
 
-  const allEventTypes = useMemo(() => {
+  const visibleEvents = useMemo(() => {
     if (!eventsData?.events) return [];
-    const types = new Set<string>();
-    eventsData.events.forEach((e: any) => types.add(e.eventType));
-    return Array.from(types).sort();
+    return eventsData.events.filter((e: any) => !HIDDEN_EVENT_TYPES.has(e.eventType));
   }, [eventsData]);
 
+  const allEventTypes = useMemo(() => {
+    const types = new Set<string>();
+    visibleEvents.forEach((e: any) => types.add(e.eventType));
+    return Array.from(types).sort();
+  }, [visibleEvents]);
+
   const allUsers = useMemo(() => {
-    if (!eventsData?.events) return [];
     const users = new Set<string>();
-    eventsData.events.forEach((e: any) => {
+    visibleEvents.forEach((e: any) => {
       if (e.userEmail) users.add(e.userEmail);
     });
     return Array.from(users).sort();
-  }, [eventsData]);
+  }, [visibleEvents]);
 
   const filteredEvents = useMemo(() => {
-    if (!eventsData?.events) return [];
-    return eventsData.events.filter((e: any) => {
+    return visibleEvents.filter((e: any) => {
       if (eventFilter !== "all" && e.eventType !== eventFilter) return false;
 
       if (userFilter) {
@@ -241,7 +244,7 @@ function Dashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">{eventsData?.events?.filter((e: any) => e.eventType === 'upload').length ?? 0}</div>
+              <div className="text-3xl font-bold">{visibleEvents.filter((e: any) => e.eventType === 'upload').length}</div>
               <p className="text-xs text-muted-foreground">Files uploaded</p>
             </CardContent>
           </Card>
@@ -254,7 +257,7 @@ function Dashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">{eventsData?.events?.filter((e: any) => e.eventType === 'add_to_cart').length ?? 0}</div>
+              <div className="text-3xl font-bold">{visibleEvents.filter((e: any) => e.eventType === 'add_to_cart').length}</div>
               <p className="text-xs text-muted-foreground">Orders added</p>
             </CardContent>
           </Card>
@@ -303,7 +306,7 @@ function Dashboard() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {statsData.stats.map((s: any, i: number) => (
+                  {statsData.stats.filter((s: any) => !HIDDEN_EVENT_TYPES.has(s.eventType)).map((s: any, i: number) => (
                     <TableRow key={i}>
                       <TableCell>{s.date}</TableCell>
                       <TableCell>
