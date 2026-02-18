@@ -1,11 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Lock, Users, Activity, BarChart3, RefreshCw } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Lock, Users, Activity, BarChart3, RefreshCw, Search, X } from "lucide-react";
 
 function getAdminToken(): string | null {
   try { return sessionStorage.getItem("admin_token"); } catch { return null; }
@@ -103,10 +104,15 @@ const eventColors: Record<string, string> = {
   upload: "bg-green-500/20 text-green-400 border-green-500/30",
   pdf_generate: "bg-purple-500/20 text-purple-400 border-purple-500/30",
   add_to_cart: "bg-orange-500/20 text-orange-400 border-orange-500/30",
+  template_select: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
   template_change: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
 };
 
 function Dashboard() {
+  const [userFilter, setUserFilter] = useState("");
+  const [eventFilter, setEventFilter] = useState("all");
+  const [timeFilter, setTimeFilter] = useState("all");
+
   const { data: activeData, refetch: refetchActive } = useQuery({
     queryKey: ["admin-active"],
     queryFn: () => adminFetch("/api/admin/analytics/active"),
@@ -115,7 +121,7 @@ function Dashboard() {
 
   const { data: eventsData, refetch: refetchEvents } = useQuery({
     queryKey: ["admin-events"],
-    queryFn: () => adminFetch("/api/admin/analytics/events?limit=50"),
+    queryFn: () => adminFetch("/api/admin/analytics/events?limit=200"),
     refetchInterval: 30000,
   });
 
@@ -129,6 +135,51 @@ function Dashboard() {
     refetchActive();
     refetchEvents();
     refetchStats();
+  };
+
+  const allEventTypes = useMemo(() => {
+    if (!eventsData?.events) return [];
+    const types = new Set<string>();
+    eventsData.events.forEach((e: any) => types.add(e.eventType));
+    return Array.from(types).sort();
+  }, [eventsData]);
+
+  const allUsers = useMemo(() => {
+    if (!eventsData?.events) return [];
+    const users = new Set<string>();
+    eventsData.events.forEach((e: any) => {
+      if (e.userEmail) users.add(e.userEmail);
+    });
+    return Array.from(users).sort();
+  }, [eventsData]);
+
+  const filteredEvents = useMemo(() => {
+    if (!eventsData?.events) return [];
+    return eventsData.events.filter((e: any) => {
+      if (eventFilter !== "all" && e.eventType !== eventFilter) return false;
+
+      if (userFilter) {
+        const email = (e.userEmail || "Anonymous").toLowerCase();
+        if (!email.includes(userFilter.toLowerCase())) return false;
+      }
+
+      if (timeFilter !== "all") {
+        const eventTime = new Date(e.createdAt).getTime();
+        const now = Date.now();
+        const minutes = parseInt(timeFilter);
+        if (now - eventTime > minutes * 60 * 1000) return false;
+      }
+
+      return true;
+    });
+  }, [eventsData, eventFilter, userFilter, timeFilter]);
+
+  const hasActiveFilters = userFilter || eventFilter !== "all" || timeFilter !== "all";
+
+  const clearFilters = () => {
+    setUserFilter("");
+    setEventFilter("all");
+    setTimeFilter("all");
   };
 
   return (
@@ -245,10 +296,66 @@ function Dashboard() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm font-medium">Recent Activity</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-medium">Recent Activity</CardTitle>
+              {hasActiveFilters && (
+                <Button variant="ghost" size="sm" onClick={clearFilters} className="h-7 text-xs">
+                  <X className="h-3 w-3 mr-1" />
+                  Clear filters
+                </Button>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-3 pt-2">
+              <Select value={timeFilter} onValueChange={setTimeFilter}>
+                <SelectTrigger className="w-[160px] h-8 text-xs">
+                  <SelectValue placeholder="Time range" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All time</SelectItem>
+                  <SelectItem value="5">Last 5 minutes</SelectItem>
+                  <SelectItem value="15">Last 15 minutes</SelectItem>
+                  <SelectItem value="30">Last 30 minutes</SelectItem>
+                  <SelectItem value="60">Last hour</SelectItem>
+                  <SelectItem value="360">Last 6 hours</SelectItem>
+                  <SelectItem value="1440">Last 24 hours</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <div className="relative">
+                <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+                <Input
+                  placeholder="Filter by user..."
+                  value={userFilter}
+                  onChange={(e) => setUserFilter(e.target.value)}
+                  className="h-8 w-[200px] text-xs pl-7"
+                  list="user-suggestions"
+                />
+                <datalist id="user-suggestions">
+                  {allUsers.map(u => <option key={u} value={u} />)}
+                </datalist>
+              </div>
+
+              <Select value={eventFilter} onValueChange={setEventFilter}>
+                <SelectTrigger className="w-[160px] h-8 text-xs">
+                  <SelectValue placeholder="Event type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All events</SelectItem>
+                  {allEventTypes.map(t => (
+                    <SelectItem key={t} value={t}>{t}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {hasActiveFilters && (
+                <div className="flex items-center text-xs text-muted-foreground">
+                  Showing {filteredEvents.length} of {eventsData?.events?.length ?? 0} events
+                </div>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
-            {eventsData?.events?.length > 0 ? (
+            {filteredEvents.length > 0 ? (
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -259,7 +366,7 @@ function Dashboard() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {eventsData.events.map((e: any) => (
+                  {filteredEvents.map((e: any) => (
                     <TableRow key={e.id}>
                       <TableCell className="text-xs whitespace-nowrap">{formatTime(e.createdAt)}</TableCell>
                       <TableCell className="text-xs">{e.userEmail || "Anonymous"}</TableCell>
@@ -269,14 +376,16 @@ function Dashboard() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-xs font-mono max-w-[200px] truncate">
-                        {e.metadata ? JSON.stringify(e.metadata) : "—"}
+                        {e.metadata ? JSON.stringify(e.metadata) : "\u2014"}
                       </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
             ) : (
-              <p className="text-sm text-muted-foreground py-4 text-center">No events recorded yet</p>
+              <p className="text-sm text-muted-foreground py-4 text-center">
+                {hasActiveFilters ? "No events match your filters" : "No events recorded yet"}
+              </p>
             )}
           </CardContent>
         </Card>
