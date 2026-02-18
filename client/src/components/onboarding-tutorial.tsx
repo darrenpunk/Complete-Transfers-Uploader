@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, ChevronRight, X, Upload, Palette, Settings, Eye, Download, CheckCircle, Play } from "lucide-react";
+import { ChevronLeft, ChevronRight, X, Upload, Palette, Settings, Eye, Download, CheckCircle, Play, ExternalLink } from "lucide-react";
 import CompleteTransferLogo from "./complete-transfer-logo";
 
 interface OnboardingTutorialProps {
@@ -39,7 +39,32 @@ export function OnboardingTutorial({ open, onOpenChange }: OnboardingTutorialPro
                 This tool helps you create high-quality transfer designs with professional workflow management. 
                 Perfect for screen printing, DTF transfers, and custom apparel decoration.
               </p>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
+              <Card className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border-blue-200 dark:border-blue-800 mt-6">
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-center gap-3 mb-2">
+                    <Play className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                    <h4 className="font-semibold text-lg">Quick Order Video Walkthrough</h4>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-4 text-center">
+                    Watch our step-by-step video guide to see the full ordering process in action.
+                  </p>
+                  <div className="flex justify-center">
+                    <a
+                      href="https://app.guidde.com/share/playbooks/maztLftrPLnSDar1TnqBDc"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Button variant="outline" className="gap-2">
+                        <Play className="w-4 h-4" />
+                        Watch Video Guide
+                        <ExternalLink className="w-3 h-3" />
+                      </Button>
+                    </a>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
                 <Card className="text-center">
                   <CardContent className="pt-6">
                     <Upload className="w-8 h-8 text-blue-500 mx-auto mb-2" />
