@@ -364,9 +364,63 @@ export const solsColors: ManufacturerColorGroup[] = [
   }
 ];
 
+export const awdisColors: ManufacturerColorGroup[] = [
+  {
+    name: "Core & Essentials",
+    colors: [
+      { code: "JH001", name: "Arctic White", hex: "#FFFFFF", cmyk: { c: 0, m: 0, y: 0, k: 0 }, pantone: "White" },
+      { code: "JH002", name: "Ash", hex: "#E6E6DA", cmyk: { c: 5, m: 5, y: 10, k: 5 }, pantone: "Cool Gray 2U" },
+      { code: "JH003", name: "Deep Black", hex: "#171C21", cmyk: { c: 73, m: 67, y: 61, k: 67 }, pantoneTextile: "19-0414 TCX" },
+      { code: "JH004", name: "Jet Black", hex: "#000000", cmyk: { c: 0, m: 0, y: 0, k: 100 }, pantone: "Black" },
+      { code: "JH005", name: "Heather Grey", hex: "#A2A9A8", cmyk: { c: 13, m: 9, y: 10, k: 27 }, pantone: "Cool Gray 5C" },
+      { code: "JH006", name: "Solid Charcoal", hex: "#2A353C", cmyk: { c: 66, m: 57, y: 51, k: 52 }, pantoneTextile: "18-5210 TCX" },
+      { code: "JH007", name: "New French Navy", hex: "#000710", cmyk: { c: 100, m: 71, y: 39, k: 90 }, pantone: "5395C" },
+      { code: "JH008", name: "Oxford Navy", hex: "#000B64", cmyk: { c: 100, m: 93, y: 36, k: 39 }, pantone: "533C" },
+    ]
+  },
+  {
+    name: "Pastels & Trending (SS26)",
+    colors: [
+      { code: "JH020", name: "Airforce Blue", hex: "#31637F", cmyk: { c: 68, m: 35, y: 17, k: 40 }, pantone: "5405C" },
+      { code: "JH021", name: "Baby Pink", hex: "#FFB3FA", cmyk: { c: 0, m: 30, y: 2, k: 0 }, pantone: "1895C" },
+      { code: "JH022", name: "Cornflower Blue", hex: "#69BAFF", cmyk: { c: 59, m: 27, y: 0, k: 0 }, pantone: "659C" },
+      { code: "JH023", name: "Digital Lavender", hex: "#AF9FC9", cmyk: { c: 13, m: 21, y: 0, k: 21 }, pantoneTextile: "17-3730 TCX" },
+      { code: "JH024", name: "Dusty Lilac", hex: "#6B7292", cmyk: { c: 50, m: 47, y: 32, k: 16 }, pantoneTextile: "18-3710 TCX" },
+      { code: "JH025", name: "Orange Crush", hex: "#FF7019", cmyk: { c: 0, m: 56, y: 90, k: 0 }, pantone: "1585C" },
+      { code: "JH026", name: "Seafoam", hex: "#61BBAA", cmyk: { c: 60, m: 23, y: 30, k: 5 }, pantoneTextile: "16-4612 TCX" },
+      { code: "JH027", name: "Sky Blue", hex: "#8BD8EB", cmyk: { c: 42, m: 10, y: 2, k: 6 }, pantone: "644C" },
+      { code: "JH028", name: "Sun Yellow", hex: "#FFE800", cmyk: { c: 0, m: 9, y: 100, k: 0 }, pantone: "Yellow C" },
+    ]
+  },
+  {
+    name: "Naturals & Earth Tones",
+    colors: [
+      { code: "JH030", name: "Desert Sand", hex: "#DDCA8F", cmyk: { c: 6, m: 14, y: 39, k: 8 }, pantone: "7502C" },
+      { code: "JH031", name: "Earthy Green", hex: "#476240", cmyk: { c: 58, m: 42, y: 62, k: 34 }, pantoneTextile: "18-0420 TCX" },
+      { code: "JH032", name: "Mocha Brown", hex: "#65554A", cmyk: { c: 16, m: 29, y: 38, k: 53 }, pantone: "7531C" },
+      { code: "JH033", name: "Moss Green", hex: "#135E31", cmyk: { c: 84, m: 20, y: 58, k: 54 }, pantone: "561C" },
+      { code: "JH034", name: "Natural Stone", hex: "#A4ADA6", cmyk: { c: 31, m: 27, y: 30, k: 7 }, pantoneTextile: "15-0000 TCX" },
+    ]
+  },
+  {
+    name: "High-Impact Brights & Performance",
+    colors: [
+      { code: "JC001", name: "Fire Red", hex: "#DA0043", cmyk: { c: 3, m: 100, y: 70, k: 12 }, pantone: "200C" },
+      { code: "JC002", name: "Hot Pink", hex: "#F500BA", cmyk: { c: 0, m: 100, y: 24, k: 4 }, pantone: "214C" },
+      { code: "JC003", name: "Kelly Green", hex: "#12FF00", cmyk: { c: 93, m: 0, y: 100, k: 0 }, pantone: "347C" },
+      { code: "JC004", name: "Purple", hex: "#2402E0", cmyk: { c: 84, m: 99, y: 0, k: 12 }, pantone: "2617C" },
+      { code: "JC005", name: "Royal Blue", hex: "#003CF0", cmyk: { c: 100, m: 75, y: 0, k: 6 }, pantone: "661C" },
+      { code: "JC006", name: "Sapphire Blue", hex: "#0380FF", cmyk: { c: 99, m: 50, y: 0, k: 0 }, pantone: "300C" },
+      { code: "JC007", name: "Bottle Green", hex: "#105017", cmyk: { c: 84, m: 22, y: 77, k: 60 }, pantone: "554C" },
+      { code: "JC008", name: "Burgundy", hex: "#45002E", cmyk: { c: 18, m: 100, y: 45, k: 67 }, pantone: "7421C" },
+    ]
+  }
+];
+
 export const manufacturerColors = {
   "Gildan": gildanColors,
   "Fruit of the Loom": fruitOfTheLoomColors,
   "Stanley/Stella": stanleyStellaColors,
-  "SOL'S": solsColors
+  "SOL'S": solsColors,
+  "AWDis": awdisColors
 };
