@@ -269,6 +269,10 @@ export default function UploadTool() {
         
         const logoIsLandscape = elW > elH;
         if (logoIsLandscape !== templateIsLandscape) {
+          const logoFitsAsIs = elW <= template.width && elH <= template.height;
+          const logoAspectRatio = Math.max(elW, elH) / Math.min(elW, elH);
+          if (logoFitsAsIs || logoAspectRatio < 1.3) continue;
+
           const logoOrientation = logoIsLandscape ? 'landscape' : 'portrait';
           const templateOrientation = templateIsLandscape ? 'landscape' : 'portrait';
           console.log(`⚠️ Orientation mismatch: logo ${logoId} is ${logoOrientation} (${elW.toFixed(0)}×${elH.toFixed(0)}mm), template is ${templateOrientation} (${template.width}×${template.height}mm)`);
