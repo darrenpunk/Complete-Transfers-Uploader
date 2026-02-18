@@ -1200,16 +1200,32 @@ grestore`;
                 console.log(`📄 Page dimensions match template but content is small - will use content bounds and apply rotation normally`);
               }
             }
+            // ELEMENT-MATCHES-PAGE CHECK: If the canvas element dimensions match the original
+            // PDF page dimensions, the element was sized from the full page (not just content).
+            // In this case, skip cropping and use the original PDF directly to prevent distortion.
+            if (!logoPdfPath) {
+              const elementWPts = element.width * MM_TO_PTS_CHECK;
+              const elementHPts = element.height * MM_TO_PTS_CHECK;
+              const elementMatchesPageDirect = Math.abs(elementWPts - origPageSize.width) < 15 && 
+                                               Math.abs(elementHPts - origPageSize.height) < 15;
+              const elementMatchesPageSwapped = Math.abs(elementWPts - origPageSize.height) < 15 && 
+                                                Math.abs(elementHPts - origPageSize.width) < 15;
+              if (elementMatchesPageDirect || elementMatchesPageSwapped) {
+                console.log(`📄 ELEMENT MATCHES PDF PAGE: Element ${element.width.toFixed(1)}×${element.height.toFixed(1)}mm ≈ PDF page ${(origPageSize.width/MM_TO_PTS_CHECK).toFixed(1)}×${(origPageSize.height/MM_TO_PTS_CHECK).toFixed(1)}mm`);
+                console.log(`📄 Using original PDF without cropping to prevent content distortion`);
+                logoPdfPath = originalPdfPath;
+              }
+            }
             // Check if bounds are too small (Ghostscript bbox failed or returned minimal bounds)
             // but we have proper Inkscape-detected bounds stored
-            else if (contentWidthPts < 1 && contentHeightPts < 1) {
+            if (!logoPdfPath && contentWidthPts < 1 && contentHeightPts < 1) {
               console.log(`⚠️ Ghostscript bbox failed (0×0) - content will be at wrong position`);
               console.log(`📐 Using original PDF without cropping - SVG normalization should handle display`);
               logoPdfPath = originalPdfPath;
             }
             // If bounds offset is non-zero, create a new PDF page with content at origin
             // by embedding the original page with translation - no Ghostscript re-encoding needed
-            else if (originalPdfBounds.xMin > 1 || originalPdfBounds.yMin > 1) {
+            if (!logoPdfPath && (originalPdfBounds.xMin > 1 || originalPdfBounds.yMin > 1)) {
               console.log(`📐 PDF has content offset (${originalPdfBounds.xMin.toFixed(1)}, ${originalPdfBounds.yMin.toFixed(1)}) - re-embedding with translation to origin`);
               
               try {
@@ -1217,11 +1233,9 @@ grestore`;
                 const contentW = originalPdfBounds.width || (originalPdfBounds.xMax - originalPdfBounds.xMin);
                 const contentH = originalPdfBounds.height || (originalPdfBounds.yMax - originalPdfBounds.yMin);
                 
-                // Create a new PDF with page sized to content bounds
                 const newPdfDoc = await PDFDocNew.create();
                 const newPage = newPdfDoc.addPage([contentW, contentH]);
                 
-                // Embed the original page and draw it translated so content starts at (0,0)
                 const [embeddedOrigPage] = await newPdfDoc.embedPdf(origPdfDoc, [0]);
                 newPage.drawPage(embeddedOrigPage, {
                   x: -originalPdfBounds.xMin,
@@ -1239,7 +1253,6 @@ grestore`;
                 shouldCleanup = true;
               } catch (reembedError) {
                 console.log(`⚠️ Re-embedding failed, falling back to Ghostscript crop: ${reembedError}`);
-                // Fallback to Ghostscript cropping
                 const resizedPdfPath = await this.cropPdfToContentBounds(originalPdfPath, originalPdfBounds);
                 if (resizedPdfPath) {
                   logoPdfPath = resizedPdfPath;
@@ -1248,7 +1261,7 @@ grestore`;
                   logoPdfPath = originalPdfPath;
                 }
               }
-            } else {
+            } else if (!logoPdfPath) {
               console.log(`✅ PDF content starts at origin - safe to use original PDF`);
               console.log(`✅ USING ORIGINAL PDF: Preserving exact CMYK colors and vectors from: ${originalPdfPath}`);
               logoPdfPath = originalPdfPath;
