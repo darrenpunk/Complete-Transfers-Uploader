@@ -108,7 +108,7 @@ export function OnboardingTutorial({ open, onOpenChange }: OnboardingTutorialPro
           
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Browse our range of transfer products including screen print transfers, DTF transfers, vinyl transfers, applique badges, and more. Each product category offers different capabilities suited to your project needs.
+              Browse our range of transfer products including screen print transfers, DTF transfers, applique badges, and more. Each product category offers different capabilities suited to your project needs.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div className="border rounded-lg p-3 text-center">
@@ -164,8 +164,8 @@ export function OnboardingTutorial({ open, onOpenChange }: OnboardingTutorialPro
                 <p className="text-xs text-muted-foreground">297 x 420mm</p>
               </div>
               <div className="border rounded-lg p-3 text-center">
-                <p className="text-sm font-medium">Custom</p>
-                <p className="text-xs text-muted-foreground">Various sizes</p>
+                <p className="text-sm font-medium">And many more</p>
+                <p className="text-xs text-muted-foreground">Product-specific sizes</p>
               </div>
             </div>
             <p className="text-sm text-muted-foreground">
@@ -183,7 +183,66 @@ export function OnboardingTutorial({ open, onOpenChange }: OnboardingTutorialPro
     },
     {
       id: 4,
-      title: "Step 3: Design Your Layout",
+      title: "Step 3: Upload Your Artwork",
+      description: "Smart file processing with automatic optimization",
+      icon: <Upload className="w-8 h-8 text-green-500" />,
+      content: (
+        <div className="space-y-6">
+          <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+            <h4 className="font-semibold text-green-800 dark:text-green-200 mb-2">Smart File Processing</h4>
+            <p className="text-sm text-green-700 dark:text-green-300">
+              Upload your artwork and our system will automatically detect file types and apply the best processing for optimal print quality.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <h4 className="font-semibold">Supported File Types:</h4>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-500" />
+                  <span className="text-sm"><strong>Vector Files:</strong> SVG, PDF (recommended)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-500" />
+                  <span className="text-sm"><strong>Raster Images:</strong> PNG, JPEG</span>
+                </div>
+                <div className="text-xs text-muted-foreground ml-6">
+                  Up to 200MB per file
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h4 className="font-semibold">Automatic Processing:</h4>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Palette className="w-4 h-4 text-blue-500" />
+                  <span className="text-sm">CMYK color conversion</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Settings className="w-4 h-4 text-purple-500" />
+                  <span className="text-sm">Vector optimization</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Eye className="w-4 h-4 text-orange-500" />
+                  <span className="text-sm">Quality analysis</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+            <p className="text-sm text-amber-800 dark:text-amber-200">
+              💡 <strong>Pro Tip:</strong> Vector files (SVG, PDF) give the best print quality. If you only have a raster image, our vectorization service can convert it for you.
+            </p>
+          </div>
+        </div>
+      )
+    },
+    {
+      id: 5,
+      title: "Step 4: Design Your Layout",
       description: "Interactive canvas with professional tools",
       icon: <Palette className="w-8 h-8 text-purple-500" />,
       content: (
@@ -254,8 +313,8 @@ export function OnboardingTutorial({ open, onOpenChange }: OnboardingTutorialPro
       )
     },
     {
-      id: 5,
-      title: "Step 4: Pre-flight Quality Check",
+      id: 6,
+      title: "Step 5: Pre-flight Quality Check",
       description: "Comprehensive analysis for print-ready files",
       icon: <CheckCircle className="w-8 h-8 text-green-600" />,
       content: (
@@ -343,8 +402,8 @@ export function OnboardingTutorial({ open, onOpenChange }: OnboardingTutorialPro
       )
     },
     {
-      id: 6,
-      title: "Step 5: Generate Production Files",
+      id: 7,
+      title: "Step 6: Generate Production Files",
       description: "Professional PDF output with exact specifications",
       icon: <Download className="w-8 h-8 text-green-500" />,
       content: (
