@@ -22,6 +22,7 @@ import { detectDimensionsFromSVG, validateDimensionAccuracy } from './dimension-
 import { adobeRgbToCmyk } from './adobe-cmyk-profile';
 import { UniversalColorExtractor } from './universal-color-extractor';
 import { setupImpositionRoutes } from './imposition-routes';
+import { manufacturerColors, type ManufacturerColorGroup } from '@shared/garment-colors';
 import { PDFBoundsExtractor } from './pdf-bounds-extractor';
 import { SVGBoundsAnalyzer } from './svg-bounds-analyzer';
 
@@ -873,6 +874,19 @@ export async function registerRoutes(app: express.Application) {
           '#762009': { name: 'Burgundy', cmyk: '26, 100, 88, 27' },
           '#4c0a6a': { name: 'Purple', cmyk: '75, 100, 0, 0' },
         };
+        for (const [brand, colorGroups] of Object.entries(manufacturerColors)) {
+          for (const group of colorGroups) {
+            for (const mc of group.colors) {
+              const hex = mc.hex.toLowerCase();
+              if (!GARMENT_COLOR_MAP[hex]) {
+                GARMENT_COLOR_MAP[hex] = {
+                  name: mc.name,
+                  cmyk: `${mc.cmyk.c}, ${mc.cmyk.m}, ${mc.cmyk.y}, ${mc.cmyk.k}`
+                };
+              }
+            }
+          }
+        }
         const getColorName = (color: string) => {
           const entry = GARMENT_COLOR_MAP[color.toLowerCase()];
           return entry ? entry.name : `Custom (${color})`;

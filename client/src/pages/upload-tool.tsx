@@ -403,7 +403,7 @@ export default function UploadTool() {
         name: currentProject.name,
         templateSize: currentProject.templateSize,
         garmentColor: currentProject.garmentColor,
-        garmentColorName: currentProject.garmentColor, // Use color hex as fallback for name
+        garmentColorName: currentProject.garmentColor ? getGarmentColorName(currentProject.garmentColor) : '',
         garmentColors: currentProject.garmentColors || [],
         inkColor: currentProject.inkColor || '',
         inkColorName: currentProject.inkColor ? getInkColorName(currentProject.inkColor) : '',

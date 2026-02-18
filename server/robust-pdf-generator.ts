@@ -12,6 +12,7 @@ import fs from 'fs';
 import path from 'path';
 import { promisify } from 'util';
 import { exec } from 'child_process';
+import { manufacturerColors } from '@shared/garment-colors';
 
 const execAsync = promisify(exec);
 
@@ -25,59 +26,61 @@ interface ProjectData {
   projectName: string;
   quantity: number;
   comments?: string;
-  useOriginalGarmentPages?: boolean; // Pass-through mode: use customer's original PDF pages 2+ instead of generating garment color pages
+  useOriginalGarmentPages?: boolean;
 }
 
-// Garment color mapping with production CMYK values
-const GARMENT_COLORS = [
-  { name: "White", hex: "#FFFFFF", cmyk: "0, 0, 0, 0" },
-  { name: "Black", hex: "#171816", cmyk: "0, 0, 0, 100" },
-  { name: "Natural Cotton", hex: "#D9D2AB", cmyk: "11, 15, 32, 0" },
-  { name: "Pastel Yellow", hex: "#F3F590", cmyk: "4, 2, 50, 0" },
-  { name: "Yellow", hex: "#F0F42A", cmyk: "5, 0, 90, 0" },
-  { name: "Hi Viz", hex: "#d7da14", cmyk: "20, 0, 100, 0" },
-  { name: "Hi Viz Orange", hex: "#D98F17", cmyk: "0, 51, 93, 0" },
-  { name: "HiViz Green", hex: "#388032", cmyk: "86, 16, 100, 3" },
-  { name: "HIViz Pink", hex: "#BF0072", cmyk: "2, 97, 4, 0" },
-  { name: "Sports Grey", hex: "#767878", cmyk: "0, 0, 0, 63" },
-  { name: "Light Grey Marl", hex: "#919393", cmyk: "0, 0, 0, 50" },
-  { name: "Ash Grey", hex: "#A6A9A2", cmyk: "32, 24, 26, 5" },
-  { name: "Light Grey", hex: "#BCBFBB", cmyk: "25, 18, 20, 2" },
-  { name: "Charcoal Grey", hex: "#353330", cmyk: "66, 57, 54, 60" },
-  { name: "Pastel Blue", hex: "#B9DBEA", cmyk: "32, 0, 5, 0" },
-  { name: "Sky Blue", hex: "#5998D4", cmyk: "70, 15, 0, 0" },
-  { name: "Navy", hex: "#201C3A", cmyk: "100, 92, 36, 39" },
-  { name: "Royal Blue", hex: "#221866", cmyk: "100, 95, 5, 0" },
-  { name: "Pastel Green", hex: "#B5D55E", cmyk: "34, 0, 73, 0" },
-  { name: "Lime Green", hex: "#90BF33", cmyk: "50, 0, 99, 0" },
-  { name: "Kelly Green", hex: "#3C8A35", cmyk: "85, 10, 100, 0" },
-  { name: "Pastel Pink", hex: "#E7BBD0", cmyk: "0, 32, 3, 0" },
-  { name: "Light Pink", hex: "#D287A2", cmyk: "2, 53, 11, 0" },
-  { name: "Fuchsia Pink", hex: "#C42469", cmyk: "0, 94, 20, 0" },
-  { name: "Red", hex: "#C02300", cmyk: "0, 99, 97, 0" },
-  { name: "Burgundy", hex: "#762009", cmyk: "26, 100, 88, 27" },
-  { name: "Purple", hex: "#4C0A6A", cmyk: "75, 100, 0, 0" }
-];
+const GARMENT_COLOR_MAP: Record<string, { name: string; cmyk: string }> = {
+  '#ffffff': { name: 'White', cmyk: '0, 0, 0, 0' },
+  '#171816': { name: 'Black', cmyk: '0, 0, 0, 100' },
+  '#1a1a1a': { name: 'Black', cmyk: '0, 0, 0, 100' },
+  '#d9d2ab': { name: 'Natural Cotton', cmyk: '11, 15, 32, 0' },
+  '#f3f590': { name: 'Pastel Yellow', cmyk: '4, 2, 50, 0' },
+  '#f0f42a': { name: 'Yellow', cmyk: '5, 0, 90, 0' },
+  '#d7da14': { name: 'Hi Viz', cmyk: '20, 0, 100, 0' },
+  '#d98f17': { name: 'Hi Viz Orange', cmyk: '0, 51, 93, 0' },
+  '#388032': { name: 'HiViz Green', cmyk: '86, 16, 100, 3' },
+  '#bf0072': { name: 'HIViz Pink', cmyk: '2, 97, 4, 0' },
+  '#767878': { name: 'Sports Grey', cmyk: '0, 0, 0, 63' },
+  '#919393': { name: 'Light Grey Marl', cmyk: '0, 0, 0, 50' },
+  '#a6a9a2': { name: 'Ash Grey', cmyk: '32, 24, 26, 5' },
+  '#bcbfbb': { name: 'Light Grey', cmyk: '25, 18, 20, 2' },
+  '#353330': { name: 'Charcoal Grey', cmyk: '66, 57, 54, 60' },
+  '#b9dbea': { name: 'Pastel Blue', cmyk: '32, 0, 5, 0' },
+  '#5998d4': { name: 'Sky Blue', cmyk: '70, 15, 0, 0' },
+  '#201c3a': { name: 'Navy', cmyk: '100, 92, 36, 39' },
+  '#221866': { name: 'Royal Blue', cmyk: '100, 95, 5, 0' },
+  '#b5d55e': { name: 'Pastel Green', cmyk: '34, 0, 73, 0' },
+  '#90bf33': { name: 'Lime Green', cmyk: '50, 0, 99, 0' },
+  '#3c8a35': { name: 'Kelly Green', cmyk: '85, 10, 100, 0' },
+  '#e7bbd0': { name: 'Pastel Pink', cmyk: '0, 32, 3, 0' },
+  '#d287a2': { name: 'Light Pink', cmyk: '2, 53, 11, 0' },
+  '#c42469': { name: 'Fuchsia Pink', cmyk: '0, 94, 20, 0' },
+  '#c02300': { name: 'Red', cmyk: '0, 99, 97, 0' },
+  '#762009': { name: 'Burgundy', cmyk: '26, 100, 88, 27' },
+  '#4c0a6a': { name: 'Purple', cmyk: '75, 100, 0, 0' },
+};
+for (const [brand, colorGroups] of Object.entries(manufacturerColors)) {
+  for (const group of colorGroups) {
+    for (const mc of group.colors) {
+      const hex = mc.hex.toLowerCase();
+      if (!GARMENT_COLOR_MAP[hex]) {
+        GARMENT_COLOR_MAP[hex] = {
+          name: mc.name,
+          cmyk: `${mc.cmyk.c}, ${mc.cmyk.m}, ${mc.cmyk.y}, ${mc.cmyk.k}`
+        };
+      }
+    }
+  }
+}
 
 function getGarmentColorName(hex: string): string {
-  const color = GARMENT_COLORS.find(c => c.hex.toLowerCase() === hex.toLowerCase());
-  return color ? color.name : hex;
+  const entry = GARMENT_COLOR_MAP[hex.toLowerCase()];
+  return entry ? entry.name : hex;
 }
 
 function getGarmentColorCmyk(hex: string): string {
-  const color = GARMENT_COLORS.find(c => c.hex.toLowerCase() === hex.toLowerCase());
-  if (color) return color.cmyk;
-  if (!hex || !hex.startsWith('#') || hex.length !== 7) return '';
-  const r = parseInt(hex.slice(1, 3), 16) / 255;
-  const g = parseInt(hex.slice(3, 5), 16) / 255;
-  const b = parseInt(hex.slice(5, 7), 16) / 255;
-  const k = 1 - Math.max(r, g, b);
-  if (k === 1) return '0, 0, 0, 100';
-  const c = Math.round(((1 - r - k) / (1 - k)) * 100);
-  const m = Math.round(((1 - g - k) / (1 - k)) * 100);
-  const y = Math.round(((1 - b - k) / (1 - k)) * 100);
-  const kPct = Math.round(k * 100);
-  return `${c}, ${m}, ${y}, ${kPct}`;
+  const entry = GARMENT_COLOR_MAP[hex.toLowerCase()];
+  return entry ? entry.cmyk : '';
 }
 
 function garmentColorRef(hex: string): string {
