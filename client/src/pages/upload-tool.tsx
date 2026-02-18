@@ -18,7 +18,7 @@ import AddToCartModal from "@/components/add-to-cart-modal";
 import ProgressSteps from "@/components/progress-steps";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Download, RotateCcw, HelpCircle, Palette, GraduationCap, FileText, AlertCircle, Upload, ShoppingCart, Maximize2, Minimize2, PanelLeft, PanelRight, X, Scissors, ClipboardList, RefreshCw, CheckCircle2, Loader2 } from "lucide-react";
+import { Download, RotateCcw, RotateCw, HelpCircle, Palette, GraduationCap, FileText, AlertCircle, AlertTriangle, Upload, ShoppingCart, Maximize2, Minimize2, PanelLeft, PanelRight, X, Scissors, ClipboardList, RefreshCw, CheckCircle2, Loader2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import completeTransfersLogoPath from "@assets/Artboard 1@4x_1753539065182.png";
 import { HelpModal } from "@/components/help-modal";
@@ -88,6 +88,8 @@ export default function UploadTool() {
   const [showPassThroughModal, setShowPassThroughModal] = useState(false);
   const [pendingPassThroughLogo, setPendingPassThroughLogo] = useState<{ logoId: string; pageCount: number; fileName: string } | null>(null);
   const [detectedReorderColors, setDetectedReorderColors] = useState<Array<{color: string; colorName: string; quantity: number}>>([]);
+  const [showOrientationMismatch, setShowOrientationMismatch] = useState(false);
+  const [orientationMismatchInfo, setOrientationMismatchInfo] = useState<{ logoId: string; logoName: string; logoOrientation: string; templateOrientation: string; elementId?: string } | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const autoFullscreen = false;
   const [isInIframe, setIsInIframe] = useState(false);
@@ -1123,6 +1125,19 @@ export default function UploadTool() {
 
 
 
+  const handleOrientationRotate = async () => {
+    if (!orientationMismatchInfo || !currentProject) return;
+    const element = canvasElements.find(el => el.logoId === orientationMismatchInfo.logoId);
+    if (element) {
+      const newRotation = ((element.rotation || 0) + 90) % 360;
+      await apiRequest("PATCH", `/api/canvas-elements/${element.id}`, { rotation: newRotation });
+      queryClient.invalidateQueries({ queryKey: ["/api/projects", currentProject.id, "canvas-elements"] });
+      toast({ title: "Rotated", description: "Artwork rotated 90° to match template orientation." });
+    }
+    setShowOrientationMismatch(false);
+    setOrientationMismatchInfo(null);
+  };
+
   // Helper to get visual bounding box dimensions for a rotated element
   const getVisualBounds = (element: CanvasElement): { visualWidth: number; visualHeight: number } => {
     const rotation = element.rotation || 0;
@@ -1858,6 +1873,39 @@ export default function UploadTool() {
             }
           }
           
+          // Orientation mismatch detection: compare logo aspect ratio vs template
+          if (currentProject?.templateSize) {
+            const template = templateSizes.find(t => t.id === currentProject.templateSize);
+            if (template) {
+              const templateIsLandscape = template.width > template.height;
+              const templateIsSquare = template.width === template.height;
+              
+              if (!templateIsSquare) {
+                for (const logo of newLogos) {
+                  const logoW = logo.width;
+                  const logoH = logo.height;
+                  if (logoW && logoH && logoW !== logoH) {
+                    const logoIsLandscape = logoW > logoH;
+                    if (logoIsLandscape !== templateIsLandscape) {
+                      const logoOrientation = logoIsLandscape ? 'landscape' : 'portrait';
+                      const templateOrientation = templateIsLandscape ? 'landscape' : 'portrait';
+                      console.log(`⚠️ Orientation mismatch: logo is ${logoOrientation}, template is ${templateOrientation}`);
+                      setOrientationMismatchInfo({
+                        logoId: logo.id,
+                        logoName: logo.originalName,
+                        logoOrientation,
+                        templateOrientation,
+                      });
+                      // Brief delay so upload modal closes first
+                      setTimeout(() => setShowOrientationMismatch(true), 800);
+                      break; // Only show for first mismatched logo
+                    }
+                  }
+                }
+              }
+            }
+          }
+          
           // Close upload progress modal after brief delay to show completion
           setTimeout(() => {
             setIsUploading(false);
@@ -2531,6 +2579,55 @@ export default function UploadTool() {
         isAddingToCart={addToCartMutation.isPending}
         isGeneratingPDF={generatePDFMutation.isPending}
       />
+
+      {/* Orientation Mismatch Detection Modal */}
+      {orientationMismatchInfo && (
+        <Dialog open={showOrientationMismatch} onOpenChange={(open) => {
+          if (!open) {
+            setShowOrientationMismatch(false);
+            setOrientationMismatchInfo(null);
+          }
+        }}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-amber-500" />
+                Orientation Mismatch Detected
+              </DialogTitle>
+              <DialogDescription>
+                Your artwork appears to be in <strong>{orientationMismatchInfo.logoOrientation}</strong> orientation, 
+                but the selected template is <strong>{orientationMismatchInfo.templateOrientation}</strong>.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3 py-2">
+              <p className="text-sm text-muted-foreground">
+                Would you like to rotate the artwork 90° to better fit the template?
+              </p>
+              <p className="text-xs text-muted-foreground">
+                You can always rotate manually later using the Rotate 90° button in the properties panel.
+              </p>
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowOrientationMismatch(false);
+                  setOrientationMismatchInfo(null);
+                }}
+              >
+                Keep As-Is
+              </Button>
+              <Button
+                onClick={handleOrientationRotate}
+                className="bg-amber-600 hover:bg-amber-700 text-white"
+              >
+                <RotateCw className="w-4 h-4 mr-2" />
+                Rotate 90°
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
 
       {/* Pass-Through Mode Modal for Multi-Page PDFs */}
       {pendingPassThroughLogo && (
