@@ -180,36 +180,81 @@ class SaleOrderLine(models.Model):
             self.sudo().write({'artwork_comment': "\n".join(comments)})
             _logger.info(f"✅ Updated order line #{self.id} comments to artwork_comment field")
     
+    GARMENT_CMYK_MAP = {
+        '#ffffff': '0, 0, 0, 0',
+        '#171816': '0, 0, 0, 100',
+        '#1a1a1a': '0, 0, 0, 100',
+        '#d9d2ab': '11, 15, 32, 0',
+        '#f3f590': '4, 2, 50, 0',
+        '#f0f42a': '5, 0, 90, 0',
+        '#d7da14': '20, 0, 100, 0',
+        '#d98f17': '0, 51, 93, 0',
+        '#388032': '86, 16, 100, 3',
+        '#bf0072': '2, 97, 4, 0',
+        '#767878': '0, 0, 0, 63',
+        '#919393': '0, 0, 0, 50',
+        '#a6a9a2': '32, 24, 26, 5',
+        '#bcbfbb': '25, 18, 20, 2',
+        '#353330': '66, 57, 54, 60',
+        '#b9dbea': '32, 0, 5, 0',
+        '#5998d4': '70, 15, 0, 0',
+        '#201c3a': '100, 92, 36, 39',
+        '#221866': '100, 95, 5, 0',
+        '#b5d55e': '34, 0, 73, 0',
+        '#90bf33': '50, 0, 99, 0',
+        '#3c8a35': '85, 10, 100, 0',
+        '#e7bbd0': '0, 32, 3, 0',
+        '#d287a2': '2, 53, 11, 0',
+        '#c42469': '0, 94, 20, 0',
+        '#c02300': '0, 99, 97, 0',
+        '#762009': '26, 100, 88, 27',
+        '#4c0a6a': '75, 100, 0, 0',
+    }
+
+    def _get_garment_cmyk(self, hex_color):
+        """Get production CMYK values for a garment color hex"""
+        if not hex_color:
+            return ''
+        return self.GARMENT_CMYK_MAP.get(hex_color.lower(), '')
+
     def _get_garment_colors_text(self, project):
         """
-        Extract and format garment colors text with quantities
-        Returns: "10 Black, 5 Gold, 3 White" format for multi-color orders
+        Extract and format garment colors text with quantities and CMYK values
+        Returns: "10 Black (CMYK: 0, 0, 0, 100)" format for multi-color orders
         """
         colors_text = []
         
-        # Check for multiple colors in JSON field
         if project.garment_colors_json:
             try:
                 import json
                 colors_data = json.loads(project.garment_colors_json)
                 if isinstance(colors_data, list) and len(colors_data) > 0:
-                    # Multi-color format: "quantity colorName"
                     for color_info in colors_data:
                         if isinstance(color_info, dict):
                             quantity = color_info.get('quantity', 1)
                             color_name = color_info.get('colorName', color_info.get('name', 'Unknown'))
-                            colors_text.append(f"{quantity} {color_name}")
+                            color_hex = color_info.get('color', '')
+                            cmyk = self._get_garment_cmyk(color_hex)
+                            if cmyk:
+                                colors_text.append(f"{quantity} {color_name} (CMYK: {cmyk})")
+                            else:
+                                colors_text.append(f"{quantity} {color_name}")
                         elif isinstance(color_info, str):
                             colors_text.append(color_info)
                     return "\n".join(colors_text)
             except (json.JSONDecodeError, TypeError):
                 pass
         
-        # Fallback to single garment color
         if not colors_text and project.garment_color_name:
             quantity = project.total_quantity or project.quantity or 1
+            cmyk = self._get_garment_cmyk(project.garment_color)
+            if cmyk:
+                return f"{quantity} {project.garment_color_name} (CMYK: {cmyk})"
             return f"{quantity} {project.garment_color_name}"
         elif not colors_text and project.garment_color:
+            cmyk = self._get_garment_cmyk(project.garment_color)
+            if cmyk:
+                return f"CMYK: {cmyk}"
             return project.garment_color
         
         return ""

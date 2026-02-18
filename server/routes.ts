@@ -843,22 +843,43 @@ export async function registerRoutes(app: express.Application) {
         console.log(`🎨 DEBUG: Found ${allGarmentColors.length} unique garment colors:`, allGarmentColors);
         
         // Function to get color name
+        const GARMENT_COLOR_MAP: Record<string, { name: string; cmyk: string }> = {
+          '#ffffff': { name: 'White', cmyk: '0, 0, 0, 0' },
+          '#171816': { name: 'Black', cmyk: '0, 0, 0, 100' },
+          '#1a1a1a': { name: 'Black', cmyk: '0, 0, 0, 100' },
+          '#d9d2ab': { name: 'Natural Cotton', cmyk: '11, 15, 32, 0' },
+          '#f3f590': { name: 'Pastel Yellow', cmyk: '4, 2, 50, 0' },
+          '#f0f42a': { name: 'Yellow', cmyk: '5, 0, 90, 0' },
+          '#d7da14': { name: 'Hi Viz', cmyk: '20, 0, 100, 0' },
+          '#d98f17': { name: 'Hi Viz Orange', cmyk: '0, 51, 93, 0' },
+          '#388032': { name: 'HiViz Green', cmyk: '86, 16, 100, 3' },
+          '#bf0072': { name: 'HIViz Pink', cmyk: '2, 97, 4, 0' },
+          '#767878': { name: 'Sports Grey', cmyk: '0, 0, 0, 63' },
+          '#919393': { name: 'Light Grey Marl', cmyk: '0, 0, 0, 50' },
+          '#a6a9a2': { name: 'Ash Grey', cmyk: '32, 24, 26, 5' },
+          '#bcbfbb': { name: 'Light Grey', cmyk: '25, 18, 20, 2' },
+          '#353330': { name: 'Charcoal Grey', cmyk: '66, 57, 54, 60' },
+          '#b9dbea': { name: 'Pastel Blue', cmyk: '32, 0, 5, 0' },
+          '#5998d4': { name: 'Sky Blue', cmyk: '70, 15, 0, 0' },
+          '#201c3a': { name: 'Navy', cmyk: '100, 92, 36, 39' },
+          '#221866': { name: 'Royal Blue', cmyk: '100, 95, 5, 0' },
+          '#b5d55e': { name: 'Pastel Green', cmyk: '34, 0, 73, 0' },
+          '#90bf33': { name: 'Lime Green', cmyk: '50, 0, 99, 0' },
+          '#3c8a35': { name: 'Kelly Green', cmyk: '85, 10, 100, 0' },
+          '#e7bbd0': { name: 'Pastel Pink', cmyk: '0, 32, 3, 0' },
+          '#d287a2': { name: 'Light Pink', cmyk: '2, 53, 11, 0' },
+          '#c42469': { name: 'Fuchsia Pink', cmyk: '0, 94, 20, 0' },
+          '#c02300': { name: 'Red', cmyk: '0, 99, 97, 0' },
+          '#762009': { name: 'Burgundy', cmyk: '26, 100, 88, 27' },
+          '#4c0a6a': { name: 'Purple', cmyk: '75, 100, 0, 0' },
+        };
         const getColorName = (color: string) => {
-          return color === '#FFFFFF' ? 'White' : 
-                 color === '#D98F17' ? 'Hi Viz Orange' : 
-                 color === '#171816' ? 'Black' : 
-                 color === '#1a1a1a' ? 'Black' :
-                 color === '#C02300' ? 'Red' :
-                 color === '#388032' ? 'HiViz Green' :
-                 color === '#FFD700' ? 'Gold' : 
-                 color === '#D9D2AB' ? 'Natural' :
-                 color === '#8B4513' ? 'Brown' :
-                 color === '#4169E1' ? 'Royal Blue' :
-                 color === '#DC143C' ? 'Red' :
-                 color === '#d7da14' ? 'Hi Viz' :
-                 color === '#90BF33' ? 'Lime Green' :
-                 color === '#228B22' ? 'Green' :
-                 color === '#C42469' ? 'Heliconia Pink' : `Custom (${color})`;
+          const entry = GARMENT_COLOR_MAP[color.toLowerCase()];
+          return entry ? entry.name : `Custom (${color})`;
+        };
+        const getColorCmyk = (color: string) => {
+          const entry = GARMENT_COLOR_MAP[color.toLowerCase()];
+          return entry ? entry.cmyk : '';
         };
         
         // Use project garment color as default background, but elements will have individual backgrounds
@@ -1462,7 +1483,9 @@ export async function registerRoutes(app: express.Application) {
           garmentPageInfo.page.drawText(`Project: ${project.name || 'Untitled'}`, { 
             x: 20, y: pageHeight - 40, size: 12, color: textColor 
           });
-          garmentPageInfo.page.drawText(`Garment Color: ${garmentPageInfo.colorName}`, { 
+          const cmykRef = getColorCmyk(garmentPageInfo.color);
+          const garmentLabel = cmykRef ? `Garment Color: ${garmentPageInfo.colorName} (CMYK: ${cmykRef})` : `Garment Color: ${garmentPageInfo.colorName}`;
+          garmentPageInfo.page.drawText(garmentLabel, { 
             x: 20, y: pageHeight - 60, size: 12, color: textColor 
           });
           garmentPageInfo.page.drawText(`Quantity: ${garmentPageInfo.quantity}`, { 

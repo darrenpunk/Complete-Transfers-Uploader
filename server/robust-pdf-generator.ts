@@ -28,40 +28,64 @@ interface ProjectData {
   useOriginalGarmentPages?: boolean; // Pass-through mode: use customer's original PDF pages 2+ instead of generating garment color pages
 }
 
-// Garment color mapping for labels
+// Garment color mapping with production CMYK values
 const GARMENT_COLORS = [
-  { name: "White", hex: "#FFFFFF" },
-  { name: "Black", hex: "#171816" },
-  { name: "Natural Cotton", hex: "#D9D2AB" },
-  { name: "Pastel Yellow", hex: "#F3F590" },
-  { name: "Yellow", hex: "#F0F42A" },
-  { name: "Hi Viz", hex: "#d7da14" },
-  { name: "Hi Viz Orange", hex: "#D98F17" },
-  { name: "HiViz Green", hex: "#388032" },
-  { name: "HIViz Pink", hex: "#BF0072" },
-  { name: "Sports Grey", hex: "#767878" },
-  { name: "Light Grey Marl", hex: "#919393" },
-  { name: "Ash Grey", hex: "#A6A9A2" },
-  { name: "Light Grey", hex: "#BCBFBB" },
-  { name: "Charcoal Grey", hex: "#353330" },
-  { name: "Pastel Blue", hex: "#B9DBEA" },
-  { name: "Sky Blue", hex: "#5998D4" },
-  { name: "Navy", hex: "#201C3A" },
-  { name: "Royal Blue", hex: "#221866" },
-  { name: "Pastel Green", hex: "#B5D55E" },
-  { name: "Lime Green", hex: "#90BF33" },
-  { name: "Kelly Green", hex: "#3C8A35" },
-  { name: "Pastel Pink", hex: "#E7BBD0" },
-  { name: "Light Pink", hex: "#D287A2" },
-  { name: "Fuchsia Pink", hex: "#C42469" },
-  { name: "Red", hex: "#C02300" },
-  { name: "Burgundy", hex: "#762009" },
-  { name: "Purple", hex: "#4C0A6A" }
+  { name: "White", hex: "#FFFFFF", cmyk: "0, 0, 0, 0" },
+  { name: "Black", hex: "#171816", cmyk: "0, 0, 0, 100" },
+  { name: "Natural Cotton", hex: "#D9D2AB", cmyk: "11, 15, 32, 0" },
+  { name: "Pastel Yellow", hex: "#F3F590", cmyk: "4, 2, 50, 0" },
+  { name: "Yellow", hex: "#F0F42A", cmyk: "5, 0, 90, 0" },
+  { name: "Hi Viz", hex: "#d7da14", cmyk: "20, 0, 100, 0" },
+  { name: "Hi Viz Orange", hex: "#D98F17", cmyk: "0, 51, 93, 0" },
+  { name: "HiViz Green", hex: "#388032", cmyk: "86, 16, 100, 3" },
+  { name: "HIViz Pink", hex: "#BF0072", cmyk: "2, 97, 4, 0" },
+  { name: "Sports Grey", hex: "#767878", cmyk: "0, 0, 0, 63" },
+  { name: "Light Grey Marl", hex: "#919393", cmyk: "0, 0, 0, 50" },
+  { name: "Ash Grey", hex: "#A6A9A2", cmyk: "32, 24, 26, 5" },
+  { name: "Light Grey", hex: "#BCBFBB", cmyk: "25, 18, 20, 2" },
+  { name: "Charcoal Grey", hex: "#353330", cmyk: "66, 57, 54, 60" },
+  { name: "Pastel Blue", hex: "#B9DBEA", cmyk: "32, 0, 5, 0" },
+  { name: "Sky Blue", hex: "#5998D4", cmyk: "70, 15, 0, 0" },
+  { name: "Navy", hex: "#201C3A", cmyk: "100, 92, 36, 39" },
+  { name: "Royal Blue", hex: "#221866", cmyk: "100, 95, 5, 0" },
+  { name: "Pastel Green", hex: "#B5D55E", cmyk: "34, 0, 73, 0" },
+  { name: "Lime Green", hex: "#90BF33", cmyk: "50, 0, 99, 0" },
+  { name: "Kelly Green", hex: "#3C8A35", cmyk: "85, 10, 100, 0" },
+  { name: "Pastel Pink", hex: "#E7BBD0", cmyk: "0, 32, 3, 0" },
+  { name: "Light Pink", hex: "#D287A2", cmyk: "2, 53, 11, 0" },
+  { name: "Fuchsia Pink", hex: "#C42469", cmyk: "0, 94, 20, 0" },
+  { name: "Red", hex: "#C02300", cmyk: "0, 99, 97, 0" },
+  { name: "Burgundy", hex: "#762009", cmyk: "26, 100, 88, 27" },
+  { name: "Purple", hex: "#4C0A6A", cmyk: "75, 100, 0, 0" }
 ];
 
 function getGarmentColorName(hex: string): string {
   const color = GARMENT_COLORS.find(c => c.hex.toLowerCase() === hex.toLowerCase());
-  return color ? color.name : hex; // Fallback to hex if name not found
+  return color ? color.name : hex;
+}
+
+function getGarmentColorCmyk(hex: string): string {
+  const color = GARMENT_COLORS.find(c => c.hex.toLowerCase() === hex.toLowerCase());
+  if (color) return color.cmyk;
+  if (!hex || !hex.startsWith('#') || hex.length !== 7) return '';
+  const r = parseInt(hex.slice(1, 3), 16) / 255;
+  const g = parseInt(hex.slice(3, 5), 16) / 255;
+  const b = parseInt(hex.slice(5, 7), 16) / 255;
+  const k = 1 - Math.max(r, g, b);
+  if (k === 1) return '0, 0, 0, 100';
+  const c = Math.round(((1 - r - k) / (1 - k)) * 100);
+  const m = Math.round(((1 - g - k) / (1 - k)) * 100);
+  const y = Math.round(((1 - b - k) / (1 - k)) * 100);
+  const kPct = Math.round(k * 100);
+  return `${c}, ${m}, ${y}, ${kPct}`;
+}
+
+function garmentColorRef(hex: string): string {
+  const name = getGarmentColorName(hex);
+  const cmyk = getGarmentColorCmyk(hex);
+  if (name !== hex && cmyk) return `${name} (CMYK: ${cmyk})`;
+  if (cmyk) return `CMYK: ${cmyk}`;
+  return name;
 }
 
 export class RobustPDFGenerator {
@@ -155,7 +179,7 @@ ${this.getProjectLabelsPS(data, templateWidthPts)}
    */
   private getProjectLabelsPS(data: ProjectData, width: number): string {
     const labelText = `Project: ${data.projectName} | Quantity: ${data.quantity}`;
-    const garmentText = data.garmentColor ? `Garment Color: ${data.garmentColor}` : '';
+    const garmentText = data.garmentColor ? `Garment Color: ${garmentColorRef(data.garmentColor)}` : '';
     
     return `/Helvetica findfont 12 scalefont setfont
 0 0 0 setrgbcolor
@@ -703,7 +727,7 @@ grestore`;
       });
       
       const labelText = `Project: ${data.projectName}`;
-      const colorText = `Garment Color: ${gcPage.colorName} (${gcPage.color})   Quantity: ${gcPage.quantity}`;
+      const colorText = `Garment Color: ${gcPage.colorName} (CMYK: ${getGarmentColorCmyk(gcPage.color)})   Quantity: ${gcPage.quantity}`;
       
       gcPage.page.drawText(labelText, {
         x: 20,
@@ -1810,7 +1834,7 @@ grestore`;
   private async addProjectLabels(page: any, data: ProjectData): Promise<void> {
     try {
       const labelText = `Project: ${data.projectName} | Quantity: ${data.quantity}`;
-      const garmentText = data.garmentColor ? `Garment Color: ${data.garmentColor}` : '';
+      const garmentText = data.garmentColor ? `Garment Color: ${garmentColorRef(data.garmentColor)}` : '';
       
       const { rgb } = await import('pdf-lib');
       

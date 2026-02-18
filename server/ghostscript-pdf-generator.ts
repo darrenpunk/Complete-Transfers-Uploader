@@ -26,40 +26,45 @@ interface ProjectData {
   comments?: string;
 }
 
-// Garment color mapping
+// Garment color mapping with production CMYK values
 const GARMENT_COLORS = [
-  { name: "White", hex: "#FFFFFF" },
-  { name: "Black", hex: "#171816" },
-  { name: "Natural Cotton", hex: "#D9D2AB" },
-  { name: "Pastel Yellow", hex: "#F3F590" },
-  { name: "Yellow", hex: "#F0F42A" },
-  { name: "Hi Viz", hex: "#d7da14" },
-  { name: "Hi Viz Orange", hex: "#D98F17" },
-  { name: "HiViz Green", hex: "#388032" },
-  { name: "HIViz Pink", hex: "#BF0072" },
-  { name: "Sports Grey", hex: "#767878" },
-  { name: "Light Grey Marl", hex: "#919393" },
-  { name: "Ash Grey", hex: "#A6A9A2" },
-  { name: "Light Grey", hex: "#BCBFBB" },
-  { name: "Charcoal Grey", hex: "#353330" },
-  { name: "Pastel Blue", hex: "#B9DBEA" },
-  { name: "Sky Blue", hex: "#5998D4" },
-  { name: "Navy", hex: "#201C3A" },
-  { name: "Royal Blue", hex: "#221866" },
-  { name: "Pastel Green", hex: "#B5D55E" },
-  { name: "Lime Green", hex: "#90BF33" },
-  { name: "Kelly Green", hex: "#3C8A35" },
-  { name: "Pastel Pink", hex: "#E7BBD0" },
-  { name: "Light Pink", hex: "#D287A2" },
-  { name: "Fuchsia Pink", hex: "#C42469" },
-  { name: "Red", hex: "#C02300" },
-  { name: "Burgundy", hex: "#762009" },
-  { name: "Purple", hex: "#4C0A6A" }
+  { name: "White", hex: "#FFFFFF", cmyk: "0, 0, 0, 0" },
+  { name: "Black", hex: "#171816", cmyk: "0, 0, 0, 100" },
+  { name: "Natural Cotton", hex: "#D9D2AB", cmyk: "11, 15, 32, 0" },
+  { name: "Pastel Yellow", hex: "#F3F590", cmyk: "4, 2, 50, 0" },
+  { name: "Yellow", hex: "#F0F42A", cmyk: "5, 0, 90, 0" },
+  { name: "Hi Viz", hex: "#d7da14", cmyk: "20, 0, 100, 0" },
+  { name: "Hi Viz Orange", hex: "#D98F17", cmyk: "0, 51, 93, 0" },
+  { name: "HiViz Green", hex: "#388032", cmyk: "86, 16, 100, 3" },
+  { name: "HIViz Pink", hex: "#BF0072", cmyk: "2, 97, 4, 0" },
+  { name: "Sports Grey", hex: "#767878", cmyk: "0, 0, 0, 63" },
+  { name: "Light Grey Marl", hex: "#919393", cmyk: "0, 0, 0, 50" },
+  { name: "Ash Grey", hex: "#A6A9A2", cmyk: "32, 24, 26, 5" },
+  { name: "Light Grey", hex: "#BCBFBB", cmyk: "25, 18, 20, 2" },
+  { name: "Charcoal Grey", hex: "#353330", cmyk: "66, 57, 54, 60" },
+  { name: "Pastel Blue", hex: "#B9DBEA", cmyk: "32, 0, 5, 0" },
+  { name: "Sky Blue", hex: "#5998D4", cmyk: "70, 15, 0, 0" },
+  { name: "Navy", hex: "#201C3A", cmyk: "100, 92, 36, 39" },
+  { name: "Royal Blue", hex: "#221866", cmyk: "100, 95, 5, 0" },
+  { name: "Pastel Green", hex: "#B5D55E", cmyk: "34, 0, 73, 0" },
+  { name: "Lime Green", hex: "#90BF33", cmyk: "50, 0, 99, 0" },
+  { name: "Kelly Green", hex: "#3C8A35", cmyk: "85, 10, 100, 0" },
+  { name: "Pastel Pink", hex: "#E7BBD0", cmyk: "0, 32, 3, 0" },
+  { name: "Light Pink", hex: "#D287A2", cmyk: "2, 53, 11, 0" },
+  { name: "Fuchsia Pink", hex: "#C42469", cmyk: "0, 94, 20, 0" },
+  { name: "Red", hex: "#C02300", cmyk: "0, 99, 97, 0" },
+  { name: "Burgundy", hex: "#762009", cmyk: "26, 100, 88, 27" },
+  { name: "Purple", hex: "#4C0A6A", cmyk: "75, 100, 0, 0" }
 ];
 
 function getGarmentColorName(hex: string): string {
   const color = GARMENT_COLORS.find(c => c.hex.toLowerCase() === hex.toLowerCase());
   return color ? color.name : hex;
+}
+
+function getGarmentColorCmyk(hex: string): string {
+  const color = GARMENT_COLORS.find(c => c.hex.toLowerCase() === hex.toLowerCase());
+  return color ? color.cmyk : '';
 }
 
 export class GhostscriptPDFGenerator {
@@ -245,7 +250,7 @@ ${xPts} ${yPts} ${widthPts} ${heightPts} rectfill
 0 0 0 setrgbcolor
 /Helvetica findfont 8 scalefont setfont
 ${xPts + 5} ${yPts + heightPts + 5} moveto
-(${garmentName}) show
+(${garmentName}${getGarmentColorCmyk(garmentColor) ? ` (CMYK: ${getGarmentColorCmyk(garmentColor)})` : ''}) show
 `;
     }
     
