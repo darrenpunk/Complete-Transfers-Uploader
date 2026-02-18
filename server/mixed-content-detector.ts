@@ -41,6 +41,27 @@ export class MixedContentDetector {
     };
 
     try {
+      // Pre-check: Detect if this is a previously generated production PDF (reorder/reupload)
+      // These multi-page PDFs contain garment color pages with footer text like "Project:", "Garment Color:", "Quantity:"
+      // They should always be treated as vector content to avoid false raster detection
+      try {
+        const { stdout: fullText } = await execAsync(`pdftotext -q "${pdfPath}" - 2>/dev/null || true`);
+        const hasProjectFooter = /Project:/i.test(fullText);
+        const hasGarmentFooter = /Garment\s*Colou?r:/i.test(fullText);
+        const hasQuantityFooter = /Quantity:\s*\d+/i.test(fullText);
+        
+        if (hasProjectFooter && hasGarmentFooter && hasQuantityFooter) {
+          console.log('✅ Production PDF detected (contains Project/Garment Color/Quantity footers) - treating as vector pass-through');
+          analysis.hasVectorContent = true;
+          analysis.vectorElements.types.push('production-pdf', 'text', 'paths');
+          analysis.vectorElements.count = 1;
+          analysis.recommendation = 'vector-workflow';
+          return analysis;
+        }
+      } catch (preCheckError) {
+        console.log('⚠️ Production PDF pre-check failed, continuing with standard analysis');
+      }
+
       // Method 1: Use pdfimages to detect raster images
       try {
         const { stdout } = await execAsync(`pdfimages -list "${pdfPath}" 2>/dev/null || true`);
