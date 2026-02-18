@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Lock, Users, Activity, BarChart3, RefreshCw, Search, X } from "lucide-react";
+import { Lock, Users, Activity, BarChart3, RefreshCw, Search, X, Upload, ShoppingCart } from "lucide-react";
 
 function getAdminToken(): string | null {
   try { return sessionStorage.getItem("admin_token"); } catch { return null; }
@@ -193,7 +193,7 @@ function Dashboard() {
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium flex items-center gap-2">
@@ -230,6 +230,32 @@ function Dashboard() {
             <CardContent>
               <div className="text-3xl font-bold">{statsData?.summary?.uniqueUsers ?? 0}</div>
               <p className="text-xs text-muted-foreground">With email</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <Upload className="h-4 w-4" />
+                Total Uploads
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">{eventsData?.events?.filter((e: any) => e.eventType === 'upload').length ?? 0}</div>
+              <p className="text-xs text-muted-foreground">Files uploaded</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <ShoppingCart className="h-4 w-4" />
+                Total Add to Cart
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">{eventsData?.events?.filter((e: any) => e.eventType === 'add_to_cart').length ?? 0}</div>
+              <p className="text-xs text-muted-foreground">Orders added</p>
             </CardContent>
           </Card>
         </div>
