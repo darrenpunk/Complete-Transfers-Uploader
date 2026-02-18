@@ -149,12 +149,11 @@ export default function SvgInlineRenderer({
       try {
         setIsLoading(true);
         
-        // Determine which URL to fetch
         let url: string;
-        if (element.colorOverrides && Object.keys(element.colorOverrides).length > 0) {
-          url = `/api/canvas-elements/${element.id}/modified-svg?t=${Date.now()}`;
-        } else if (shouldRecolorForInk && project.inkColor) {
+        if (shouldRecolorForInk && project.inkColor) {
           url = `/uploads/${logo.filename}?inkColor=${encodeURIComponent(project.inkColor)}&recolor=true&t=${Date.now()}`;
+        } else if (element.colorOverrides && Object.keys(element.colorOverrides).length > 0) {
+          url = `/api/canvas-elements/${element.id}/modified-svg?t=${Date.now()}`;
         } else {
           url = `/uploads/${logo.filename}`;
         }

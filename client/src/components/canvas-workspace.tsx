@@ -2968,17 +2968,13 @@ export default function CanvasWorkspace({
                         // For non-SVG files (PNG, JPEG), use regular img element
                         <img
                           src={(() => {
-                            // Priority 1: Color overrides exist - use modified SVG endpoint
+                            if (shouldRecolorForInk && project.inkColor) {
+                              return `/uploads/${logo.filename}?inkColor=${encodeURIComponent(project.inkColor)}&recolor=true&t=${Date.now()}`;
+                            }
                             if (element.colorOverrides && Object.keys(element.colorOverrides).length > 0) {
                               return `/api/canvas-elements/${element.id}/modified-svg?t=${Date.now()}`;
                             }
-                            // Priority 2: Single Colour Transfer with ink color selected
-                            if (shouldRecolorForInk) {
-                              return `/uploads/${logo.filename}?inkColor=${encodeURIComponent(project.inkColor || '')}&recolor=true&t=${Date.now()}`;
-                            }
-                            // Priority 3: Original image
                             const url = getImageUrl(logo);
-                            console.log('🖼️ Using image URL:', url, 'for logo:', logo.filename, logo.mimeType);
                             return url;
                           })()}
                           alt={logo.originalName}

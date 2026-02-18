@@ -678,12 +678,11 @@ class ArtworkUploaderController(http.Controller):
             # Each order has unique artwork, so lines must never be merged together
             _logger.info(f"🛒 Creating separate order line (preventing merge)")
             
-            # Get the correct unit price from the pricelist using actual quantity
             order_qty = project.quantity or 1
             product_price = sale_order.pricelist_id._get_product_price(
-                product, order_qty, partner
+                product, order_qty, partner=partner, date=False, uom=product.uom_id
             )
-            _logger.info(f"💰 Product price from pricelist: {product_price} (qty: {order_qty})")
+            _logger.info(f"💰 Product price from pricelist: {product_price} (qty: {order_qty}, pricelist: {sale_order.pricelist_id.name})")
             
             # Build line description with artwork filename for identification
             artwork_name = data.get('artworkFilename', '') or project.name or ''
