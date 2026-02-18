@@ -1,7 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { createServer } from "http";
 import { registerRoutes } from "./routes";
-import { setupVite, log } from "./vite";
+import { setupVite, serveStatic, log } from "./vite";
 import dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
@@ -101,17 +101,17 @@ const port = parseInt(process.env.PORT || '5000', 10);
 const isProduction = process.env.NODE_ENV === 'production';
 
 async function main() {
-  if (isProduction) {
-    const distPath = path.resolve(__dirname, "public");
-    if (fs.existsSync(distPath)) {
-      app.use(express.static(distPath));
-      console.log('[SERVER] Static asset serving configured');
-    }
-  }
+  const startTime = Date.now();
+  console.log(`[SERVER] Starting in ${isProduction ? 'production' : 'development'} mode...`);
 
-  console.log('[SERVER] Starting route registration...');
-  await registerRoutes(app);
-  console.log('[SERVER] Routes registered successfully');
+  try {
+    console.log('[SERVER] Starting route registration...');
+    await registerRoutes(app);
+    console.log(`[SERVER] Routes registered in ${Date.now() - startTime}ms`);
+  } catch (error) {
+    console.error('[SERVER] Route registration failed:', error);
+    throw error;
+  }
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
@@ -121,12 +121,15 @@ async function main() {
   });
 
   if (isProduction) {
-    const distPath = path.resolve(__dirname, "public");
-    if (fs.existsSync(distPath)) {
+    console.log('[SERVER] Configuring production static serving...');
+    try {
+      serveStatic(app);
+      console.log('[SERVER] Production static serving configured');
+    } catch (error) {
+      console.error('[SERVER] Static serving setup failed:', error);
       app.use("*", (_req, res) => {
-        res.sendFile(path.resolve(distPath, "index.html"));
+        res.status(503).json({ error: 'Application is starting up' });
       });
-      console.log('[SERVER] SPA catch-all configured');
     }
   } else {
     console.log('[SERVER] Setting up Vite for development...');
@@ -135,8 +138,9 @@ async function main() {
   }
 
   server.listen(port, "0.0.0.0", () => {
+    const elapsed = Date.now() - startTime;
     log(`serving on port ${port}`);
-    console.log('[SERVER] Server fully initialized');
+    console.log(`[SERVER] Server fully initialized in ${elapsed}ms`);
   });
 }
 
