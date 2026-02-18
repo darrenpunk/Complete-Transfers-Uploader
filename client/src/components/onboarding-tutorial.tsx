@@ -469,8 +469,8 @@ export function OnboardingTutorial({ open, onOpenChange }: OnboardingTutorialPro
             <CardContent className="pt-6">
               <h4 className="font-semibold mb-2">Ready for Production</h4>
               <p className="text-sm text-muted-foreground">
-                Your PDF files are now ready to be sent to production or attached to your order. 
-                Each file includes all necessary specifications for accurate printing and meets industry standards for professional transfer production.
+                Your production-ready PDF files are now ready to add to the web cart for payment. 
+                Simply click "Add to Cart" and your artwork will be attached to your order with all the correct specifications, garment colours, and quantities included.
               </p>
             </CardContent>
           </Card>
