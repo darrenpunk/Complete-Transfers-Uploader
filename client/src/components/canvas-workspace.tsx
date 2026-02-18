@@ -1811,14 +1811,18 @@ export default function CanvasWorkspace({
     
     console.log(`🎯 ${isDTFTemplate ? 'DTF' : 'Standard'} template fit-to-bounds: ${safeWidth}×${safeHeight}mm usable area (${safetyMarginMm}mm margins)`);
     
-    // Find the bounding box of all elements
+    // Find the bounding box of all elements, accounting for rotation
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
     
     canvasElements.forEach(element => {
+      const isRotated = element.rotation === 90 || element.rotation === 270;
+      const visualWidth = isRotated ? element.height : element.width;
+      const visualHeight = isRotated ? element.width : element.height;
+      
       minX = Math.min(minX, element.x);
       minY = Math.min(minY, element.y);
-      maxX = Math.max(maxX, element.x + element.width);
-      maxY = Math.max(maxY, element.y + element.height);
+      maxX = Math.max(maxX, element.x + visualWidth);
+      maxY = Math.max(maxY, element.y + visualHeight);
     });
     
     const contentWidth = maxX - minX;
@@ -1836,21 +1840,23 @@ export default function CanvasWorkspace({
       
       // Scale and reposition all elements
       canvasElements.forEach(element => {
+        const isRotated = element.rotation === 90 || element.rotation === 270;
+        const visualWidth = isRotated ? element.height : element.width;
+        const visualHeight = isRotated ? element.width : element.height;
         const relativeX = element.x - minX;
         const relativeY = element.y - minY;
         
-        const newWidth = Math.round(element.width * scaleFactor);
-        const newHeight = Math.round(element.height * scaleFactor);
+        const newVisualWidth = Math.round(visualWidth * scaleFactor);
+        const newVisualHeight = Math.round(visualHeight * scaleFactor);
+        const newWidth = isRotated ? newVisualHeight : newVisualWidth;
+        const newHeight = isRotated ? newVisualWidth : newVisualHeight;
         
         let newX, newY;
         if (isDTFTemplate) {
-          // DTF: Center horizontally, position higher for better visibility
           const scaledContentWidth = contentWidth * scaleFactor;
-          const scaledContentHeight = contentHeight * scaleFactor;
           newX = Math.round((template.width - scaledContentWidth) / 2 + (relativeX * scaleFactor));
           newY = Math.round(safetyMarginMm + (relativeY * scaleFactor));
         } else {
-          // Standard templates: existing behavior
           newX = Math.round(safetyMarginMm + (relativeX * scaleFactor));
           newY = Math.round(safetyMarginMm + (relativeY * scaleFactor));
         }
@@ -1867,12 +1873,10 @@ export default function CanvasWorkspace({
       let centerOffsetX, centerOffsetY;
       
       if (isDTFTemplate) {
-        // DTF: Center horizontally, position closer to top
         centerOffsetX = (template.width - contentWidth) / 2;
-        centerOffsetY = safetyMarginMm + (safeHeight - contentHeight) / 4; // 25% from top of safe area
+        centerOffsetY = safetyMarginMm + (safeHeight - contentHeight) / 4;
         console.log('🎯 DTF template: Centering horizontally, positioning towards top');
       } else {
-        // Standard templates: existing behavior
         centerOffsetX = (safeWidth - contentWidth) / 2 + safetyMarginMm;
         centerOffsetY = (safeHeight - contentHeight) / 2 + safetyMarginMm;
         console.log('🎯 Standard template: Centering content within safety margins');
