@@ -1200,19 +1200,34 @@ grestore`;
                 console.log(`📄 Page dimensions match template but content is small - will use content bounds and apply rotation normally`);
               }
             }
-            // ELEMENT-MATCHES-PAGE CHECK: If the canvas element dimensions match the original
+            // ELEMENT-MATCHES-PAGE CHECK: If the canvas element dimensions are close to the original
             // PDF page dimensions, the element was sized from the full page (not just content).
             // In this case, skip cropping and use the original PDF directly to prevent distortion.
+            // Uses generous tolerance (50pts ≈ 17.6mm) because Inkscape bounds extraction may
+            // produce slightly different dimensions than the raw PDF page size.
             if (!logoPdfPath) {
               const elementWPts = element.width * MM_TO_PTS_CHECK;
               const elementHPts = element.height * MM_TO_PTS_CHECK;
-              const elementMatchesPageDirect = Math.abs(elementWPts - origPageSize.width) < 15 && 
-                                               Math.abs(elementHPts - origPageSize.height) < 15;
-              const elementMatchesPageSwapped = Math.abs(elementWPts - origPageSize.height) < 15 && 
-                                                Math.abs(elementHPts - origPageSize.width) < 15;
+              const elementMatchesPageDirect = Math.abs(elementWPts - origPageSize.width) < 50 && 
+                                               Math.abs(elementHPts - origPageSize.height) < 50;
+              const elementMatchesPageSwapped = Math.abs(elementWPts - origPageSize.height) < 50 && 
+                                                Math.abs(elementHPts - origPageSize.width) < 50;
               if (elementMatchesPageDirect || elementMatchesPageSwapped) {
                 console.log(`📄 ELEMENT MATCHES PDF PAGE: Element ${element.width.toFixed(1)}×${element.height.toFixed(1)}mm ≈ PDF page ${(origPageSize.width/MM_TO_PTS_CHECK).toFixed(1)}×${(origPageSize.height/MM_TO_PTS_CHECK).toFixed(1)}mm`);
                 console.log(`📄 Using original PDF without cropping to prevent content distortion`);
+                logoPdfPath = originalPdfPath;
+              }
+            }
+            // ELEMENT-LARGER-THAN-CONTENT CHECK: If the canvas element is significantly wider
+            // than the Ghostscript content bounds, it means the element was sized from the full
+            // SVG/page (including white elements GS can't detect). Using content bounds would
+            // cause stretching/distortion. Use original PDF to preserve correct proportions.
+            if (!logoPdfPath) {
+              const elementWPts = element.width * MM_TO_PTS_CHECK;
+              const contentToElementRatio = contentWidthPts / elementWPts;
+              if (contentToElementRatio < 0.5) {
+                console.log(`📄 ELEMENT MUCH WIDER THAN GS CONTENT: Element ${element.width.toFixed(1)}mm vs GS content ${(contentWidthPts/MM_TO_PTS_CHECK).toFixed(1)}mm (ratio ${(contentToElementRatio * 100).toFixed(1)}%)`);
+                console.log(`📄 GS bbox likely missed white elements - using original PDF to prevent distortion`);
                 logoPdfPath = originalPdfPath;
               }
             }

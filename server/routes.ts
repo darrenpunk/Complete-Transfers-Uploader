@@ -1289,34 +1289,6 @@ export async function registerRoutes(app: express.Application) {
               // Load and embed PDF artwork
               const vectorDoc = await PDFDocument.load(vectorBytes!);
               [embeddedPage] = await pdfDoc.embedPdf(vectorDoc);
-              
-              // CRITICAL: When using original PDF, preserve aspect ratio
-              // The original PDF page may have different proportions than the canvas element
-              if (useOriginalPdf && embeddedPage) {
-                const pdfPage = vectorDoc.getPage(0);
-                const pdfPageWidth = pdfPage.getWidth();
-                const pdfPageHeight = pdfPage.getHeight();
-                const pdfAspect = pdfPageWidth / pdfPageHeight;
-                const elementAspect = widthPts / heightPts;
-                
-                console.log(`📄 Original PDF page: ${pdfPageWidth.toFixed(1)}×${pdfPageHeight.toFixed(1)}pts, aspect: ${pdfAspect.toFixed(3)}`);
-                console.log(`📄 Element bounds: ${widthPts.toFixed(1)}×${heightPts.toFixed(1)}pts, aspect: ${elementAspect.toFixed(3)}`);
-                
-                if (Math.abs(pdfAspect - elementAspect) > 0.01) {
-                  let adjW = widthPts;
-                  let adjH = heightPts;
-                  
-                  if (pdfAspect > elementAspect) {
-                    adjH = widthPts / pdfAspect;
-                  } else {
-                    adjW = heightPts * pdfAspect;
-                  }
-                  
-                  console.log(`📐 Adjusted PDF embedding to preserve aspect: ${adjW.toFixed(1)}×${adjH.toFixed(1)}pts`);
-                  (element as any).adjustedWidthPts = adjW;
-                  (element as any).adjustedHeightPts = adjH;
-                }
-              }
             }
             
             // The PDF is now cropped to content bounds, so when we scale it to canvas dimensions
@@ -1366,14 +1338,7 @@ export async function registerRoutes(app: express.Application) {
                   height: adjustedHeightPts
                 });
               } else if (embeddedPage) {
-                // Use adjusted dimensions for embedded PDF pages to preserve aspect ratio
-                targetPage.drawPage(embeddedPage, {
-                  ...options,
-                  x: options.x + xOffset,
-                  y: options.y + yOffset,
-                  width: adjustedWidthPts,
-                  height: adjustedHeightPts
-                });
+                targetPage.drawPage(embeddedPage, options);
               }
             };
             
