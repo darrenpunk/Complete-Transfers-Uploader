@@ -69,51 +69,41 @@ export function OnboardingTutorial({ open, onOpenChange }: OnboardingTutorialPro
     },
     {
       id: 2,
-      title: "Step 1: Choose Your Template",
-      description: "Select the right template for your transfer type",
+      title: "Step 1: Product Selection",
+      description: "Choose your transfer product to get started",
       icon: <Settings className="w-8 h-8 text-blue-500" />,
       content: (
         <div className="space-y-6">
           <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-            <h4 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">Template Selection</h4>
+            <h4 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">Product Selection</h4>
             <p className="text-sm text-blue-700 dark:text-blue-300">
-              Templates determine your final output size, pricing, and printing method. Choose based on your project needs.
+              Start by selecting the transfer product you need. Your selection determines available sizes, pricing, and printing method.
             </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Full Colour Transfers</CardTitle>
-                <CardDescription>Multi-color designs with photo-realistic printing</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <Badge variant="secondary">A3, A4, A5 sizes</Badge>
-                  <Badge variant="secondary">Minimum 10 copies</Badge>
-                  <p className="text-sm text-muted-foreground">Perfect for logos, photographs, and complex designs</p>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">DTF Transfers</CardTitle>
-                <CardDescription>Direct-to-Film transfers for any fabric</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <Badge variant="secondary">Various sizes</Badge>
-                  <Badge variant="secondary">Minimum 1 copy</Badge>
-                  <p className="text-sm text-muted-foreground">Flexible application on cotton, polyester, blends</p>
-                </div>
-              </CardContent>
-            </Card>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Browse our range of transfer products including screen print transfers, DTF transfers, vinyl transfers, applique badges, and more. Each product category offers different capabilities suited to your project needs.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="border rounded-lg p-3 text-center">
+                <p className="text-sm font-medium">Screen Print Transfers</p>
+                <p className="text-xs text-muted-foreground">Professional quality for bulk orders</p>
+              </div>
+              <div className="border rounded-lg p-3 text-center">
+                <p className="text-sm font-medium">DTF Transfers</p>
+                <p className="text-xs text-muted-foreground">Flexible for any fabric type</p>
+              </div>
+              <div className="border rounded-lg p-3 text-center">
+                <p className="text-sm font-medium">Applique Badges</p>
+                <p className="text-xs text-muted-foreground">Embroidered and woven options</p>
+              </div>
+            </div>
           </div>
           
           <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
             <p className="text-sm text-amber-800 dark:text-amber-200">
-              💡 <strong>Pro Tip:</strong> Template selection affects pricing and minimum quantities. DTF transfers offer lower minimums but Full Colour transfers provide the best quality for detailed designs.
+              💡 <strong>Pro Tip:</strong> Each product has different minimum quantities and pricing. Select the product that best fits your project requirements.
             </p>
           </div>
         </div>
@@ -121,68 +111,48 @@ export function OnboardingTutorial({ open, onOpenChange }: OnboardingTutorialPro
     },
     {
       id: 3,
-      title: "Step 2: Upload Your Artwork",
-      description: "Smart file processing with automatic optimization",
+      title: "Step 2: Transfer Size",
+      description: "Select the right size for your transfer",
       icon: <Upload className="w-8 h-8 text-green-500" />,
       content: (
         <div className="space-y-6">
           <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
-            <h4 className="font-semibold text-green-800 dark:text-green-200 mb-2">Smart File Processing</h4>
+            <h4 className="font-semibold text-green-800 dark:text-green-200 mb-2">Template Selection</h4>
             <p className="text-sm text-green-700 dark:text-green-300">
-              Our system automatically detects file types and applies the best processing workflow for optimal print quality.
+              Choose from a wide range of transfer sizes. The available sizes depend on the product you selected in the previous step.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <h4 className="font-semibold">Supported File Types:</h4>
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span className="text-sm"><strong>Vector Files:</strong> SVG, PDF (recommended)</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span className="text-sm"><strong>Raster Images:</strong> PNG, JPEG</span>
-                </div>
-                <div className="text-xs text-muted-foreground ml-6">
-                  Up to 200MB per file
-                </div>
+          <div className="space-y-4">
+            <h4 className="font-semibold">Available Sizes Include:</h4>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="border rounded-lg p-3 text-center">
+                <p className="text-sm font-medium">A5</p>
+                <p className="text-xs text-muted-foreground">148 x 210mm</p>
+              </div>
+              <div className="border rounded-lg p-3 text-center">
+                <p className="text-sm font-medium">A4</p>
+                <p className="text-xs text-muted-foreground">210 x 297mm</p>
+              </div>
+              <div className="border rounded-lg p-3 text-center">
+                <p className="text-sm font-medium">A3</p>
+                <p className="text-xs text-muted-foreground">297 x 420mm</p>
+              </div>
+              <div className="border rounded-lg p-3 text-center">
+                <p className="text-sm font-medium">Custom</p>
+                <p className="text-xs text-muted-foreground">Various sizes</p>
               </div>
             </div>
-
-            <div className="space-y-4">
-              <h4 className="font-semibold">Automatic Processing:</h4>
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Palette className="w-4 h-4 text-blue-500" />
-                  <span className="text-sm">CMYK color conversion</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Settings className="w-4 h-4 text-purple-500" />
-                  <span className="text-sm">Vector optimization</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Eye className="w-4 h-4 text-orange-500" />
-                  <span className="text-sm">Quality analysis</span>
-                </div>
-              </div>
-            </div>
+            <p className="text-sm text-muted-foreground">
+              Sizes vary by product type. Some products offer standard paper sizes while others have specific dimensions for labels, badges, or custom formats.
+            </p>
           </div>
 
-          <Card className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20">
-            <CardContent className="pt-6">
-              <h4 className="font-semibold mb-2">AI Vectorization Service</h4>
-              <p className="text-sm text-muted-foreground mb-3">
-                Have a raster logo that needs to be converted to vector? Our AI service can automatically vectorize simple logos, 
-                or you can request professional manual vectorization for complex designs.
-              </p>
-              <div className="flex gap-2">
-                <Badge variant="outline">AI Vectorization: €3.00 ex VAT</Badge>
-                <Badge variant="outline">Professional Service: Custom Quote</Badge>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+            <p className="text-sm text-amber-800 dark:text-amber-200">
+              💡 <strong>Pro Tip:</strong> Choose the smallest size that fits your artwork to keep costs down. You can always scale your logo to fit within the template boundaries.
+            </p>
+          </div>
         </div>
       )
     },
@@ -236,14 +206,14 @@ export function OnboardingTutorial({ open, onOpenChange }: OnboardingTutorialPro
                     <div className="w-2 h-2 bg-red-500 rounded"></div>
                     <span className="text-sm font-medium">Garment Colors</span>
                   </div>
-                  <p className="text-xs text-muted-foreground">27+ professional garment colors from Gildan & Fruit of the Loom</p>
+                  <p className="text-xs text-muted-foreground">150+ professional garment colors from leading manufacturers</p>
                 </div>
                 <div className="border rounded-lg p-3">
                   <div className="flex items-center gap-2 mb-1">
                     <div className="w-2 h-2 bg-purple-500 rounded"></div>
                     <span className="text-sm font-medium">Ink Colors</span>
                   </div>
-                  <p className="text-xs text-muted-foreground">CMYK color picker with Pantone matching</p>
+                  <p className="text-xs text-muted-foreground">CMYK color picker for accurate print reproduction</p>
                 </div>
                 <div className="border rounded-lg p-3">
                   <div className="flex items-center gap-2 mb-1">
@@ -291,7 +261,7 @@ export function OnboardingTutorial({ open, onOpenChange }: OnboardingTutorialPro
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle className="w-4 h-4 text-green-500" />
-                  <span className="text-sm">Pantone color detection</span>
+                  <span className="text-sm">Ink color standardization</span>
                 </div>
               </CardContent>
             </Card>
@@ -319,6 +289,17 @@ export function OnboardingTutorial({ open, onOpenChange }: OnboardingTutorialPro
               </CardContent>
             </Card>
           </div>
+
+          <Card className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20">
+            <CardContent className="pt-6">
+              <h4 className="font-semibold mb-2">Vectorization Service</h4>
+              <p className="text-sm text-muted-foreground mb-3">
+                Need your raster artwork converted to a production-ready vector file? Our professional vectorization service 
+                ensures your logos and designs are crisp and scalable at any size, perfect for screen printing and transfers.
+              </p>
+              <Badge variant="outline">Vectorization Service: &euro;15.00 ex VAT</Badge>
+            </CardContent>
+          </Card>
 
           <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
             <h4 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">Automatic Fixes Available</h4>
