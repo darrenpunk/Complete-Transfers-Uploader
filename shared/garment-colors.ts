@@ -417,10 +417,43 @@ export const awdisColors: ManufacturerColorGroup[] = [
   }
 ];
 
+export const portwestColors: ManufacturerColorGroup[] = [
+  {
+    name: "High-Visibility Safety",
+    colors: [
+      { code: "PW-HV1", name: "Hi-Vis Yellow", hex: "#FFFF00", cmyk: { c: 0, m: 0, y: 100, k: 0 }, pantone: "803 C (Neon)" },
+      { code: "PW-HV2", name: "Hi-Vis Orange", hex: "#FF7900", cmyk: { c: 0, m: 60, y: 100, k: 0 }, pantone: "804 C (Neon)" },
+      { code: "PW-HV3", name: "Hi-Vis Red", hex: "#FF2D2D", cmyk: { c: 0, m: 90, y: 80, k: 0 }, pantone: "805 C (Neon)" },
+    ]
+  },
+  {
+    name: "Corporate & Workwear Essentials",
+    colors: [
+      { code: "PW-CW1", name: "Navy", hex: "#1C2440", cmyk: { c: 100, m: 85, y: 40, k: 50 }, pantone: "282 C" },
+      { code: "PW-CW2", name: "Dark Navy", hex: "#10182C", cmyk: { c: 100, m: 85, y: 50, k: 70 }, pantone: "533 C" },
+      { code: "PW-CW3", name: "Black", hex: "#000000", cmyk: { c: 60, m: 40, y: 40, k: 100 }, pantone: "Black 6 C" },
+      { code: "PW-CW4", name: "Royal Blue", hex: "#00529C", cmyk: { c: 100, m: 70, y: 0, k: 0 }, pantone: "286 C" },
+      { code: "PW-CW5", name: "Bottle Green", hex: "#004B3C", cmyk: { c: 90, m: 30, y: 70, k: 50 }, pantone: "3435 C" },
+      { code: "PW-CW6", name: "Grey (Graphite)", hex: "#6E7378", cmyk: { c: 50, m: 40, y: 40, k: 30 }, pantone: "445 C" },
+      { code: "PW-CW7", name: "White", hex: "#FFFFFF", cmyk: { c: 0, m: 0, y: 0, k: 0 }, pantone: "White" },
+    ]
+  },
+  {
+    name: "Trade & Specialized Shades",
+    colors: [
+      { code: "PW-TS1", name: "Metal Grey", hex: "#91969B", cmyk: { c: 45, m: 35, y: 35, k: 10 }, pantone: "423 C" },
+      { code: "PW-TS2", name: "Persian Blue", hex: "#1E73BE", cmyk: { c: 85, m: 50, y: 0, k: 0 }, pantone: "7689 C" },
+      { code: "PW-TS3", name: "Olive Green", hex: "#6E7355", cmyk: { c: 40, m: 30, y: 60, k: 40 }, pantone: "5753 C" },
+      { code: "PW-TS4", name: "Tan / Khaki", hex: "#C3AA82", cmyk: { c: 20, m: 30, y: 50, k: 10 }, pantone: "465 C" },
+    ]
+  }
+];
+
 export const manufacturerColors = {
   "Gildan": gildanColors,
   "Fruit of the Loom": fruitOfTheLoomColors,
   "Stanley/Stella": stanleyStellaColors,
   "SOL'S": solsColors,
-  "AWDis": awdisColors
+  "AWDis": awdisColors,
+  "Portwest": portwestColors
 };
