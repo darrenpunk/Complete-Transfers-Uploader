@@ -10,6 +10,8 @@ import gildanLogoPath from "@assets/GILDAN_LOGO_blue_1753539382856.png";
 import fruitOfTheLoomLogoPath from "@assets/Fruit_logo.svg_1753539605426.png";
 import stanleyStellaLogoPath from "@assets/Stanley_Stella_1770656215368.png";
 import solsLogoPath from "@assets/sols_logog_1770656711740.png";
+import awdisLogoPath from "@assets/AWDis_1771411528736.png";
+import portwestLogoPath from "@assets/Portwest_1771411809660.png";
 import TShirtSwatch from "@/components/ui/tshirt-swatch";
 
 interface GarmentColorModalProps {
@@ -219,6 +221,20 @@ export default function GarmentColorModal({ currentColor, onColorChange, trigger
                             src={solsLogoPath} 
                             alt="SOL'S" 
                             className="h-8 w-auto object-contain"
+                          />
+                        )}
+                        {manufacturerName === "AWDis" && (
+                          <img 
+                            src={awdisLogoPath} 
+                            alt="AWDis" 
+                            className="h-6 w-auto object-contain"
+                          />
+                        )}
+                        {manufacturerName === "Portwest" && (
+                          <img 
+                            src={portwestLogoPath} 
+                            alt="Portwest" 
+                            className="h-6 w-auto object-contain"
                           />
                         )}
                       </div>
