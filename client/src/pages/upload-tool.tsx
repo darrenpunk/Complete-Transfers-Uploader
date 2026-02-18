@@ -33,6 +33,7 @@ import { EmbroideryElementSelector } from "@/components/embroidery-element-selec
 import { EmbroideryWorkflowModal } from "@/components/embroidery-workflow-modal";
 import { ColorElementSelector } from "@/components/color-element-selector";
 import { UploadProgressModal } from "@/components/upload-progress-modal";
+import { useAnalytics } from "@/hooks/use-analytics";
 
 export default function UploadTool() {
   const { id } = useParams();
@@ -104,6 +105,7 @@ export default function UploadTool() {
   const [hiddenSvgIndices, setHiddenSvgIndices] = useState<Set<number>>(new Set());
   const [hiddenIndicesHistory, setHiddenIndicesHistory] = useState<Set<number>[]>([]);
   const [showColorSelector, setShowColorSelector] = useState(false);
+  const { trackEvent } = useAnalytics(partnerEmail);
   const [odooUrlFromParams, setOdooUrlFromParams] = useState<string | null>(() => {
     try { return sessionStorage.getItem('odoo_base_url'); } catch { return null; }
   });

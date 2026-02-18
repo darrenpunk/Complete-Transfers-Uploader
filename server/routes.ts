@@ -7246,5 +7246,14 @@ ${svgClose}`;
     });
   });
 
+  // === SANDBOXED ANALYTICS ===
+  try {
+    const { registerAnalyticsRoutes } = await import('./analytics-routes');
+    registerAnalyticsRoutes(app, storage);
+    console.log('📊 Analytics routes registered');
+  } catch (e) {
+    console.warn('⚠️ Analytics routes failed to load (non-critical):', e);
+  }
+
   return app;
 }

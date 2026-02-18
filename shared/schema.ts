@@ -144,6 +144,24 @@ export const supportTickets = pgTable("support_tickets", {
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
 
+// ===== ANALYTICS (sandboxed) =====
+export const analyticsEvents = pgTable("analytics_events", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  sessionId: text("session_id").notNull(),
+  userEmail: text("user_email"),
+  eventType: text("event_type").notNull(),
+  metadata: jsonb("metadata"),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const activeSessions = pgTable("active_sessions", {
+  sessionId: text("session_id").primaryKey(),
+  userEmail: text("user_email"),
+  lastSeen: text("last_seen").notNull().default(sql`CURRENT_TIMESTAMP`),
+  currentPage: text("current_page"),
+  metadata: jsonb("metadata"),
+});
+
 // Insert schemas
 export const insertProjectSchema = createInsertSchema(projects).omit({
   id: true,
@@ -174,6 +192,13 @@ export const insertSupportTicketSchema = createInsertSchema(supportTickets).omit
   status: true,
 });
 
+export const insertAnalyticsEventSchema = createInsertSchema(analyticsEvents).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertActiveSessionSchema = createInsertSchema(activeSessions);
+
 // Update schemas
 export const updateCanvasElementSchema = createInsertSchema(canvasElements).partial().omit({
   id: true,
@@ -202,6 +227,12 @@ export type SupportTicket = typeof supportTickets.$inferSelect;
 
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertProjectSchema>;
+
+export type InsertAnalyticsEvent = z.infer<typeof insertAnalyticsEventSchema>;
+export type AnalyticsEvent = typeof analyticsEvents.$inferSelect;
+
+export type InsertActiveSession = z.infer<typeof insertActiveSessionSchema>;
+export type ActiveSession = typeof activeSessions.$inferSelect;
 
 // Content bounds type definition
 export type ContentBounds = {

@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { UpdateBanner } from "@/components/update-banner";
 import { SafariBanner } from "@/components/safari-banner";
 import NotFound from "@/pages/not-found";
+import AdminDashboard from "@/pages/admin-dashboard";
 import UploadTool from "@/pages/upload-tool";
 import DownloadOdooModule from "@/pages/download-odoo-module";
 import ModuleDownload from "@/pages/ModuleDownload";
@@ -28,6 +29,7 @@ function Router() {
       <Route path="/bounds-demo" component={() => <div className="container mx-auto py-8"><BoundsDemoStandalone /></div>} />
       <Route path="/download-odoo-module" component={DownloadOdooModule} />
       <Route path="/module-download" component={ModuleDownload} />
+      <Route path="/admin" component={AdminDashboard} />
       <Route component={NotFound} />
     </Switch>
   );
