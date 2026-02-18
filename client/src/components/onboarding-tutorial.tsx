@@ -22,6 +22,7 @@ interface TutorialStep {
 export function OnboardingTutorial({ open, onOpenChange }: OnboardingTutorialProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [hasStarted, setHasStarted] = useState(false);
+  const [showVideo, setShowVideo] = useState(false);
 
   const tutorialSteps: TutorialStep[] = [
     {
@@ -49,17 +50,10 @@ export function OnboardingTutorial({ open, onOpenChange }: OnboardingTutorialPro
                     Watch our step-by-step video guide to see the full ordering process in action.
                   </p>
                   <div className="flex justify-center">
-                    <a
-                      href="https://app.guidde.com/share/playbooks/maztLftrPLnSDar1TnqBDc"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <Button variant="outline" className="gap-2">
-                        <Play className="w-4 h-4" />
-                        Watch Video Guide
-                        <ExternalLink className="w-3 h-3" />
-                      </Button>
-                    </a>
+                    <Button variant="outline" className="gap-2" onClick={() => setShowVideo(true)}>
+                      <Play className="w-4 h-4" />
+                      Watch Video Guide
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -510,8 +504,28 @@ export function OnboardingTutorial({ open, onOpenChange }: OnboardingTutorialPro
 
   const currentTutorialStep = tutorialSteps[currentStep];
 
+  const videoPopup = showVideo ? (
+    <Dialog open={showVideo} onOpenChange={setShowVideo}>
+      <DialogContent className="max-w-4xl p-0 overflow-hidden">
+        <DialogHeader className="p-4 pb-0">
+          <DialogTitle>Quick Order Video Guide</DialogTitle>
+        </DialogHeader>
+        <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+          <iframe
+            src="https://embed.app.guidde.com/playbooks/maztLftrPLnSDar1TnqBDc?mode=videoOnly"
+            className="absolute top-0 left-0 w-full h-full border-0"
+            allow="autoplay; fullscreen"
+            allowFullScreen
+          />
+        </div>
+      </DialogContent>
+    </Dialog>
+  ) : null;
+
   if (!hasStarted && open) {
     return (
+      <>
+      {videoPopup}
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
@@ -554,10 +568,13 @@ export function OnboardingTutorial({ open, onOpenChange }: OnboardingTutorialPro
           </div>
         </DialogContent>
       </Dialog>
+      </>
     );
   }
 
   return (
+    <>
+    {videoPopup}
     <Dialog open={open && hasStarted} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
@@ -627,5 +644,6 @@ export function OnboardingTutorial({ open, onOpenChange }: OnboardingTutorialPro
         </div>
       </DialogContent>
     </Dialog>
+    </>
   );
 }
