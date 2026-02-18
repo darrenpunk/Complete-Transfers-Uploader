@@ -374,6 +374,7 @@ export default function UploadTool() {
     },
     onSuccess: ({ filename }) => {
       console.log('✅ PDF download initiated:', filename);
+      try { trackEvent('pdf_generate', { filename, project: currentProject?.name }); } catch {}
       
       toast({
         title: "CMYK PDF Generated",
@@ -497,6 +498,7 @@ export default function UploadTool() {
     onSuccess: (result) => {
       const { data, action } = result as { data: any; action: 'new-project' | 'view-cart' | undefined };
       console.log('✅ Added to cart successfully:', data);
+      try { trackEvent('add_to_cart', { project: currentProject?.name, template: currentProject?.templateSize }); } catch {}
       
       if (action === 'new-project') {
         toast({
@@ -947,6 +949,7 @@ export default function UploadTool() {
     const selectedTemplate = templateSizes.find(t => t.id === templateId);
     if (selectedTemplate) {
       console.log('Template selected:', { templateId, selectedTemplate, group: selectedTemplate.group });
+      try { trackEvent('template_select', { template: selectedTemplate.label, group: selectedTemplate.group }); } catch {}
       setShowTemplateSelector(false);
       setShowProductLauncher(false); // Close product launcher if open
       setHasInitialized(true); // Prevent reopening
@@ -1795,6 +1798,7 @@ export default function UploadTool() {
         try {
           const newLogos = JSON.parse(xhr.responseText);
           console.log('Upload completed, checking for PDFs with raster content:', newLogos);
+          try { trackEvent('upload', { fileCount: files.length, fileNames: files.map(f => f.name).join(', '), project: currentProject?.name }); } catch {}
           
           // Update logos cache directly
           queryClient.setQueryData(
