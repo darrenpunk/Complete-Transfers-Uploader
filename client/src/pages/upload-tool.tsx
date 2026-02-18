@@ -90,6 +90,7 @@ export default function UploadTool() {
   const [detectedReorderColors, setDetectedReorderColors] = useState<Array<{color: string; colorName: string; quantity: number}>>([]);
   const [showOrientationMismatch, setShowOrientationMismatch] = useState(false);
   const [orientationMismatchInfo, setOrientationMismatchInfo] = useState<{ logoId: string; logoName: string; logoOrientation: string; templateOrientation: string; elementId?: string } | null>(null);
+  const [pendingOrientationCheckLogoIds, setPendingOrientationCheckLogoIds] = useState<string[]>([]);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const autoFullscreen = false;
   const [isInIframe, setIsInIframe] = useState(false);
@@ -241,6 +242,51 @@ export default function UploadTool() {
     queryKey: ["/api/projects", currentProject?.id, "canvas-elements"],
     enabled: !!currentProject?.id,
   });
+
+  // Orientation mismatch detection: runs after canvas elements load for newly uploaded logos
+  useEffect(() => {
+    if (pendingOrientationCheckLogoIds.length === 0 || canvasElements.length === 0 || !currentProject?.templateSize) return;
+    
+    const template = templateSizes.find(t => t.id === currentProject.templateSize);
+    if (!template) return;
+    
+    const templateIsLandscape = template.width > template.height;
+    const templateIsSquare = Math.abs(template.width - template.height) < 5;
+    if (templateIsSquare) {
+      setPendingOrientationCheckLogoIds([]);
+      return;
+    }
+    
+    // Find canvas elements matching the newly uploaded logos
+    for (const logoId of pendingOrientationCheckLogoIds) {
+      const element = canvasElements.find(el => el.logoId?.toString() === logoId.toString());
+      if (element && element.width && element.height) {
+        const elW = element.width;
+        const elH = element.height;
+        if (Math.abs(elW - elH) < 5) continue; // Skip roughly square logos
+        
+        const logoIsLandscape = elW > elH;
+        if (logoIsLandscape !== templateIsLandscape) {
+          const logoOrientation = logoIsLandscape ? 'landscape' : 'portrait';
+          const templateOrientation = templateIsLandscape ? 'landscape' : 'portrait';
+          console.log(`⚠️ Orientation mismatch: logo ${logoId} is ${logoOrientation} (${elW.toFixed(0)}×${elH.toFixed(0)}mm), template is ${templateOrientation} (${template.width}×${template.height}mm)`);
+          
+          const logo = logos?.find(l => l.id?.toString() === logoId.toString());
+          setOrientationMismatchInfo({
+            logoId: logoId.toString(),
+            logoName: logo?.originalName || 'Uploaded artwork',
+            logoOrientation,
+            templateOrientation,
+            elementId: element.id?.toString(),
+          });
+          setTimeout(() => setShowOrientationMismatch(true), 600);
+          break; // Only show for first mismatched logo
+        }
+      }
+    }
+    
+    setPendingOrientationCheckLogoIds([]);
+  }, [canvasElements, pendingOrientationCheckLogoIds, currentProject?.templateSize]);
 
   // Keep selectedElements synced with latest canvasElements data (e.g., after rotation updates)
   useEffect(() => {
@@ -1127,7 +1173,9 @@ export default function UploadTool() {
 
   const handleOrientationRotate = async () => {
     if (!orientationMismatchInfo || !currentProject) return;
-    const element = canvasElements.find(el => el.logoId === orientationMismatchInfo.logoId);
+    const element = orientationMismatchInfo.elementId
+      ? canvasElements.find(el => el.id?.toString() === orientationMismatchInfo.elementId)
+      : canvasElements.find(el => el.logoId?.toString() === orientationMismatchInfo.logoId);
     if (element) {
       const newRotation = ((element.rotation || 0) + 90) % 360;
       await apiRequest("PATCH", `/api/canvas-elements/${element.id}`, { rotation: newRotation });
@@ -1873,35 +1921,17 @@ export default function UploadTool() {
             }
           }
           
-          // Orientation mismatch detection: compare logo aspect ratio vs template
-          if (currentProject?.templateSize) {
+          // Orientation mismatch detection: store uploaded logo IDs, check after canvas elements load
+          if (currentProject?.templateSize && newLogos.length > 0) {
             const template = templateSizes.find(t => t.id === currentProject.templateSize);
             if (template) {
               const templateIsLandscape = template.width > template.height;
-              const templateIsSquare = template.width === template.height;
+              const templateIsSquare = Math.abs(template.width - template.height) < 5;
               
               if (!templateIsSquare) {
-                for (const logo of newLogos) {
-                  const logoW = logo.width;
-                  const logoH = logo.height;
-                  if (logoW && logoH && logoW !== logoH) {
-                    const logoIsLandscape = logoW > logoH;
-                    if (logoIsLandscape !== templateIsLandscape) {
-                      const logoOrientation = logoIsLandscape ? 'landscape' : 'portrait';
-                      const templateOrientation = templateIsLandscape ? 'landscape' : 'portrait';
-                      console.log(`⚠️ Orientation mismatch: logo is ${logoOrientation}, template is ${templateOrientation}`);
-                      setOrientationMismatchInfo({
-                        logoId: logo.id,
-                        logoName: logo.originalName,
-                        logoOrientation,
-                        templateOrientation,
-                      });
-                      // Brief delay so upload modal closes first
-                      setTimeout(() => setShowOrientationMismatch(true), 800);
-                      break; // Only show for first mismatched logo
-                    }
-                  }
-                }
+                // Store newly uploaded logo IDs for orientation check after canvas elements refetch
+                setPendingOrientationCheckLogoIds(newLogos.map((l: any) => l.id));
+                console.log(`📐 Will check orientation for logos: ${newLogos.map((l: any) => l.id).join(', ')}`);
               }
             }
           }
