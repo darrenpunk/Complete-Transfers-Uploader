@@ -1176,11 +1176,16 @@ grestore`;
               const pageArea = origPageSize.width * origPageSize.height;
               const contentArea = contentWidthPts * contentHeightPts;
               const coverageRatio = contentArea / pageArea;
+              const hasUserRotation = element.rotation && element.rotation !== 0;
               const orientationNote = isFullPageMatchRotated ? ' (LANDSCAPE - rotated orientation)' : '';
               console.log(`📄 FULL-PAGE PDF CHECK${orientationNote}: PDF page (${origPageSize.width.toFixed(1)}×${origPageSize.height.toFixed(1)}pts) matches template (${templateWPts.toFixed(1)}×${templateHPts.toFixed(1)}pts)`);
               console.log(`📄 Content coverage: ${(coverageRatio * 100).toFixed(1)}% (${contentWidthPts.toFixed(1)}×${contentHeightPts.toFixed(1)} content in ${origPageSize.width.toFixed(1)}×${origPageSize.height.toFixed(1)} page)`);
               
-              if (coverageRatio > 0.5) {
+              if (isFullPageMatchRotated && hasUserRotation) {
+                console.log(`📄 LANDSCAPE PDF with user rotation (${element.rotation}°) - NOT treating as full-page landscape`);
+                console.log(`📄 User has manually rotated this element - applying normal rotation workflow`);
+                logoPdfPath = originalPdfPath;
+              } else if (coverageRatio > 0.5) {
                 console.log(`📄 Content fills >50% of page - treating as full-page PDF`);
                 console.log(`📄 Skipping content-bounds cropping - embedding full page to prevent clipping`);
                 logoPdfPath = originalPdfPath;
