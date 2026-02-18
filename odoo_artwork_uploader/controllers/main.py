@@ -679,10 +679,6 @@ class ArtworkUploaderController(http.Controller):
             _logger.info(f"🛒 Creating separate order line (preventing merge)")
             
             order_qty = project.quantity or 1
-            product_price = sale_order.pricelist_id._get_product_price(
-                product, order_qty, partner=partner, date=False, uom=product.uom_id
-            )
-            _logger.info(f"💰 Product price from pricelist: {product_price} (qty: {order_qty}, pricelist: {sale_order.pricelist_id.name})")
             
             # Build line description with artwork filename for identification
             artwork_name = data.get('artworkFilename', '') or project.name or ''
@@ -692,23 +688,18 @@ class ArtworkUploaderController(http.Controller):
             
             line_name = f"{product.name} - {base_name}" if base_name else product.name
             
-            # Get fiscal position for correct tax mapping
-            fpos = sale_order.fiscal_position_id
-            taxes = product.taxes_id
-            if fpos:
-                taxes = fpos.map_tax(taxes)
-            
+            # Let Odoo compute price_unit automatically via _compute_price_unit
+            # This uses the same pricing engine as manual order entry, ensuring
+            # pricelist rules, discounts, and quantity tiers are applied correctly
             line_vals = {
                 'order_id': sale_order.id,
                 'product_id': product.id,
-                'product_uom_qty': project.quantity or 1,
+                'product_uom_qty': order_qty,
                 'product_uom': product.uom_id.id,
-                'price_unit': product_price,
                 'name': line_name,
-                'tax_id': [(6, 0, taxes.ids)],
             }
             order_line = request.env['sale.order.line'].sudo().create(line_vals)
-            _logger.info(f"✅ Created separate order line #{order_line.id}: {line_name}")
+            _logger.info(f"✅ Created separate order line #{order_line.id}: {line_name}, price_unit: {order_line.price_unit} (computed by Odoo, qty: {order_qty}, pricelist: {sale_order.pricelist_id.name})")
             
             # Link project to order
             project.sale_order_id = sale_order.id
