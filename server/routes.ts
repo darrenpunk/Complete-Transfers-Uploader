@@ -5930,8 +5930,8 @@ export async function registerRoutes(app: express.Application) {
         return res.status(400).json({ error: 'Project ID is required' });
       }
 
-      // Get Odoo base URL from request body (set by frontend based on parent window) or fall back to env
-      const odooBaseUrl = projectData.odooBaseUrl || process.env.VITE_ODOO_URL || 'https://www.completetransfers.com';
+      // Always use server-side VITE_ODOO_URL to avoid proxying back to ourselves
+      const odooBaseUrl = process.env.VITE_ODOO_URL || 'https://www.completetransfers.com';
       console.log(`🌐 Using Odoo base URL: ${odooBaseUrl}`);
       
       // Use the projects add-to-cart endpoint for all requests
@@ -6958,8 +6958,8 @@ ${svgClose}`;
       };
 
       try {
-        // Use odooBaseUrl from request if provided, otherwise fall back to env var
-        const odooBaseUrl = req.body.odooBaseUrl || process.env.VITE_ODOO_URL || 'https://www.completetransfers.com';
+        // Always use server-side VITE_ODOO_URL to avoid proxying back to ourselves
+        const odooBaseUrl = process.env.VITE_ODOO_URL || 'https://www.completetransfers.com';
         const ctWebsiteId = process.env.VITE_ODOO_CT_WEBSITE_ID || '3';
         const clientCookies = req.headers.cookie || '';
         const partnerEmail = req.body.partnerEmail || '';
@@ -7134,7 +7134,7 @@ ${svgClose}`;
       });
       
       // Create Odoo Helpdesk ticket via API
-      const odooBaseUrl = req.body.odooBaseUrl || 'https://completetransfers.odoo.com';
+      const odooBaseUrl = process.env.VITE_ODOO_URL || 'https://www.completetransfers.com';
       const helpdeskEndpoint = `${odooBaseUrl}/artwork/api/helpdesk/create`;
       
       try {
