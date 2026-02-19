@@ -228,9 +228,10 @@ export default function UploadTool() {
   });
 
   // Fetch project if ID provided
-  const { data: project } = useQuery<Project>({
+  const { data: project, isError: projectLoadError, isFetched: projectFetched } = useQuery<Project>({
     queryKey: ["/api/projects", id],
     enabled: !!id,
+    retry: 1,
   });
 
   // Fetch logos for current project
@@ -749,6 +750,13 @@ export default function UploadTool() {
       setCurrentProject(project);
     }
   }, [project]);
+
+  useEffect(() => {
+    if (id && projectFetched && !project && (projectLoadError || !currentProject)) {
+      console.log('⚠️ Project not found, redirecting to home:', id);
+      navigate('/');
+    }
+  }, [id, projectFetched, project, projectLoadError, currentProject, navigate]);
 
   const pendingReorderRef = useRef<any>(null);
 
