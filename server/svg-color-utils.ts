@@ -642,10 +642,14 @@ export function checkFileComplexityEarly(
     fs.closeSync(fd);
     
     const totalElements = pathCount + circleCount + rectCount + lineCount + polygonCount + polylineCount + ellipseCount;
-    const isLikelyTooComplex = pathCount > EARLY_PATH_THRESHOLD || totalElements > EARLY_ELEMENT_THRESHOLD;
+    const SVG_SIZE_THRESHOLD = 20 * 1024 * 1024; // 20MB SVG file size limit for browser rendering
+    const isSVGTooLarge = fileSize > SVG_SIZE_THRESHOLD;
+    const isLikelyTooComplex = pathCount > EARLY_PATH_THRESHOLD || totalElements > EARLY_ELEMENT_THRESHOLD || isSVGTooLarge;
     
     let reason;
-    if (pathCount > EARLY_PATH_THRESHOLD) {
+    if (isSVGTooLarge) {
+      reason = `Converted SVG is ${convertedFileSizeMB}MB (limit: ${(SVG_SIZE_THRESHOLD / (1024 * 1024)).toFixed(0)}MB) - too large for browser rendering`;
+    } else if (pathCount > EARLY_PATH_THRESHOLD) {
       reason = `Found ${pathCount.toLocaleString()} paths (limit: ${EARLY_PATH_THRESHOLD.toLocaleString()})`;
     } else if (totalElements > EARLY_ELEMENT_THRESHOLD) {
       reason = `Found ${totalElements.toLocaleString()} vector elements (limit: ${EARLY_ELEMENT_THRESHOLD.toLocaleString()})`;
