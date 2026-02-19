@@ -1,17 +1,16 @@
 import fs from 'fs';
 import path from 'path';
 import { PDFCMYKExtractor } from './pdf-cmyk-extractor';
-import { getExactCMYK } from './exact-cmyk-mapping';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 
 const execAsync = promisify(exec);
 
 export interface ColorValue {
-  format: string; // 'cmyk', 'rgb', 'hex'
-  values: number[]; // CMYK: [c, m, y, k], RGB: [r, g, b]
-  originalString: string; // Original color declaration from file
-  elementSelector?: string; // CSS selector for the element
+  format: string;
+  values: number[];
+  originalString: string;
+  elementSelector?: string;
 }
 
 export interface ExtractedColors {
@@ -21,19 +20,10 @@ export interface ExtractedColors {
   preserveOriginal: boolean;
 }
 
-/**
- * Universal Color Extractor - Extracts exact original colors from ANY artwork file
- * Supports: SVG, PDF, AI, EPS files with embedded CMYK/RGB values
- */
 export class UniversalColorExtractor {
   
-  /**
-   * Extract all colors from any supported file format
-   */
   static async extractColors(filePath: string, mimeType: string): Promise<ExtractedColors> {
-    console.log(`🎨 UNIVERSAL COLOR EXTRACTION: ${path.basename(filePath)} (${mimeType})`);
-    
-    const extension = path.extname(filePath).toLowerCase();
+    console.log(`🎨 Color extraction: ${path.basename(filePath)} (${mimeType})`);
     
     try {
       switch (mimeType) {
@@ -45,7 +35,6 @@ export class UniversalColorExtractor {
         case 'application/illustrator':
           return await this.extractFromAI(filePath);
         default:
-          console.log(`⚠️ Unsupported file type for color extraction: ${mimeType}`);
           return this.createFallbackResult();
       }
     } catch (error) {
@@ -54,17 +43,12 @@ export class UniversalColorExtractor {
     }
   }
 
-  /**
-   * Extract colors from SVG files - most detailed extraction
-   */
   private static async extractFromSVG(filePath: string): Promise<ExtractedColors> {
     const svgContent = fs.readFileSync(filePath, 'utf8');
     const colors: ColorValue[] = [];
-    let colorSpace: 'CMYK' | 'RGB' | 'sRGB' | 'MIXED' = 'RGB';
     let hasCMYK = false;
     let hasRGB = false;
 
-    // First priority: Extract CMYK colors from device-cmyk() functions
     const cmykPattern = /device-cmyk\s*\(\s*([\d.]+)\s*,?\s*([\d.]+)\s*,?\s*([\d.]+)\s*,?\s*([\d.]+)\s*\)/gi;
     let cmykMatch;
     while ((cmykMatch = cmykPattern.exec(svgContent)) !== null) {
@@ -72,40 +56,28 @@ export class UniversalColorExtractor {
       colors.push({
         format: 'cmyk',
         values: [parseFloat(c) * 100, parseFloat(m) * 100, parseFloat(y) * 100, parseFloat(k) * 100],
-        originalString: fullMatch,
-        elementSelector: this.findElementSelector(svgContent, cmykMatch.index)
+        originalString: fullMatch
       });
       hasCMYK = true;
-      console.log(`✓ Found CMYK: device-cmyk(${c}, ${m}, ${y}, ${k}) → C:${Math.round(parseFloat(c) * 100)} M:${Math.round(parseFloat(m) * 100)} Y:${Math.round(parseFloat(y) * 100)} K:${Math.round(parseFloat(k) * 100)}`);
     }
 
-    // Check for CMYK markers or PDF origin indicating original CMYK content
     const hasCMYKMarkers = svgContent.includes('data-vectorized-cmyk="true"') || 
                           svgContent.includes('data-original-cmyk-pdf="true"') ||
-                          svgContent.includes('PANTONE') ||
                           svgContent.includes('CMYK');
 
-    console.log(`🔍 CMYK Detection: device-cmyk=${colors.length}, markers=${hasCMYKMarkers}`);
-
-    // If we found CMYK markers, treat this as a CMYK file and convert RGB to approximate CMYK
     if (hasCMYKMarkers) {
-      console.log(`🎨 CMYK file detected with markers - converting RGB to CMYK format`);
       hasCMYK = true;
-      colorSpace = 'CMYK';
       
-      // For CMYK files, extract unique RGB colors and group them intelligently
       const uniqueRGBColors = new Map<string, {count: number, color: ColorValue}>();
       const rgbPattern = /fill="rgb\(([\d.]+)%?,?\s*([\d.]+)%?,?\s*([\d.]+)%?\)"/gi;
       let rgbMatch;
       
-      // First pass: collect all RGB colors and count occurrences
       while ((rgbMatch = rgbPattern.exec(svgContent)) !== null) {
         const [fullMatch, r, g, b] = rgbMatch;
         const rPercent = parseFloat(r);
         const gPercent = parseFloat(g);
         const bPercent = parseFloat(b);
         
-        // Round to reduce minor variations (e.g., 28.315735% → 28.32%)
         const roundedKey = `${rPercent.toFixed(2)},${gPercent.toFixed(2)},${bPercent.toFixed(2)}`;
         
         const values = this.parseRGBValues(`${r}%, ${g}%, ${b}%`);
@@ -113,49 +85,30 @@ export class UniversalColorExtractor {
           if (uniqueRGBColors.has(roundedKey)) {
             uniqueRGBColors.get(roundedKey)!.count++;
           } else {
-            // For CMYK files, try to find exact CMYK values first, then fallback to approximation
-            let cmykValues: number[] | null = null;
-            if (hasCMYKMarkers) {
-              // First try exact mapping for known Pantone colors
-              const exactMapping = getExactCMYK(rPercent, gPercent, bPercent);
-              if (exactMapping) {
-                cmykValues = exactMapping.cmyk;
-                console.log(`🎯 EXACT MATCH: RGB(${rPercent.toFixed(1)}, ${gPercent.toFixed(1)}, ${bPercent.toFixed(1)}) → ${exactMapping.pantone} CMYK(${cmykValues.join(', ')})`);
-              } else {
-                // If no exact match, use RGB-to-CMYK approximation
-                cmykValues = this.rgbToCMYKApprox(values[0], values[1], values[2]);
-                console.log(`⚠️ Approximation: RGB(${rPercent.toFixed(1)}, ${gPercent.toFixed(1)}, ${bPercent.toFixed(1)}) → CMYK(${cmykValues.join(', ')})`);
-              }
-            }
+            const cmykValues = this.rgbToCMYKApprox(values[0], values[1], values[2]);
             
             uniqueRGBColors.set(roundedKey, {
               count: 1,
               color: {
-                format: hasCMYKMarkers && cmykValues ? 'cmyk' : 'rgb',
-                values: hasCMYKMarkers && cmykValues ? cmykValues : values,
-                originalString: fullMatch,
-                elementSelector: this.findElementSelector(svgContent, rgbMatch.index)
+                format: 'cmyk',
+                values: cmykValues,
+                originalString: fullMatch
               }
             });
           }
         }
       }
       
-      // Second pass: only keep colors that appear frequently (likely main design colors)
       const significantColors = Array.from(uniqueRGBColors.entries())
-        .filter(([key, data]) => data.count >= 2) // Must appear at least 2 times 
-        .sort((a, b) => b[1].count - a[1].count) // Sort by frequency
-        .slice(0, 8) // Max 8 colors for clean results
+        .filter(([key, data]) => data.count >= 2)
+        .sort((a, b) => b[1].count - a[1].count)
+        .slice(0, 8)
         .map(([key, data]) => data.color);
       
       colors.push(...significantColors);
       
-      console.log(`🎯 CMYK file: Found ${uniqueRGBColors.size} total RGB colors, kept ${significantColors.length} significant colors`);
-      significantColors.forEach((color, i) => {
-        console.log(`✓ Significant RGB ${i+1}: ${color.originalString} → R:${color.values[0]} G:${color.values[1]} B:${color.values[2]}`);
-      });
+      console.log(`🎯 CMYK file: ${uniqueRGBColors.size} unique RGB colors, kept ${significantColors.length} significant`);
       
-      console.log(`🎯 CMYK file: Extracted ${colors.length} total colors (${colors.filter(c => c.format === 'cmyk').length} CMYK, ${colors.filter(c => c.format === 'rgb').length} RGB)`);
       return {
         colors,
         colorSpace: 'CMYK',
@@ -164,63 +117,61 @@ export class UniversalColorExtractor {
       };
     }
 
-    // Extract RGB colors from fill and stroke attributes (including percentage format)
     const rgbPatterns = [
       /fill="rgb\(([^)]+)\)"/gi,
       /stroke="rgb\(([^)]+)\)"/gi,
       /fill\s*:\s*rgb\(([^)]+)\)/gi,
       /stroke\s*:\s*rgb\(([^)]+)\)/gi,
-      // Look for RGB colors in style attributes
-      /fill="rgb\(([^)]+)\)"/gi,
-      /stroke="rgb\(([^)]+)\)"/gi
     ];
 
+    const seenRGB = new Set<string>();
     for (const pattern of rgbPatterns) {
       let rgbMatch;
       while ((rgbMatch = pattern.exec(svgContent)) !== null) {
         const [fullMatch, rgbValues] = rgbMatch;
         const values = this.parseRGBValues(rgbValues);
         if (values) {
-          colors.push({
-            format: 'rgb',
-            values: values,
-            originalString: fullMatch,
-            elementSelector: this.findElementSelector(svgContent, rgbMatch.index)
-          });
-          hasRGB = true;
-          console.log(`✓ Found RGB: ${fullMatch} → R:${values[0]} G:${values[1]} B:${values[2]}`);
+          const key = values.join(',');
+          if (!seenRGB.has(key)) {
+            seenRGB.add(key);
+            colors.push({
+              format: 'rgb',
+              values: values,
+              originalString: fullMatch
+            });
+            hasRGB = true;
+          }
         }
       }
     }
 
-    // Extract hex colors
     const hexPattern = /(?:fill|stroke)="(#[0-9a-fA-F]{6})"/gi;
+    const seenHex = new Set<string>();
     let hexMatch;
     while ((hexMatch = hexPattern.exec(svgContent)) !== null) {
       const [fullMatch, hexValue] = hexMatch;
-      const rgbValues = this.hexToRgb(hexValue);
-      if (rgbValues) {
-        colors.push({
-          format: 'hex',
-          values: [rgbValues.r, rgbValues.g, rgbValues.b],
-          originalString: fullMatch,
-          elementSelector: this.findElementSelector(svgContent, hexMatch.index)
-        });
-        hasRGB = true;
-        console.log(`✓ Found HEX: ${hexValue} → R:${rgbValues.r} G:${rgbValues.g} B:${rgbValues.b}`);
+      if (!seenHex.has(hexValue)) {
+        seenHex.add(hexValue);
+        const rgbValues = this.hexToRgb(hexValue);
+        if (rgbValues) {
+          colors.push({
+            format: 'hex',
+            values: [rgbValues.r, rgbValues.g, rgbValues.b],
+            originalString: fullMatch
+          });
+          hasRGB = true;
+        }
       }
     }
 
-    // Determine color space
+    let colorSpace: 'CMYK' | 'RGB' | 'sRGB' | 'MIXED' = 'RGB';
     if (hasCMYK && hasRGB) {
       colorSpace = 'MIXED';
     } else if (hasCMYK) {
       colorSpace = 'CMYK';
-    } else {
-      colorSpace = 'RGB';
     }
 
-    console.log(`🎯 SVG Color Analysis Complete: ${colors.length} colors found, colorSpace: ${colorSpace}`);
+    console.log(`🎯 SVG Color Analysis: ${colors.length} unique colors, colorSpace: ${colorSpace}`);
 
     return {
       colors,
@@ -230,18 +181,12 @@ export class UniversalColorExtractor {
     };
   }
 
-  /**
-   * Extract colors from PDF files - extract actual CMYK values directly
-   */
   private static async extractFromPDF(filePath: string): Promise<ExtractedColors> {
-    console.log('🔍 Extracting CMYK colors directly from PDF file...');
-    
     try {
-      // Extract actual CMYK colors from PDF using Ghostscript
       const pdfCMYKColors = await PDFCMYKExtractor.extractCMYKFromPDF(filePath);
       
       if (pdfCMYKColors.length > 0) {
-        console.log(`✅ Found ${pdfCMYKColors.length} original CMYK colors in PDF`);
+        console.log(`✅ Found ${pdfCMYKColors.length} CMYK colors in PDF`);
         
         const colors: ColorValue[] = pdfCMYKColors.map((color, index) => ({
           format: 'cmyk',
@@ -254,14 +199,10 @@ export class UniversalColorExtractor {
           colors,
           colorSpace: 'CMYK',
           hasEmbeddedProfile: true,
-          preserveOriginal: true,
-          extractionMethod: 'PDF_DIRECT_CMYK',
-          totalColors: colors.length,
-          significantColors: colors.length
+          preserveOriginal: true
         };
       }
       
-      // Fallback: convert to SVG and analyze
       console.log('⚠️ No direct CMYK found, falling back to SVG analysis');
       return await this.extractFromPDFViaSVG(filePath);
       
@@ -271,9 +212,6 @@ export class UniversalColorExtractor {
     }
   }
 
-  /**
-   * Fallback method: Extract via SVG conversion
-   */
   private static async extractFromPDFViaSVG(filePath: string): Promise<ExtractedColors> {
     const svgPath = filePath.replace('.pdf', '.svg');
     
@@ -292,18 +230,11 @@ export class UniversalColorExtractor {
     return this.createFallbackResult();
   }
 
-  /**
-   * Extract colors from AI/EPS files
-   */
   private static async extractFromAI(filePath: string): Promise<ExtractedColors> {
-    console.log(`🎨 Extracting colors from AI/EPS: ${filePath}`);
-    
     try {
-      // Read AI/EPS file content (they're text-based PostScript)
       const content = fs.readFileSync(filePath, 'utf8');
       const colors: ColorValue[] = [];
       
-      // Look for CMYK color definitions in PostScript
       const cmykPattern = /(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+k/gi;
       let cmykMatch;
       while ((cmykMatch = cmykPattern.exec(content)) !== null) {
@@ -315,7 +246,6 @@ export class UniversalColorExtractor {
         });
       }
 
-      // Look for RGB color definitions
       const rgbPattern = /(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+rg/gi;
       let rgbMatch;
       while ((rgbMatch = rgbPattern.exec(content)) !== null) {
@@ -341,23 +271,18 @@ export class UniversalColorExtractor {
     }
   }
 
-  /**
-   * Parse RGB values from various formats
-   */
   private static parseRGBValues(rgbString: string): number[] | null {
-    // Handle percentage format: "92.939758%, 10.978699%, 14.118958%"
     if (rgbString.includes('%')) {
       const percentages = rgbString.split(',').map(s => parseFloat(s.trim().replace('%', '')));
       if (percentages.length === 3) {
         return [
-          Math.round(percentages[0] * 2.55), // Convert % to 0-255
+          Math.round(percentages[0] * 2.55),
           Math.round(percentages[1] * 2.55),
           Math.round(percentages[2] * 2.55)
         ];
       }
     }
     
-    // Handle 0-255 format: "237, 28, 36"
     const values = rgbString.split(',').map(s => parseInt(s.trim()));
     if (values.length === 3 && values.every(v => v >= 0 && v <= 255)) {
       return values;
@@ -366,9 +291,6 @@ export class UniversalColorExtractor {
     return null;
   }
 
-  /**
-   * Convert hex to RGB
-   */
   private static hexToRgb(hex: string): { r: number, g: number, b: number } | null {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
     return result ? {
@@ -378,43 +300,21 @@ export class UniversalColorExtractor {
     } : null;
   }
 
-  /**
-   * Find the CSS selector for an element containing a color
-   */
-  private static findElementSelector(svgContent: string, colorIndex: number): string {
-    const beforeColor = svgContent.substring(0, colorIndex);
-    const lastElementMatch = beforeColor.match(/<(path|rect|circle|ellipse|polygon|text)[^>]*$/);
-    if (lastElementMatch) {
-      const elementType = lastElementMatch[1];
-      const elementCount = (beforeColor.match(new RegExp(`<${elementType}`, 'g')) || []).length;
-      return `${elementType}:nth-of-type(${elementCount})`;
-    }
-    return 'unknown';
-  }
-
-  /**
-   * Convert RGB to approximate CMYK values
-   */
   private static rgbToCMYKApprox(r: number, g: number, b: number): number[] {
-    // Normalize RGB values to 0-1 range
     const rNorm = r / 255;
     const gNorm = g / 255; 
     const bNorm = b / 255;
     
-    // Calculate K (black)
     const k = 1 - Math.max(rNorm, Math.max(gNorm, bNorm));
     
-    // Handle pure black case
     if (k === 1) {
       return [0, 0, 0, 100];
     }
     
-    // Calculate CMY
     const c = (1 - rNorm - k) / (1 - k);
     const m = (1 - gNorm - k) / (1 - k);
     const y = (1 - bNorm - k) / (1 - k);
     
-    // Convert to percentages and round
     return [
       Math.round(c * 100),
       Math.round(m * 100), 
@@ -423,9 +323,6 @@ export class UniversalColorExtractor {
     ];
   }
 
-  /**
-   * Create fallback result when extraction fails
-   */
   private static createFallbackResult(): ExtractedColors {
     return {
       colors: [],
@@ -435,9 +332,6 @@ export class UniversalColorExtractor {
     };
   }
 
-  /**
-   * Format color for display in UI
-   */
   static formatColorForDisplay(color: ColorValue): string {
     switch (color.format) {
       case 'cmyk':

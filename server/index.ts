@@ -12,6 +12,18 @@ const __dirname = path.dirname(__filename);
 
 dotenv.config();
 
+// Global crash protection - prevent unhandled errors from killing the server
+process.on('uncaughtException', (err) => {
+  console.error('[CRASH PROTECTION] Uncaught exception caught:', err.message);
+  console.error(err.stack);
+  // Don't exit - keep the server running
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('[CRASH PROTECTION] Unhandled promise rejection:', reason);
+  // Don't exit - keep the server running
+});
+
 const app = express();
 
 app.get('/health', (_req, res) => {

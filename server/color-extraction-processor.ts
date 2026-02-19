@@ -6,7 +6,7 @@ import { promisify } from 'util';
 const execAsync = promisify(exec);
 
 interface ColorData {
-  type: 'CMYK' | 'RGB' | 'PANTONE';
+  type: 'CMYK' | 'RGB';
   values: number[];
   name?: string;
 }

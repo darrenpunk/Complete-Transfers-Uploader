@@ -16,8 +16,6 @@ interface SVGColorInfo {
   originalColor: string;
   originalFormat?: string;
   cmykColor?: string;
-  pantoneMatch?: string;
-  pantoneDistance?: number;
   elementType: string;
   attribute: string;
   selector: string;

@@ -3,109 +3,11 @@ import path from 'path';
 import { adobeRgbToCmyk } from './adobe-cmyk-profile';
 import { IllustratorCMYKMapper } from './illustrator-cmyk-mapper';
 
-// Pantone color database - Common Pantone colors with their RGB/CMYK values
-const PANTONE_COLORS = [
-  // Basic Pantone Colors
-  { name: "Pantone Red 032 C", rgb: "#ED2939", cmyk: "0, 85, 75, 0" },
-  { name: "Pantone Blue 072 C", rgb: "#0F4C9C", cmyk: "100, 70, 0, 0" },
-  { name: "Pantone Yellow C", rgb: "#FEDD00", cmyk: "0, 10, 100, 0" },
-  { name: "Pantone Orange 021 C", rgb: "#FF6900", cmyk: "0, 65, 100, 0" },
-  { name: "Pantone Green C", rgb: "#00AD69", cmyk: "70, 0, 100, 0" },
-  { name: "Pantone Purple C", rgb: "#70147A", cmyk: "65, 100, 0, 0" },
-  { name: "Pantone Black C", rgb: "#2D2926", cmyk: "0, 0, 0, 100" },
-  { name: "Pantone White", rgb: "#FFFFFF", cmyk: "0, 0, 0, 0" },
-  
-  // Popular Pantone Colors
-  { name: "Pantone 186 C", rgb: "#CE1126", cmyk: "0, 91, 76, 0" },
-  { name: "Pantone 286 C", rgb: "#003DA5", cmyk: "100, 75, 0, 0" },
-  { name: "Pantone 123 C", rgb: "#FFC72C", cmyk: "0, 20, 90, 0" },
-  { name: "Pantone 485 C", rgb: "#DA020E", cmyk: "0, 95, 100, 0" },
-  { name: "Pantone 2925 C", rgb: "#009CDE", cmyk: "65, 0, 0, 0" },
-  { name: "Pantone 376 C", rgb: "#7CB518", cmyk: "40, 0, 100, 0" },
-  { name: "Pantone 269 C", rgb: "#8031A7", cmyk: "60, 90, 0, 0" },
-  { name: "Pantone 144 C", rgb: "#F5A623", cmyk: "0, 35, 85, 0" },
-  { name: "Pantone 355 C", rgb: "#009639", cmyk: "75, 0, 100, 0" },
-  { name: "Pantone 200 C", rgb: "#A6192E", cmyk: "15, 100, 80, 5" },
-  
-  // Extended Color Range
-  { name: "Pantone 7462 C", rgb: "#017EB8", cmyk: "75, 25, 0, 0" },
-  { name: "Pantone 7547 C", rgb: "#365194", cmyk: "80, 65, 0, 0" },
-  { name: "Pantone 300 C", rgb: "#005EB8", cmyk: "100, 50, 0, 0" },
-  { name: "Pantone 287 C", rgb: "#041E42", cmyk: "100, 80, 0, 50" },
-  { name: "Pantone 294 C", rgb: "#002F6C", cmyk: "100, 80, 0, 30" },
-  { name: "Pantone 347 C", rgb: "#009639", cmyk: "80, 0, 100, 0" },
-  { name: "Pantone 348 C", rgb: "#00A651", cmyk: "75, 0, 100, 0" },
-  { name: "Pantone 349 C", rgb: "#46B050", cmyk: "60, 0, 100, 0" },
-  { name: "Pantone 1795 C", rgb: "#E31837", cmyk: "0, 90, 80, 0" },
-  { name: "Pantone 18-1664 TPX", rgb: "#C8102E", cmyk: "0, 92, 85, 22" },
-  
-  // Grays and Neutrals
-  { name: "Pantone Cool Gray 11 C", rgb: "#53565A", cmyk: "45, 35, 30, 0" },
-  { name: "Pantone Warm Gray 11 C", rgb: "#5C504A", cmyk: "40, 45, 55, 5" },
-  { name: "Pantone Cool Gray 9 C", rgb: "#75787B", cmyk: "40, 30, 25, 0" },
-  { name: "Pantone Cool Gray 7 C", rgb: "#97999B", cmyk: "30, 20, 15, 0" },
-  { name: "Pantone Cool Gray 5 C", rgb: "#B1B3B3", cmyk: "20, 15, 10, 0" },
-  { name: "Pantone Cool Gray 3 C", rgb: "#C7C9C7", cmyk: "15, 10, 10, 0" },
-  { name: "Pantone Cool Gray 1 C", rgb: "#D9D9D6", cmyk: "10, 5, 5, 0" },
-  
-  // Additional Popular Colors
-  { name: "Pantone Process Blue C", rgb: "#0085CA", cmyk: "85, 25, 0, 0" },
-  { name: "Pantone Reflex Blue C", rgb: "#001489", cmyk: "100, 90, 0, 0" },
-  { name: "Pantone Bright Red C", rgb: "#F5333F", cmyk: "0, 80, 75, 0" },
-  { name: "Pantone Rubine Red C", rgb: "#CE0058", cmyk: "0, 100, 55, 20" },
-  { name: "Pantone Process Magenta C", rgb: "#D70270", cmyk: "0, 100, 40, 15" },
-  { name: "Pantone Pink C", rgb: "#D62598", cmyk: "0, 85, 15, 0" },
-  { name: "Pantone Purple C", rgb: "#70147A", cmyk: "65, 100, 0, 0" },
-  { name: "Pantone Violet C", rgb: "#5F259F", cmyk: "70, 80, 0, 0" }
-];
-
-// Function to convert hex to RGB
-function hexToRgb(hex: string): { r: number, g: number, b: number } | null {
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  return result ? {
-    r: parseInt(result[1], 16),
-    g: parseInt(result[2], 16),
-    b: parseInt(result[3], 16)
-  } : null;
-}
-
-// Function to calculate color distance (Delta E simplified)
-function colorDistance(rgb1: { r: number, g: number, b: number }, rgb2: { r: number, g: number, b: number }): number {
-  const dr = rgb1.r - rgb2.r;
-  const dg = rgb1.g - rgb2.g;
-  const db = rgb1.b - rgb2.b;
-  return Math.sqrt(dr * dr + dg * dg + db * db);
-}
-
-// Function to find closest Pantone match
-function findClosestPantone(hexColor: string): { pantone: string | null, distance: number } {
-  const inputRgb = hexToRgb(hexColor);
-  if (!inputRgb) return { pantone: null, distance: Infinity };
-
-  let closestMatch = null;
-  let minDistance = Infinity;
-
-  for (const pantoneColor of PANTONE_COLORS) {
-    const pantoneRgb = hexToRgb(pantoneColor.rgb);
-    if (!pantoneRgb) continue;
-
-    const distance = colorDistance(inputRgb, pantoneRgb);
-    if (distance < minDistance) {
-      minDistance = distance;
-      closestMatch = pantoneColor.name;
-    }
-  }
-
-  return { pantone: closestMatch, distance: minDistance };
-}
-
 export interface SVGColorInfo {
   id: string;
   originalColor: string;
   originalFormat?: string; // The exact color format as found in the SVG
   cmykColor?: string | null; // CMYK representation of the color (if available)
-  pantoneMatch?: string; // Closest Pantone color match
-  pantoneDistance?: number; // Color distance to Pantone match
   elementType: string;
   attribute: string; // 'fill', 'stroke', etc.
   selector: string; // CSS selector to identify the element
@@ -372,52 +274,6 @@ export function extractSVGColors(svgPath: string): SVGColorInfo[] {
     };
 
     // RGB to CMYK conversion is now imported from color-utils.ts
-
-    // Function to detect embedded Pantone color information 
-    const detectEmbeddedPantone = (content: string): string | undefined => {
-      // Check for Pantone color names in various formats throughout the SVG
-      const pantonePatterns = [
-        /pantone[\s-]*(\d+[\w\s]*[Cc]?)/gi,
-        /pms[\s-]*(\d+[\w\s]*[Cc]?)/gi,
-        /spot[\s-]*color[\s-]*pantone[\s-]*(\d+[\w\s]*[Cc]?)/gi,
-        /color[\s-]*name[\s'"=]*pantone[\s-]*(\d+[\w\s]*[Cc]?)/gi,
-        /<desc[^>]*>.*?pantone[\s-]*(\d+[\w\s]*[Cc]?).*?<\/desc>/gi,
-        /<title[^>]*>.*?pantone[\s-]*(\d+[\w\s]*[Cc]?).*?<\/title>/gi,
-        /id\s*=\s*["'].*?pantone[\s-]*(\d+[\w\s]*[Cc]?).*?["']/gi,
-        /<metadata[^>]*>.*?pantone[\s-]*(\d+[\w\s]*[Cc]?).*?<\/metadata>/gi,
-        /inkName[\s'"=]*pantone[\s-]*(\d+[\w\s]*[Cc]?)/gi,
-        /spot-color[\s'"=]*pantone[\s-]*(\d+[\w\s]*[Cc]?)/gi
-      ];
-
-      // First check the entire SVG content
-      for (const pattern of pantonePatterns) {
-        const matches = svgContent.match(pattern);
-        if (matches && matches.length > 0) {
-          for (const match of matches) {
-            const pantoneMatch = match.match(/pantone[\s-]*(\d+[\w\s]*[Cc]?)/i) || 
-                               match.match(/pms[\s-]*(\d+[\w\s]*[Cc]?)/i);
-            if (pantoneMatch) {
-              return `Pantone ${pantoneMatch[1].trim()}`;
-            }
-          }
-        }
-      }
-
-      // Then check the specific element content
-      for (const pattern of pantonePatterns) {
-        const matches = content.match(pattern);
-        if (matches && matches.length > 0) {
-          for (const match of matches) {
-            const pantoneMatch = match.match(/pantone[\s-]*(\d+[\w\s]*[Cc]?)/i) || 
-                               match.match(/pms[\s-]*(\d+[\w\s]*[Cc]?)/i);
-            if (pantoneMatch) {
-              return `Pantone ${pantoneMatch[1].trim()}`;
-            }
-          }
-        }
-      }
-      return undefined;
-    };
 
     // Function to detect white colors that are likely conversion artifacts from PDF text
     const isWhiteConversionArtifact = (colorValue: string, elementType: string): boolean => {
