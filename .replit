@@ -51,3 +51,6 @@ integrations = ["dropbox:1.0.0", "github:1.0.0", "javascript_gemini_ai_integrati
 [userenv.shared]
 VITE_ODOO_CT_WEBSITE_ID = "3"
 ADMIN_PASSWORD = "admin123"
+
+[userenv.production]
+NODE_ENV = "production"
