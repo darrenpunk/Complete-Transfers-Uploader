@@ -513,15 +513,15 @@ export function VectorizationServiceForm({ open, onOpenChange, partnerEmail }: V
                             className="flex flex-col space-y-2"
                           >
                             <div className="flex items-center space-x-3 space-y-0">
-                              <RadioGroupItem value="vectorization-only" id="vectorization-only" />
-                              <Label htmlFor="vectorization-only" className="font-normal cursor-pointer">
-                                Vectorization Service Only (€15.00 ex VAT)
+                              <RadioGroupItem value="vectorization-with-product" id="vectorization-with-product" />
+                              <Label htmlFor="vectorization-with-product" className="font-normal cursor-pointer">
+                                Vectorization (€15.00 ex VAT) + Transfer Product
                               </Label>
                             </div>
                             <div className="flex items-center space-x-3 space-y-0">
-                              <RadioGroupItem value="vectorization-with-product" id="vectorization-with-product" />
-                              <Label htmlFor="vectorization-with-product" className="font-normal cursor-pointer">
-                                Vectorization + Transfer Product
+                              <RadioGroupItem value="vectorization-only" id="vectorization-only" />
+                              <Label htmlFor="vectorization-only" className="font-normal cursor-pointer">
+                                Vectorization Service Only (€15.00 ex VAT)
                               </Label>
                             </div>
                           </RadioGroup>
