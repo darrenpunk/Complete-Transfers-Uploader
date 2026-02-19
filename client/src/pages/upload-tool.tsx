@@ -753,10 +753,11 @@ export default function UploadTool() {
 
   useEffect(() => {
     if (id && projectFetched && !project && (projectLoadError || !currentProject)) {
-      console.log('⚠️ Project not found, redirecting to home:', id);
-      navigate('/');
+      console.log('⚠️ Project not found, showing product launcher:', id);
+      setShowProductLauncher(true);
+      setHasInitialized(true);
     }
-  }, [id, projectFetched, project, projectLoadError, currentProject, navigate]);
+  }, [id, projectFetched, project, projectLoadError, currentProject]);
 
   const pendingReorderRef = useRef<any>(null);
 
