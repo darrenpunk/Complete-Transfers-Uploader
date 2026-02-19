@@ -3244,7 +3244,10 @@ export async function registerRoutes(app: express.Application) {
                   // Use Ghostscript bounds if available, otherwise fall back to SVG geometry
                   let contentBoundsForNormalization: { xMin: number; yMin: number; xMax: number; yMax: number; width: number; height: number };
                   
-                  if (gsBounds) {
+                  // CRITICAL FIX: Ghostscript bbox can return 0x0 for white-on-white content
+                  // (e.g., CorelDRAW files with white artwork on white background)
+                  // Must check for non-zero bounds before trusting Ghostscript
+                  if (gsBounds && gsBounds.width > 1 && gsBounds.height > 1) {
                     // Check if Ghostscript bbox aspect ratio dramatically differs from page
                     // Only override if aspect ratios are truly mismatched (GS missing content)
                     const pageAspectRatio = pageWidth / pageHeight;
@@ -3303,36 +3306,99 @@ export async function registerRoutes(app: express.Application) {
                     displayHeight = gsBounds.height * pxToMm;
                     console.log(`📐 Using Ghostscript dimensions: ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm`);
                   } else {
-                    // Fallback to SVG geometry analysis
-                    console.log(`🔄 Falling back to SVG geometry analysis`);
-                    const { SVGBoundsAnalyzer } = await import('./svg-bounds-analyzer');
-                    const svgAnalyzer = new SVGBoundsAnalyzer();
-                    const svgGeometryResult = await svgAnalyzer.extractSVGBounds(svgPath);
+                    // Ghostscript bbox returned zero/empty bounds (common with white-on-white content)
+                    // Try Inkscape first for accurate content detection, then fall back to SVG geometry
+                    console.log(`⚠️ Ghostscript bbox returned zero/empty bounds - trying Inkscape for content detection`);
                     
-                    if (svgGeometryResult.success && svgGeometryResult.contentBounds && 
-                        svgGeometryResult.contentBounds.width > 0 && svgGeometryResult.contentBounds.height > 0) {
-                      contentBoundsForNormalization = svgGeometryResult.contentBounds;
+                    let inkscapeBounds: { xMin: number; yMin: number; xMax: number; yMax: number; width: number; height: number } | null = null;
+                    
+                    try {
+                      const { execSync: execSyncBounds } = await import('child_process');
+                      const queryResult = execSyncBounds(`inkscape --query-all "${svgPath}" 2>/dev/null | head -1`, { encoding: 'utf8', timeout: 10000 });
+                      const parts = queryResult.trim().split(',');
+                      if (parts.length >= 5) {
+                        const inkX = parseFloat(parts[1]) || 0;
+                        const inkY = parseFloat(parts[2]) || 0;
+                        const inkW = parseFloat(parts[3]) || 0;
+                        const inkH = parseFloat(parts[4]) || 0;
+                        if (inkW > 1 && inkH > 1) {
+                          inkscapeBounds = { xMin: inkX, yMin: inkY, xMax: inkX + inkW, yMax: inkY + inkH, width: inkW, height: inkH };
+                          console.log(`✅ Inkscape content bounds: (${inkX.toFixed(1)}, ${inkY.toFixed(1)}) size ${inkW.toFixed(1)}×${inkH.toFixed(1)}pts`);
+                        }
+                      }
+                    } catch (inkErr) {
+                      console.log(`⚠️ Inkscape query failed:`, inkErr);
+                    }
+                    
+                    if (inkscapeBounds) {
+                      contentBoundsForNormalization = inkscapeBounds;
                       const pxToMm = 1 / 2.834645669;
                       
                       boundsResult = {
                         success: true,
-                        method: 'svg-geometry',
+                        method: 'inkscape-fallback',
                         contentBounds: {
                           xMin: 0,
                           yMin: 0,
-                          xMax: svgGeometryResult.contentBounds.width,
-                          yMax: svgGeometryResult.contentBounds.height,
-                          width: svgGeometryResult.contentBounds.width,
-                          height: svgGeometryResult.contentBounds.height,
+                          xMax: inkscapeBounds.width,
+                          yMax: inkscapeBounds.height,
+                          width: inkscapeBounds.width,
+                          height: inkscapeBounds.height,
                           units: 'pt'
                         }
                       };
                       
-                      displayWidth = svgGeometryResult.contentBounds.width * pxToMm;
-                      displayHeight = svgGeometryResult.contentBounds.height * pxToMm;
-                      console.log(`📐 Using SVG geometry dimensions: ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm`);
+                      displayWidth = inkscapeBounds.width * pxToMm;
+                      displayHeight = inkscapeBounds.height * pxToMm;
+                      console.log(`📐 Using Inkscape dimensions: ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm`);
+                      
+                      // Store original PDF bounds for cropping (convert Inkscape top-down Y to PDF bottom-up Y)
+                      if (pdfPageDimensions) {
+                        const pdfYMin = pdfPageDimensions.heightPts - inkscapeBounds.yMin - inkscapeBounds.height;
+                        const pdfYMax = pdfPageDimensions.heightPts - inkscapeBounds.yMin;
+                        originalPdfBounds = {
+                          xMin: inkscapeBounds.xMin,
+                          yMin: pdfYMin,
+                          xMax: inkscapeBounds.xMax,
+                          yMax: pdfYMax,
+                          width: inkscapeBounds.width,
+                          height: inkscapeBounds.height,
+                          units: 'pt'
+                        };
+                        console.log(`📋 PDF bounds from Inkscape: (${originalPdfBounds.xMin.toFixed(1)}, ${originalPdfBounds.yMin.toFixed(1)}) to (${originalPdfBounds.xMax.toFixed(1)}, ${originalPdfBounds.yMax.toFixed(1)})`);
+                      }
                     } else {
-                      throw new Error('Both Ghostscript and SVG geometry analysis failed');
+                      // Final fallback to SVG geometry analysis
+                      console.log(`🔄 Falling back to SVG geometry analysis`);
+                      const { SVGBoundsAnalyzer } = await import('./svg-bounds-analyzer');
+                      const svgAnalyzer2 = new SVGBoundsAnalyzer();
+                      const svgGeometryResult = await svgAnalyzer2.extractSVGBounds(svgPath);
+                      
+                      if (svgGeometryResult.success && svgGeometryResult.contentBounds && 
+                          svgGeometryResult.contentBounds.width > 0 && svgGeometryResult.contentBounds.height > 0) {
+                        contentBoundsForNormalization = svgGeometryResult.contentBounds;
+                        const pxToMm = 1 / 2.834645669;
+                        
+                        boundsResult = {
+                          success: true,
+                          method: 'svg-geometry',
+                          contentBounds: {
+                            xMin: 0,
+                            yMin: 0,
+                            xMax: svgGeometryResult.contentBounds.width,
+                            yMax: svgGeometryResult.contentBounds.height,
+                            width: svgGeometryResult.contentBounds.width,
+                            height: svgGeometryResult.contentBounds.height,
+                            units: 'pt'
+                          }
+                        };
+                        
+                        displayWidth = svgGeometryResult.contentBounds.width * pxToMm;
+                        displayHeight = svgGeometryResult.contentBounds.height * pxToMm;
+                        console.log(`📐 Using SVG geometry dimensions: ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm`);
+                      } else {
+                        throw new Error('Ghostscript, Inkscape, and SVG geometry analysis all failed');
+                      }
                     }
                   }
                   
