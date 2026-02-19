@@ -130,25 +130,6 @@ async function main() {
   const startTime = Date.now();
   console.log(`[SERVER] Starting in ${isProduction ? 'production' : 'development'} mode...`);
 
-  if (isProduction) {
-    server.listen(port, "0.0.0.0", () => {
-      console.log(`[SERVER] Listening on port ${port} (health check available immediately)`);
-    });
-
-    if (isProduction) {
-      console.log('[SERVER] Configuring production static serving...');
-      try {
-        serveStatic(app);
-        console.log('[SERVER] Production static serving configured');
-      } catch (error) {
-        console.error('[SERVER] Static serving setup failed:', error);
-        app.use("*", (_req, res) => {
-          res.status(503).json({ error: 'Application is starting up' });
-        });
-      }
-    }
-  }
-
   try {
     console.log('[SERVER] Starting route registration...');
     const routeTimeout = new Promise((_, reject) => 
@@ -179,9 +160,22 @@ async function main() {
       console.log(`[SERVER] Server fully initialized in ${elapsed}ms`);
     });
   } else {
-    const elapsed = Date.now() - startTime;
-    log(`serving on port ${port}`);
-    console.log(`[SERVER] Server fully initialized in ${elapsed}ms`);
+    console.log('[SERVER] Configuring production static serving...');
+    try {
+      serveStatic(app);
+      console.log('[SERVER] Production static serving configured');
+    } catch (error) {
+      console.error('[SERVER] Static serving setup failed:', error);
+      app.use("*", (_req, res) => {
+        res.status(503).json({ error: 'Application is starting up' });
+      });
+    }
+
+    server.listen(port, "0.0.0.0", () => {
+      const elapsed = Date.now() - startTime;
+      log(`serving on port ${port}`);
+      console.log(`[SERVER] Server fully initialized in ${elapsed}ms`);
+    });
   }
 }
 
