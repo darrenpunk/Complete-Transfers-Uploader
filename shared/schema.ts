@@ -111,6 +111,7 @@ export const templateSizes = pgTable("template_sizes", {
   description: text("description"), // product description
   placeholderImage: text("placeholder_image"), // Template-specific placeholder for Dropbox uploads
   bleedMargin: integer("bleed_margin"), // Optional bleed margin in mm (added around canvas, label shows inner dimensions)
+  productCode: text("product_code"), // Odoo product internal reference code (e.g., CTCCA3, STCCA4)
 });
 
 export const vectorizationRequests = pgTable("vectorization_requests", {

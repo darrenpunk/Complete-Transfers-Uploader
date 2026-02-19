@@ -28,6 +28,13 @@ import { SVGBoundsAnalyzer } from './svg-bounds-analyzer';
 
 const execAsync = promisify(exec);
 
+function buildPdfFilename(projectName: string, quantity: number, productCode?: string | null, suffix?: string): string {
+  const safeName = (projectName || 'artwork').replace(/\s+/g, '_');
+  const codePrefix = productCode ? `[${productCode}]_` : '';
+  const suffixStr = suffix ? `_${suffix}` : '';
+  return `${codePrefix}${safeName}_qty${quantity}${suffixStr}.pdf`;
+}
+
 const SERVER_BUILD_VERSION = Date.now().toString();
 
 // Get actual dimensions from PNG file
@@ -799,7 +806,7 @@ export async function registerRoutes(app: express.Application) {
               console.log(`✅ Applique Badges PDF with form page: ${appliquePdfBytes.length} bytes`);
               
               res.setHeader('Content-Type', 'application/pdf');
-              res.setHeader('Content-Disposition', `attachment; filename="${project.name}_qty${project.quantity}_applique.pdf"`);
+              res.setHeader('Content-Disposition', `attachment; filename="${buildPdfFilename(project.name, project.quantity || 1, templateSize.productCode, 'applique')}"`);
               res.send(appliquePdfBytes);
               return;
             } catch (appliqueError) {
@@ -809,7 +816,7 @@ export async function registerRoutes(app: express.Application) {
           }
           
           res.setHeader('Content-Type', 'application/pdf');
-          res.setHeader('Content-Disposition', `attachment; filename="${project.name}_qty${project.quantity}.pdf"`);
+          res.setHeader('Content-Disposition', `attachment; filename="${buildPdfFilename(project.name, project.quantity || 1, templateSize.productCode)}"`);
           res.send(pdfBuffer);
           return;
         } catch (robustError) {
@@ -1632,7 +1639,7 @@ export async function registerRoutes(app: express.Application) {
             console.log(`✅ Applique Badges PDF with form page: ${appliquePdfBytes.length} bytes`);
             
             res.setHeader('Content-Type', 'application/pdf');
-            res.setHeader('Content-Disposition', `attachment; filename="${project.name}_qty${project.quantity}_applique.pdf"`);
+            res.setHeader('Content-Disposition', `attachment; filename="${buildPdfFilename(project.name, project.quantity || 1, templateSize?.productCode, 'applique')}"`);
             res.send(appliquePdfBytes);
             return;
           } catch (error) {
@@ -1693,7 +1700,7 @@ export async function registerRoutes(app: express.Application) {
             fs.unlinkSync(tempCmykPath);
             
             res.setHeader('Content-Type', 'application/pdf');
-            res.setHeader('Content-Disposition', `attachment; filename="${project.name}_qty${project.quantity}.pdf"`);
+            res.setHeader('Content-Disposition', `attachment; filename="${buildPdfFilename(project.name, project.quantity || 1, templateSize?.productCode)}"`);
             res.send(cmykPdfBytes);
             return;
           } else {
@@ -1707,7 +1714,7 @@ export async function registerRoutes(app: express.Application) {
         
         // Fallback: return original RGB PDF if CMYK conversion failed
         res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename="${project.name}_qty${project.quantity}.pdf"`);
+        res.setHeader('Content-Disposition', `attachment; filename="${buildPdfFilename(project.name, project.quantity || 1, templateSize?.productCode)}"`);
         res.send(Buffer.from(pdfBytes));
         return;
         
@@ -5860,15 +5867,29 @@ export async function registerRoutes(app: express.Application) {
         hasCookies: !!clientCookies
       });
 
+      // Look up product code from template for inclusion in Odoo data
+      let productCode: string | null = null;
+      if (projectData.templateSize) {
+        try {
+          const templateSizes = await storage.getTemplateSizes();
+          const matchedTemplate = templateSizes.find((t: any) => t.id === projectData.templateSize);
+          if (matchedTemplate?.productCode) {
+            productCode = matchedTemplate.productCode;
+            console.log(`📋 Product code for template ${projectData.templateSize}: [${productCode}]`);
+          }
+        } catch (e) {
+          console.warn('⚠️ Could not look up product code:', e);
+        }
+      }
+
       // Add source and website_id parameters to indicate request is from Complete Transfers
       // The website_id is critical for Odoo to use the correct pricelist in iframe context
       const ctWebsiteId = process.env.VITE_ODOO_CT_WEBSITE_ID || '2';  // Default to Complete Transfers website ID
       const requestBody = {
         ...projectData,
-        source: 'completetransfers',  // Identifies request as from Complete Transfers for proper pricelist
-        website_id: parseInt(ctWebsiteId, 10),  // Explicit website ID for correct pricelist selection
-        // For vectorization-only requests, pass template_id so Odoo uses template mapping
-        // instead of looking up a project's template field
+        source: 'completetransfers',
+        website_id: parseInt(ctWebsiteId, 10),
+        ...(productCode && { product_code: productCode }),
         ...(isVectorizationOnly && { template_id: 'vector-service' }),
       };
 
