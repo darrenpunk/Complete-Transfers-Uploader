@@ -2071,6 +2071,7 @@ export default function UploadTool() {
             const email = sessionStorage.getItem('partner_email') || '';
             navigate(email ? `/order-history?email=${encodeURIComponent(email)}` : "/order-history");
           }}
+          inline={true}
         />
         
         <TemplateSelectorModal

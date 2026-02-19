@@ -117,15 +117,15 @@ interface ProductLauncherModalProps {
   onSelectProduct: (productId: string) => void;
   onOpenVectorizationForm?: () => void;
   onViewOrders?: () => void;
+  inline?: boolean;
 }
 
-export default function ProductLauncherModal({ 
-  open, 
-  onClose, 
+function ProductContent({
+  onClose,
   onSelectProduct,
   onOpenVectorizationForm,
   onViewOrders,
-}: ProductLauncherModalProps) {
+}: Omit<ProductLauncherModalProps, 'open' | 'inline'>) {
   const [showTutorial, setShowTutorial] = useState(false);
 
   const handleProductSelect = (productId: string) => {
@@ -139,19 +139,18 @@ export default function ProductLauncherModal({
 
   return (
     <>
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <div className="w-full max-w-7xl mx-auto">
+        <div className="text-center mb-6">
           <CompleteTransferLogo size="md" className="mb-4" />
-          <DialogTitle className="text-2xl font-bold text-center mb-2">
+          <h2 className="text-2xl font-bold text-center mb-2 text-white">
             Select Product Type
-          </DialogTitle>
-          <DialogDescription className="text-center text-gray-600">
+          </h2>
+          <p className="text-center text-gray-400">
             Choose the type of product you want to create artwork for
-          </DialogDescription>
-        </DialogHeader>
+          </p>
+        </div>
 
-        <div className="flex justify-end gap-2 px-6 -mt-2 mb-2">
+        <div className="flex justify-end gap-2 px-2 md:px-6 mb-4">
           <Button
             variant="outline"
             size="sm"
@@ -176,7 +175,7 @@ export default function ProductLauncherModal({
           )}
         </div>
         
-        <div className="relative px-6 pt-2 pb-0">
+        <div className="relative px-2 md:px-6 pt-2 pb-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {productCategories.map((product) => (
               <Card 
@@ -224,7 +223,54 @@ export default function ProductLauncherModal({
             ))}
           </div>
         </div>
-        
+      </div>
+
+      <OnboardingTutorial open={showTutorial} onOpenChange={setShowTutorial} />
+    </>
+  );
+}
+
+export default function ProductLauncherModal({ 
+  open, 
+  onClose, 
+  onSelectProduct,
+  onOpenVectorizationForm,
+  onViewOrders,
+  inline = false,
+}: ProductLauncherModalProps) {
+  if (!open) return null;
+
+  if (inline) {
+    return (
+      <div className="min-h-screen bg-background flex items-start justify-center pt-8 pb-8 px-4 overflow-y-auto">
+        <ProductContent
+          onClose={onClose}
+          onSelectProduct={onSelectProduct}
+          onOpenVectorizationForm={onOpenVectorizationForm}
+          onViewOrders={onViewOrders}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <CompleteTransferLogo size="md" className="mb-4" />
+          <DialogTitle className="text-2xl font-bold text-center mb-2">
+            Select Product Type
+          </DialogTitle>
+          <DialogDescription className="text-center text-gray-600">
+            Choose the type of product you want to create artwork for
+          </DialogDescription>
+        </DialogHeader>
+        <ProductContent
+          onClose={onClose}
+          onSelectProduct={onSelectProduct}
+          onOpenVectorizationForm={onOpenVectorizationForm}
+          onViewOrders={onViewOrders}
+        />
         <div className="flex justify-center pt-4 border-t border-gray-700">
           <Button variant="outline" onClick={onClose} className="bg-transparent border-gray-600 text-gray-300 hover:bg-gray-800">
             Cancel
@@ -232,8 +278,5 @@ export default function ProductLauncherModal({
         </div>
       </DialogContent>
     </Dialog>
-
-    <OnboardingTutorial open={showTutorial} onOpenChange={setShowTutorial} />
-    </>
   );
 }
