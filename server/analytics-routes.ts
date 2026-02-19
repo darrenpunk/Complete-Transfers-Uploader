@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { type IStorage } from "./storage";
 import crypto from "crypto";
+import { pool } from "./db";
 
 const ADMIN_TOKEN_SECRET = crypto.randomBytes(32).toString("hex");
 
@@ -85,6 +86,31 @@ export function registerAnalyticsRoutes(app: Express, storage: IStorage) {
       res.status(401).json({ error: "Unauthorized" });
     }
   };
+
+  app.get("/api/admin/analytics/dbcheck", adminAuth, async (req, res) => {
+    try {
+      const client = await pool.connect();
+      try {
+        const result = await client.query("SELECT NOW() as time, current_database() as db");
+        const tables = await client.query("SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_name IN ('analytics_events','active_sessions')");
+        const eventCount = await client.query("SELECT COUNT(*) as count FROM analytics_events");
+        const sessionCount = await client.query("SELECT COUNT(*) as count FROM active_sessions");
+        res.json({
+          status: "connected",
+          serverTime: result.rows[0].time,
+          database: result.rows[0].db,
+          tables: tables.rows.map((r: any) => r.table_name),
+          eventCount: parseInt(eventCount.rows[0].count),
+          sessionCount: parseInt(sessionCount.rows[0].count),
+        });
+      } finally {
+        client.release();
+      }
+    } catch (e: any) {
+      console.error("DB check error:", e?.message || e);
+      res.json({ status: "error", error: e?.message || String(e) });
+    }
+  });
 
   app.get("/api/admin/analytics/active", adminAuth, async (req, res) => {
     try {

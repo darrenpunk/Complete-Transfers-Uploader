@@ -468,73 +468,100 @@ export class MemStorage implements IStorage {
     return ticket;
   }
 
-  // Analytics methods - database-backed for persistence across restarts
+  // Analytics methods - database-backed with retry for resilience
+  private async dbRetry<T>(fn: () => Promise<T>, fallback: T, label: string): Promise<T> {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        return await fn();
+      } catch (err: any) {
+        const msg = err?.message || String(err);
+        console.error(`DB ${label} attempt ${attempt + 1}/3 failed:`, msg);
+        if (attempt < 2) await new Promise(r => setTimeout(r, 500 * (attempt + 1)));
+      }
+    }
+    return fallback;
+  }
+
   async logAnalyticsEvent(event: InsertAnalyticsEvent): Promise<AnalyticsEvent> {
     const id = randomUUID();
-    const [result] = await db.insert(analyticsEvents).values({
+    const fallback: AnalyticsEvent = {
       id,
       sessionId: event.sessionId,
       userEmail: event.userEmail || null,
       eventType: event.eventType,
       metadata: event.metadata || null,
       createdAt: new Date().toISOString(),
-    }).returning();
-    return result;
+    };
+    return this.dbRetry(async () => {
+      const [result] = await db.insert(analyticsEvents).values(fallback).returning();
+      return result;
+    }, fallback, "logAnalyticsEvent");
   }
 
   async upsertActiveSession(session: { sessionId: string; userEmail?: string; lastSeen: string; currentPage?: string; metadata?: any }): Promise<void> {
-    await db.insert(activeSessions).values({
-      sessionId: session.sessionId,
-      userEmail: session.userEmail || null,
-      lastSeen: session.lastSeen,
-      currentPage: session.currentPage || null,
-      metadata: session.metadata || null,
-    }).onConflictDoUpdate({
-      target: activeSessions.sessionId,
-      set: {
+    await this.dbRetry(async () => {
+      await db.insert(activeSessions).values({
+        sessionId: session.sessionId,
         userEmail: session.userEmail || null,
         lastSeen: session.lastSeen,
         currentPage: session.currentPage || null,
         metadata: session.metadata || null,
-      },
-    });
+      }).onConflictDoUpdate({
+        target: activeSessions.sessionId,
+        set: {
+          userEmail: session.userEmail || null,
+          lastSeen: session.lastSeen,
+          currentPage: session.currentPage || null,
+          metadata: session.metadata || null,
+        },
+      });
+    }, undefined, "upsertActiveSession");
   }
 
   async getActiveSessions(sinceMinutes: number = 5): Promise<ActiveSession[]> {
     const cutoff = new Date(Date.now() - sinceMinutes * 60 * 1000).toISOString();
-    return db.select().from(activeSessions).where(gte(activeSessions.lastSeen, cutoff));
+    return this.dbRetry(
+      () => db.select().from(activeSessions).where(gte(activeSessions.lastSeen, cutoff)),
+      [],
+      "getActiveSessions"
+    );
   }
 
   async getAnalyticsEvents(limit: number = 50, offset: number = 0, eventType?: string): Promise<AnalyticsEvent[]> {
-    let query = db.select().from(analyticsEvents).orderBy(desc(analyticsEvents.createdAt)).limit(limit).offset(offset);
-    if (eventType) {
-      return db.select().from(analyticsEvents).where(eq(analyticsEvents.eventType, eventType)).orderBy(desc(analyticsEvents.createdAt)).limit(limit).offset(offset);
-    }
-    return query;
+    return this.dbRetry(async () => {
+      if (eventType) {
+        return db.select().from(analyticsEvents).where(eq(analyticsEvents.eventType, eventType)).orderBy(desc(analyticsEvents.createdAt)).limit(limit).offset(offset);
+      }
+      return db.select().from(analyticsEvents).orderBy(desc(analyticsEvents.createdAt)).limit(limit).offset(offset);
+    }, [], "getAnalyticsEvents");
   }
 
   async getAnalyticsStats(days: number = 7): Promise<{ date: string; eventType: string; count: number }[]> {
-    const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
-    const events = await db.select().from(analyticsEvents).where(gte(analyticsEvents.createdAt, cutoff));
-    const counts: Record<string, number> = {};
-    for (const e of events) {
-      const date = new Date(e.createdAt).toISOString().split("T")[0];
-      const key = `${date}|${e.eventType}`;
-      counts[key] = (counts[key] || 0) + 1;
-    }
-    return Object.entries(counts)
-      .map(([key, count]) => {
-        const [date, eventType] = key.split("|");
-        return { date, eventType, count };
-      })
-      .sort((a, b) => b.date.localeCompare(a.date));
+    return this.dbRetry(async () => {
+      const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+      const events = await db.select().from(analyticsEvents).where(gte(analyticsEvents.createdAt, cutoff));
+      const counts: Record<string, number> = {};
+      for (const e of events) {
+        const date = new Date(e.createdAt).toISOString().split("T")[0];
+        const key = `${date}|${e.eventType}`;
+        counts[key] = (counts[key] || 0) + 1;
+      }
+      return Object.entries(counts)
+        .map(([key, count]) => {
+          const [date, eventType] = key.split("|");
+          return { date, eventType, count };
+        })
+        .sort((a, b) => b.date.localeCompare(a.date));
+    }, [], "getAnalyticsStats");
   }
 
   async cleanupOldSessions(olderThanMinutes: number = 10): Promise<void> {
-    const cutoff = new Date(Date.now() - olderThanMinutes * 60 * 1000).toISOString();
-    await db.delete(activeSessions).where(
-      sql`${activeSessions.lastSeen} < ${cutoff}`
-    );
+    await this.dbRetry(async () => {
+      const cutoff = new Date(Date.now() - olderThanMinutes * 60 * 1000).toISOString();
+      await db.delete(activeSessions).where(
+        sql`${activeSessions.lastSeen} < ${cutoff}`
+      );
+    }, undefined, "cleanupOldSessions");
   }
 }
 
