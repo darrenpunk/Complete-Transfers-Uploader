@@ -56,10 +56,10 @@ export function useAnalytics(userEmail?: string | null) {
   }, [userEmail]);
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/admin')) {
+    if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/admin') && userEmail) {
       trackEvent("login", { page: window.location.pathname });
     }
-  }, [trackEvent]);
+  }, [trackEvent, userEmail]);
 
   return { trackEvent };
 }
