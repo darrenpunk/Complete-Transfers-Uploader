@@ -7258,6 +7258,243 @@ ${svgClose}`;
     }
   });
 
+  // === REPEAT APPLIQUE ORDER (ZIP UPLOAD) ===
+  const zipUpload = multer({
+    dest: uploadDir,
+    limits: { fileSize: 500 * 1024 * 1024 },
+    fileFilter: (_req, file, cb) => {
+      if (file.mimetype === 'application/zip' || file.mimetype === 'application/x-zip-compressed' || 
+          file.mimetype === 'application/x-zip' || file.originalname?.toLowerCase().endsWith('.zip')) {
+        cb(null, true);
+      } else {
+        cb(new Error('Only ZIP files are accepted'));
+      }
+    }
+  });
+
+  app.post('/api/projects/repeat-applique-zip', zipUpload.single('zipFile'), async (req, res) => {
+    try {
+      const file = req.file;
+      if (!file) {
+        return res.status(400).json({ error: 'No ZIP file uploaded' });
+      }
+
+      const AdmZip = (await import('adm-zip')).default;
+      const zipPath = path.join(uploadDir, file.filename);
+      
+      let zip: InstanceType<typeof AdmZip>;
+      try {
+        zip = new AdmZip(zipPath);
+      } catch (zipErr) {
+        fs.unlinkSync(zipPath);
+        return res.status(400).json({ error: 'Invalid or corrupted ZIP file' });
+      }
+
+      const entries = zip.getEntries();
+      
+      const artworkExts = ['.pdf', '.svg', '.ai', '.eps', '.png', '.jpg', '.jpeg'];
+      const embroideryExts = ['.dst', '.emb', '.pes', '.jef', '.exp', '.xxx', '.vp3', '.art', '.ofm', '.hus', '.pcd', '.pcm', '.pcs', '.pec'];
+      const maxEntrySize = 100 * 1024 * 1024;
+      
+      const artworkFiles: { name: string; data: Buffer }[] = [];
+      const embroideryFiles: { name: string; data: Buffer }[] = [];
+      const otherFiles: string[] = [];
+      
+      for (const entry of entries) {
+        if (entry.isDirectory) continue;
+        const fileName = path.basename(entry.entryName);
+        if (fileName.startsWith('.') || fileName.startsWith('__MACOSX')) continue;
+        if (entry.entryName.includes('__MACOSX/')) continue;
+        
+        const ext = path.extname(fileName).toLowerCase();
+        
+        if (artworkExts.includes(ext) || embroideryExts.includes(ext)) {
+          if (entry.header.size > maxEntrySize) {
+            console.log(`⚠️ Skipping oversized entry: ${fileName} (${(entry.header.size / 1024 / 1024).toFixed(1)}MB)`);
+            continue;
+          }
+          const data = entry.getData();
+          if (artworkExts.includes(ext)) {
+            artworkFiles.push({ name: fileName, data });
+          } else {
+            embroideryFiles.push({ name: fileName, data });
+          }
+        } else {
+          otherFiles.push(fileName);
+        }
+      }
+
+      if (artworkFiles.length === 0) {
+        fs.unlinkSync(zipPath);
+        return res.status(400).json({ 
+          error: 'No artwork files found in ZIP',
+          details: 'ZIP must contain at least one artwork file (PDF, SVG, AI, EPS, PNG, or JPG)'
+        });
+      }
+
+      console.log(`📦 Repeat applique ZIP: ${artworkFiles.length} artwork, ${embroideryFiles.length} embroidery, ${otherFiles.length} other files`);
+
+      const templateSizeId = req.body?.templateSizeId;
+      let selectedTemplate = null;
+
+      if (templateSizeId) {
+        const allTemplates = await storage.getTemplateSizes();
+        selectedTemplate = allTemplates.find(t => t.id === templateSizeId);
+      }
+
+      if (!selectedTemplate) {
+        const allTemplates = await storage.getTemplateSizes();
+        selectedTemplate = allTemplates.find(t => t.name?.toLowerCase().includes('applique') || t.id?.startsWith('applique-'));
+      }
+
+      if (!selectedTemplate) {
+        fs.unlinkSync(zipPath);
+        return res.status(400).json({ error: 'No applique template found. Please contact support.' });
+      }
+
+      const projectName = req.body?.projectName || `Repeat Order - ${path.parse(file.originalname).name}`;
+      const project = await storage.createProject({
+        name: projectName,
+        templateSize: selectedTemplate.id,
+        garmentColor: '#929292',
+        quantity: parseInt(req.body?.quantity) || 1,
+      });
+
+      console.log(`📋 Created repeat applique project: ${project.id} (${projectName})`);
+
+      const savedArtwork: any[] = [];
+      const savedEmbroidery: string[] = [];
+
+      for (const artwork of artworkFiles) {
+        const uniqueName = `${crypto.randomBytes(8).toString('hex')}_${artwork.name}`;
+        const destPath = path.join(uploadDir, uniqueName);
+        fs.writeFileSync(destPath, artwork.data);
+
+        const ext = path.extname(artwork.name).toLowerCase();
+        let mimeType = 'application/octet-stream';
+        if (ext === '.pdf') mimeType = 'application/pdf';
+        else if (ext === '.svg') mimeType = 'image/svg+xml';
+        else if (ext === '.png') mimeType = 'image/png';
+        else if (['.jpg', '.jpeg'].includes(ext)) mimeType = 'image/jpeg';
+        else if (['.ai', '.eps'].includes(ext)) mimeType = 'application/postscript';
+
+        let finalFilename = uniqueName;
+        let finalMimeType = mimeType;
+        let finalUrl = `/uploads/${uniqueName}`;
+        let originalFilename: string | undefined;
+        let originalMimeType: string | undefined;
+        let originalUrl: string | undefined;
+
+        if (mimeType === 'application/pdf') {
+          try {
+            const svgFilename = `${uniqueName}.svg`;
+            const svgDestPath = path.join(uploadDir, svgFilename);
+            const pdf2svgCmd = `timeout 30 pdf2svg "${destPath}" "${svgDestPath}"`;
+            await execAsync(pdf2svgCmd);
+            
+            if (fs.existsSync(svgDestPath) && fs.statSync(svgDestPath).size > 0) {
+              originalFilename = uniqueName;
+              originalMimeType = 'application/pdf';
+              originalUrl = `/uploads/${uniqueName}`;
+              finalFilename = svgFilename;
+              finalMimeType = 'image/svg+xml';
+              finalUrl = `/uploads/${svgFilename}`;
+              console.log(`✅ Converted PDF to SVG for canvas display: ${artwork.name}`);
+            }
+          } catch (convErr) {
+            console.log(`⚠️ PDF to SVG conversion failed for ${artwork.name}, keeping as PDF`);
+            try {
+              const pngFilename = `${uniqueName}.png`;
+              const pngDestPath = path.join(uploadDir, pngFilename);
+              await execAsync(`timeout 30 convert -density 150 "${destPath}[0]" -quality 90 "${pngDestPath}"`);
+              if (fs.existsSync(pngDestPath) && fs.statSync(pngDestPath).size > 0) {
+                originalFilename = uniqueName;
+                originalMimeType = 'application/pdf';
+                originalUrl = `/uploads/${uniqueName}`;
+                finalFilename = pngFilename;
+                finalMimeType = 'image/png';
+                finalUrl = `/uploads/${pngFilename}`;
+                console.log(`✅ Converted PDF to PNG fallback for canvas display: ${artwork.name}`);
+              }
+            } catch {
+              console.log(`⚠️ PNG fallback also failed for ${artwork.name}`);
+            }
+          }
+        }
+
+        const logo = await storage.createLogo({
+          projectId: project.id,
+          filename: finalFilename,
+          originalName: artwork.name,
+          mimeType: finalMimeType,
+          size: artwork.data.length,
+          url: finalUrl,
+          originalFilename,
+          originalMimeType,
+          originalUrl,
+        });
+
+        const existingElements = await storage.getCanvasElementsByProject(project.id);
+        const nextZ = existingElements.length > 0 ? Math.max(...existingElements.map(el => el.zIndex ?? 0)) + 1 : 0;
+
+        const canvasW = selectedTemplate.pixelWidth || 400;
+        const canvasH = selectedTemplate.pixelHeight || 400;
+        const logoW = Math.min(canvasW * 0.6, 200);
+        const logoH = logoW;
+
+        await storage.createCanvasElement({
+          projectId: project.id,
+          logoId: logo.id,
+          elementType: 'logo',
+          x: (canvasW - logoW) / 2,
+          y: (canvasH - logoH) / 2,
+          width: logoW,
+          height: logoH,
+          rotation: 0,
+          zIndex: nextZ,
+          isVisible: true,
+          isLocked: false,
+          canvasIndex: 0,
+        });
+
+        savedArtwork.push({ id: logo.id, name: artwork.name, type: ext });
+        console.log(`🎨 Added artwork to project: ${artwork.name}`);
+      }
+
+      for (const embFile of embroideryFiles) {
+        const uniqueName = `${crypto.randomBytes(8).toString('hex')}_${embFile.name}`;
+        const destPath = path.join(uploadDir, uniqueName);
+        fs.writeFileSync(destPath, embFile.data);
+
+        await storage.createLogo({
+          projectId: project.id,
+          filename: uniqueName,
+          originalName: embFile.name,
+          mimeType: 'application/octet-stream',
+          size: embFile.data.length,
+          url: `/uploads/${uniqueName}`,
+        });
+
+        savedEmbroidery.push(embFile.name);
+        console.log(`🧵 Added embroidery file to project: ${embFile.name}`);
+      }
+
+      fs.unlinkSync(zipPath);
+
+      res.status(201).json({
+        project,
+        artworkFiles: savedArtwork,
+        embroideryFiles: savedEmbroidery,
+        otherFilesSkipped: otherFiles,
+        template: selectedTemplate,
+      });
+
+    } catch (error: any) {
+      console.error('❌ Repeat applique ZIP upload error:', error);
+      res.status(500).json({ error: 'Failed to process ZIP file', details: error?.message });
+    }
+  });
+
   // Support contact endpoint (to be implemented in Odoo Helpdesk)
   app.post('/api/support/send-email', async (req, res) => {
     // This endpoint will be replaced with Odoo Helpdesk ticket creation

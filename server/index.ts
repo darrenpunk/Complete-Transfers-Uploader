@@ -26,6 +26,14 @@ process.on('unhandledRejection', (reason, promise) => {
 
 const app = express();
 
+const requiredDirs = ['./uploads', './public'];
+for (const dir of requiredDirs) {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+    console.log(`[SERVER] Created directory: ${dir}`);
+  }
+}
+
 app.get('/health', (_req, res) => {
   res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
 });
@@ -116,9 +124,18 @@ async function main() {
   const startTime = Date.now();
   console.log(`[SERVER] Starting in ${isProduction ? 'production' : 'development'} mode...`);
 
+  if (isProduction) {
+    server.listen(port, "0.0.0.0", () => {
+      console.log(`[SERVER] Listening on port ${port} (health check available)`);
+    });
+  }
+
   try {
     console.log('[SERVER] Starting route registration...');
-    await registerRoutes(app);
+    const routeTimeout = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Route registration timed out after 120s')), 120000)
+    );
+    await Promise.race([registerRoutes(app), routeTimeout]);
     console.log(`[SERVER] Routes registered in ${Date.now() - startTime}ms`);
   } catch (error) {
     console.error('[SERVER] Route registration failed:', error);
@@ -143,17 +160,19 @@ async function main() {
         res.status(503).json({ error: 'Application is starting up' });
       });
     }
+    const elapsed = Date.now() - startTime;
+    log(`serving on port ${port}`);
+    console.log(`[SERVER] Server fully initialized in ${elapsed}ms`);
   } else {
     console.log('[SERVER] Setting up Vite for development...');
     await setupVite(app, server);
     console.log('[SERVER] Vite setup complete');
+    server.listen(port, "0.0.0.0", () => {
+      const elapsed = Date.now() - startTime;
+      log(`serving on port ${port}`);
+      console.log(`[SERVER] Server fully initialized in ${elapsed}ms`);
+    });
   }
-
-  server.listen(port, "0.0.0.0", () => {
-    const elapsed = Date.now() - startTime;
-    log(`serving on port ${port}`);
-    console.log(`[SERVER] Server fully initialized in ${elapsed}ms`);
-  });
 }
 
 main().catch(error => {

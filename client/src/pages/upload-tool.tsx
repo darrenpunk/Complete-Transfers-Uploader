@@ -13,6 +13,7 @@ import InkColorModal, { getColorName as getInkColorName } from "@/components/ink
 import { getGarmentColorName } from "@/components/garment-color-modal";
 import ProjectNameModal from "@/components/project-name-modal";
 import AppliqueBadgesModal from "@/components/applique-badges-modal";
+import RepeatAppliqueModal from "@/components/repeat-applique-modal";
 import PDFPreviewModal from "@/components/pdf-preview-modal";
 import AddToCartModal from "@/components/add-to-cart-modal";
 import ProgressSteps from "@/components/progress-steps";
@@ -58,6 +59,7 @@ export default function UploadTool() {
   const [triggerAppliqueBadgesModal, setTriggerAppliqueBadgesModal] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [showVectorizationForm, setShowVectorizationForm] = useState(false);
+  const [showRepeatAppliqueModal, setShowRepeatAppliqueModal] = useState(false);
   const [showOnboardingTutorial, setShowOnboardingTutorial] = useState(false);
   const [showArtworkRequirementsModal, setShowArtworkRequirementsModal] = useState(false);
   const [showExternalFileLinkModal, setShowExternalFileLinkModal] = useState(false);
@@ -2058,6 +2060,7 @@ export default function UploadTool() {
             const email = sessionStorage.getItem('partner_email') || '';
             navigate(email ? `/order-history?email=${encodeURIComponent(email)}` : "/order-history");
           }}
+          onOpenRepeatApplique={() => setShowRepeatAppliqueModal(true)}
         />
         
         {/* Template Selector Modal */}
@@ -2108,6 +2111,19 @@ export default function UploadTool() {
           open={showVectorizationForm}
           onOpenChange={setShowVectorizationForm}
           partnerEmail={partnerEmail}
+        />
+
+        <RepeatAppliqueModal
+          open={showRepeatAppliqueModal}
+          onOpenChange={setShowRepeatAppliqueModal}
+          onSuccess={(projectId) => {
+            setHasInitialized(true);
+            navigate(`/project/${projectId}`);
+            toast({
+              title: "Repeat order created",
+              description: "Your artwork has been loaded from the ZIP file. Review and adjust as needed.",
+            });
+          }}
         />
       </div>
     );

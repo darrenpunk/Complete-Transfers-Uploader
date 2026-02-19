@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import CompleteTransferLogo from "./complete-transfer-logo";
 import { OnboardingTutorial } from "./onboarding-tutorial";
-import { Palette, ShoppingBag, GraduationCap } from "lucide-react";
+import { Palette, ShoppingBag, GraduationCap, RefreshCw } from "lucide-react";
 import type { TemplateSize } from "@shared/schema";
 
 // Import product icons
@@ -117,6 +117,7 @@ interface ProductLauncherModalProps {
   onSelectProduct: (productId: string) => void;
   onOpenVectorizationForm?: () => void;
   onViewOrders?: () => void;
+  onOpenRepeatApplique?: () => void;
 }
 
 export default function ProductLauncherModal({ 
@@ -124,7 +125,8 @@ export default function ProductLauncherModal({
   onClose, 
   onSelectProduct,
   onOpenVectorizationForm,
-  onViewOrders
+  onViewOrders,
+  onOpenRepeatApplique
 }: ProductLauncherModalProps) {
   const [showTutorial, setShowTutorial] = useState(false);
 
@@ -162,6 +164,22 @@ export default function ProductLauncherModal({
             <span className="text-xs font-bold uppercase tracking-wide">Quick Start</span>
             <span className="text-[10px] text-gray-400 uppercase tracking-wider">How It Works</span>
           </Button>
+          {onOpenRepeatApplique && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex flex-col items-center gap-0.5 h-auto py-2 px-4 bg-amber-900/50 border-amber-600 text-amber-200 hover:bg-amber-800/50 hover:border-amber-400"
+              onClick={() => {
+                onClose();
+                onOpenRepeatApplique();
+              }}
+              data-testid="button-repeat-applique"
+            >
+              <RefreshCw className="w-5 h-5" />
+              <span className="text-xs font-bold uppercase tracking-wide">Repeat Order</span>
+              <span className="text-[10px] text-amber-400 uppercase tracking-wider">Applique ZIP Upload</span>
+            </Button>
+          )}
           {onViewOrders && (
             <Button
               variant="outline"
