@@ -31,21 +31,24 @@ class ProjectTask(models.Model):
     
     def _build_task_name(self, order_line, artwork_filename):
         """Build task name format:
-        'SO12345 - [CTCCA4] ProjectName.pdf'
+        'SO86019 - [STCC6060] Single Colour - Cut 60x60mm (TAIL2408) GX logo.pdf'
         
-        Format: SO number - [ProductCode] ArtworkFilename
-        The artwork filename already contains the project name, so we only
-        need the SO reference, product code, and the filename.
+        Format: {SO} - [{ProductCode}] {ProductName} ({CustomerCode}) {PDFName}
         """
         sale_order_ref = order_line.order_id.name if order_line.order_id else ''
         product = order_line.product_id
         product_code = product.default_code if product and product.default_code else ''
+        product_name = product.name if product else ''
+        
+        partner = order_line.order_id.partner_id if order_line.order_id else None
+        customer_code = partner.ref if partner and partner.ref else ''
         
         code_part = f"[{product_code}] " if product_code else ''
+        customer_part = f"({customer_code}) " if customer_code else ''
+        name_part = f"{product_name} " if product_name else ''
+        file_part = artwork_filename or ''
         
-        if artwork_filename:
-            return f"{sale_order_ref} - {code_part}{artwork_filename}"
-        return f"{sale_order_ref} - {code_part}{order_line.name or ''}"
+        return f"{sale_order_ref} - {code_part}{name_part}{customer_part}{file_part}".strip()
     
     def _sync_artwork_pdf_from_order_line(self, task):
         """Helper method to sync artwork PDF and filename from sale order line to task

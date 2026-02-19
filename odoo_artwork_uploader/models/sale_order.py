@@ -75,12 +75,14 @@ class SaleOrderLine(models.Model):
                         product_code = product.default_code if product and product.default_code else ''
                         if product_code and task.name and f'[{product_code}]' not in task.name:
                             sale_order_ref = line.order_id.name if line.order_id else ''
+                            product_name = product.name if product else ''
+                            partner = line.order_id.partner_id if line.order_id else None
+                            customer_code = partner.ref if partner and partner.ref else ''
                             code_part = f"[{product_code}] " if product_code else ''
+                            name_part = f"{product_name} " if product_name else ''
+                            customer_part = f"({customer_code}) " if customer_code else ''
                             artwork_filename = line.artwork_file_name if hasattr(line, 'artwork_file_name') and line.artwork_file_name else ''
-                            if artwork_filename:
-                                task_vals['name'] = f"{sale_order_ref} - {code_part}{artwork_filename}"
-                            else:
-                                task_vals['name'] = f"{sale_order_ref} - {code_part}{line.name or ''}"
+                            task_vals['name'] = f"{sale_order_ref} - {code_part}{name_part}{customer_part}{artwork_filename}".strip()
                         
                         task.write(task_vals)
                         _logger.info(f"✅ PDF synced to manufacturing task #{task.id} from order line #{line.id}")
@@ -122,12 +124,14 @@ class SaleOrderLine(models.Model):
                     product_code = product.default_code if product and product.default_code else ''
                     if product_code and task.name and f'[{product_code}]' not in task.name:
                         sale_order_ref = order_line.order_id.name if order_line.order_id else ''
+                        product_name = product.name if product else ''
+                        partner = order_line.order_id.partner_id if order_line.order_id else None
+                        customer_code = partner.ref if partner and partner.ref else ''
                         code_part = f"[{product_code}] " if product_code else ''
+                        name_part = f"{product_name} " if product_name else ''
+                        customer_part = f"({customer_code}) " if customer_code else ''
                         artwork_filename = order_line.artwork_file_name if hasattr(order_line, 'artwork_file_name') and order_line.artwork_file_name else ''
-                        if artwork_filename:
-                            task_vals['name'] = f"{sale_order_ref} - {code_part}{artwork_filename}"
-                        else:
-                            task_vals['name'] = f"{sale_order_ref} - {code_part}{order_line.name or ''}"
+                        task_vals['name'] = f"{sale_order_ref} - {code_part}{name_part}{customer_part}{artwork_filename}".strip()
                     
                     task.write(task_vals)
                     synced_count += 1
