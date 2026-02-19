@@ -5830,6 +5830,85 @@ export async function registerRoutes(app: express.Application) {
     }
   });
 
+  const zipUpload = multer({
+    dest: uploadDir,
+    limits: { fileSize: 500 * 1024 * 1024 },
+    fileFilter: (_req: any, file: any, cb: any) => {
+      if (file.mimetype === 'application/zip' || file.mimetype === 'application/x-zip-compressed' || 
+          file.mimetype === 'application/x-zip' || file.originalname?.toLowerCase().endsWith('.zip')) {
+        cb(null, true);
+      } else {
+        cb(new Error('Only ZIP files are accepted'));
+      }
+    }
+  });
+
+  app.post('/api/projects/:id/attach-zip', zipUpload.single('zipFile'), async (req, res) => {
+    try {
+      const projectId = req.params.id;
+      const file = req.file;
+      if (!file) {
+        return res.status(400).json({ error: 'No ZIP file uploaded' });
+      }
+
+      const project = await storage.getProject(projectId);
+      if (!project) {
+        fs.unlinkSync(path.join(uploadDir, file.filename));
+        return res.status(404).json({ error: 'Project not found' });
+      }
+
+      if (project.attachedZipPath) {
+        const oldPath = path.join(uploadDir, path.basename(project.attachedZipPath));
+        if (fs.existsSync(oldPath)) {
+          fs.unlinkSync(oldPath);
+        }
+      }
+
+      const zipUrl = `/uploads/${file.filename}`;
+      await storage.updateProject(projectId, {
+        attachedZipPath: zipUrl,
+        attachedZipName: file.originalname,
+      });
+
+      console.log(`📎 ZIP attached to project ${projectId}: ${file.originalname}`);
+      res.json({
+        success: true,
+        zipPath: zipUrl,
+        zipName: file.originalname,
+        fileSize: file.size,
+      });
+    } catch (error) {
+      console.error('❌ Attach ZIP error:', error);
+      res.status(500).json({ error: 'Failed to attach ZIP file' });
+    }
+  });
+
+  app.delete('/api/projects/:id/attach-zip', async (req, res) => {
+    try {
+      const projectId = req.params.id;
+      const project = await storage.getProject(projectId);
+      if (!project) {
+        return res.status(404).json({ error: 'Project not found' });
+      }
+
+      if (project.attachedZipPath) {
+        const filePath = path.join(uploadDir, path.basename(project.attachedZipPath));
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
+        await storage.updateProject(projectId, {
+          attachedZipPath: null,
+          attachedZipName: null,
+        });
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('❌ Remove ZIP error:', error);
+      res.status(500).json({ error: 'Failed to remove ZIP file' });
+    }
+  });
+
   // Add to Cart endpoint - proxy to Odoo
   app.post('/api/projects/:id/add-to-cart', async (req, res) => {
     let projectId = req.params.id;
@@ -5883,15 +5962,31 @@ export async function registerRoutes(app: express.Application) {
         }
       }
 
-      // Add source and website_id parameters to indicate request is from Complete Transfers
-      // The website_id is critical for Odoo to use the correct pricelist in iframe context
-      const ctWebsiteId = process.env.VITE_ODOO_CT_WEBSITE_ID || '2';  // Default to Complete Transfers website ID
+      let zipBase64: string | undefined;
+      if (!isVectorizationOnly && projectId !== 'vector-service') {
+        try {
+          const proj = await storage.getProject(projectId);
+          if (proj?.attachedZipPath) {
+            const zipFilePath = path.join('./uploads', path.basename(proj.attachedZipPath));
+            if (fs.existsSync(zipFilePath)) {
+              const zipBuffer = fs.readFileSync(zipFilePath);
+              zipBase64 = zipBuffer.toString('base64');
+              console.log(`📎 Including attached ZIP (${(zipBuffer.length / 1024 / 1024).toFixed(1)}MB): ${proj.attachedZipName}`);
+            }
+          }
+        } catch (e) {
+          console.warn('⚠️ Could not read attached ZIP:', e);
+        }
+      }
+
+      const ctWebsiteId = process.env.VITE_ODOO_CT_WEBSITE_ID || '2';
       const requestBody = {
         ...projectData,
         source: 'completetransfers',
         website_id: parseInt(ctWebsiteId, 10),
         ...(productCode && { product_code: productCode }),
         ...(isVectorizationOnly && { template_id: 'vector-service' }),
+        ...(zipBase64 && { zipBase64, zipFileName: (await storage.getProject(projectId))?.attachedZipName }),
       };
 
       // Call Odoo add-to-cart API
@@ -7259,19 +7354,6 @@ ${svgClose}`;
   });
 
   // === REPEAT APPLIQUE ORDER (ZIP UPLOAD) ===
-  const zipUpload = multer({
-    dest: uploadDir,
-    limits: { fileSize: 500 * 1024 * 1024 },
-    fileFilter: (_req, file, cb) => {
-      if (file.mimetype === 'application/zip' || file.mimetype === 'application/x-zip-compressed' || 
-          file.mimetype === 'application/x-zip' || file.originalname?.toLowerCase().endsWith('.zip')) {
-        cb(null, true);
-      } else {
-        cb(new Error('Only ZIP files are accepted'));
-      }
-    }
-  });
-
   app.post('/api/projects/repeat-applique-zip', zipUpload.single('zipFile'), async (req, res) => {
     try {
       const file = req.file;

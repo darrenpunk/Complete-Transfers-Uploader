@@ -23,7 +23,10 @@ export const projects = pgTable("projects", {
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
   useOriginalGarmentPages: boolean("use_original_garment_pages").default(false), // Pass-through mode: use customer's original PDF pages 2+ for garment info
   embroideryPreviewPath: text("embroidery_preview_path"), // Path to saved AI embroidery preview image
+  attachedZipPath: text("attached_zip_path"), // Path to attached ZIP file for repeat applique orders
+  attachedZipName: text("attached_zip_name"), // Original filename of attached ZIP
 });
+
 
 export const logos = pgTable("logos", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
