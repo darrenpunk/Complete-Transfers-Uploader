@@ -12,16 +12,13 @@ const __dirname = path.dirname(__filename);
 
 dotenv.config();
 
-// Global crash protection - prevent unhandled errors from killing the server
 process.on('uncaughtException', (err) => {
   console.error('[CRASH PROTECTION] Uncaught exception caught:', err.message);
   console.error(err.stack);
-  // Don't exit - keep the server running
 });
 
 process.on('unhandledRejection', (reason, promise) => {
   console.error('[CRASH PROTECTION] Unhandled promise rejection:', reason);
-  // Don't exit - keep the server running
 });
 
 const app = express();
@@ -126,20 +123,34 @@ async function main() {
 
   if (isProduction) {
     server.listen(port, "0.0.0.0", () => {
-      console.log(`[SERVER] Listening on port ${port} (health check available)`);
+      console.log(`[SERVER] Listening on port ${port} (health check available immediately)`);
     });
+
+    if (isProduction) {
+      console.log('[SERVER] Configuring production static serving...');
+      try {
+        serveStatic(app);
+        console.log('[SERVER] Production static serving configured');
+      } catch (error) {
+        console.error('[SERVER] Static serving setup failed:', error);
+        app.use("*", (_req, res) => {
+          res.status(503).json({ error: 'Application is starting up' });
+        });
+      }
+    }
   }
 
   try {
     console.log('[SERVER] Starting route registration...');
     const routeTimeout = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Route registration timed out after 120s')), 120000)
+      setTimeout(() => reject(new Error('Route registration timed out after 30s')), 30000)
     );
     await Promise.race([registerRoutes(app), routeTimeout]);
     console.log(`[SERVER] Routes registered in ${Date.now() - startTime}ms`);
   } catch (error) {
     console.error('[SERVER] Route registration failed:', error);
-    throw error;
+    if (!isProduction) throw error;
+    console.error('[SERVER] Continuing in degraded mode - health check still available');
   }
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
@@ -149,21 +160,7 @@ async function main() {
     res.status(status).json({ message });
   });
 
-  if (isProduction) {
-    console.log('[SERVER] Configuring production static serving...');
-    try {
-      serveStatic(app);
-      console.log('[SERVER] Production static serving configured');
-    } catch (error) {
-      console.error('[SERVER] Static serving setup failed:', error);
-      app.use("*", (_req, res) => {
-        res.status(503).json({ error: 'Application is starting up' });
-      });
-    }
-    const elapsed = Date.now() - startTime;
-    log(`serving on port ${port}`);
-    console.log(`[SERVER] Server fully initialized in ${elapsed}ms`);
-  } else {
+  if (!isProduction) {
     console.log('[SERVER] Setting up Vite for development...');
     await setupVite(app, server);
     console.log('[SERVER] Vite setup complete');
@@ -172,6 +169,10 @@ async function main() {
       log(`serving on port ${port}`);
       console.log(`[SERVER] Server fully initialized in ${elapsed}ms`);
     });
+  } else {
+    const elapsed = Date.now() - startTime;
+    log(`serving on port ${port}`);
+    console.log(`[SERVER] Server fully initialized in ${elapsed}ms`);
   }
 }
 
