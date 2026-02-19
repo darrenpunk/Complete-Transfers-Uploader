@@ -2116,6 +2116,41 @@ export async function registerRoutes(app: express.Application) {
                         const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r150 -dMaxBitmap=500000000 -dAlignToPixels=0 -dGridFitTT=2 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`;
                         execSync(gsCommand, { encoding: 'buffer', timeout: 120000 });
                         
+                        // CRITICAL: Crop PNG to content bounds if bounds are available
+                        // Without cropping, the full-page PNG gets squished into the content-area element dimensions
+                        const pdfBounds = (file as any).originalPdfBounds;
+                        if (pdfBounds && (pdfBounds.xMin > 5 || pdfBounds.yMin > 5)) {
+                          try {
+                            const dpi = 150;
+                            const scale = dpi / 72; // Convert from pts to pixels at render DPI
+                            const cropX = Math.floor(pdfBounds.xMin * scale);
+                            const cropY = 0; // GS renders top-down, so we need to calculate from top
+                            const cropW = Math.ceil(pdfBounds.width * scale);
+                            const cropH = Math.ceil(pdfBounds.height * scale);
+                            
+                            // Get actual PNG dimensions to calculate Y offset
+                            const identifyResult = execSync(`identify -format "%w %h" "${pngPath}"`, { encoding: 'utf8', timeout: 10000 }).trim();
+                            const [pngW, pngH] = identifyResult.split(' ').map(Number);
+                            
+                            // PDF coords: yMin is from bottom, for PNG (top-down): cropY = pngH - (yMax * scale)
+                            const cropYFromTop = Math.max(0, Math.floor(pngH - pdfBounds.yMax * scale));
+                            
+                            console.log(`✂️ Cropping PNG to content area: ${cropW}×${cropH}px at (${cropX}, ${cropYFromTop}) from ${pngW}×${pngH}px`);
+                            const croppedPath = pngPath + '.cropped.png';
+                            execSync(`convert "${pngPath}" -crop ${cropW}x${cropH}+${cropX}+${cropYFromTop} +repage "${croppedPath}"`, { timeout: 30000 });
+                            
+                            if (fs.existsSync(croppedPath) && fs.statSync(croppedPath).size > 100) {
+                              fs.renameSync(croppedPath, pngPath);
+                              console.log(`✅ PNG cropped to content bounds: ${cropW}×${cropH}px`);
+                            } else {
+                              console.log(`⚠️ Cropped PNG invalid, keeping full page`);
+                              if (fs.existsSync(croppedPath)) fs.unlinkSync(croppedPath);
+                            }
+                          } catch (cropErr) {
+                            console.log(`⚠️ PNG crop failed, keeping full page:`, cropErr);
+                          }
+                        }
+                        
                         if (fs.existsSync(pngPath) && fs.statSync(pngPath).size > 0) {
                           const pngBuffer = fs.readFileSync(pngPath);
                           const pngSignature = pngBuffer.slice(0, 8).toString('hex');
@@ -3295,14 +3330,20 @@ export async function registerRoutes(app: express.Application) {
                       if (inkscapeVerifyBounds) {
                         const inkArea = inkscapeVerifyBounds.width * inkscapeVerifyBounds.height;
                         const gsArea = gsBounds.width * gsBounds.height;
+                        const pageArea = pageWidth * pageHeight;
+                        const inkPageCoverage = inkArea / pageArea;
+                        
                         if (inkArea > gsArea * 1.5) {
-                          console.log(`🔄 Inkscape found ${(inkArea / gsArea).toFixed(1)}x more content than GS - white content detected!`);
-                          console.log(`   GS: ${gsBounds.width.toFixed(1)}×${gsBounds.height.toFixed(1)}pts vs Inkscape: ${inkscapeVerifyBounds.width.toFixed(1)}×${inkscapeVerifyBounds.height.toFixed(1)}pts`);
-                          
-                          // Convert Inkscape bounds (SVG top-down) to PDF coordinates (bottom-up)
-                          // For the content bounds used in normalization, use the Inkscape bounds directly
-                          gsBounds = inkscapeVerifyBounds;
-                          console.log(`✅ Using Inkscape bounds (captures all content including white)`);
+                          if (inkPageCoverage > 0.8) {
+                            console.log(`✅ Inkscape bounds cover ${(inkPageCoverage * 100).toFixed(0)}% of page - these are background/invisible elements, NOT hidden content`);
+                            console.log(`   Trusting GS bbox: ${gsBounds.width.toFixed(1)}×${gsBounds.height.toFixed(1)}pts (actual visible artwork)`);
+                            console.log(`   Ignoring Inkscape: ${inkscapeVerifyBounds.width.toFixed(1)}×${inkscapeVerifyBounds.height.toFixed(1)}pts (includes backgrounds)`);
+                          } else {
+                            console.log(`🔄 Inkscape found ${(inkArea / gsArea).toFixed(1)}x more content than GS - white content detected!`);
+                            console.log(`   GS: ${gsBounds.width.toFixed(1)}×${gsBounds.height.toFixed(1)}pts vs Inkscape: ${inkscapeVerifyBounds.width.toFixed(1)}×${inkscapeVerifyBounds.height.toFixed(1)}pts`);
+                            gsBounds = inkscapeVerifyBounds;
+                            console.log(`✅ Using Inkscape bounds (captures all content including white)`);
+                          }
                         } else {
                           console.log(`✅ Inkscape confirms GS bounds are accurate (similar area)`);
                         }
@@ -3469,9 +3510,19 @@ export async function registerRoutes(app: express.Application) {
                             console.log(`🔍 Inkscape query-all: SVG at (${svgBoundsX.toFixed(2)}, ${svgBoundsY.toFixed(2)}) size ${inkscapeWidth.toFixed(2)}×${inkscapeHeight.toFixed(2)}pts`);
                             
                             // CRITICAL: Use Inkscape dimensions if they're larger than Ghostscript
-                            // This prevents clipping when Ghostscript misses masked content
+                            // But ONLY if Inkscape isn't just reporting background/invisible elements
                             const TOLERANCE = 1.0; // 1pt tolerance
+                            const inkPageCoverage2 = pdfPageDimensions ? (inkscapeWidth * inkscapeHeight) / (pdfPageDimensions.widthPts * pdfPageDimensions.heightPts) : 0;
                             if (inkscapeWidth > contentWidthPts + TOLERANCE || inkscapeHeight > contentHeightPts + TOLERANCE) {
+                              if (inkPageCoverage2 > 0.8) {
+                                console.log(`✅ Inkscape root bounds cover ${(inkPageCoverage2 * 100).toFixed(0)}% of page - background elements, trusting GS bbox`);
+                                console.log(`   GS content: ${contentWidthPts.toFixed(2)}×${contentHeightPts.toFixed(2)}pts (actual visible artwork)`);
+                                if (pdfPageDimensions && originalPdfBounds) {
+                                  svgBoundsX = originalPdfBounds.xMin;
+                                  svgBoundsY = pdfPageDimensions.heightPts - originalPdfBounds.yMax;
+                                  console.log(`   SVG translation from GS bounds: (${svgBoundsX.toFixed(2)}, ${svgBoundsY.toFixed(2)})`);
+                                }
+                              } else {
                               console.log(`⚠️ Inkscape reports LARGER bounds than Ghostscript!`);
                               console.log(`   Ghostscript: ${contentWidthPts.toFixed(2)}×${contentHeightPts.toFixed(2)}pts`);
                               console.log(`   Inkscape: ${inkscapeWidth.toFixed(2)}×${inkscapeHeight.toFixed(2)}pts`);
@@ -3531,6 +3582,7 @@ export async function registerRoutes(app: express.Application) {
                                 console.log(`📋 Updated contentBounds to Inkscape dimensions: ${inkscapeWidth.toFixed(1)}×${inkscapeHeight.toFixed(1)}pts`);
                               }
                             }
+                          } // end else (inkPageCoverage2 <= 0.8)
                           }
                         } catch (queryError) {
                           console.log(`⚠️ Inkscape query failed, using Ghostscript bounds:`, queryError);
