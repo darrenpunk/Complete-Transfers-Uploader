@@ -3244,45 +3244,71 @@ export async function registerRoutes(app: express.Application) {
                   // Use Ghostscript bounds if available, otherwise fall back to SVG geometry
                   let contentBoundsForNormalization: { xMin: number; yMin: number; xMax: number; yMax: number; width: number; height: number };
                   
-                  // CRITICAL FIX: Ghostscript bbox can return 0x0 for white-on-white content
-                  // (e.g., CorelDRAW files with white artwork on white background)
-                  // Must check for non-zero bounds before trusting Ghostscript
+                  // CRITICAL FIX: Ghostscript bbox misses white content on its default white background
+                  // This causes partial bounds for files with mixed colored + white artwork
+                  // (e.g., CorelDRAW files with orange "TEAM" + white "MAPLES" text)
+                  // Must validate GS bounds against Inkscape to catch missed white content
                   if (gsBounds && gsBounds.width > 1 && gsBounds.height > 1) {
-                    // Check if Ghostscript bbox aspect ratio dramatically differs from page
-                    // Only override if aspect ratios are truly mismatched (GS missing content)
-                    const pageAspectRatio = pageWidth / pageHeight;
-                    const gsAspectRatio = gsBounds.width / gsBounds.height;
                     const heightRatio = gsBounds.height / pageHeight;
                     const widthRatio = gsBounds.width / pageWidth;
+                    const areaCoverage = (gsBounds.width * gsBounds.height) / (pageWidth * pageHeight);
                     
-                    // Only override GS bbox if the ASPECT RATIOS are dramatically different
-                    // This indicates GS missed some content on one axis
-                    // Don't override just because content is smaller than page (valid whitespace)
-                    const pageIsSquare = pageAspectRatio >= 0.9 && pageAspectRatio <= 1.1;
-                    const gsIsNotSquare = gsAspectRatio < 0.7 || gsAspectRatio > 1.43; // More than 30% aspect ratio difference
+                    console.log(`📊 GS bbox coverage: ${(widthRatio * 100).toFixed(0)}%W × ${(heightRatio * 100).toFixed(0)}%H = ${(areaCoverage * 100).toFixed(0)}% area`);
                     
-                    // Only override if page is square but GS bbox is NOT square (aspect ratio mismatch)
-                    // AND the bbox is extremely small (less than 50% of page) - very suspicious
-                    const isTinyCoverage = heightRatio < 0.5 || widthRatio < 0.5;
-                    
-                    if (pageIsSquare && gsIsNotSquare && isTinyCoverage) {
-                      console.log(`⚠️ GS BBOX SUSPICIOUS: Page is square (${pageAspectRatio.toFixed(2)}) but GS is ${gsAspectRatio.toFixed(2)}`);
-                      console.log(`   Height ratio: ${(heightRatio * 100).toFixed(0)}%, Width ratio: ${(widthRatio * 100).toFixed(0)}%`);
-                      console.log(`🔄 Using PDF PAGE DIMENSIONS instead of unreliable GS bbox`);
+                    // If GS bbox covers less than 25% of page area, it may be missing white content
+                    // Use Inkscape to verify there isn't additional content GS can't see
+                    if (areaCoverage < 0.25) {
+                      console.log(`⚠️ GS bbox covers only ${(areaCoverage * 100).toFixed(0)}% of page - checking for hidden white content with Inkscape`);
                       
-                      // Use page dimensions with small margin (1pt on each side)
-                      const margin = 1;
-                      gsBounds = {
-                        xMin: margin,
-                        yMin: margin,
-                        xMax: pageWidth - margin,
-                        yMax: pageHeight - margin,
-                        width: pageWidth - 2 * margin,
-                        height: pageHeight - 2 * margin
-                      };
-                      console.log(`✅ Corrected bounds: ${gsBounds.width.toFixed(1)}×${gsBounds.height.toFixed(1)}pts`);
+                      let inkscapeVerifyBounds: typeof gsBounds | null = null;
+                      try {
+                        const queryResult = execSync(`inkscape --query-all "${svgPath}" 2>/dev/null`, { encoding: 'utf8', timeout: 10000 });
+                        const lines = queryResult.trim().split('\n');
+                        let globalXMin = Infinity, globalYMin = Infinity, globalXMax = -Infinity, globalYMax = -Infinity;
+                        for (const line of lines) {
+                          const parts = line.split(',');
+                          if (parts.length >= 5) {
+                            const elX = parseFloat(parts[1]) || 0;
+                            const elY = parseFloat(parts[2]) || 0;
+                            const elW = parseFloat(parts[3]) || 0;
+                            const elH = parseFloat(parts[4]) || 0;
+                            if (elW > 0.5 && elH > 0.5) {
+                              globalXMin = Math.min(globalXMin, elX);
+                              globalYMin = Math.min(globalYMin, elY);
+                              globalXMax = Math.max(globalXMax, elX + elW);
+                              globalYMax = Math.max(globalYMax, elY + elH);
+                            }
+                          }
+                        }
+                        if (globalXMin < Infinity) {
+                          const inkW = globalXMax - globalXMin;
+                          const inkH = globalYMax - globalYMin;
+                          if (inkW > 1 && inkH > 1) {
+                            inkscapeVerifyBounds = { xMin: globalXMin, yMin: globalYMin, xMax: globalXMax, yMax: globalYMax, width: inkW, height: inkH };
+                            console.log(`🔍 Inkscape all-elements bounds: (${globalXMin.toFixed(1)}, ${globalYMin.toFixed(1)}) to (${globalXMax.toFixed(1)}, ${globalYMax.toFixed(1)}) = ${inkW.toFixed(1)}×${inkH.toFixed(1)}`);
+                          }
+                        }
+                      } catch (inkErr) {
+                        console.log(`⚠️ Inkscape verification failed:`, inkErr);
+                      }
+                      
+                      if (inkscapeVerifyBounds) {
+                        const inkArea = inkscapeVerifyBounds.width * inkscapeVerifyBounds.height;
+                        const gsArea = gsBounds.width * gsBounds.height;
+                        if (inkArea > gsArea * 1.5) {
+                          console.log(`🔄 Inkscape found ${(inkArea / gsArea).toFixed(1)}x more content than GS - white content detected!`);
+                          console.log(`   GS: ${gsBounds.width.toFixed(1)}×${gsBounds.height.toFixed(1)}pts vs Inkscape: ${inkscapeVerifyBounds.width.toFixed(1)}×${inkscapeVerifyBounds.height.toFixed(1)}pts`);
+                          
+                          // Convert Inkscape bounds (SVG top-down) to PDF coordinates (bottom-up)
+                          // For the content bounds used in normalization, use the Inkscape bounds directly
+                          gsBounds = inkscapeVerifyBounds;
+                          console.log(`✅ Using Inkscape bounds (captures all content including white)`);
+                        } else {
+                          console.log(`✅ Inkscape confirms GS bounds are accurate (similar area)`);
+                        }
+                      }
                     } else {
-                      console.log(`✅ GS BBOX TRUSTED: Content covers ${(heightRatio * 100).toFixed(0)}%×${(widthRatio * 100).toFixed(0)}% of page (aspect ratio ${gsAspectRatio.toFixed(2)} vs page ${pageAspectRatio.toFixed(2)})`);
+                      console.log(`✅ GS BBOX TRUSTED: Content covers ${(areaCoverage * 100).toFixed(0)}% of page`);
                     }
                     
                     contentBoundsForNormalization = gsBounds;
@@ -3463,17 +3489,16 @@ export async function registerRoutes(app: express.Application) {
                               displayHeight = contentHeightPts * pxToMm;
                               console.log(`✅ Updated dimensions: ${contentWidthPts.toFixed(2)}×${contentHeightPts.toFixed(2)}pts (${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm)`);
                               
-                              // CRITICAL FIX: Update originalPdfBounds with Inkscape-detected position
-                              // This ensures PDF cropping uses the correct content location (not the guessed center)
+                              // CRITICAL FIX: Update originalPdfBounds with Inkscape-detected bounds
+                              // Inkscape detects ALL content including white elements that Ghostscript misses
+                              // This ensures PDF cropping uses the correct full content location
                               // IMPORTANT: Inkscape uses top-down Y coords (Y=0 at top), PDF uses bottom-up Y coords (Y=0 at bottom)
-                              // Must convert: pdfY = pageHeight - inkscapeY - contentHeight
-                              if (originalPdfBounds && originalPdfBounds.width < 1 && svgBoundsX !== undefined && svgBoundsY !== undefined && pdfPageDimensions) {
-                                // Convert Inkscape (top-down) Y to PDF (bottom-up) Y
+                              if (svgBoundsX !== undefined && svgBoundsY !== undefined && pdfPageDimensions) {
                                 const pageHeight = pdfPageDimensions.heightPts;
-                                const pdfYMin = pageHeight - svgBoundsY - inkscapeHeight; // Bottom of content in PDF coords
-                                const pdfYMax = pageHeight - svgBoundsY; // Top of content in PDF coords
+                                const pdfYMin = pageHeight - svgBoundsY - inkscapeHeight;
+                                const pdfYMax = pageHeight - svgBoundsY;
                                 
-                                console.log(`🔧 Ghostscript bbox failed - converting Inkscape coords to PDF coords:`);
+                                console.log(`🔧 Updating PDF bounds with Inkscape content detection:`);
                                 console.log(`   Inkscape: y=${svgBoundsY.toFixed(2)}, height=${inkscapeHeight.toFixed(2)} (top-down)`);
                                 console.log(`   Page height: ${pageHeight.toFixed(2)}pts`);
                                 console.log(`   PDF coords: yMin=${pdfYMin.toFixed(2)}, yMax=${pdfYMax.toFixed(2)} (bottom-up)`);
@@ -3488,6 +3513,22 @@ export async function registerRoutes(app: express.Application) {
                                   units: 'pt'
                                 };
                                 console.log(`📋 Updated PDF bounds for cropping: (${originalPdfBounds.xMin.toFixed(1)}, ${originalPdfBounds.yMin.toFixed(1)}) to (${originalPdfBounds.xMax.toFixed(1)}, ${originalPdfBounds.yMax.toFixed(1)})`);
+                                
+                                // Also update the stored contentBounds to match the larger Inkscape bounds
+                                boundsResult = {
+                                  success: true,
+                                  method: 'inkscape-corrected',
+                                  contentBounds: {
+                                    xMin: 0,
+                                    yMin: 0,
+                                    xMax: inkscapeWidth,
+                                    yMax: inkscapeHeight,
+                                    width: inkscapeWidth,
+                                    height: inkscapeHeight,
+                                    units: 'pt'
+                                  }
+                                };
+                                console.log(`📋 Updated contentBounds to Inkscape dimensions: ${inkscapeWidth.toFixed(1)}×${inkscapeHeight.toFixed(1)}pts`);
                               }
                             }
                           }
