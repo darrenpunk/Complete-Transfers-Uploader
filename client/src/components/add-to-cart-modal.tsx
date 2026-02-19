@@ -1,4 +1,7 @@
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -9,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import CompleteTransferLogo from "./complete-transfer-logo";
-import { ShoppingCart, Plus, ExternalLink, Download, FileText } from "lucide-react";
+import { ShoppingCart, Plus, ExternalLink, Download, FileText, Pencil } from "lucide-react";
 
 interface AddToCartModalProps {
   open: boolean;
@@ -19,6 +22,7 @@ interface AddToCartModalProps {
   onDownloadPDF?: () => void;
   isAddingToCart?: boolean;
   isGeneratingPDF?: boolean;
+  onProjectNameChange?: (name: string) => void;
 }
 
 export default function AddToCartModal({
@@ -29,7 +33,25 @@ export default function AddToCartModal({
   onDownloadPDF,
   isAddingToCart = false,
   isGeneratingPDF = false,
+  onProjectNameChange,
 }: AddToCartModalProps) {
+  const [editableName, setEditableName] = useState(projectName);
+
+  useEffect(() => {
+    if (open) {
+      setEditableName(projectName);
+    }
+  }, [open, projectName]);
+
+  const handleNameBlur = () => {
+    const trimmed = editableName.trim();
+    if (trimmed && trimmed !== projectName && onProjectNameChange) {
+      onProjectNameChange(trimmed);
+    }
+  };
+
+  const isUntitled = !editableName.trim() || editableName.trim() === 'Untitled Project';
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
@@ -40,9 +62,28 @@ export default function AddToCartModal({
             Next Step: Add to Cart
           </DialogTitle>
           <DialogDescription className="text-center text-base">
-            Your project <span className="font-semibold text-foreground">"{projectName}"</span> is ready to order.
+            Name your project then add it to your cart.
           </DialogDescription>
         </DialogHeader>
+
+        <div className="space-y-2 pb-2">
+          <Label htmlFor="project-name" className="text-sm font-medium flex items-center gap-1.5">
+            <Pencil className="w-3.5 h-3.5" />
+            Project Name
+          </Label>
+          <Input
+            id="project-name"
+            value={editableName}
+            onChange={(e) => setEditableName(e.target.value)}
+            onBlur={handleNameBlur}
+            placeholder="Enter a name for this project"
+            className={isUntitled ? "border-amber-500/50 focus:border-amber-500" : ""}
+            data-testid="input-project-name"
+          />
+          {isUntitled && (
+            <p className="text-xs text-amber-400">Please give your project a descriptive name before ordering.</p>
+          )}
+        </div>
         
         <div className="py-4 space-y-4">
           {/* Primary Action Section */}
@@ -61,8 +102,14 @@ export default function AddToCartModal({
             
             <div className="space-y-2">
               <Button
-                onClick={() => onAddToCart('view-cart')}
-                disabled={isAddingToCart || isGeneratingPDF}
+                onClick={() => {
+                  const trimmed = editableName.trim();
+                  if (trimmed && trimmed !== projectName && onProjectNameChange) {
+                    onProjectNameChange(trimmed);
+                  }
+                  onAddToCart('view-cart');
+                }}
+                disabled={isAddingToCart || isGeneratingPDF || isUntitled}
                 className="w-full bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all"
                 size="lg"
                 data-testid="button-add-cart-view-cart"
@@ -73,8 +120,14 @@ export default function AddToCartModal({
               </Button>
               
               <Button
-                onClick={() => onAddToCart('new-project')}
-                disabled={isAddingToCart || isGeneratingPDF}
+                onClick={() => {
+                  const trimmed = editableName.trim();
+                  if (trimmed && trimmed !== projectName && onProjectNameChange) {
+                    onProjectNameChange(trimmed);
+                  }
+                  onAddToCart('new-project');
+                }}
+                disabled={isAddingToCart || isGeneratingPDF || isUntitled}
                 variant="outline"
                 className="w-full border-2"
                 size="lg"

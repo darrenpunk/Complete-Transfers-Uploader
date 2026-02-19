@@ -2628,6 +2628,9 @@ export default function UploadTool() {
         }}
         isAddingToCart={addToCartMutation.isPending}
         isGeneratingPDF={generatePDFMutation.isPending}
+        onProjectNameChange={(name) => {
+          updateProjectMutation.mutate({ name });
+        }}
       />
 
       {/* Orientation Mismatch Detection Modal */}
