@@ -1,7 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Eye, Layers, Palette, Type, FileText, ChevronLeft, ChevronRight } from "lucide-react";
+import { Eye, Layers, Palette, Type, FileText, ChevronLeft, ChevronRight, Download } from "lucide-react";
 import { CompleteTransferLogo } from "./complete-transfer-logo";
 import { useState, useMemo, useCallback } from "react";
 
@@ -176,6 +176,7 @@ export default function PDFPreviewModal({
   const [designApproved, setDesignApproved] = useState(false);
   const [rightsConfirmed, setRightsConfirmed] = useState(false);
   const [currentPassThroughPage, setCurrentPassThroughPage] = useState(2);
+  const [isDownloading, setIsDownloading] = useState(false);
   
   console.log('PDFPreviewModal render:', { open, project: project?.name });
 
@@ -213,6 +214,31 @@ export default function PDFPreviewModal({
       onApprove();
     }
   };
+
+  const handleDownloadPdf = useCallback(async () => {
+    if (!project?.id) return;
+    setIsDownloading(true);
+    try {
+      const response = await fetch(`/api/projects/${project.id}/generate-pdf`);
+      if (!response.ok) throw new Error('PDF generation failed');
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const projectName = project.name || 'artwork';
+      const garmentColors = project.garmentColors as any[];
+      const totalQty = garmentColors?.reduce((sum: number, gc: any) => sum + (gc.quantity || 0), 0) || project.quantity || 10;
+      a.download = `${projectName}_qty${totalQty}_cmyk.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('PDF download failed:', err);
+    } finally {
+      setIsDownloading(false);
+    }
+  }, [project]);
 
   // Calculate preflight information
   const totalLogos = logos.length;
@@ -633,6 +659,17 @@ export default function PDFPreviewModal({
                 className="flex-1"
               >
                 Approve & Continue
+              </Button>
+            </div>
+            <div className="mb-4">
+              <Button 
+                variant="outline" 
+                onClick={handleDownloadPdf}
+                disabled={isDownloading}
+                className="w-full"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                {isDownloading ? 'Generating PDF...' : 'Download PDF'}
               </Button>
             </div>
 
