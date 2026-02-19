@@ -16,12 +16,20 @@ function setAdminToken(token: string) {
   try { sessionStorage.setItem("admin_token", token); } catch {}
 }
 
+function clearAdminToken() {
+  try { sessionStorage.removeItem("admin_token"); } catch {}
+}
+
 function adminFetch(url: string) {
   const token = getAdminToken();
   return fetch(url, {
     headers: { Authorization: `Bearer ${token}` },
   }).then(r => {
-    if (r.status === 401) throw new Error("Unauthorized");
+    if (r.status === 401) {
+      clearAdminToken();
+      window.location.reload();
+      throw new Error("Unauthorized");
+    }
     return r.json();
   });
 }
