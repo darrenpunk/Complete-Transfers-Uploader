@@ -15,9 +15,13 @@ import {
   type InsertSupportTicket,
   type AnalyticsEvent,
   type InsertAnalyticsEvent,
-  type ActiveSession
+  type ActiveSession,
+  analyticsEvents,
+  activeSessions
 } from "@shared/schema";
 import { randomUUID } from "crypto";
+import { db } from "./db";
+import { eq, desc, gte, sql } from "drizzle-orm";
 
 export interface IStorage {
   // User methods
@@ -79,8 +83,6 @@ export class MemStorage implements IStorage {
   private templateSizes: Map<string, TemplateSize> = new Map();
   private vectorizationRequests: Map<string, VectorizationRequest> = new Map();
   private supportTickets: Map<string, SupportTicket> = new Map();
-  private analyticsEventsMap: Map<string, AnalyticsEvent> = new Map();
-  private activeSessionsMap: Map<string, ActiveSession> = new Map();
 
   constructor() {
     this.initializeTemplateSizes();
@@ -466,51 +468,54 @@ export class MemStorage implements IStorage {
     return ticket;
   }
 
-  // Analytics methods (sandboxed)
+  // Analytics methods - database-backed for persistence across restarts
   async logAnalyticsEvent(event: InsertAnalyticsEvent): Promise<AnalyticsEvent> {
     const id = randomUUID();
-    const analyticsEvent: AnalyticsEvent = {
-      ...event,
+    const [result] = await db.insert(analyticsEvents).values({
       id,
+      sessionId: event.sessionId,
       userEmail: event.userEmail || null,
+      eventType: event.eventType,
       metadata: event.metadata || null,
       createdAt: new Date().toISOString(),
-    };
-    this.analyticsEventsMap.set(id, analyticsEvent);
-    return analyticsEvent;
+    }).returning();
+    return result;
   }
 
   async upsertActiveSession(session: { sessionId: string; userEmail?: string; lastSeen: string; currentPage?: string; metadata?: any }): Promise<void> {
-    this.activeSessionsMap.set(session.sessionId, {
+    await db.insert(activeSessions).values({
       sessionId: session.sessionId,
       userEmail: session.userEmail || null,
       lastSeen: session.lastSeen,
       currentPage: session.currentPage || null,
       metadata: session.metadata || null,
+    }).onConflictDoUpdate({
+      target: activeSessions.sessionId,
+      set: {
+        userEmail: session.userEmail || null,
+        lastSeen: session.lastSeen,
+        currentPage: session.currentPage || null,
+        metadata: session.metadata || null,
+      },
     });
   }
 
   async getActiveSessions(sinceMinutes: number = 5): Promise<ActiveSession[]> {
-    const cutoff = Date.now() - sinceMinutes * 60 * 1000;
-    return Array.from(this.activeSessionsMap.values()).filter(
-      (s) => new Date(s.lastSeen).getTime() > cutoff
-    );
+    const cutoff = new Date(Date.now() - sinceMinutes * 60 * 1000).toISOString();
+    return db.select().from(activeSessions).where(gte(activeSessions.lastSeen, cutoff));
   }
 
   async getAnalyticsEvents(limit: number = 50, offset: number = 0, eventType?: string): Promise<AnalyticsEvent[]> {
-    let events = Array.from(this.analyticsEventsMap.values());
+    let query = db.select().from(analyticsEvents).orderBy(desc(analyticsEvents.createdAt)).limit(limit).offset(offset);
     if (eventType) {
-      events = events.filter((e) => e.eventType === eventType);
+      return db.select().from(analyticsEvents).where(eq(analyticsEvents.eventType, eventType)).orderBy(desc(analyticsEvents.createdAt)).limit(limit).offset(offset);
     }
-    events.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    return events.slice(offset, offset + limit);
+    return query;
   }
 
   async getAnalyticsStats(days: number = 7): Promise<{ date: string; eventType: string; count: number }[]> {
-    const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
-    const events = Array.from(this.analyticsEventsMap.values()).filter(
-      (e) => new Date(e.createdAt).getTime() > cutoff
-    );
+    const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+    const events = await db.select().from(analyticsEvents).where(gte(analyticsEvents.createdAt, cutoff));
     const counts: Record<string, number> = {};
     for (const e of events) {
       const date = new Date(e.createdAt).toISOString().split("T")[0];
@@ -526,12 +531,10 @@ export class MemStorage implements IStorage {
   }
 
   async cleanupOldSessions(olderThanMinutes: number = 10): Promise<void> {
-    const cutoff = Date.now() - olderThanMinutes * 60 * 1000;
-    for (const [id, session] of this.activeSessionsMap.entries()) {
-      if (new Date(session.lastSeen).getTime() < cutoff) {
-        this.activeSessionsMap.delete(id);
-      }
-    }
+    const cutoff = new Date(Date.now() - olderThanMinutes * 60 * 1000).toISOString();
+    await db.delete(activeSessions).where(
+      sql`${activeSessions.lastSeen} < ${cutoff}`
+    );
   }
 }
 
