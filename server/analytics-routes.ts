@@ -51,7 +51,9 @@ export function registerAnalyticsRoutes(app: Express, storage: IStorage) {
         lastSeen: new Date().toISOString(),
         currentPage: currentPage || undefined,
       });
-      try { await storage.cleanupOldSessions(10); } catch {}
+      if (Math.random() < 0.1) {
+        try { await storage.cleanupOldSessions(10); } catch {}
+      }
       res.json({ ok: true });
     } catch (e) {
       console.error("Analytics heartbeat error (non-critical):", e);
@@ -139,16 +141,21 @@ export function registerAnalyticsRoutes(app: Express, storage: IStorage) {
     try {
       const days = parseInt(req.query.days as string) || 7;
       const stats = await storage.getAnalyticsStats(days);
-      const allEvents = await storage.getAnalyticsEvents(10000);
-      const uniqueUsers = new Set(allEvents.filter(e => e.userEmail).map(e => e.userEmail)).size;
-      res.json({
-        stats,
-        summary: {
-          totalEvents: allEvents.length,
-          uniqueUsers,
-          activeSessions: (await storage.getActiveSessions(5)).length,
-        },
-      });
+      const client = await pool.connect();
+      try {
+        const countResult = await client.query("SELECT COUNT(*) as total, COUNT(DISTINCT user_email) as unique_users FROM analytics_events WHERE user_email IS NOT NULL");
+        const totalResult = await client.query("SELECT COUNT(*) as total FROM analytics_events");
+        res.json({
+          stats,
+          summary: {
+            totalEvents: parseInt(totalResult.rows[0].total),
+            uniqueUsers: parseInt(countResult.rows[0].unique_users),
+            activeSessions: (await storage.getActiveSessions(5)).length,
+          },
+        });
+      } finally {
+        client.release();
+      }
     } catch (e) {
       console.error("Admin stats error:", e);
       res.json({ stats: [], summary: { totalEvents: 0, uniqueUsers: 0, activeSessions: 0 } });

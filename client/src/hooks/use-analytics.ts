@@ -50,7 +50,7 @@ export function useAnalytics(userEmail?: string | null) {
     };
 
     sendHeartbeat();
-    const interval = setInterval(sendHeartbeat, 60000);
+    const interval = setInterval(sendHeartbeat, 300000);
 
     return () => clearInterval(interval);
   }, [userEmail]);

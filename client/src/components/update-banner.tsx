@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Info, X } from "lucide-react";
 
-const VERSION_CHECK_INTERVAL = 60_000;
+const VERSION_CHECK_INTERVAL = 300_000;
 const VERSION_STORAGE_KEY = "app-version";
 
 export function UpdateBanner() {

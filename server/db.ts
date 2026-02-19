@@ -31,7 +31,8 @@ const DATABASE_URL = getDatabaseUrl();
 export const pool = new Pool({ 
   connectionString: DATABASE_URL,
   connectionTimeoutMillis: 10000,
-  max: 10,
+  idleTimeoutMillis: 30000,
+  max: 5,
 });
 
 pool.on('error', (err) => {
