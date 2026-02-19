@@ -2601,6 +2601,15 @@ export default function UploadTool() {
           setShowUploadGuidanceModal(false);
           fileInputRef.current?.click();
         }}
+        isAppliqueTemplate={isAppliqueTemplate}
+        projectId={currentProject?.id}
+        onZipAttached={() => {
+          toast({
+            title: "ZIP Attached",
+            description: "Your repeat order ZIP has been attached. Proceeding to add to cart...",
+          });
+          setShowAddToCartModal(true);
+        }}
       />
 
       {/* Add to Cart Modal */}

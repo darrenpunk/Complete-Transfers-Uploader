@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import { useDropzone } from "react-dropzone";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
@@ -13,16 +15,60 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { FileText, Image, FileImage, Upload, ExternalLink, CheckCircle2, FileCheck, HardDrive, Lightbulb } from "lucide-react";
+import { FileText, Image, FileImage, Upload, ExternalLink, CheckCircle2, FileCheck, HardDrive, Lightbulb, FileArchive, Loader2, X, AlertCircle } from "lucide-react";
 
 interface UploadGuidanceModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onViewArtworkRequirements?: () => void;
   onStartUploading?: () => void;
+  isAppliqueTemplate?: boolean;
+  projectId?: string;
+  onZipAttached?: () => void;
 }
 
-export function UploadGuidanceModal({ open, onOpenChange, onViewArtworkRequirements, onStartUploading }: UploadGuidanceModalProps) {
+export function UploadGuidanceModal({ open, onOpenChange, onViewArtworkRequirements, onStartUploading, isAppliqueTemplate, projectId, onZipAttached }: UploadGuidanceModalProps) {
+  const queryClient = useQueryClient();
+  const [zipFile, setZipFile] = useState<File | null>(null);
+
+  const attachZipMutation = useMutation({
+    mutationFn: async (file: File) => {
+      if (!projectId) throw new Error("No project");
+      const formData = new FormData();
+      formData.append("zipFile", file);
+      const response = await fetch(`/api/projects/${projectId}/attach-zip`, {
+        method: "POST",
+        body: formData,
+      });
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || "Upload failed");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/projects", projectId] });
+      onOpenChange(false);
+      setZipFile(null);
+      if (onZipAttached) onZipAttached();
+    },
+  });
+
+  const onDropZip = useCallback((acceptedFiles: File[]) => {
+    if (acceptedFiles.length > 0) {
+      setZipFile(acceptedFiles[0]);
+    }
+  }, []);
+
+  const { getRootProps: getZipRootProps, getInputProps: getZipInputProps, isDragActive: isZipDragActive } = useDropzone({
+    onDrop: onDropZip,
+    accept: {
+      "application/zip": [".zip"],
+      "application/x-zip-compressed": [".zip"],
+    },
+    maxFiles: 1,
+    multiple: false,
+  });
   const fileTypes = [
     {
       icon: FileText,
@@ -82,6 +128,73 @@ export function UploadGuidanceModal({ open, onOpenChange, onViewArtworkRequireme
           <Upload className="h-4 w-4 mr-2" />
           Start Uploading
         </Button>
+
+        {isAppliqueTemplate && projectId && (
+          <div className="mt-4 p-4 rounded-lg border-2 border-amber-500/30 bg-amber-500/5">
+            <h3 className="text-sm font-semibold flex items-center gap-2 mb-3 text-amber-200">
+              <FileArchive className="h-4 w-4" />
+              Repeat Applique Order
+            </h3>
+            <p className="text-xs text-muted-foreground mb-3">
+              Have a ZIP from a previous order? Upload it to reorder with the same artwork and embroidery files.
+            </p>
+            <div
+              {...getZipRootProps()}
+              className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${
+                isZipDragActive
+                  ? "border-amber-400 bg-amber-400/10"
+                  : zipFile
+                  ? "border-green-500 bg-green-500/10"
+                  : "border-gray-600 hover:border-gray-400"
+              }`}
+            >
+              <input {...getZipInputProps()} />
+              {zipFile ? (
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-5 h-5 text-green-500" />
+                    <div className="text-left">
+                      <p className="text-sm font-medium text-green-400">{zipFile.name}</p>
+                      <p className="text-xs text-gray-400">{(zipFile.size / (1024 * 1024)).toFixed(1)} MB</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setZipFile(null); attachZipMutation.reset(); }}
+                    className="p-1 hover:bg-gray-700 rounded"
+                  >
+                    <X className="w-4 h-4 text-gray-400" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center gap-1">
+                  <FileArchive className="w-8 h-8 text-gray-400" />
+                  <p className="text-sm text-gray-300">
+                    {isZipDragActive ? "Drop ZIP here" : "Drag & drop ZIP file or click to browse"}
+                  </p>
+                </div>
+              )}
+            </div>
+            {attachZipMutation.isError && (
+              <div className="flex items-center gap-2 mt-2 text-sm text-red-400">
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                {attachZipMutation.error?.message || "Upload failed"}
+              </div>
+            )}
+            {zipFile && (
+              <Button
+                className="w-full mt-3 bg-amber-600 hover:bg-amber-700 text-white"
+                onClick={() => attachZipMutation.mutate(zipFile)}
+                disabled={attachZipMutation.isPending}
+              >
+                {attachZipMutation.isPending ? (
+                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Uploading ZIP...</>
+                ) : (
+                  <><FileArchive className="w-4 h-4 mr-2" />Attach ZIP & Add to Cart</>
+                )}
+              </Button>
+            )}
+          </div>
+        )}
 
         <div className="py-4">
           {/* Best Practices - Always visible */}
