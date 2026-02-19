@@ -110,7 +110,7 @@ export function VectorizationServiceForm({ open, onOpenChange, partnerEmail }: V
     defaultValues: {
       comments: "",
       printSize: "",
-      serviceType: "vectorization-only",
+      serviceType: "vectorization-with-product",
       transferProduct: "",
       quantity: 1,
       garmentColor: "",
