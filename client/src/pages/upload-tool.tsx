@@ -222,10 +222,34 @@ export default function UploadTool() {
     }
   }, []);
 
-  // Fetch template sizes
-  const { data: templateSizes = [] } = useQuery<TemplateSize[]>({
+  // Fetch template sizes - with direct fetch fallback for production reliability
+  const { data: queryTemplateSizes } = useQuery<TemplateSize[]>({
     queryKey: ["/api/template-sizes"],
   });
+  const [fallbackTemplateSizes, setFallbackTemplateSizes] = useState<TemplateSize[]>([]);
+  
+  useEffect(() => {
+    const doFetch = () => {
+      console.log('⏰ Fetching template sizes directly...');
+      fetch('/api/template-sizes')
+        .then(res => res.json())
+        .then(data => {
+          if (Array.isArray(data) && data.length > 0) {
+            console.log('✅ Direct fetch got template sizes:', data.length);
+            setFallbackTemplateSizes(data);
+          }
+        })
+        .catch(err => console.error('❌ Direct fetch failed:', err));
+    };
+    
+    if (!queryTemplateSizes || queryTemplateSizes.length === 0) {
+      doFetch();
+      const timer = setTimeout(doFetch, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [queryTemplateSizes]);
+  
+  const templateSizes: TemplateSize[] = (queryTemplateSizes && queryTemplateSizes.length > 0) ? queryTemplateSizes : fallbackTemplateSizes;
 
   // Fetch project if ID provided
   const { data: project, isError: projectLoadError, isFetched: projectFetched } = useQuery<Project>({
