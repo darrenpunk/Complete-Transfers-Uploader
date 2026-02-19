@@ -29,34 +29,56 @@ class ProjectTask(models.Model):
         
         return result
     
+    def _build_task_name(self, order_line, artwork_filename):
+        """Build consistent task name format: 'SO12345 - [CTCC295] Product Name - filename.pdf'
+        
+        Used across all sync paths to ensure product code is always included.
+        """
+        sale_order_ref = order_line.order_id.name if order_line.order_id else ''
+        product = order_line.product_id
+        product_code = product.default_code if product and product.default_code else ''
+        product_name = product.name if product else ''
+        
+        product_display = f"[{product_code}] {product_name}" if product_code else product_name
+        
+        if artwork_filename:
+            return f"{sale_order_ref} - {product_display} - {artwork_filename}"
+        return f"{sale_order_ref} - {product_display}"
+    
     def _sync_artwork_pdf_from_order_line(self, task):
         """Helper method to sync artwork PDF and filename from sale order line to task
         
         Syncs both artwork_image (PDF binary) AND task name (includes PDF filename).
-        This matches production workflow where task title includes PDF filename.
+        Checks both artwork_pdf_file (manual upload) and artwork_files_datas (API upload)
+        field sets to ensure task naming works regardless of upload path.
         """
         if not task.sale_line_id:
             return
         
         order_line = task.sale_line_id
         
-        # Sync PDF and filename from order line
+        # Check both field sets: artwork_pdf_file (manual) and artwork_files_datas (API/production)
+        pdf_data = None
+        artwork_filename = ''
+        
         if order_line.artwork_pdf_file:
+            pdf_data = order_line.artwork_pdf_file
+            artwork_filename = order_line.artwork_pdf_filename or ''
+        elif hasattr(order_line, 'artwork_files_datas') and order_line.artwork_files_datas:
+            pdf_data = order_line.artwork_files_datas
+            artwork_filename = order_line.artwork_file_name if hasattr(order_line, 'artwork_file_name') else ''
+        
+        if pdf_data:
             try:
-                vals = {'artwork_image': order_line.artwork_pdf_file}
+                vals = {'artwork_image': pdf_data}
                 
-                # Add PDF filename to task name (matches production workflow)
-                if order_line.artwork_pdf_filename:
-                    # Format: "SO12345 - [Product] Product Name filename.pdf"
-                    sale_order_ref = order_line.order_id.name if order_line.order_id else ''
-                    product_name = order_line.product_id.name if order_line.product_id else ''
-                    task_name_with_filename = f"{sale_order_ref} - {product_name} {order_line.artwork_pdf_filename}"
-                    vals['name'] = task_name_with_filename
-                    _logger.info(f"✅ Task name updated to include PDF filename: {task_name_with_filename}")
+                # Build task name with product code
+                task_name = self._build_task_name(order_line, artwork_filename)
+                vals['name'] = task_name
+                _logger.info(f"✅ Task name set: {task_name}")
                 
                 # CRITICAL: Must use write() to persist binary data in Odoo
                 task.write(vals)
-                action = "updated" if task.artwork_image else "synced"
-                _logger.info(f"✅ PDF {action} on manufacturing task #{task.id} ({task.name}) from order line #{order_line.id}")
+                _logger.info(f"✅ PDF synced to manufacturing task #{task.id} ({task.name}) from order line #{order_line.id}")
             except Exception as e:
                 _logger.error(f"❌ Failed to sync PDF to task #{task.id}: {str(e)}")

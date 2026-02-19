@@ -680,13 +680,15 @@ class ArtworkUploaderController(http.Controller):
             
             order_qty = project.quantity or 1
             
-            # Build line description with artwork filename for identification
+            # Build line description with product code and artwork filename for identification
             artwork_name = data.get('artworkFilename', '') or project.name or ''
             base_name = ''
             if artwork_name:
                 base_name = artwork_name.rsplit('.', 1)[0] if '.' in artwork_name else artwork_name
             
-            line_name = f"{product.name} - {base_name}" if base_name else product.name
+            product_code = product.default_code if product and product.default_code else ''
+            product_display = f"[{product_code}] {product.name}" if product_code else product.name
+            line_name = f"{product_display} - {base_name}" if base_name else product_display
             
             # Let Odoo compute price_unit automatically via _compute_price_unit
             # This uses the same pricing engine as manual order entry, ensuring
@@ -715,16 +717,25 @@ class ArtworkUploaderController(http.Controller):
                     # The pdfBase64 from frontend is already base64, so pass it directly
                     pdf_base64_string = data['pdfBase64']
                     
-                    # Use artworkFilename if provided (preserves original filename for vectorization uploads)
-                    # Otherwise fall back to project name with qty and .pdf extension
+                    # Build filename with product code prefix for consistent identification
+                    product_code = product.default_code if product and product.default_code else ''
+                    
                     if data.get('artworkFilename'):
-                        artwork_filename = data['artworkFilename'].replace(' ', '_')
-                        _logger.info(f"📄 Using provided artworkFilename: {artwork_filename}")
+                        base_filename = data['artworkFilename'].replace(' ', '_')
+                        # Prepend product code if not already present
+                        if product_code and f'[{product_code}]' not in base_filename:
+                            artwork_filename = f"[{product_code}]_{base_filename}"
+                        else:
+                            artwork_filename = base_filename
+                        _logger.info(f"📄 Using provided artworkFilename with product code: {artwork_filename}")
                     else:
                         project_name = data.get('name', 'artwork').replace(' ', '_')
                         quantity = data.get('quantity', project.quantity or 1)
-                        artwork_filename = f"{project_name}_qty{quantity}.pdf"
-                        _logger.info(f"📄 Generated filename with quantity: {artwork_filename}")
+                        if product_code:
+                            artwork_filename = f"[{product_code}]_{project_name}_qty{quantity}.pdf"
+                        else:
+                            artwork_filename = f"{project_name}_qty{quantity}.pdf"
+                        _logger.info(f"📄 Generated filename: {artwork_filename}")
                     
                     # CRITICAL: Upload to PRODUCTION fields (artwork_files_datas + artwork_file_name)
                     # artwork_files_datas expects base64-encoded string, NOT decoded bytes

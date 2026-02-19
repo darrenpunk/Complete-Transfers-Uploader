@@ -69,7 +69,22 @@ class SaleOrderLine(models.Model):
                     ], limit=1)
                     
                     if task:
-                        task.write({'artwork_image': line.artwork_files_datas})
+                        task_vals = {'artwork_image': line.artwork_files_datas}
+                        
+                        # Update task name to include product code if missing
+                        product = line.product_id
+                        product_code = product.default_code if product and product.default_code else ''
+                        if product_code and task.name and f'[{product_code}]' not in task.name:
+                            sale_order_ref = line.order_id.name if line.order_id else ''
+                            product_name = product.name if product else ''
+                            product_display = f"[{product_code}] {product_name}" if product_code else product_name
+                            artwork_filename = line.artwork_file_name if hasattr(line, 'artwork_file_name') and line.artwork_file_name else ''
+                            if artwork_filename:
+                                task_vals['name'] = f"{sale_order_ref} - {product_display} - {artwork_filename}"
+                            else:
+                                task_vals['name'] = f"{sale_order_ref} - {product_display}"
+                        
+                        task.write(task_vals)
                         _logger.info(f"✅ PDF synced to manufacturing task #{task.id} from order line #{line.id}")
                     else:
                         _logger.warning(f"⚠️ No manufacturing task found for order line #{line.id} - will sync when task is created")
@@ -103,7 +118,22 @@ class SaleOrderLine(models.Model):
             # Check if order line has artwork PDF (artwork_files_datas from website_artwork_dropbox)
             if order_line and order_line.artwork_files_datas:
                 try:
-                    task.write({'artwork_image': order_line.artwork_files_datas})
+                    task_vals = {'artwork_image': order_line.artwork_files_datas}
+                    
+                    # Update task name to include product code if missing
+                    product = order_line.product_id
+                    product_code = product.default_code if product and product.default_code else ''
+                    if product_code and task.name and f'[{product_code}]' not in task.name:
+                        sale_order_ref = order_line.order_id.name if order_line.order_id else ''
+                        product_name = product.name if product else ''
+                        product_display = f"[{product_code}] {product_name}" if product_code else product_name
+                        artwork_filename = order_line.artwork_file_name if hasattr(order_line, 'artwork_file_name') and order_line.artwork_file_name else ''
+                        if artwork_filename:
+                            task_vals['name'] = f"{sale_order_ref} - {product_display} - {artwork_filename}"
+                        else:
+                            task_vals['name'] = f"{sale_order_ref} - {product_display}"
+                    
+                    task.write(task_vals)
                     synced_count += 1
                     _logger.info(f"🔄 Cron synced PDF to task #{task.id} ({task.name}) from order line #{order_line.id}")
                 except Exception as e:
