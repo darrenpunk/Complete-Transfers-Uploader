@@ -2049,14 +2049,18 @@ export default function UploadTool() {
   };
 
   if (!currentProject) {
+    const anyModalOpen = showProductLauncher || showTemplateSelector || showAppliqueBadgesModal || showVectorizationForm;
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Setting up your workspace...</p>
-        </div>
+      <div className="min-h-screen bg-background">
+        {!anyModalOpen && (
+          <div className="flex items-center justify-center min-h-screen">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
+              <p className="mt-4 text-muted-foreground">Setting up your workspace...</p>
+            </div>
+          </div>
+        )}
         
-        {/* Product Launcher Modal */}
         <ProductLauncherModal
           open={showProductLauncher}
           onClose={() => setShowProductLauncher(false)}
@@ -2069,13 +2073,11 @@ export default function UploadTool() {
           }}
         />
         
-        {/* Template Selector Modal */}
         <TemplateSelectorModal
           open={showTemplateSelector}
           templates={templateSizes.filter(t => {
             if (!selectedProductGroup) return true;
             
-            // Define exact template IDs for each product type matching actual storage data
             const productTemplates: { [key: string]: string[] } = {
               "Full Colour Transfers": ["template-A3", "template-A4", "template-A5", "template-A6", "template-transfer-size", "template-square", "template-badge", "template-small", "template-295x300"],
               "Full Colour Metallic": ["metallic-A3", "metallic-A4", "metallic-A5", "metallic-A6", "metallic-transfer-size", "metallic-square", "metallic-badge", "metallic-small"],
@@ -2104,7 +2106,6 @@ export default function UploadTool() {
           authStatus={authStatus}
         />
         
-        {/* Applique Badges Modal - Must be here since it appears before project creation */}
         <AppliqueBadgesModal
           open={showAppliqueBadgesModal}
           onOpenChange={setShowAppliqueBadgesModal}
@@ -2112,13 +2113,11 @@ export default function UploadTool() {
           isLoading={createProjectMutation.isPending}
         />
         
-        {/* Vectorization Service Form - Must be here since it can be accessed before project creation */}
         <VectorizationServiceForm
           open={showVectorizationForm}
           onOpenChange={setShowVectorizationForm}
           partnerEmail={partnerEmail}
         />
-
       </div>
     );
   }
