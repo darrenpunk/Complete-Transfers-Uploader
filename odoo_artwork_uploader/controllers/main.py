@@ -739,6 +739,38 @@ class ArtworkUploaderController(http.Controller):
                     _logger.info(f"📄 Artwork uploaded to PRODUCTION fields (artwork_files_datas + artwork_file_name): {artwork_filename}")
                     _logger.info(f"✅ Dropbox workflow will automatically move file to Dropbox via shipping_dropbox_customization module")
                 
+                # Handle attached ZIP file (repeat applique orders)
+                if data.get('zipBase64') and data.get('zipFileName'):
+                    try:
+                        zip_base64_string = data['zipBase64']
+                        zip_filename = data['zipFileName']
+                        
+                        # Create ir.attachment linked to the sale order line
+                        attachment_vals = {
+                            'name': zip_filename,
+                            'type': 'binary',
+                            'datas': zip_base64_string,
+                            'res_model': 'sale.order.line',
+                            'res_id': order_line.id,
+                            'mimetype': 'application/zip',
+                        }
+                        attachment = request.env['ir.attachment'].sudo().create(attachment_vals)
+                        _logger.info(f"📎 ZIP attached to order line #{order_line.id}: {zip_filename} (attachment #{attachment.id})")
+                        
+                        # Also attach to the sale order itself for easy access
+                        so_attachment_vals = {
+                            'name': zip_filename,
+                            'type': 'binary',
+                            'datas': zip_base64_string,
+                            'res_model': 'sale.order',
+                            'res_id': sale_order.id,
+                            'mimetype': 'application/zip',
+                        }
+                        so_attachment = request.env['ir.attachment'].sudo().create(so_attachment_vals)
+                        _logger.info(f"📎 ZIP also attached to sale order #{sale_order.id} (attachment #{so_attachment.id})")
+                    except Exception as zip_err:
+                        _logger.error(f"❌ Failed to attach ZIP to order line: {str(zip_err)}")
+                
                 _logger.info(f"✅ Linked order line #{order_line.id} to project")
             else:
                 _logger.warning(f"⚠️ Could not find order line for product {product.id}")
