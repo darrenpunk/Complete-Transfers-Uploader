@@ -2075,34 +2075,69 @@ export async function registerRoutes(app: express.Application) {
                     if (fileSizeMB < 50) {
                       console.log(`📸 Complex file under 50MB (${fileSizeMB.toFixed(1)}MB) - creating PNG preview, preserving PDF for output`);
                       
-                      // CRITICAL: Extract PDF bounds BEFORE creating PNG - the PNG display needs correct dimensions
+                      // CRITICAL: Extract PDF bounds and page dimensions BEFORE creating PNG
+                      let isFullPageTemplate = false;
                       try {
-                        const bboxCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=bbox -f "${pdfPath}" 2>&1`;
-                        const bboxResult = await execAsync(bboxCommand, { maxBuffer: 5 * 1024 * 1024 });
-                        const bboxOutput = bboxResult.stderr || bboxResult.stdout || '';
+                        // Get PDF page dimensions first
+                        const { PDFDocument: PDFDocComplex } = await import('pdf-lib');
+                        const complexPdfBytes = fs.readFileSync(pdfPath);
+                        const complexPdfDoc = await PDFDocComplex.load(complexPdfBytes);
+                        const [complexPage] = complexPdfDoc.getPages();
+                        const complexPageSize = complexPage.getSize();
+                        const pageWidthMm = complexPageSize.width * 0.352778;
+                        const pageHeightMm = complexPageSize.height * 0.352778;
                         
-                        // Parse HiResBoundingBox from Ghostscript output
-                        const hiresMatch = bboxOutput.match(/%%HiResBoundingBox:\s*([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)/);
-                        if (hiresMatch) {
-                          const [, xMin, yMin, xMax, yMax] = hiresMatch.map(parseFloat);
-                          const widthPt = xMax - xMin;
-                          const heightPt = yMax - yMin;
-                          const widthMm = widthPt * 0.352778;
-                          const heightMm = heightPt * 0.352778;
+                        // Check if PDF page matches template dimensions (within 5mm tolerance)
+                        const uploadTemplateSize = templateSizes.find(t => t.id === project.templateSize);
+                        if (uploadTemplateSize) {
+                          const matchesDirect = Math.abs(pageWidthMm - uploadTemplateSize.width) < 5 && 
+                                               Math.abs(pageHeightMm - uploadTemplateSize.height) < 5;
+                          const matchesRotated = Math.abs(pageWidthMm - uploadTemplateSize.height) < 5 && 
+                                                Math.abs(pageHeightMm - uploadTemplateSize.width) < 5;
+                          if (matchesDirect || matchesRotated) {
+                            isFullPageTemplate = true;
+                            console.log(`📄 FULL-PAGE MATCH: PDF page ${pageWidthMm.toFixed(0)}×${pageHeightMm.toFixed(0)}mm matches template ${uploadTemplateSize.width}×${uploadTemplateSize.height}mm`);
+                            console.log(`📄 Pre-imposed artwork - using full page dimensions, no cropping`);
+                            (file as any).originalPdfBounds = {
+                              xMin: 0,
+                              yMin: 0,
+                              xMax: complexPageSize.width,
+                              yMax: complexPageSize.height,
+                              width: complexPageSize.width,
+                              height: complexPageSize.height,
+                              widthMm: pageWidthMm,
+                              heightMm: pageHeightMm
+                            };
+                            (file as any).isFullPageTemplate = true;
+                          }
+                        }
+                        
+                        if (!isFullPageTemplate) {
+                          const bboxCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=bbox -f "${pdfPath}" 2>&1`;
+                          const bboxResult = await execAsync(bboxCommand, { maxBuffer: 5 * 1024 * 1024 });
+                          const bboxOutput = bboxResult.stderr || bboxResult.stdout || '';
                           
-                          console.log(`📐 Complex file PDF bounds: ${widthMm.toFixed(1)}mm x ${heightMm.toFixed(1)}mm`);
-                          
-                          // Store original PDF bounds for canvas display sizing
-                          (file as any).originalPdfBounds = {
-                            xMin: xMin,
-                            yMin: yMin,
-                            xMax: xMax,
-                            yMax: yMax,
-                            width: widthPt,
-                            height: heightPt,
-                            widthMm: widthMm,
-                            heightMm: heightMm
-                          };
+                          const hiresMatch = bboxOutput.match(/%%HiResBoundingBox:\s*([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)/);
+                          if (hiresMatch) {
+                            const [, xMin, yMin, xMax, yMax] = hiresMatch.map(parseFloat);
+                            const widthPt = xMax - xMin;
+                            const heightPt = yMax - yMin;
+                            const widthMm = widthPt * 0.352778;
+                            const heightMm = heightPt * 0.352778;
+                            
+                            console.log(`📐 Complex file PDF bounds: ${widthMm.toFixed(1)}mm x ${heightMm.toFixed(1)}mm`);
+                            
+                            (file as any).originalPdfBounds = {
+                              xMin: xMin,
+                              yMin: yMin,
+                              xMax: xMax,
+                              yMax: yMax,
+                              width: widthPt,
+                              height: heightPt,
+                              widthMm: widthMm,
+                              heightMm: heightMm
+                            };
+                          }
                         }
                       } catch (bboxError) {
                         console.log(`⚠️ Could not extract PDF bounds for complex file: ${bboxError}`);
@@ -2117,9 +2152,10 @@ export async function registerRoutes(app: express.Application) {
                         execSync(gsCommand, { encoding: 'buffer', timeout: 120000 });
                         
                         // CRITICAL: Crop PNG to content bounds if bounds are available
-                        // Without cropping, the full-page PNG gets squished into the content-area element dimensions
+                        // WITHOUT cropping for full-page template matches (pre-imposed artwork)
+                        // WITHOUT cropping, the full-page PNG gets squished into the content-area element dimensions
                         const pdfBounds = (file as any).originalPdfBounds;
-                        if (pdfBounds && (pdfBounds.xMin > 5 || pdfBounds.yMin > 5)) {
+                        if (!isFullPageTemplate && pdfBounds && (pdfBounds.xMin > 5 || pdfBounds.yMin > 5)) {
                           try {
                             const dpi = 150;
                             const scale = dpi / 72; // Convert from pts to pixels at render DPI
