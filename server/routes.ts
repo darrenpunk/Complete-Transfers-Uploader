@@ -29,10 +29,11 @@ import { SVGBoundsAnalyzer } from './svg-bounds-analyzer';
 const execAsync = promisify(exec);
 
 function buildPdfFilename(projectName: string, quantity: number, productCode?: string | null, suffix?: string): string {
-  const safeName = (projectName || 'artwork').replace(/\s+/g, '_');
-  const codePrefix = productCode ? `[${productCode}]_` : '';
-  const suffixStr = suffix ? `_${suffix}` : '';
-  return `${codePrefix}${safeName}_qty${quantity}${suffixStr}.pdf`;
+  const name = projectName || 'artwork';
+  const now = new Date();
+  const dateStr = `${String(now.getDate()).padStart(2, '0')}-${String(now.getMonth() + 1).padStart(2, '0')}-${now.getFullYear()}`;
+  const suffixStr = suffix ? ` ${suffix}` : '';
+  return `${name}${suffixStr} ${dateStr}.pdf`;
 }
 
 const SERVER_BUILD_VERSION = Date.now().toString();

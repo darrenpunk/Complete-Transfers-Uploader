@@ -717,24 +717,17 @@ class ArtworkUploaderController(http.Controller):
                     # The pdfBase64 from frontend is already base64, so pass it directly
                     pdf_base64_string = data['pdfBase64']
                     
-                    # Build filename with product code prefix for consistent identification
-                    product_code = product.default_code if product and product.default_code else ''
+                    # Build artwork filename: project name + date (matching old system format)
+                    # Product code is NOT in the filename - it goes in the task title via _build_task_name
+                    from datetime import datetime
+                    date_str = datetime.now().strftime('%d-%m-%Y')
                     
                     if data.get('artworkFilename'):
-                        base_filename = data['artworkFilename'].replace(' ', '_')
-                        # Prepend product code if not already present
-                        if product_code and f'[{product_code}]' not in base_filename:
-                            artwork_filename = f"[{product_code}]_{base_filename}"
-                        else:
-                            artwork_filename = base_filename
-                        _logger.info(f"📄 Using provided artworkFilename with product code: {artwork_filename}")
+                        artwork_filename = data['artworkFilename']
+                        _logger.info(f"📄 Using provided artworkFilename: {artwork_filename}")
                     else:
-                        project_name = data.get('name', 'artwork').replace(' ', '_')
-                        quantity = data.get('quantity', project.quantity or 1)
-                        if product_code:
-                            artwork_filename = f"[{product_code}]_{project_name}_qty{quantity}.pdf"
-                        else:
-                            artwork_filename = f"{project_name}_qty{quantity}.pdf"
+                        project_name = data.get('name', 'artwork')
+                        artwork_filename = f"{project_name} {date_str}.pdf"
                         _logger.info(f"📄 Generated filename: {artwork_filename}")
                     
                     # CRITICAL: Upload to PRODUCTION fields (artwork_files_datas + artwork_file_name)

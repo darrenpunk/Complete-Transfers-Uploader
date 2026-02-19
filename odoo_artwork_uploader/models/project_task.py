@@ -30,9 +30,11 @@ class ProjectTask(models.Model):
         return result
     
     def _build_task_name(self, order_line, artwork_filename):
-        """Build consistent task name format: 'SO12345 - [CTCC295] Product Name - filename.pdf'
+        """Build consistent task name format matching old system:
+        'SO12345 - [CTCCA4] Full Colour - Cut A4 297 x 210mm (BOUR) St Malachy's PS 18-02-2026.pdf'
         
-        Used across all sync paths to ensure product code is always included.
+        Format: SO number - [ProductCode] Product Name ArtworkFilename
+        Note: NO extra dash between product name and artwork filename (just a space).
         """
         sale_order_ref = order_line.order_id.name if order_line.order_id else ''
         product = order_line.product_id
@@ -42,7 +44,7 @@ class ProjectTask(models.Model):
         product_display = f"[{product_code}] {product_name}" if product_code else product_name
         
         if artwork_filename:
-            return f"{sale_order_ref} - {product_display} - {artwork_filename}"
+            return f"{sale_order_ref} - {product_display} {artwork_filename}"
         return f"{sale_order_ref} - {product_display}"
     
     def _sync_artwork_pdf_from_order_line(self, task):

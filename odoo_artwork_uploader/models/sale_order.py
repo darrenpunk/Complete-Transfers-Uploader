@@ -80,7 +80,7 @@ class SaleOrderLine(models.Model):
                             product_display = f"[{product_code}] {product_name}" if product_code else product_name
                             artwork_filename = line.artwork_file_name if hasattr(line, 'artwork_file_name') and line.artwork_file_name else ''
                             if artwork_filename:
-                                task_vals['name'] = f"{sale_order_ref} - {product_display} - {artwork_filename}"
+                                task_vals['name'] = f"{sale_order_ref} - {product_display} {artwork_filename}"
                             else:
                                 task_vals['name'] = f"{sale_order_ref} - {product_display}"
                         
@@ -129,7 +129,7 @@ class SaleOrderLine(models.Model):
                         product_display = f"[{product_code}] {product_name}" if product_code else product_name
                         artwork_filename = order_line.artwork_file_name if hasattr(order_line, 'artwork_file_name') and order_line.artwork_file_name else ''
                         if artwork_filename:
-                            task_vals['name'] = f"{sale_order_ref} - {product_display} - {artwork_filename}"
+                            task_vals['name'] = f"{sale_order_ref} - {product_display} {artwork_filename}"
                         else:
                             task_vals['name'] = f"{sale_order_ref} - {product_display}"
                     
