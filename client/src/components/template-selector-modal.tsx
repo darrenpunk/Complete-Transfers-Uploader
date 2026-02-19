@@ -270,6 +270,12 @@ export default function TemplateSelectorModal({
         </DialogHeader>
 
         <div className="flex-1 overflow-auto space-y-4 pr-2">
+          {templates.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Loading template sizes...</p>
+            </div>
+          )}
           {Object.entries(groupedTemplates).map(([groupName, groupTemplates]) => (
             <Card key={groupName} className="border-2">
               <CardHeader className="pb-2">

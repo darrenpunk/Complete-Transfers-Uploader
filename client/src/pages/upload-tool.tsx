@@ -936,7 +936,6 @@ export default function UploadTool() {
 
   // Handle product selection from launcher modal
   const handleProductSelect = (productId: string) => {
-    // Find the product to get its group
     const productMap: { [key: string]: string } = {
       "full-colour-transfers": "Full Colour Transfers",
       "full-colour-metallic": "Full Colour Metallic", 
@@ -2049,15 +2048,24 @@ export default function UploadTool() {
   };
 
   if (!currentProject) {
-    const showInlineProducts = !showTemplateSelector && !showAppliqueBadgesModal && !showVectorizationForm;
+    const anyModalOpen = showProductLauncher || showTemplateSelector || showAppliqueBadgesModal || showVectorizationForm;
     return (
       <div className="min-h-screen bg-background">
+        {!anyModalOpen && (
+          <div className="flex items-center justify-center min-h-screen">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
+              <p className="mt-4 text-muted-foreground">Setting up your workspace...</p>
+            </div>
+          </div>
+        )}
         <ProductLauncherModal
-          open={showInlineProducts}
-          onClose={() => {}}
+          open={showProductLauncher}
+          onClose={() => setShowProductLauncher(false)}
           onSelectProduct={handleProductSelect}
           onOpenVectorizationForm={() => setShowVectorizationForm(true)}
           onViewOrders={() => {
+            setShowProductLauncher(false);
             const email = sessionStorage.getItem('partner_email') || '';
             navigate(email ? `/order-history?email=${encodeURIComponent(email)}` : "/order-history");
           }}
