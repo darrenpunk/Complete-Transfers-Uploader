@@ -588,25 +588,28 @@ grestore`;
       }
     }
     
-    // APPLIQUE TEMPLATE: Separate page structure (P1=badge, P2=embroidery, P3=form)
+    // APPLIQUE TEMPLATE: Separate page structure (P1=badge transparent, P2=badge on garment color, P3=embroidery, P4=form)
     if (isAppliqueTemplate) {
-      console.log(`📋 Applique PDF: Processing ${badgeElements.length} badge elements for page 1`);
+      console.log(`📋 Applique PDF: Processing ${badgeElements.length} badge elements for page 1 (transparent) and page 2 (garment color)`);
       for (const element of badgeElements) {
         const shapeTypes = ['rectangle', 'ellipse', 'circle', 'line', 'shield', 'star', 'hexagon', 'pentagon', 'triangle', 'diamond', 'banner', 'cross', 'oval', 'heart', 'octagon', 'arch', 'malteseCross', 'chevron', 'arrow', 'ribbon'];
         const isShape = shapeTypes.includes(element.elementType || '');
         if (isShape) {
           this.drawShapeOnPage(page1, element, data.templateSize, pageHeight);
+          if (page2) {
+            this.drawShapeOnPage(page2, element, data.templateSize, pageHeight);
+          }
           continue;
         }
         const logo = data.logos.find(l => l.id === element.logoId);
         if (logo) {
-          await this.embedLogoInPages(pdfDoc, page1, null, logo, element, data.templateSize);
+          await this.embedLogoInPages(pdfDoc, page1, page2, logo, element, data.templateSize);
         }
       }
       
       if (embroideryElements.length > 0) {
         const embroideryPage = pdfDoc.addPage([pageWidth, pageHeight]);
-        console.log(`📋 Applique PDF: Processing ${embroideryElements.length} embroidery elements for page 2`);
+        console.log(`📋 Applique PDF: Processing ${embroideryElements.length} embroidery elements for embroidery page`);
         for (const element of embroideryElements) {
           console.log(`📋 Emb element: id=${(element as any).id?.substring(0,8)}, logoId=${element.logoId?.substring(0,8)}, type=${element.elementType}, size=${element.width}x${element.height}`);
           const embShapeTypes = ['rectangle', 'ellipse', 'circle', 'line', 'shield', 'star', 'hexagon', 'pentagon', 'triangle', 'diamond', 'banner', 'cross', 'oval', 'heart', 'octagon', 'arch', 'malteseCross', 'chevron', 'arrow', 'ribbon'];
@@ -625,7 +628,7 @@ grestore`;
         }
       }
       
-      // Save and return - applique form (P3) is appended by the route handler
+      // Save and return - applique form page is appended by the route handler
       const pdfBytes = await pdfDoc.save();
       return Buffer.from(pdfBytes);
     }

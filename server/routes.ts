@@ -690,6 +690,7 @@ export async function registerRoutes(app: express.Application) {
       console.log(`✅ Project found: ${project.name || 'Untitled'}`);
       console.log(`🎨 Project garmentColors:`, project.garmentColors);
       console.log(`🎨 Project garmentColor (single):`, project.garmentColor);
+      console.log(`📋 Project appliqueBadgesForm:`, project.appliqueBadgesForm ? JSON.stringify(project.appliqueBadgesForm).substring(0, 200) : 'NULL/UNDEFINED');
 
       // Get project data
       const logos = await storage.getLogosByProject(projectId);
@@ -789,17 +790,24 @@ export async function registerRoutes(app: express.Application) {
           console.log(`✅ Robust PDF generated with original CMYK colors: ${pdfBuffer.length} bytes`);
           
           // Check if this is an applique badges project - need to add form page
-          const isAppliqueBadges = project.templateSize?.includes('applique') || project.appliqueBadgesForm;
+          const isAppliqueBadges = project.templateSize?.includes('applique');
           
-          if (isAppliqueBadges && project.appliqueBadgesForm) {
-            console.log('📋 Applique Badges project detected with form data - adding specification page');
+          if (isAppliqueBadges) {
+            const formData = project.appliqueBadgesForm || {
+              embroideryFileOptions: [],
+              embroideryThreadOptions: [],
+              position: [],
+              graphicSize: '',
+              embroideredParts: ''
+            };
+            console.log('📋 Applique Badges project detected - adding specification page (form data:', project.appliqueBadgesForm ? 'provided' : 'using defaults', ')');
             try {
               const { AppliqueBadgesPDFGenerator } = await import('./applique-badges-pdf-generator');
               const appliqueGenerator = new AppliqueBadgesPDFGenerator();
               
               const appliquePdfBytes = await appliqueGenerator.generateAppliquePDF({
                 originalPdfBuffer: pdfBuffer,
-                appliqueBadgesForm: project.appliqueBadgesForm,
+                appliqueBadgesForm: formData,
                 projectName: project.name,
                 embroideryPreviewPath: project.embroideryPreviewPath || undefined
               });
@@ -1622,17 +1630,24 @@ export async function registerRoutes(app: express.Application) {
         console.log(`✅ Initial PDF: ${pdfBytes.length} bytes`);
         
         // Check if this is an applique badges project and process accordingly
-        const isAppliqueBadges = project.templateSize?.includes('applique') || project.appliqueBadgesForm;
+        const isAppliqueBadges = project.templateSize?.includes('applique');
         
-        if (isAppliqueBadges && project.appliqueBadgesForm) {
-          console.log('📋 Applique Badges project detected with form data - adding specification page');
+        if (isAppliqueBadges) {
+          const formData = project.appliqueBadgesForm || {
+            embroideryFileOptions: [],
+            embroideryThreadOptions: [],
+            position: [],
+            graphicSize: '',
+            embroideredParts: ''
+          };
+          console.log('📋 Applique Badges project detected - adding specification page (form data:', project.appliqueBadgesForm ? 'provided' : 'using defaults', ')');
           try {
             const { AppliqueBadgesPDFGenerator } = await import('./applique-badges-pdf-generator');
             const appliqueGenerator = new AppliqueBadgesPDFGenerator();
             
             const appliquePdfBytes = await appliqueGenerator.generateAppliquePDF({
               originalPdfBuffer: Buffer.from(pdfBytes),
-              appliqueBadgesForm: project.appliqueBadgesForm,
+              appliqueBadgesForm: formData,
               projectName: project.name,
               embroideryPreviewPath: project.embroideryPreviewPath || undefined
             });
@@ -1645,7 +1660,6 @@ export async function registerRoutes(app: express.Application) {
             return;
           } catch (error) {
             console.error('❌ Applique Badges PDF generation failed:', error);
-            // Fall back to original PDF if applique generation fails
             console.log('🔄 Falling back to original PDF without applique form page');
           }
         }
@@ -4773,9 +4787,12 @@ export async function registerRoutes(app: express.Application) {
   app.post('/api/projects', async (req, res) => {
     try {
       const projectData = insertProjectSchema.parse(req.body);
+      console.log(`📋 Creating project with appliqueBadgesForm:`, projectData.appliqueBadgesForm ? JSON.stringify(projectData.appliqueBadgesForm).substring(0, 200) : 'NULL/UNDEFINED');
       const project = await storage.createProject(projectData);
+      console.log(`📋 Created project ${project.id} - appliqueBadgesForm saved:`, !!project.appliqueBadgesForm);
       res.status(201).json(project);
     } catch (error) {
+      console.error(`❌ Failed to create project:`, error);
       res.status(400).json({ error: 'Invalid project data' });
     }
   });
