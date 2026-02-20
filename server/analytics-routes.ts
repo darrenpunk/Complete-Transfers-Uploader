@@ -41,7 +41,7 @@ export function registerAnalyticsRoutes(app: Express, storage: IStorage) {
 
   app.post("/api/analytics/heartbeat", async (req, res) => {
     try {
-      const { sessionId, userEmail, currentPage } = req.body;
+      const { sessionId, userEmail, currentPage, isActive } = req.body;
       if (!sessionId) {
         return res.status(400).json({ error: "sessionId required" });
       }
@@ -50,9 +50,10 @@ export function registerAnalyticsRoutes(app: Express, storage: IStorage) {
         userEmail: userEmail || undefined,
         lastSeen: new Date().toISOString(),
         currentPage: currentPage || undefined,
+        metadata: { isActive: isActive !== false },
       });
       if (Math.random() < 0.1) {
-        try { await storage.cleanupOldSessions(10); } catch {}
+        try { await storage.cleanupOldSessions(3); } catch {}
       }
       res.json({ ok: true });
     } catch (e) {
@@ -116,11 +117,25 @@ export function registerAnalyticsRoutes(app: Express, storage: IStorage) {
 
   app.get("/api/admin/analytics/active", adminAuth, async (req, res) => {
     try {
-      const sessions = await storage.getActiveSessions(5);
-      res.json({ count: sessions.length, sessions });
+      const sessions = await storage.getActiveSessions(3);
+      const now = Date.now();
+      const enriched = sessions.map((s: any) => {
+        const lastSeenMs = new Date(s.lastSeen).getTime();
+        const idleSeconds = Math.floor((now - lastSeenMs) / 1000);
+        const status = idleSeconds <= 90 ? "active" : "idle";
+        return { ...s, status, idleSeconds };
+      });
+      const activeCount = enriched.filter((s: any) => s.status === "active").length;
+      const idleCount = enriched.filter((s: any) => s.status === "idle").length;
+      res.json({
+        count: sessions.length,
+        activeCount,
+        idleCount,
+        sessions: enriched,
+      });
     } catch (e) {
       console.error("Admin active sessions error:", e);
-      res.json({ count: 0, sessions: [] });
+      res.json({ count: 0, activeCount: 0, idleCount: 0, sessions: [] });
     }
   });
 
@@ -145,12 +160,20 @@ export function registerAnalyticsRoutes(app: Express, storage: IStorage) {
       try {
         const countResult = await client.query("SELECT COUNT(*) as total, COUNT(DISTINCT user_email) as unique_users FROM analytics_events WHERE user_email IS NOT NULL");
         const totalResult = await client.query("SELECT COUNT(*) as total FROM analytics_events");
+        const allSessions = await storage.getActiveSessions(3);
+        const now = Date.now();
+        const trueActive = allSessions.filter((s: any) => {
+          const idleSeconds = Math.floor((now - new Date(s.lastSeen).getTime()) / 1000);
+          return idleSeconds <= 90;
+        }).length;
         res.json({
           stats,
           summary: {
             totalEvents: parseInt(totalResult.rows[0].total),
             uniqueUsers: parseInt(countResult.rows[0].unique_users),
-            activeSessions: (await storage.getActiveSessions(5)).length,
+            activeSessions: allSessions.length,
+            activeUsers: trueActive,
+            idleUsers: allSessions.length - trueActive,
           },
         });
       } finally {

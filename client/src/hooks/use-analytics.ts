@@ -1,5 +1,8 @@
 import { useEffect, useRef, useCallback } from "react";
 
+const HEARTBEAT_INTERVAL = 60000;
+const IDLE_TIMEOUT = 120000;
+
 function getSessionId(): string {
   try {
     let sid = sessionStorage.getItem("analytics_session_id");
@@ -15,6 +18,29 @@ function getSessionId(): string {
 
 export function useAnalytics(userEmail?: string | null) {
   const sessionId = useRef(getSessionId());
+  const lastActivityRef = useRef(Date.now());
+  const isActiveRef = useRef(true);
+
+  useEffect(() => {
+    const markActive = () => {
+      lastActivityRef.current = Date.now();
+      isActiveRef.current = true;
+    };
+
+    const events = ["mousemove", "mousedown", "keydown", "scroll", "touchstart", "click"];
+    events.forEach(evt => window.addEventListener(evt, markActive, { passive: true }));
+
+    const idleChecker = setInterval(() => {
+      if (Date.now() - lastActivityRef.current > IDLE_TIMEOUT) {
+        isActiveRef.current = false;
+      }
+    }, 10000);
+
+    return () => {
+      events.forEach(evt => window.removeEventListener(evt, markActive));
+      clearInterval(idleChecker);
+    };
+  }, []);
 
   const trackEvent = useCallback(
     (eventType: string, metadata?: Record<string, any>) => {
@@ -37,6 +63,7 @@ export function useAnalytics(userEmail?: string | null) {
   useEffect(() => {
     const sendHeartbeat = () => {
       try {
+        if (!isActiveRef.current) return;
         fetch("/api/analytics/heartbeat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -44,13 +71,14 @@ export function useAnalytics(userEmail?: string | null) {
             sessionId: sessionId.current,
             userEmail: userEmail || undefined,
             currentPage: window.location.pathname,
+            isActive: true,
           }),
         }).catch(() => {});
       } catch {}
     };
 
     sendHeartbeat();
-    const interval = setInterval(sendHeartbeat, 300000);
+    const interval = setInterval(sendHeartbeat, HEARTBEAT_INTERVAL);
 
     return () => clearInterval(interval);
   }, [userEmail]);

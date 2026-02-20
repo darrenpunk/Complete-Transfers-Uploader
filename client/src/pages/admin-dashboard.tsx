@@ -213,8 +213,12 @@ function Dashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">{activeData?.count ?? 0}</div>
-              <p className="text-xs text-muted-foreground">Last 5 minutes</p>
+              <div className="text-3xl font-bold">{activeData?.activeCount ?? 0}</div>
+              <p className="text-xs text-muted-foreground">
+                {(activeData?.idleCount ?? 0) > 0 
+                  ? `+ ${activeData.idleCount} idle`
+                  : "Last 3 minutes"}
+              </p>
             </CardContent>
           </Card>
 
@@ -281,6 +285,7 @@ function Dashboard() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>User</TableHead>
+                    <TableHead>Status</TableHead>
                     <TableHead>Page</TableHead>
                     <TableHead>Last Seen</TableHead>
                   </TableRow>
@@ -289,6 +294,13 @@ function Dashboard() {
                   {activeData.sessions.map((s: any) => (
                     <TableRow key={s.sessionId}>
                       <TableCell>{s.userEmail || "Anonymous"}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className={s.status === "active" 
+                          ? "bg-green-500/20 text-green-400 border-green-500/30" 
+                          : "bg-gray-500/20 text-gray-400 border-gray-500/30"}>
+                          {s.status === "active" ? "Active" : "Idle"}
+                        </Badge>
+                      </TableCell>
                       <TableCell className="font-mono text-xs">{s.currentPage || "/"}</TableCell>
                       <TableCell>{timeSince(s.lastSeen)}</TableCell>
                     </TableRow>
