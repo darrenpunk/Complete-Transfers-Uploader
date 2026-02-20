@@ -661,18 +661,6 @@ export default function PDFPreviewModal({
                 Approve & Continue
               </Button>
             </div>
-            <div className="mb-4">
-              <Button 
-                variant="outline" 
-                onClick={handleDownloadPdf}
-                disabled={isDownloading}
-                className="w-full"
-              >
-                <Download className="w-4 h-4 mr-2" />
-                {isDownloading ? 'Generating PDF...' : 'Download PDF'}
-              </Button>
-            </div>
-
             {/* Preflight Summary - scrollable below buttons */}
             <div className="flex-1 overflow-y-auto min-h-0">
               <h3 className="text-lg font-semibold mb-3">Preflight Summary</h3>
