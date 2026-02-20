@@ -831,6 +831,8 @@ export default function ToolsSidebar({
           (selectedTemplate?.label?.includes("Single Colour") || selectedTemplate?.label?.includes("Zero"));
         if (!isSingleColourTemplate) return null;
         
+        const hasRealGarmentColor = project.garmentColor && project.garmentColor !== "#929292";
+        
         return (
           <Collapsible open={!productSelectorCollapsed} onOpenChange={(open) => setProductSelectorCollapsed(!open)}>
             <div className="border-b border-gray-200">
@@ -838,7 +840,7 @@ export default function ToolsSidebar({
                 <div className="p-6 cursor-pointer flex items-center justify-between hover:bg-gray-400">
                   <h3 className="text-lg font-semibold flex items-center gap-2 text-[#922168]">
                     <Shirt className="w-5 h-5" />
-                    Garment Colour Preview
+                    Garment Colour
                   </h3>
                   {productSelectorCollapsed ? (
                     <ChevronRight className="w-4 h-4" />
@@ -850,8 +852,7 @@ export default function ToolsSidebar({
               <CollapsibleContent>
                 <div className="px-6 pb-6">
                   <div className="space-y-3">
-                    {/* Current Selection Display */}
-                    {project.garmentColor && (
+                    {hasRealGarmentColor && (
                       <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                         <TShirtSwatch
                           color={project.garmentColor}
@@ -859,34 +860,33 @@ export default function ToolsSidebar({
                           selected={false}
                         />
                         <div className="text-sm">
-                          <div className="font-medium text-gray-900">Preview Color</div>
+                          <div className="font-medium text-gray-900">Selected Color</div>
                           <div className="text-gray-600">{getColorName(project.garmentColor)}</div>
                         </div>
                       </div>
                     )}
 
-                    {!project.garmentColor && (
+                    {!hasRealGarmentColor && (
                       <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
                         <p className="text-sm text-blue-700 font-medium">
-                          ℹ️ Optional garment color preview
+                          Select the garment colour for your order
                         </p>
                         <p className="text-xs text-blue-600 mt-1">
-                          See how your artwork looks on different garment colors
+                          This will be included in your production PDF and sales order
                         </p>
                       </div>
                     )}
 
-                    {/* Garment Color Modal Trigger */}
                     <GarmentColorModal
                       currentColor={project.garmentColor || ""}
                       onColorChange={onGarmentColorChange}
                       trigger={
                         <Button 
-                          variant={project.garmentColor ? "outline" : "secondary"} 
+                          variant={hasRealGarmentColor ? "outline" : "default"} 
                           className="w-full hover:bg-gray-400"
                         >
                           <Palette className="w-4 h-4 mr-2" />
-                          {project.garmentColor ? "Change Preview Color" : "Select Preview Color"}
+                          {hasRealGarmentColor ? "Change Garment Colour" : "Select Garment Colour"}
                         </Button>
                       }
                     />
