@@ -1186,8 +1186,10 @@ grestore`;
               
               if (isFullPageMatchRotated && hasUserRotation) {
                 console.log(`📄 LANDSCAPE PDF with user rotation (${element.rotation}°) - NOT treating as full-page landscape`);
-                console.log(`📄 User has manually rotated this element - applying normal rotation workflow`);
-                logoPdfPath = originalPdfPath;
+                console.log(`📄 User has manually rotated this element - will crop to content bounds then apply rotation`);
+                // DO NOT set logoPdfPath here - let the normal cropping flow handle it
+                // Setting logoPdfPath = originalPdfPath would embed the full 842×595 page
+                // but drawPage would force it into element dimensions (~737×312pts), squashing the content
               } else if (coverageRatio > 0.5) {
                 console.log(`📄 Content fills >50% of page - treating as full-page PDF`);
                 console.log(`📄 Skipping content-bounds cropping - embedding full page to prevent clipping`);
