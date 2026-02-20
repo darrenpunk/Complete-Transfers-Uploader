@@ -3362,22 +3362,36 @@ export async function registerRoutes(app: express.Application) {
                       }
                       
                       if (inkscapeVerifyBounds) {
-                        const inkArea = inkscapeVerifyBounds.width * inkscapeVerifyBounds.height;
                         const gsArea = gsBounds.width * gsBounds.height;
                         const pageArea = pageWidth * pageHeight;
-                        const inkPageCoverage = inkArea / pageArea;
                         
-                        if (inkArea > gsArea * 1.5) {
-                          if (inkPageCoverage > 0.8) {
-                            console.log(`✅ Inkscape bounds cover ${(inkPageCoverage * 100).toFixed(0)}% of page - these are background/invisible elements, NOT hidden content`);
-                            console.log(`   Trusting GS bbox: ${gsBounds.width.toFixed(1)}×${gsBounds.height.toFixed(1)}pts (actual visible artwork)`);
-                            console.log(`   Ignoring Inkscape: ${inkscapeVerifyBounds.width.toFixed(1)}×${inkscapeVerifyBounds.height.toFixed(1)}pts (includes backgrounds)`);
-                          } else {
-                            console.log(`🔄 Inkscape found ${(inkArea / gsArea).toFixed(1)}x more content than GS - white content detected!`);
-                            console.log(`   GS: ${gsBounds.width.toFixed(1)}×${gsBounds.height.toFixed(1)}pts vs Inkscape: ${inkscapeVerifyBounds.width.toFixed(1)}×${inkscapeVerifyBounds.height.toFixed(1)}pts`);
-                            gsBounds = inkscapeVerifyBounds;
+                        const pxToPtFactor = 72 / 96;
+                        const inkW_pts = inkscapeVerifyBounds.width * pxToPtFactor;
+                        const inkH_pts = inkscapeVerifyBounds.height * pxToPtFactor;
+                        const inkArea_pts = inkW_pts * inkH_pts;
+                        
+                        if (inkArea_pts > gsArea * 1.15) {
+                          const inkWidthBigger = inkW_pts > gsBounds.width * 1.1;
+                          const inkHeightBigger = inkH_pts > gsBounds.height * 1.1;
+                          
+                          if (inkWidthBigger || inkHeightBigger) {
+                            const gsPageCov = (gsArea / pageArea * 100).toFixed(0);
+                            const inkPageCov = (inkArea_pts / pageArea * 100).toFixed(0);
+                            console.log(`🔄 Inkscape found more content than GS (${(inkArea_pts / gsArea).toFixed(1)}x area) - white content detected!`);
+                            console.log(`   GS: ${gsBounds.width.toFixed(1)}×${gsBounds.height.toFixed(1)}pts (${gsPageCov}% page)`);
+                            console.log(`   Inkscape: ${inkW_pts.toFixed(1)}×${inkH_pts.toFixed(1)}pts (${inkPageCov}% page)`);
+                            gsBounds = {
+                              xMin: inkscapeVerifyBounds.xMin * pxToPtFactor,
+                              yMin: inkscapeVerifyBounds.yMin * pxToPtFactor,
+                              xMax: inkscapeVerifyBounds.xMax * pxToPtFactor,
+                              yMax: inkscapeVerifyBounds.yMax * pxToPtFactor,
+                              width: inkW_pts,
+                              height: inkH_pts,
+                            };
                             (gsBounds as any).__fromSvgCoords = true;
-                            console.log(`✅ Using Inkscape bounds (captures all content including white)`);
+                            console.log(`✅ Using Inkscape bounds converted to pts: ${gsBounds.width.toFixed(1)}×${gsBounds.height.toFixed(1)}pts`);
+                          } else {
+                            console.log(`✅ Inkscape bounds slightly larger but dimensions similar - trusting GS bbox`);
                           }
                         } else {
                           console.log(`✅ Inkscape confirms GS bounds are accurate (similar area)`);
