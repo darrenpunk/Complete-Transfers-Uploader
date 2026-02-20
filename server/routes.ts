@@ -3326,10 +3326,8 @@ export async function registerRoutes(app: express.Application) {
                     
                     console.log(`📊 GS bbox coverage: ${(widthRatio * 100).toFixed(0)}%W × ${(heightRatio * 100).toFixed(0)}%H = ${(areaCoverage * 100).toFixed(0)}% area`);
                     
-                    // If GS bbox covers less than 25% of page area, it may be missing white content
-                    // Use Inkscape to verify there isn't additional content GS can't see
-                    if (areaCoverage < 0.25) {
-                      console.log(`⚠️ GS bbox covers only ${(areaCoverage * 100).toFixed(0)}% of page - checking for hidden white content with Inkscape`);
+                    if (areaCoverage < 0.85) {
+                      console.log(`⚠️ GS bbox covers ${(areaCoverage * 100).toFixed(0)}% of page - verifying with Inkscape for white content`);
                       
                       let inkscapeVerifyBounds: typeof gsBounds | null = null;
                       try {
