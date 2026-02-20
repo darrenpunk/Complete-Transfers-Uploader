@@ -3364,32 +3364,21 @@ export async function registerRoutes(app: express.Application) {
                       if (inkscapeVerifyBounds) {
                         const gsArea = gsBounds.width * gsBounds.height;
                         const pageArea = pageWidth * pageHeight;
+                        const inkArea = inkscapeVerifyBounds.width * inkscapeVerifyBounds.height;
                         
-                        const pxToPtFactor = 72 / 96;
-                        const inkW_pts = inkscapeVerifyBounds.width * pxToPtFactor;
-                        const inkH_pts = inkscapeVerifyBounds.height * pxToPtFactor;
-                        const inkArea_pts = inkW_pts * inkH_pts;
-                        
-                        if (inkArea_pts > gsArea * 1.15) {
-                          const inkWidthBigger = inkW_pts > gsBounds.width * 1.1;
-                          const inkHeightBigger = inkH_pts > gsBounds.height * 1.1;
+                        if (inkArea > gsArea * 1.15) {
+                          const inkWidthBigger = inkscapeVerifyBounds.width > gsBounds.width * 1.1;
+                          const inkHeightBigger = inkscapeVerifyBounds.height > gsBounds.height * 1.1;
                           
                           if (inkWidthBigger || inkHeightBigger) {
                             const gsPageCov = (gsArea / pageArea * 100).toFixed(0);
-                            const inkPageCov = (inkArea_pts / pageArea * 100).toFixed(0);
-                            console.log(`🔄 Inkscape found more content than GS (${(inkArea_pts / gsArea).toFixed(1)}x area) - white content detected!`);
+                            const inkPageCov = (inkArea / pageArea * 100).toFixed(0);
+                            console.log(`🔄 Inkscape found more content than GS (${(inkArea / gsArea).toFixed(1)}x area) - white content detected!`);
                             console.log(`   GS: ${gsBounds.width.toFixed(1)}×${gsBounds.height.toFixed(1)}pts (${gsPageCov}% page)`);
-                            console.log(`   Inkscape: ${inkW_pts.toFixed(1)}×${inkH_pts.toFixed(1)}pts (${inkPageCov}% page)`);
-                            gsBounds = {
-                              xMin: inkscapeVerifyBounds.xMin * pxToPtFactor,
-                              yMin: inkscapeVerifyBounds.yMin * pxToPtFactor,
-                              xMax: inkscapeVerifyBounds.xMax * pxToPtFactor,
-                              yMax: inkscapeVerifyBounds.yMax * pxToPtFactor,
-                              width: inkW_pts,
-                              height: inkH_pts,
-                            };
+                            console.log(`   Inkscape: ${inkscapeVerifyBounds.width.toFixed(1)}×${inkscapeVerifyBounds.height.toFixed(1)}pts (${inkPageCov}% page)`);
+                            gsBounds = inkscapeVerifyBounds;
                             (gsBounds as any).__fromSvgCoords = true;
-                            console.log(`✅ Using Inkscape bounds converted to pts: ${gsBounds.width.toFixed(1)}×${gsBounds.height.toFixed(1)}pts`);
+                            console.log(`✅ Using Inkscape bounds: ${gsBounds.width.toFixed(1)}×${gsBounds.height.toFixed(1)}pts`);
                           } else {
                             console.log(`✅ Inkscape bounds slightly larger but dimensions similar - trusting GS bbox`);
                           }
@@ -3581,15 +3570,7 @@ export async function registerRoutes(app: express.Application) {
                             const TOLERANCE = 1.0; // 1pt tolerance
                             const inkPageCoverage2 = pdfPageDimensions ? (inkscapeWidth * inkscapeHeight) / (pdfPageDimensions.widthPts * pdfPageDimensions.heightPts) : 0;
                             if (inkscapeWidth > contentWidthPts + TOLERANCE || inkscapeHeight > contentHeightPts + TOLERANCE) {
-                              if (inkPageCoverage2 > 0.8) {
-                                console.log(`✅ Inkscape root bounds cover ${(inkPageCoverage2 * 100).toFixed(0)}% of page - background elements, trusting GS bbox`);
-                                console.log(`   GS content: ${contentWidthPts.toFixed(2)}×${contentHeightPts.toFixed(2)}pts (actual visible artwork)`);
-                                if (pdfPageDimensions && originalPdfBounds) {
-                                  svgBoundsX = originalPdfBounds.xMin;
-                                  svgBoundsY = pdfPageDimensions.heightPts - originalPdfBounds.yMax;
-                                  console.log(`   SVG translation from GS bounds: (${svgBoundsX.toFixed(2)}, ${svgBoundsY.toFixed(2)})`);
-                                }
-                              } else {
+                              {
                               console.log(`⚠️ Inkscape reports LARGER bounds than Ghostscript!`);
                               console.log(`   Ghostscript: ${contentWidthPts.toFixed(2)}×${contentHeightPts.toFixed(2)}pts`);
                               console.log(`   Inkscape: ${inkscapeWidth.toFixed(2)}×${inkscapeHeight.toFixed(2)}pts`);
