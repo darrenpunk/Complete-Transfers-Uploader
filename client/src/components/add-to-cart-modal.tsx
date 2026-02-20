@@ -140,30 +140,27 @@ export default function AddToCartModal({
             </div>
           </div>
 
-          {import.meta.env.DEV && (
+          {onDownloadPDF && (
             <>
               <Separator className="my-4" />
 
-              {/* Optional Action Section - Dev only */}
               <div className="space-y-3">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <FileText className="w-4 h-4" />
                   <span className="font-medium">Optional: Download for Your Records</span>
                 </div>
                 
-                {onDownloadPDF && (
-                  <Button
-                    onClick={onDownloadPDF}
-                    disabled={isAddingToCart || isGeneratingPDF}
-                    variant="secondary"
-                    className="w-full"
-                    size="default"
-                    data-testid="button-download-pdf"
-                  >
-                    <Download className="w-4 h-4 mr-2" />
-                    {isGeneratingPDF ? 'Generating PDF...' : 'Download PDF Copy'}
-                  </Button>
-                )}
+                <Button
+                  onClick={onDownloadPDF}
+                  disabled={isAddingToCart || isGeneratingPDF}
+                  variant="secondary"
+                  className="w-full"
+                  size="default"
+                  data-testid="button-download-pdf"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  {isGeneratingPDF ? 'Generating PDF...' : 'Download PDF Copy'}
+                </Button>
                 
                 <p className="text-xs text-muted-foreground text-center px-4">
                   You can download a PDF copy of your artwork for your records. This is optional and won't affect your order.
