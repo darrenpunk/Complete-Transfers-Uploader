@@ -31,8 +31,33 @@ for (const dir of requiredDirs) {
   }
 }
 
-app.get('/health', (_req, res) => {
-  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+app.get('/health', async (_req, res) => {
+  const checks: Record<string, string> = {};
+  let healthy = true;
+
+  try {
+    const { pool } = await import('./db');
+    const result = await pool.query('SELECT 1');
+    checks.database = result.rows.length > 0 ? 'ok' : 'no response';
+    if (checks.database !== 'ok') healthy = false;
+  } catch (err: any) {
+    checks.database = 'error: ' + (err.message || 'unknown');
+    healthy = false;
+  }
+
+  const uploadsDir = './uploads';
+  checks.filesystem = fs.existsSync(uploadsDir) ? 'ok' : 'missing uploads directory';
+  if (checks.filesystem !== 'ok') healthy = false;
+
+  checks.uptime = `${Math.floor(process.uptime())}s`;
+  checks.memory = `${Math.round(process.memoryUsage().rss / 1024 / 1024)}MB`;
+
+  const status = healthy ? 200 : 503;
+  res.status(status).json({
+    status: healthy ? 'ok' : 'degraded',
+    timestamp: new Date().toISOString(),
+    checks,
+  });
 });
 
 app.use(express.json({ limit: '200mb' }));
