@@ -72,7 +72,7 @@ export default function ProjectNameModal({
       setProjectName(currentName);
       setComments("");
       setErrorType('none');
-      if (hasReorderColors) {
+      if (hasReorderColors && supportsMultiColor) {
         setUseMultiColor(true);
         setGarmentColors(detectedReorderColors.map(dc => ({
           color: dc.color,
@@ -151,11 +151,9 @@ export default function ProjectNameModal({
       finalComments = colorSection + (finalComments ? '\n\n' + finalComments : '');
     }
     
-    // For multi-color, validate that garment color quantities sum to original order quantity
-    if (useMultiColor && garmentColors.length > 0) {
+    if (supportsMultiColor && useMultiColor && garmentColors.length > 0) {
       const garmentTotal = garmentColors.reduce((sum, gc) => sum + gc.quantity, 0);
       if (garmentTotal !== originalQuantity) {
-        // Show error - quantities don't match
         setErrorType('quantity');
         return;
       }
