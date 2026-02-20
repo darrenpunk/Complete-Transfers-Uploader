@@ -6207,6 +6207,7 @@ export async function registerRoutes(app: express.Application) {
 
       const isAppliqueTemplate = projectData.templateSize?.includes('applique');
       const includeDstProofing = isAppliqueTemplate && !isRepeatOrder;
+      console.log(`🔍 DST proofing check: templateSize="${projectData.templateSize}", isApplique=${isAppliqueTemplate}, isRepeat=${isRepeatOrder}, includeDst=${includeDstProofing}`);
       if (includeDstProofing) {
         console.log(`📋 Applique order (new) - including DST proofing charge [DSTF]`);
       } else if (isAppliqueTemplate && isRepeatOrder) {
