@@ -703,6 +703,28 @@ class ArtworkUploaderController(http.Controller):
             order_line = request.env['sale.order.line'].sudo().create(line_vals)
             _logger.info(f"✅ Created separate order line #{order_line.id}: {line_name}, price_unit: {order_line.price_unit} (computed by Odoo, qty: {order_qty}, pricelist: {sale_order.pricelist_id.name})")
             
+            # Auto-add DST Embroidery Proofing Service for new applique orders
+            if data.get('include_dst_proofing'):
+                dst_product_code = data.get('dst_product_code', 'DSTF')
+                try:
+                    dst_product = request.env['product.product'].sudo().search(
+                        [('default_code', '=', dst_product_code)], limit=1
+                    )
+                    if dst_product:
+                        dst_line_vals = {
+                            'order_id': sale_order.id,
+                            'product_id': dst_product.id,
+                            'product_uom_qty': 1,
+                            'product_uom': dst_product.uom_id.id,
+                            'name': f"[{dst_product_code}] {dst_product.name}",
+                        }
+                        dst_line = request.env['sale.order.line'].sudo().create(dst_line_vals)
+                        _logger.info(f"📋 Auto-added DST proofing line #{dst_line.id}: [{dst_product_code}] {dst_product.name}, price: {dst_line.price_unit}")
+                    else:
+                        _logger.warning(f"⚠️ DST proofing product not found with code: {dst_product_code}")
+                except Exception as dst_err:
+                    _logger.error(f"❌ Failed to add DST proofing product: {str(dst_err)}")
+            
             # Link project to order
             project.sale_order_id = sale_order.id
             _logger.info(f"✅ Linked project to sale order #{sale_order.id}")
