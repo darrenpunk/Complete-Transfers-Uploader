@@ -3378,6 +3378,7 @@ export async function registerRoutes(app: express.Application) {
                             console.log(`🔄 Inkscape found ${(inkArea / gsArea).toFixed(1)}x more content than GS - white content detected!`);
                             console.log(`   GS: ${gsBounds.width.toFixed(1)}×${gsBounds.height.toFixed(1)}pts vs Inkscape: ${inkscapeVerifyBounds.width.toFixed(1)}×${inkscapeVerifyBounds.height.toFixed(1)}pts`);
                             gsBounds = inkscapeVerifyBounds;
+                            (gsBounds as any).__fromSvgCoords = true;
                             console.log(`✅ Using Inkscape bounds (captures all content including white)`);
                           }
                         } else {
@@ -3513,16 +3514,34 @@ export async function registerRoutes(app: express.Application) {
                   let contentHeightPts = contentBoundsForNormalization.height;
                   
                   // Store original PDF bounds for PDF cropping during generation
-                  originalPdfBounds = {
-                    xMin: contentBoundsForNormalization.xMin,
-                    yMin: contentBoundsForNormalization.yMin,
-                    xMax: contentBoundsForNormalization.xMax,
-                    yMax: contentBoundsForNormalization.yMax,
-                    width: contentWidthPts,
-                    height: contentHeightPts,
-                    units: 'pt'
-                  };
-                  console.log(`📋 Stored original PDF bounds for cropping: (${originalPdfBounds.xMin.toFixed(1)}, ${originalPdfBounds.yMin.toFixed(1)}) to (${originalPdfBounds.xMax.toFixed(1)}, ${originalPdfBounds.yMax.toFixed(1)})`);
+                  // CRITICAL: If bounds came from Inkscape SVG analysis, Y coordinates are in SVG space (top-down)
+                  // and must be converted to PDF space (bottom-up) for correct Ghostscript cropping
+                  if ((contentBoundsForNormalization as any).__fromSvgCoords && pdfPageDimensions) {
+                    const svgYMin = contentBoundsForNormalization.yMin;
+                    const svgYMax = contentBoundsForNormalization.yMax;
+                    originalPdfBounds = {
+                      xMin: contentBoundsForNormalization.xMin,
+                      yMin: pdfPageDimensions.heightPts - svgYMax,
+                      xMax: contentBoundsForNormalization.xMax,
+                      yMax: pdfPageDimensions.heightPts - svgYMin,
+                      width: contentWidthPts,
+                      height: contentHeightPts,
+                      units: 'pt'
+                    };
+                    console.log(`📋 Stored PDF bounds (converted from SVG coords): (${originalPdfBounds.xMin.toFixed(1)}, ${originalPdfBounds.yMin.toFixed(1)}) to (${originalPdfBounds.xMax.toFixed(1)}, ${originalPdfBounds.yMax.toFixed(1)})`);
+                    console.log(`   SVG Y range: ${svgYMin.toFixed(1)}-${svgYMax.toFixed(1)} → PDF Y range: ${originalPdfBounds.yMin.toFixed(1)}-${originalPdfBounds.yMax.toFixed(1)} (page height: ${pdfPageDimensions.heightPts.toFixed(1)})`);
+                  } else {
+                    originalPdfBounds = {
+                      xMin: contentBoundsForNormalization.xMin,
+                      yMin: contentBoundsForNormalization.yMin,
+                      xMax: contentBoundsForNormalization.xMax,
+                      yMax: contentBoundsForNormalization.yMax,
+                      width: contentWidthPts,
+                      height: contentHeightPts,
+                      units: 'pt'
+                    };
+                    console.log(`📋 Stored original PDF bounds for cropping: (${originalPdfBounds.xMin.toFixed(1)}, ${originalPdfBounds.yMin.toFixed(1)}) to (${originalPdfBounds.xMax.toFixed(1)}, ${originalPdfBounds.yMax.toFixed(1)})`);
+                  }
                     
                     // Crop SVG viewBox to content bounds AND translate content to zero-origin
                     if (fs.existsSync(svgPath)) {

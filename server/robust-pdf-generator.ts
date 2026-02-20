@@ -1241,40 +1241,15 @@ grestore`;
             // If bounds offset is non-zero, create a new PDF page with content at origin
             // by embedding the original page with translation - no Ghostscript re-encoding needed
             if (!logoPdfPath && (originalPdfBounds.xMin > 1 || originalPdfBounds.yMin > 1)) {
-              console.log(`📐 PDF has content offset (${originalPdfBounds.xMin.toFixed(1)}, ${originalPdfBounds.yMin.toFixed(1)}) - re-embedding with translation to origin`);
+              console.log(`📐 PDF has content offset (${originalPdfBounds.xMin.toFixed(1)}, ${originalPdfBounds.yMin.toFixed(1)}) - cropping to content bounds with Ghostscript`);
               
-              try {
-                const { PDFDocument: PDFDocNew } = await import('pdf-lib');
-                const contentW = originalPdfBounds.width || (originalPdfBounds.xMax - originalPdfBounds.xMin);
-                const contentH = originalPdfBounds.height || (originalPdfBounds.yMax - originalPdfBounds.yMin);
-                
-                const newPdfDoc = await PDFDocNew.create();
-                const newPage = newPdfDoc.addPage([contentW, contentH]);
-                
-                const [embeddedOrigPage] = await newPdfDoc.embedPdf(origPdfDoc, [0]);
-                newPage.drawPage(embeddedOrigPage, {
-                  x: -originalPdfBounds.xMin,
-                  y: -originalPdfBounds.yMin,
-                  width: origPageSize.width,
-                  height: origPageSize.height,
-                });
-                
-                const reembeddedBytes = await newPdfDoc.save();
-                const reembeddedPath = path.join(process.cwd(), 'uploads', `reembedded_${Date.now()}.pdf`);
-                fs.writeFileSync(reembeddedPath, reembeddedBytes);
-                
-                console.log(`✅ PDF re-embedded with content at origin: ${contentW.toFixed(1)}×${contentH.toFixed(1)}pts (translated by -${originalPdfBounds.xMin.toFixed(1)}, -${originalPdfBounds.yMin.toFixed(1)})`);
-                logoPdfPath = reembeddedPath;
+              const resizedPdfPath = await this.cropPdfToContentBounds(originalPdfPath, originalPdfBounds);
+              if (resizedPdfPath) {
+                logoPdfPath = resizedPdfPath;
                 shouldCleanup = true;
-              } catch (reembedError) {
-                console.log(`⚠️ Re-embedding failed, falling back to Ghostscript crop: ${reembedError}`);
-                const resizedPdfPath = await this.cropPdfToContentBounds(originalPdfPath, originalPdfBounds);
-                if (resizedPdfPath) {
-                  logoPdfPath = resizedPdfPath;
-                  shouldCleanup = true;
-                } else {
-                  logoPdfPath = originalPdfPath;
-                }
+              } else {
+                console.log(`⚠️ Ghostscript crop failed, using original PDF as-is`);
+                logoPdfPath = originalPdfPath;
               }
             } else if (!logoPdfPath) {
               console.log(`✅ PDF content starts at origin - safe to use original PDF`);
