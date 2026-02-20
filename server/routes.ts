@@ -6187,10 +6187,12 @@ export async function registerRoutes(app: express.Application) {
       }
 
       let zipBase64: string | undefined;
+      let isRepeatOrder = false;
       if (!isVectorizationOnly && projectId !== 'vector-service') {
         try {
           const proj = await storage.getProject(projectId);
           if (proj?.attachedZipPath) {
+            isRepeatOrder = true;
             const zipFilePath = path.join('./uploads', path.basename(proj.attachedZipPath));
             if (fs.existsSync(zipFilePath)) {
               const zipBuffer = fs.readFileSync(zipFilePath);
@@ -6203,6 +6205,14 @@ export async function registerRoutes(app: express.Application) {
         }
       }
 
+      const isAppliqueTemplate = projectData.templateSize?.includes('applique');
+      const includeDstProofing = isAppliqueTemplate && !isRepeatOrder;
+      if (includeDstProofing) {
+        console.log(`📋 Applique order (new) - including DST proofing charge [DSTF]`);
+      } else if (isAppliqueTemplate && isRepeatOrder) {
+        console.log(`📋 Applique order (repeat) - skipping DST proofing charge`);
+      }
+
       const ctWebsiteId = process.env.VITE_ODOO_CT_WEBSITE_ID || '2';
       const requestBody = {
         ...projectData,
@@ -6211,6 +6221,7 @@ export async function registerRoutes(app: express.Application) {
         ...(productCode && { product_code: productCode }),
         ...(isVectorizationOnly && { template_id: 'vector-service' }),
         ...(zipBase64 && { zipBase64, zipFileName: (await storage.getProject(projectId))?.attachedZipName }),
+        ...(includeDstProofing && { include_dst_proofing: true, dst_product_code: 'DSTF' }),
       };
 
       // Call Odoo add-to-cart API
