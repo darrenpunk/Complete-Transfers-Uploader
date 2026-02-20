@@ -125,7 +125,8 @@ function ProductContent({
   onSelectProduct,
   onOpenVectorizationForm,
   onViewOrders,
-}: Omit<ProductLauncherModalProps, 'open' | 'inline'>) {
+  hideHeader = false,
+}: Omit<ProductLauncherModalProps, 'open' | 'inline'> & { hideHeader?: boolean }) {
   const [showTutorial, setShowTutorial] = useState(false);
 
   const handleProductSelect = (productId: string) => {
@@ -140,15 +141,17 @@ function ProductContent({
   return (
     <>
       <div className="w-full max-w-7xl mx-auto">
-        <div className="text-center mb-6">
-          <CompleteTransferLogo size="md" className="mb-4" />
-          <h2 className="text-2xl font-bold text-center mb-2 text-white">
-            Select Product Type
-          </h2>
-          <p className="text-center text-gray-400">
-            Choose the type of product you want to create artwork for
-          </p>
-        </div>
+        {!hideHeader && (
+          <div className="text-center mb-6">
+            <CompleteTransferLogo size="md" className="mb-4" />
+            <h2 className="text-2xl font-bold text-center mb-2 text-white">
+              Select Product Type
+            </h2>
+            <p className="text-center text-gray-400">
+              Choose the type of product you want to create artwork for
+            </p>
+          </div>
+        )}
 
         <div className="flex justify-end gap-2 px-2 md:px-6 mb-4">
           <Button
@@ -270,6 +273,7 @@ export default function ProductLauncherModal({
           onSelectProduct={onSelectProduct}
           onOpenVectorizationForm={onOpenVectorizationForm}
           onViewOrders={onViewOrders}
+          hideHeader
         />
         <div className="flex justify-center pt-4 border-t border-gray-700">
           <Button variant="outline" onClick={onClose} className="bg-transparent border-gray-600 text-gray-300 hover:bg-gray-800">
