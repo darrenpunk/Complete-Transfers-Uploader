@@ -1334,6 +1334,50 @@ grestore`;
         }
       }
       
+      // ASPECT RATIO SAFETY NET: Before embedding, check if the PDF page dimensions
+      // match the element dimensions. If the aspect ratios differ significantly, the PDF
+      // page is likely uncropped (full page with whitespace) while the element was sized
+      // from content bounds. This causes drawPage to squash/distort the content.
+      // Most common with landscape PDFs rotated to fit portrait templates.
+      const MM_TO_POINTS = 2.834645669;
+      const isFullPagePdf = (element as any)._isFullPagePdf === true;
+      
+      if (!isFullPagePdf) {
+        const { PDFDocument: PDFDocAspect } = await import('pdf-lib');
+        const checkPdfBytes = fs.readFileSync(logoPdfPath);
+        const checkPdfDoc = await PDFDocAspect.load(checkPdfBytes);
+        const [checkPage] = checkPdfDoc.getPages();
+        const pdfW = checkPage.getSize().width;
+        const pdfH = checkPage.getSize().height;
+        const elemWPts = element.width * MM_TO_POINTS;
+        const elemHPts = element.height * MM_TO_POINTS;
+        
+        const pdfAspect = pdfW / pdfH;
+        const elemAspect = elemWPts / elemHPts;
+        const aspectDiff = Math.abs(pdfAspect - elemAspect);
+        
+        if (aspectDiff > 0.15 && pdfW > elemWPts + 20 && pdfH > elemHPts + 20) {
+          console.log(`⚠️ ASPECT RATIO MISMATCH: PDF page ${pdfW.toFixed(1)}×${pdfH.toFixed(1)}pts (${pdfAspect.toFixed(2)}) vs element ${elemWPts.toFixed(1)}×${elemHPts.toFixed(1)}pts (${elemAspect.toFixed(2)})`);
+          console.log(`📐 Difference: ${aspectDiff.toFixed(3)} - PDF page is larger than element in both dimensions, needs cropping`);
+          
+          const originalPdfBounds = logo.originalPdfBounds as any;
+          if (originalPdfBounds && originalPdfBounds.width > 1 && originalPdfBounds.height > 1) {
+            console.log(`🔪 Auto-cropping PDF to content bounds to prevent distortion`);
+            const croppedPath = await this.cropPdfToContentBounds(logoPdfPath, originalPdfBounds);
+            if (croppedPath) {
+              if (shouldCleanup && logoPdfPath) {
+                try { fs.unlinkSync(logoPdfPath); } catch (e) {}
+              }
+              logoPdfPath = croppedPath;
+              shouldCleanup = true;
+              console.log(`✅ Auto-cropped PDF to prevent squashing`);
+            }
+          } else {
+            console.log(`⚠️ No original bounds available for auto-crop - PDF may be distorted`);
+          }
+        }
+      }
+      
       // Read and embed the PDF
       const logoPdfBytes = fs.readFileSync(logoPdfPath);
       const logoDoc = await pdfDoc.embedPdf(logoPdfBytes);
@@ -1343,12 +1387,6 @@ grestore`;
       const actualPdfWidth = logoPage.width;
       const actualPdfHeight = logoPage.height;
       console.log(`📄 Actual embedded PDF size: ${actualPdfWidth.toFixed(1)}×${actualPdfHeight.toFixed(1)}pts`);
-      
-      // Calculate exact position using user's actual element dimensions
-      const MM_TO_POINTS = 2.834645669;
-      
-      // Check if this is a full-page PDF (detected earlier in the cropping logic)
-      const isFullPagePdf = (element as any)._isFullPagePdf === true;
       
       if (isFullPagePdf) {
         console.log(`📄 FULL-PAGE PDF: Embedding at full template size (${(templateSize?.width || 297)}×${(templateSize?.height || 420)}mm) to prevent clipping`);
