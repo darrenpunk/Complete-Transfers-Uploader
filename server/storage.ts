@@ -16,8 +16,11 @@ import {
   type AnalyticsEvent,
   type InsertAnalyticsEvent,
   type ActiveSession,
+  type CustomerTemplate,
+  type InsertCustomerTemplate,
   analyticsEvents,
-  activeSessions
+  activeSessions,
+  customerTemplates
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
@@ -73,6 +76,11 @@ export interface IStorage {
   getAnalyticsEvents(limit?: number, offset?: number, eventType?: string): Promise<AnalyticsEvent[]>;
   getAnalyticsStats(days?: number): Promise<{ date: string; eventType: string; count: number }[]>;
   cleanupOldSessions(olderThanMinutes?: number): Promise<void>;
+
+  getCustomerTemplates(customerCode: string): Promise<CustomerTemplate[]>;
+  getAllCustomerTemplates(): Promise<CustomerTemplate[]>;
+  createCustomerTemplate(assignment: InsertCustomerTemplate): Promise<CustomerTemplate>;
+  deleteCustomerTemplate(id: string): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -83,6 +91,7 @@ export class MemStorage implements IStorage {
   private templateSizes: Map<string, TemplateSize> = new Map();
   private vectorizationRequests: Map<string, VectorizationRequest> = new Map();
   private supportTickets: Map<string, SupportTicket> = new Map();
+  private customerTemplatesMap: Map<string, CustomerTemplate> = new Map();
 
   constructor() {
     this.initializeTemplateSizes();
@@ -466,6 +475,29 @@ export class MemStorage implements IStorage {
     };
     this.supportTickets.set(id, ticket);
     return ticket;
+  }
+
+  async getCustomerTemplates(customerCode: string): Promise<CustomerTemplate[]> {
+    return Array.from(this.customerTemplatesMap.values()).filter(ct => ct.customerCode === customerCode);
+  }
+
+  async getAllCustomerTemplates(): Promise<CustomerTemplate[]> {
+    return Array.from(this.customerTemplatesMap.values());
+  }
+
+  async createCustomerTemplate(assignment: InsertCustomerTemplate): Promise<CustomerTemplate> {
+    const id = randomUUID();
+    const ct: CustomerTemplate = {
+      ...assignment,
+      id,
+      createdAt: new Date().toISOString(),
+    };
+    this.customerTemplatesMap.set(id, ct);
+    return ct;
+  }
+
+  async deleteCustomerTemplate(id: string): Promise<boolean> {
+    return this.customerTemplatesMap.delete(id);
   }
 
   // Analytics methods - database-backed with retry for resilience

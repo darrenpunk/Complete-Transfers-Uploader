@@ -152,6 +152,41 @@ export function registerAnalyticsRoutes(app: Express, storage: IStorage) {
     }
   });
 
+  app.get("/api/admin/customer-templates", adminAuth, async (req, res) => {
+    try {
+      const assignments = await storage.getAllCustomerTemplates();
+      res.json(assignments);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to get customer template assignments" });
+    }
+  });
+
+  app.post("/api/admin/customer-templates", adminAuth, async (req, res) => {
+    try {
+      const { customerCode, templateId } = req.body;
+      if (!customerCode || !templateId) {
+        return res.status(400).json({ error: "Customer code and template ID are required" });
+      }
+      const assignment = await storage.createCustomerTemplate({ customerCode: customerCode.trim(), templateId });
+      res.json(assignment);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to create customer template assignment" });
+    }
+  });
+
+  app.delete("/api/admin/customer-templates/:id", adminAuth, async (req, res) => {
+    try {
+      const deleted = await storage.deleteCustomerTemplate(req.params.id);
+      if (deleted) {
+        res.json({ success: true });
+      } else {
+        res.status(404).json({ error: "Assignment not found" });
+      }
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete customer template assignment" });
+    }
+  });
+
   app.get("/api/admin/analytics/stats", adminAuth, async (req, res) => {
     try {
       const days = parseInt(req.query.days as string) || 7;

@@ -166,6 +166,13 @@ export const activeSessions = pgTable("active_sessions", {
   metadata: jsonb("metadata"),
 });
 
+export const customerTemplates = pgTable("customer_templates", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  customerCode: text("customer_code").notNull(),
+  templateId: text("template_id").notNull(),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+});
+
 // Insert schemas
 export const insertProjectSchema = createInsertSchema(projects).omit({
   id: true,
@@ -203,6 +210,8 @@ export const insertAnalyticsEventSchema = createInsertSchema(analyticsEvents).om
 
 export const insertActiveSessionSchema = createInsertSchema(activeSessions);
 
+export const insertCustomerTemplateSchema = createInsertSchema(customerTemplates).omit({ id: true, createdAt: true });
+
 // Update schemas
 export const updateCanvasElementSchema = createInsertSchema(canvasElements).partial().omit({
   id: true,
@@ -237,6 +246,9 @@ export type AnalyticsEvent = typeof analyticsEvents.$inferSelect;
 
 export type InsertActiveSession = z.infer<typeof insertActiveSessionSchema>;
 export type ActiveSession = typeof activeSessions.$inferSelect;
+
+export type InsertCustomerTemplate = z.infer<typeof insertCustomerTemplateSchema>;
+export type CustomerTemplate = typeof customerTemplates.$inferSelect;
 
 // Content bounds type definition
 export type ContentBounds = {

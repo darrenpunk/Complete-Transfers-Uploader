@@ -224,14 +224,15 @@ export default function UploadTool() {
 
   // Fetch template sizes - with direct fetch fallback for production reliability
   const { data: queryTemplateSizes } = useQuery<TemplateSize[]>({
-    queryKey: ["/api/template-sizes"],
+    queryKey: ["/api/template-sizes", partnerEmail],
+    queryFn: () => fetch(`/api/template-sizes${partnerEmail ? `?customerCode=${encodeURIComponent(partnerEmail)}` : ''}`).then(r => r.json()),
   });
   const [fallbackTemplateSizes, setFallbackTemplateSizes] = useState<TemplateSize[]>([]);
   
   useEffect(() => {
     const doFetch = () => {
       console.log('⏰ Fetching template sizes directly...');
-      fetch('/api/template-sizes')
+      fetch(`/api/template-sizes${partnerEmail ? `?customerCode=${encodeURIComponent(partnerEmail)}` : ''}`)
         .then(res => res.json())
         .then(data => {
           if (Array.isArray(data) && data.length > 0) {
@@ -247,7 +248,7 @@ export default function UploadTool() {
       const timer = setTimeout(doFetch, 3000);
       return () => clearTimeout(timer);
     }
-  }, [queryTemplateSizes]);
+  }, [queryTemplateSizes, partnerEmail]);
   
   const templateSizes: TemplateSize[] = (queryTemplateSizes && queryTemplateSizes.length > 0) ? queryTemplateSizes : fallbackTemplateSizes;
 

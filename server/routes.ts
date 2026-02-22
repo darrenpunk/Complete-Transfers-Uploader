@@ -4812,7 +4812,30 @@ export async function registerRoutes(app: express.Application) {
   app.get('/api/template-sizes', async (req, res) => {
     try {
       const templateSizes = await storage.getTemplateSizes();
-      res.json(templateSizes);
+      const customerCode = req.query.customerCode as string | undefined;
+      const allAssignments = await storage.getAllCustomerTemplates();
+
+      const restrictedTemplateIds = new Set<string>();
+      for (const assignment of allAssignments) {
+        restrictedTemplateIds.add(assignment.templateId);
+      }
+
+      const customerAllowedIds = new Set<string>();
+      if (customerCode) {
+        for (const assignment of allAssignments) {
+          if (assignment.customerCode === customerCode) {
+            customerAllowedIds.add(assignment.templateId);
+          }
+        }
+      }
+
+      const filtered = templateSizes.filter(t => {
+        if (!restrictedTemplateIds.has(t.id)) return true;
+        if (customerCode && customerAllowedIds.has(t.id)) return true;
+        return false;
+      });
+
+      res.json(filtered);
     } catch (error) {
       res.status(500).json({ error: 'Failed to get template sizes' });
     }

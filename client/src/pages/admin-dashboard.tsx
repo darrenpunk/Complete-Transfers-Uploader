@@ -6,7 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Lock, Users, Activity, BarChart3, RefreshCw, Search, X, Upload, ShoppingCart } from "lucide-react";
+import { Lock, Users, Activity, BarChart3, RefreshCw, Search, X, Upload, ShoppingCart, LayoutTemplate, Plus, Trash2 } from "lucide-react";
+import { queryClient } from "@/lib/queryClient";
+import type { TemplateSize } from "@shared/schema";
 
 function getAdminToken(): string | null {
   try { return sessionStorage.getItem("admin_token"); } catch { return null; }
@@ -117,7 +119,172 @@ const eventColors: Record<string, string> = {
   template_select: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
 };
 
+function CustomerTemplatesManager() {
+  const [newCustomerCode, setNewCustomerCode] = useState("");
+  const [newTemplateId, setNewTemplateId] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const { data: assignments, refetch: refetchAssignments } = useQuery<any[]>({
+    queryKey: ["admin-customer-templates"],
+    queryFn: () => adminFetch("/api/admin/customer-templates"),
+  });
+
+  const { data: allTemplates } = useQuery<TemplateSize[]>({
+    queryKey: ["/api/template-sizes"],
+  });
+
+  const groupedAssignments = useMemo(() => {
+    if (!assignments) return {};
+    const grouped: Record<string, any[]> = {};
+    for (const a of assignments) {
+      if (!grouped[a.customerCode]) grouped[a.customerCode] = [];
+      grouped[a.customerCode].push(a);
+    }
+    return grouped;
+  }, [assignments]);
+
+  const templateLabel = (id: string) => {
+    const t = allTemplates?.find(t => t.id === id);
+    return t ? `${t.label} (${t.id})` : id;
+  };
+
+  const handleAdd = async () => {
+    if (!newCustomerCode.trim() || !newTemplateId) return;
+    setSaving(true);
+    try {
+      const token = getAdminToken();
+      await fetch("/api/admin/customer-templates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ customerCode: newCustomerCode.trim(), templateId: newTemplateId }),
+      });
+      setNewCustomerCode("");
+      setNewTemplateId("");
+      refetchAssignments();
+    } catch (e) {
+      console.error("Failed to add assignment", e);
+    }
+    setSaving(false);
+  };
+
+  const handleDelete = async (id: string) => {
+    const token = getAdminToken();
+    await fetch(`/api/admin/customer-templates/${id}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    refetchAssignments();
+  };
+
+  const templateGroups = useMemo(() => {
+    if (!allTemplates) return {};
+    const groups: Record<string, TemplateSize[]> = {};
+    for (const t of allTemplates) {
+      const g = t.group || "Other";
+      if (!groups[g]) groups[g] = [];
+      groups[g].push(t);
+    }
+    return groups;
+  }, [allTemplates]);
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm font-medium flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            Add Customer Template Assignment
+          </CardTitle>
+          <p className="text-xs text-muted-foreground">
+            Assign a template to a specific customer. Templates with assignments become exclusive — only assigned customers will see them. All other templates remain visible to everyone.
+          </p>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-3 items-end">
+            <div className="space-y-1">
+              <label className="text-xs text-muted-foreground">Customer Email</label>
+              <Input
+                placeholder="customer@example.com"
+                value={newCustomerCode}
+                onChange={(e) => setNewCustomerCode(e.target.value)}
+                className="w-[260px] h-9"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs text-muted-foreground">Template</label>
+              <Select value={newTemplateId} onValueChange={setNewTemplateId}>
+                <SelectTrigger className="w-[280px] h-9">
+                  <SelectValue placeholder="Select a template..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(templateGroups).map(([group, templates]) => (
+                    <div key={group}>
+                      <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">{group}</div>
+                      {templates.map(t => (
+                        <SelectItem key={t.id} value={t.id}>
+                          {t.label} ({t.id})
+                        </SelectItem>
+                      ))}
+                    </div>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button onClick={handleAdd} disabled={saving || !newCustomerCode.trim() || !newTemplateId} size="sm" className="h-9">
+              <Plus className="h-4 w-4 mr-1" />
+              Assign
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm font-medium">Current Assignments</CardTitle>
+          <p className="text-xs text-muted-foreground">
+            {Object.keys(groupedAssignments).length} customer(s) with template restrictions
+          </p>
+        </CardHeader>
+        <CardContent>
+          {Object.keys(groupedAssignments).length === 0 ? (
+            <p className="text-sm text-muted-foreground py-4 text-center">
+              No customer-specific template assignments yet. All templates are visible to everyone.
+            </p>
+          ) : (
+            <div className="space-y-4">
+              {Object.entries(groupedAssignments).sort(([a], [b]) => a.localeCompare(b)).map(([code, items]) => (
+                <div key={code} className="border rounded-lg p-3">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Badge variant="outline" className="bg-blue-500/20 text-blue-400 border-blue-500/30">
+                      {code}
+                    </Badge>
+                    <span className="text-xs text-muted-foreground">{items.length} template(s)</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {items.map((a: any) => (
+                      <div key={a.id} className="flex items-center gap-1 bg-muted rounded px-2 py-1">
+                        <span className="text-xs">{templateLabel(a.templateId)}</span>
+                        <button
+                          onClick={() => handleDelete(a.id)}
+                          className="text-muted-foreground hover:text-destructive transition-colors ml-1"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 function Dashboard() {
+  const [activeTab, setActiveTab] = useState<"analytics" | "customer-templates">("analytics");
   const [userFilter, setUserFilter] = useState("");
   const [eventFilter, setEventFilter] = useState("all");
   const [timeFilter, setTimeFilter] = useState("all");
@@ -197,13 +364,37 @@ function Dashboard() {
     <div className="min-h-screen bg-background text-foreground p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Analytics Dashboard</h1>
-          <Button variant="outline" size="sm" onClick={handleRefresh}>
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
-          </Button>
+          <h1 className="text-2xl font-bold">Admin Dashboard</h1>
+          <div className="flex items-center gap-2">
+            <div className="flex border rounded-md overflow-hidden">
+              <button
+                onClick={() => setActiveTab("analytics")}
+                className={`px-3 py-1.5 text-sm font-medium transition-colors ${activeTab === "analytics" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"}`}
+              >
+                <Activity className="h-4 w-4 inline mr-1.5" />
+                Analytics
+              </button>
+              <button
+                onClick={() => setActiveTab("customer-templates")}
+                className={`px-3 py-1.5 text-sm font-medium transition-colors ${activeTab === "customer-templates" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"}`}
+              >
+                <LayoutTemplate className="h-4 w-4 inline mr-1.5" />
+                Customer Templates
+              </button>
+            </div>
+            {activeTab === "analytics" && (
+              <Button variant="outline" size="sm" onClick={handleRefresh}>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Refresh
+              </Button>
+            )}
+          </div>
         </div>
 
+        {activeTab === "customer-templates" && <CustomerTemplatesManager />}
+
+        {activeTab === "analytics" && (
+        <>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <Card>
             <CardHeader className="pb-2">
@@ -438,6 +629,8 @@ function Dashboard() {
             )}
           </CardContent>
         </Card>
+        </>
+        )}
       </div>
     </div>
   );
