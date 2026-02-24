@@ -210,39 +210,8 @@ odoo.define('artwork_uploader.website_frontend', function (require) {
                 break;
                 
             case 'claim-cart':
-                // Iframe is requesting to claim a cart into the current session
-                var orderId = event.data.orderId;
-                var accessToken = event.data.accessToken || '';
-                var cartUrl = event.data.cartUrl || '/shop/cart';
-                
-                if (!orderId) {
-                    console.error('❌ claim-cart message missing orderId');
-                    break;
-                }
-                
-                console.log('🛒 Claiming cart:', orderId, 'with token:', accessToken ? 'yes' : 'no');
-                
-                // Call the claim-cart endpoint to sync session
-                fetch('/artwork/claim-cart?order_id=' + orderId + '&access_token=' + encodeURIComponent(accessToken), {
-                    method: 'GET',
-                    credentials: 'include',
-                }).then(function(response) {
-                    return response.json();
-                }).then(function(data) {
-                    if (data.success) {
-                        console.log('✅ Cart claimed successfully:', data);
-                        // Navigate to cart
-                        window.location.href = cartUrl;
-                    } else {
-                        console.error('❌ Failed to claim cart:', data.error);
-                        // Navigate anyway
-                        window.location.href = cartUrl;
-                    }
-                }).catch(function(error) {
-                    console.error('❌ Error claiming cart:', error);
-                    // Navigate to cart anyway
-                    window.location.href = cartUrl;
-                });
+                // Handled by iframe_message_handler.js (uses server-side redirect for reliable session sync)
+                console.log('🛒 claim-cart delegated to iframe_message_handler.js');
                 break;
                 
             case 'navigate-to-cart':
