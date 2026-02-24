@@ -29,7 +29,7 @@ import { SVGBoundsAnalyzer } from './svg-bounds-analyzer';
 const execAsync = promisify(exec);
 
 function buildPdfFilename(projectName: string, quantity: number, productCode?: string | null, suffix?: string): string {
-  const name = projectName || 'artwork';
+  const name = (projectName || 'artwork').replace(/_/g, ' ');
   const now = new Date();
   const dateStr = `${String(now.getDate()).padStart(2, '0')}-${String(now.getMonth() + 1).padStart(2, '0')}-${now.getFullYear()}`;
   const suffixStr = suffix ? ` ${suffix}` : '';

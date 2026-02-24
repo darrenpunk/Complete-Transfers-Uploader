@@ -198,9 +198,9 @@ export class ProductionFlowManager {
    * Generate production-ready filename for PDF output
    */
   generateProductionFilename(projectName: string, templateSize: string, quantity: number): string {
-    const sanitizedName = projectName.replace(/[^a-zA-Z0-9\-_]/g, '_');
-    const timestamp = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
-    return `${sanitizedName}_${templateSize}_qty${quantity}_${timestamp}.pdf`;
+    const sanitizedName = projectName.replace(/[^a-zA-Z0-9\- ]/g, ' ').replace(/\s+/g, ' ').trim();
+    const timestamp = new Date().toISOString().slice(0, 10);
+    return `${sanitizedName} ${templateSize} qty${quantity} ${timestamp}.pdf`;
   }
 
   /**
