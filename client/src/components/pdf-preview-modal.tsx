@@ -188,6 +188,11 @@ export default function PDFPreviewModal({
 
   const shouldRecolorForInk = isSingleColourTemplate && !!project?.inkColor;
 
+  const isDTFTemplate = useMemo(() => {
+    if (!template) return false;
+    return template.group === "Digital Transfers";
+  }, [template]);
+
   const canProceed = designApproved && rightsConfirmed;
 
   // Check if pass-through mode is enabled and find the multi-page PDF logo
@@ -405,7 +410,7 @@ export default function PDFPreviewModal({
               </div>
 
               {/* Page 2 Preview - Embroidery Artwork (applique) OR Garment Background OR Pass-Through Pages */}
-              <div className="flex-1 flex flex-col">
+              {!isDTFTemplate && (<div className="flex-1 flex flex-col">
                 {(template?.id?.includes('applique') || template?.name?.includes('applique')) ? (
                   <>
                     <h4 className="text-sm font-medium text-muted-foreground mb-2">Page 2 - Embroidery Artwork</h4>
@@ -606,7 +611,7 @@ export default function PDFPreviewModal({
                     </div>
                   </>
                 )}
-              </div>
+              </div>)}
             </div>
           </div>
 
