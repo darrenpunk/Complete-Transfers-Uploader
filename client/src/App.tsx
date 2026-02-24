@@ -13,6 +13,7 @@ import DownloadOdooModule from "@/pages/download-odoo-module";
 import ModuleDownload from "@/pages/ModuleDownload";
 import LandingPage from "@/pages/landing";
 import OrderHistory from "@/pages/order-history";
+import VideoGuides from "@/pages/video-guides";
 import { BoundsTestingPage } from "@/pages/bounds-testing";
 import { BoundsDemoStandalone } from "@/components/bounds-demo-standalone";
 
@@ -30,6 +31,7 @@ function Router() {
       <Route path="/download-odoo-module" component={DownloadOdooModule} />
       <Route path="/module-download" component={ModuleDownload} />
       <Route path="/admin" component={AdminDashboard} />
+      <Route path="/video-guides" component={VideoGuides} />
       <Route component={NotFound} />
     </Switch>
   );
