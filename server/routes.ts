@@ -6238,10 +6238,15 @@ export async function registerRoutes(app: express.Application) {
       }
 
       const ctWebsiteId = process.env.VITE_ODOO_CT_WEBSITE_ID || '2';
+      const projectName = (projectData.name || 'artwork').replace(/_/g, ' ');
+      const now = new Date();
+      const dateStr = `${String(now.getDate()).padStart(2, '0')}-${String(now.getMonth() + 1).padStart(2, '0')}-${now.getFullYear()}`;
+      const artworkFilename = `${projectName} ${dateStr}.pdf`;
       const requestBody = {
         ...projectData,
         source: 'completetransfers',
         website_id: parseInt(ctWebsiteId, 10),
+        artworkFilename,
         ...(productCode && { product_code: productCode }),
         ...(isVectorizationOnly && { template_id: 'vector-service' }),
         ...(zipBase64 && { zipBase64, zipFileName: (await storage.getProject(projectId))?.attachedZipName }),

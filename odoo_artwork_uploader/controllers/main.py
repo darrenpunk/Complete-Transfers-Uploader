@@ -681,7 +681,7 @@ class ArtworkUploaderController(http.Controller):
             order_qty = project.quantity or 1
             
             # Build line description with product code and artwork filename for identification
-            artwork_name = data.get('artworkFilename', '') or project.name or ''
+            artwork_name = (data.get('artworkFilename', '') or project.name or '').replace('_', ' ')
             base_name = ''
             if artwork_name:
                 base_name = artwork_name.rsplit('.', 1)[0] if '.' in artwork_name else artwork_name
@@ -745,10 +745,10 @@ class ArtworkUploaderController(http.Controller):
                     date_str = datetime.now().strftime('%d-%m-%Y')
                     
                     if data.get('artworkFilename'):
-                        artwork_filename = data['artworkFilename']
+                        artwork_filename = data['artworkFilename'].replace('_', ' ')
                         _logger.info(f"📄 Using provided artworkFilename: {artwork_filename}")
                     else:
-                        project_name = data.get('name', 'artwork')
+                        project_name = (data.get('name', 'artwork') or 'artwork').replace('_', ' ')
                         artwork_filename = f"{project_name} {date_str}.pdf"
                         _logger.info(f"📄 Generated filename: {artwork_filename}")
                     
