@@ -36,9 +36,15 @@ class ProjectTask(models.Model):
         Format: {SO} - [{ProductCode}] {ProductName} ({CustomerCode}) {PDFName}
         """
         sale_order_ref = order_line.order_id.name if order_line.order_id else ''
-        product = order_line.product_id
+        product = order_line.product_id.sudo()
         product_code = product.default_code if product and product.default_code else ''
         product_name = product.name if product else ''
+        
+        if not product_code and order_line.name:
+            import re
+            code_match = re.search(r'\[([A-Z0-9]+)\]', order_line.name or '')
+            if code_match:
+                product_code = code_match.group(1)
         
         partner = order_line.order_id.partner_id if order_line.order_id else None
         customer_code = partner.ref if partner and partner.ref else ''
@@ -46,7 +52,7 @@ class ProjectTask(models.Model):
         code_part = f"[{product_code}] " if product_code else ''
         customer_part = f"({customer_code}) " if customer_code else ''
         name_part = f"{product_name} " if product_name else ''
-        file_part = artwork_filename or ''
+        file_part = (artwork_filename or '').replace('_', ' ')
         
         return f"{sale_order_ref} - {code_part}{name_part}{customer_part}{file_part}".strip()
     
