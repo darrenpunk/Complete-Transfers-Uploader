@@ -1056,10 +1056,11 @@ export default function ToolsSidebar({
           const elementHalfWidth = visualWidth / 2;
           const elementHalfHeight = visualHeight / 2;
           
-          const isWithinBounds = selectedElement.x >= -templateHalfWidth + elementHalfWidth && 
-                                selectedElement.x <= templateHalfWidth - elementHalfWidth && 
-                                selectedElement.y >= -templateHalfHeight + elementHalfHeight && 
-                                selectedElement.y <= templateHalfHeight - elementHalfHeight;
+          const posTolerance = 0.5;
+          const isWithinBounds = selectedElement.x >= -templateHalfWidth + elementHalfWidth - posTolerance && 
+                                selectedElement.x <= templateHalfWidth - elementHalfWidth + posTolerance && 
+                                selectedElement.y >= -templateHalfHeight + elementHalfHeight - posTolerance && 
+                                selectedElement.y <= templateHalfHeight - elementHalfHeight + posTolerance;
           checks.push({
             name: "Position",
             status: isWithinBounds ? "pass" : "warning",
@@ -1067,8 +1068,8 @@ export default function ToolsSidebar({
           });
           
           // Size check - element should be at least 5mm and fit within template bounds
-          const maxWidth = templateWidth - 6; // 3mm margin on each side
-          const maxHeight = templateHeight - 6;
+          const maxWidth = templateWidth + 0.5;
+          const maxHeight = templateHeight + 0.5;
           const hasReasonableSize = visualWidth >= 5 && visualHeight >= 5 &&
                                    visualWidth <= maxWidth && visualHeight <= maxHeight;
           checks.push({

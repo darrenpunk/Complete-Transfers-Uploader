@@ -725,10 +725,11 @@ export default function PropertiesPanel({
     const canvasTop = -templateHalfHeight;
     const canvasBottom = templateHalfHeight;
     
-    const isWithinCanvas = contentLeft >= canvasLeft && 
-                           contentRight <= canvasRight && 
-                           contentTop >= canvasTop && 
-                           contentBottom <= canvasBottom;
+    const posTolerance = 0.5;
+    const isWithinCanvas = contentLeft >= canvasLeft - posTolerance && 
+                           contentRight <= canvasRight + posTolerance && 
+                           contentTop >= canvasTop - posTolerance && 
+                           contentBottom <= canvasBottom + posTolerance;
     
     checks.push({
       name: "Position",
@@ -742,8 +743,8 @@ export default function PropertiesPanel({
     const visualWidth = isRotated ? currentElement.height : currentElement.width;
     const visualHeight = isRotated ? currentElement.width : currentElement.height;
     
-    const maxWidth = Math.min(templateWidth * 0.95, 500); // Allow up to 95% of template width or 500mm max
-    const maxHeight = Math.min(templateHeight * 0.95, 500); // Allow up to 95% of template height or 500mm max
+    const maxWidth = Math.min(templateWidth + 0.5, 500);
+    const maxHeight = Math.min(templateHeight + 0.5, 500);
     const hasReasonableSize = visualWidth >= 5 && visualHeight >= 5 &&
                              visualWidth <= maxWidth && visualHeight <= maxHeight;
     checks.push({

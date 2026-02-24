@@ -1981,9 +1981,10 @@ export default function CanvasWorkspace({
     const elementTop = element.y - elementHalfHeight;
     const elementBottom = element.y + elementHalfHeight;
     
-    // Check against canvas bounds (no safety margin offset)
-    return elementLeft < -templateHalfWidth || elementTop < -templateHalfHeight || 
-           elementRight > templateHalfWidth || elementBottom > templateHalfHeight;
+    // Check against canvas bounds with small tolerance for floating point precision
+    const tolerance = 0.5;
+    return elementLeft < -templateHalfWidth - tolerance || elementTop < -templateHalfHeight - tolerance || 
+           elementRight > templateHalfWidth + tolerance || elementBottom > templateHalfHeight + tolerance;
   });
 
   return (
