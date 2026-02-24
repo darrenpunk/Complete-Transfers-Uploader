@@ -311,17 +311,18 @@ export default function PDFPreviewModal({
                 <h4 className="text-sm font-medium text-muted-foreground mb-2">
                   Page 1 - {(template?.id?.includes('applique') || template?.name?.includes('applique')) ? 'Badge Artwork' : 'Artwork Layout'}
                 </h4>
-                <div className="border rounded-lg p-4 flex-1 flex items-center justify-center relative overflow-hidden" style={{backgroundColor: '#CDCECC'}}>
+                <div className="border rounded-lg p-3 flex-1 flex items-center justify-center relative overflow-hidden bg-gray-100 dark:bg-gray-800">
                   <div 
-                    className="relative border border-dashed border-gray-400"
+                    className="relative border border-dashed border-gray-400 shadow-sm"
                     style={{
                       backgroundColor: '#CDCECC',
                       aspectRatio: template ? `${template.width}/${template.height}` : '297/420',
-                      width: '90%',
-                      maxWidth: '280px'
+                      ...(template && template.width > template.height
+                        ? { width: '95%', maxHeight: '90%' }
+                        : { maxWidth: '280px', width: '90%' }
+                      ),
                     }}
                   >
-                    {/* Render positioned logos that contain the artwork with color grids */}
                     {canvasElements
                       .filter(el => {
                         const isApplique = template?.id?.includes('applique') || template?.name?.includes('applique');
@@ -408,14 +409,16 @@ export default function PDFPreviewModal({
                 {(template?.id?.includes('applique') || template?.name?.includes('applique')) ? (
                   <>
                     <h4 className="text-sm font-medium text-muted-foreground mb-2">Page 2 - Embroidery Artwork</h4>
-                    <div className="border rounded-lg p-4 flex-1 flex items-center justify-center relative overflow-hidden" style={{backgroundColor: '#CDCECC'}}>
+                    <div className="border rounded-lg p-3 flex-1 flex items-center justify-center relative overflow-hidden bg-gray-100 dark:bg-gray-800">
                       <div 
-                        className="relative border border-dashed border-gray-400"
+                        className="relative border border-dashed border-gray-400 shadow-sm"
                         style={{
                           backgroundColor: '#CDCECC',
                           aspectRatio: template ? `${template.width}/${template.height}` : '297/420',
-                          width: '90%',
-                          maxWidth: '280px'
+                          ...(template && template.width > template.height
+                            ? { width: '95%', maxHeight: '90%' }
+                            : { maxWidth: '280px', width: '90%' }
+                          ),
                         }}
                       >
                         {canvasElements.filter(el => (el.canvasIndex || 0) === 1).map((element) => {
@@ -524,14 +527,16 @@ export default function PDFPreviewModal({
                 ) : (
                   <>
                     <h4 className="text-sm font-medium text-muted-foreground mb-2">Page 2 - Garment Background</h4>
-                    <div className="border rounded-lg bg-white p-4 flex-1 flex items-center justify-center relative overflow-hidden">
-                      {/* Template container with individual garment color areas */}
+                    <div className="border rounded-lg bg-gray-100 dark:bg-gray-800 p-3 flex-1 flex items-center justify-center relative overflow-hidden">
                       <div 
-                        className="relative border border-dashed border-gray-300 bg-gray-100"
+                        className="relative border border-dashed border-gray-300 shadow-sm"
                         style={{
+                          backgroundColor: '#f3f4f6',
                           aspectRatio: template ? `${template.width}/${template.height}` : '297/420',
-                          width: '90%',
-                          maxWidth: '280px'
+                          ...(template && template.width > template.height
+                            ? { width: '95%', maxHeight: '90%' }
+                            : { maxWidth: '280px', width: '90%' }
+                          ),
                         }}
                       >
                         {/* Render individual garment color backgrounds for each logo */}
