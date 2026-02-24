@@ -31,7 +31,7 @@ function Router() {
       <Route path="/download-odoo-module" component={DownloadOdooModule} />
       <Route path="/module-download" component={ModuleDownload} />
       <Route path="/admin" component={AdminDashboard} />
-      <Route path="/video-guides" component={VideoGuides} />
+      {/* <Route path="/video-guides" component={VideoGuides} /> */}
       <Route component={NotFound} />
     </Switch>
   );

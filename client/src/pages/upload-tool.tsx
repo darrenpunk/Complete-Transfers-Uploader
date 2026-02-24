@@ -2169,12 +2169,14 @@ export default function UploadTool() {
               <GraduationCap className="w-4 h-4 md:mr-2" />
               <span className="hidden md:inline">Tutorial</span>
             </Button>
+            {/* Video Guides button - uncomment when ready:
             <a href="/video-guides" target="_blank" rel="noopener noreferrer">
               <Button variant="outline" size="sm" className="hidden xl:flex">
                 <Video className="w-4 h-4 md:mr-2" />
                 <span className="hidden md:inline">Video Guides</span>
               </Button>
             </a>
+            */}
             <Button variant="outline" size="sm" className="hidden xl:flex" onClick={() => setShowVectorizationForm(true)}>
               <Palette className="w-4 h-4 md:mr-2" />
               <span className="hidden md:inline">Vectorization</span>
