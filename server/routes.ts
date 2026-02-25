@@ -6239,9 +6239,8 @@ export async function registerRoutes(app: express.Application) {
 
       const ctWebsiteId = process.env.VITE_ODOO_CT_WEBSITE_ID || '2';
       const projectName = (projectData.name || 'artwork').replace(/_/g, ' ');
-      const now = new Date();
-      const dateStr = `${String(now.getDate()).padStart(2, '0')}-${String(now.getMonth() + 1).padStart(2, '0')}-${now.getFullYear()}`;
-      const artworkFilename = `${projectName} ${dateStr}.pdf`;
+      const orderQty = projectData.totalQuantity || projectData.quantity || 1;
+      const artworkFilename = `${projectName} qty${orderQty}.pdf`;
       const requestBody = {
         ...projectData,
         source: 'completetransfers',
