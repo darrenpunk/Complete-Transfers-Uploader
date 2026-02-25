@@ -590,7 +590,9 @@ export default function PropertiesPanel({
     
     // File Resolution Check - skip for vector files as they're resolution-independent
     if (logo) {
-      const isVector = logo.mimeType === 'image/svg+xml' || logo.originalMimeType === 'application/pdf';
+      // PNG fallback: PDF was too complex or large-format — display is PNG, not vector SVG
+      const isPngFallback = logo.mimeType === 'image/png' && logo.originalMimeType === 'application/pdf';
+      const isVector = !isPngFallback && (logo.mimeType === 'image/svg+xml' || logo.originalMimeType === 'application/pdf');
       
       if (isVector) {
         checks.push({

@@ -937,7 +937,9 @@ export default function ToolsSidebar({
             const isPdfWithRasterOnly = logo.originalMimeType === 'application/pdf' && 
                                        logo.mimeType === 'image/svg+xml' && 
                                        (logo as any).isPdfWithRasterOnly;
-            const isVector = !isPdfWithRasterOnly && 
+            // PNG fallback: PDF was too complex or large-format — display is PNG, not vector SVG
+            const isPngFallback = logo.mimeType === 'image/png' && logo.originalMimeType === 'application/pdf';
+            const isVector = !isPdfWithRasterOnly && !isPngFallback &&
                            (logo.mimeType === 'image/svg+xml' || logo.originalMimeType === 'application/pdf');
             
             if (isVector) {
@@ -1016,8 +1018,18 @@ export default function ToolsSidebar({
                 colorStatus = "pass";
               }
             } else if (isVector) {
-              // Vector files without detected colors (might be single color or grayscale)
-              colorValue = "Vector (Monochrome)";
+              // Vector files without detected colors
+              // Check isCMYKPreserved flag or preflightData colorSpace before falling back to "Monochrome"
+              const preflightColorSpace = (logo as any).preflightData?.colorSpaceDetected;
+              if ((logo as any).isCMYKPreserved || preflightColorSpace === 'CMYK') {
+                colorValue = "CMYK (Preserved)";
+                colorStatus = "pass";
+              } else if (preflightColorSpace === 'RGB') {
+                colorValue = "RGB Vector";
+                colorStatus = "pass";
+              } else {
+                colorValue = "Vector (Monochrome)";
+              }
             } else if (isRasterImage && svgColors && typeof svgColors === 'object' && svgColors.type === 'raster') {
               // Raster images with extracted color information
               const mode = svgColors.mode || 'RGB';
