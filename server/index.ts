@@ -91,6 +91,11 @@ app.get('/uploads/:filename', async (req, res, next) => {
 });
 
 app.use((req, res, next) => {
+  // Allow this app to be embedded in iframes from any origin
+  // (needed for Odoo website embedding)
+  res.setHeader('X-Frame-Options', 'ALLOWALL');
+  res.setHeader('Content-Security-Policy', "frame-ancestors *");
+
   if (req.path === '/' || (!req.path.startsWith('/api') && !req.path.startsWith('/uploads') && !req.path.includes('.'))) {
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.setHeader('Pragma', 'no-cache');
