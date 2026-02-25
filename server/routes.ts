@@ -66,38 +66,58 @@ async function extractOriginalPNG(pdfPath: string, outputPrefix: string): Promis
     const fileSizeBytes = fs.existsSync(pdfPath) ? fs.statSync(pdfPath).size : 0;
     const fileSizeMB = fileSizeBytes / (1024 * 1024);
     
-    // Scale DPI based on file size to prevent memory exhaustion
-    let renderDPI = 300;
-    let gsTimeout = 60000; // 60 seconds default
+    // MAX_SIDE: cap output image at this number of pixels on longest side
+    const MAX_SIDE_PX = 2000;
+
+    // Use 150 DPI as the default — this prevents oversized images from large-format PDFs.
+    // After rendering we resize down if needed. 300 DPI is only necessary for print output,
+    // not for canvas previews.
+    let renderDPI = 150;
+    let gsTimeout = 45000; // 45 seconds default
     if (fileSizeMB > 20) {
-      renderDPI = 150;
-      gsTimeout = 90000; // 90 seconds for large files
+      renderDPI = 96;
+      gsTimeout = 60000;
       console.log(`⚠️ Large file detected (${fileSizeMB.toFixed(1)}MB) - using ${renderDPI} DPI to prevent memory issues`);
-    } else if (fileSizeMB > 10) {
-      renderDPI = 200;
-      gsTimeout = 75000;
+    } else if (fileSizeMB > 5) {
+      renderDPI = 120;
+      gsTimeout = 50000;
       console.log(`📦 Medium file (${fileSizeMB.toFixed(1)}MB) - using ${renderDPI} DPI`);
     }
     
     // Method 1: Try direct PDF-to-PNG conversion using Ghostscript
     try {
-      console.log(`🎯 DIRECT PDF RENDERING: Using Ghostscript at ${renderDPI} DPI for optimal vectorization quality`);
+      console.log(`🎯 DIRECT PDF RENDERING: Using Ghostscript at ${renderDPI} DPI`);
       
       const timestamp = Date.now();
       const outputPath = path.join(path.dirname(pdfPath), `${path.basename(outputPrefix)}_direct_${timestamp}.png`);
       
-      const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r${renderDPI} -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -dMaxBitmap=500000000 -sOutputFile="${outputPath}" "${pdfPath}"`;
+      const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r${renderDPI} -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -dMaxBitmap=300000000 -sOutputFile="${outputPath}" "${pdfPath}"`;
       
       console.log('📋 Ghostscript direct rendering command:', gsCommand);
-      const { stdout, stderr } = await execAsync(gsCommand, { timeout: gsTimeout });
+      await execAsync(gsCommand, { timeout: gsTimeout });
       
       if (fs.existsSync(outputPath)) {
         const stats = fs.statSync(outputPath);
         console.log(`✅ DIRECT GHOSTSCRIPT RENDERING SUCCESS: ${outputPath} (${stats.size} bytes)`);
         
+        // Cap the image at MAX_SIDE_PX to prevent massive files being passed downstream
         const dimensions = await getPNGDimensions(outputPath);
         if (dimensions) {
           console.log(`📏 Direct rendered dimensions: ${dimensions.width}×${dimensions.height}px at ${renderDPI} DPI`);
+          const longestSide = Math.max(dimensions.width, dimensions.height);
+          if (longestSide > MAX_SIDE_PX) {
+            const resizedPath = outputPath.replace('.png', '_resized.png');
+            try {
+              await execAsync(`convert "${outputPath}" -resize ${MAX_SIDE_PX}x${MAX_SIDE_PX} "${resizedPath}"`, { timeout: 15000 });
+              if (fs.existsSync(resizedPath)) {
+                fs.unlinkSync(outputPath);
+                console.log(`📐 Resized from ${longestSide}px to max ${MAX_SIDE_PX}px for performance`);
+                return resizedPath;
+              }
+            } catch (resizeErr) {
+              console.log('⚠️ Resize failed, using original:', resizeErr);
+            }
+          }
         }
         
         return outputPath;
@@ -107,21 +127,21 @@ async function extractOriginalPNG(pdfPath: string, outputPrefix: string): Promis
       const errorMessage = error instanceof Error ? error.message : String(error);
       console.log('⚠️ Direct Ghostscript rendering failed:', errorMessage);
       
-      // If 300 DPI failed, retry at lower DPI
-      if (renderDPI > 150) {
+      // If first attempt failed, retry at 96 DPI
+      if (renderDPI > 96) {
         try {
-          console.log('🔄 Retrying at 150 DPI as fallback...');
+          console.log('🔄 Retrying at 96 DPI as fallback...');
           const timestamp = Date.now();
           const fallbackPath = path.join(path.dirname(pdfPath), `${path.basename(outputPrefix)}_direct_${timestamp}.png`);
-          const fallbackCmd = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r150 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -dMaxBitmap=500000000 -sOutputFile="${fallbackPath}" "${pdfPath}"`;
-          await execAsync(fallbackCmd, { timeout: 90000 });
+          const fallbackCmd = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r96 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -dMaxBitmap=200000000 -sOutputFile="${fallbackPath}" "${pdfPath}"`;
+          await execAsync(fallbackCmd, { timeout: 60000 });
           if (fs.existsSync(fallbackPath)) {
             const stats = fs.statSync(fallbackPath);
-            console.log(`✅ FALLBACK 150 DPI RENDERING SUCCESS: ${fallbackPath} (${stats.size} bytes)`);
+            console.log(`✅ FALLBACK 96 DPI RENDERING SUCCESS: ${fallbackPath} (${stats.size} bytes)`);
             return fallbackPath;
           }
         } catch (fallbackError) {
-          console.log('⚠️ Fallback 150 DPI rendering also failed');
+          console.log('⚠️ Fallback 96 DPI rendering also failed');
         }
       }
     }

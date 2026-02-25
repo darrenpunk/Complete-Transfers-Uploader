@@ -502,8 +502,8 @@ export class PDFBoundsExtractor {
       const timestamp = Date.now();
       const rasterPath = path.join(tempDir, `raster_${timestamp}.png`);
       
-      // Render at high DPI for precision
-      const dpi = 300;
+      // Render at 150 DPI — sufficient for bounds detection and much faster than 300 DPI
+      const dpi = 150;
       const convertCommand = [
         'gs',
         '-dNOPAUSE',
