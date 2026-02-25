@@ -2686,8 +2686,21 @@ export async function registerRoutes(app: express.Application) {
         let fileType = ColorWorkflowManager.getFileType(file.mimetype, file.filename);
         
         // PRODUCTION FLOW: Run preflight check for each file
+        // IMPORTANT: Skip all expensive analysis for large format DTF — the file is already
+        // handled (PNG preview created); running pdf2svg/GS on it crashes the production server.
         const filePath = path.join(uploadDir, file.filename);
-        const preflightResult = await productionFlow.runPreflightCheck(filePath, file.mimetype);
+        const preflightResult = isLargeFormatDTF
+          ? {
+              colorSpaceDetected: (file as any).isCMYKPreserved ? 'CMYK' : 'RGB',
+              hasRasterContent: false,
+              hasVectorContent: true,
+              isMixedContent: false,
+              contentBounds: (file as any).originalPdfBounds || null,
+              colorsDetected: [],
+              requiresVectorization: false,
+              warnings: [] as string[],
+            }
+          : await productionFlow.runPreflightCheck(filePath, file.mimetype);
         
         console.log('🔍 Production Preflight:', {
           file: file.filename,
@@ -2695,11 +2708,13 @@ export async function registerRoutes(app: express.Application) {
           requiresVectorization: preflightResult.requiresVectorization,
           hasRaster: preflightResult.hasRasterContent,
           hasVector: preflightResult.hasVectorContent,
-          warnings: preflightResult.warnings.length
+          warnings: preflightResult.warnings.length,
+          skipped: isLargeFormatDTF ? 'large-format-DTF' : false
         });
 
         // For PDFs, analyze the original PDF file before conversion
-        if (file.mimetype === 'application/pdf') {
+        // Skip for large format DTF — pdf2svg on these files crashes the server
+        if (file.mimetype === 'application/pdf' && !isLargeFormatDTF) {
           const originalPdfPath = path.join(uploadDir, file.filename);
           const contentAnalysis = await MixedContentDetector.analyzeFile(originalPdfPath, file.mimetype);
           
