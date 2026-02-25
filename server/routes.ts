@@ -2094,7 +2094,15 @@ export async function registerRoutes(app: express.Application) {
                   svgCommand = `inkscape --pdf-poppler "${pdfPath}" --export-type=svg --export-filename="${svgPath}" 2>/dev/null || convert -density 300 -background none "${pdfPath}[0]" "${svgPath}"`;
                 }
                 
-                await execAsync(svgCommand);
+                // Run with a 30-second timeout — complex vectors (glitter, fine-detail) will kill pdf2svg.
+                // Any failure here falls through to the PNG fallback in the else branch below.
+                try {
+                  await execAsync(svgCommand, { timeout: 30000 });
+                } catch (pdf2svgErr: any) {
+                  console.log(`⚠️ pdf2svg failed/killed for CMYK file (likely too complex) — will use PNG fallback. Error: ${pdf2svgErr?.message || pdf2svgErr}`);
+                  // Delete any partial/empty SVG so the else branch triggers
+                  if (fs.existsSync(svgPath)) try { fs.unlinkSync(svgPath); } catch {}
+                }
                 
                 if (fs.existsSync(svgPath) && fs.statSync(svgPath).size > 0) {
                   // EARLY COMPLEXITY CHECK - Prevent memory crashes from extremely complex files
@@ -2309,16 +2317,54 @@ export async function registerRoutes(app: express.Application) {
                     console.log(`Created SVG preview for CMYK PDF: ${svgFilename}`);
                   }
                 } else {
-                  // Fallback to PNG preview if SVG conversion fails
+                  // SVG missing or empty (pdf2svg was killed/failed) — render PNG directly from PDF
+                  console.log(`📸 pdf2svg produced no SVG — rendering PNG preview from PDF for canvas display`);
                   const pngFilename = `${file.filename}_preview.png`;
                   const pngPath = path.join(uploadDir, pngFilename);
                   
-                  const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r150 -dMaxBitmap=500000000 -dAlignToPixels=0 -dGridFitTT=2 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`;
-                  await execAsync(gsCommand);
-                  
-                  if (fs.existsSync(pngPath) && fs.statSync(pngPath).size > 0) {
-                    (file as any).previewFilename = pngFilename;
-                    console.log(`Created PNG preview for CMYK PDF: ${pngFilename}`);
+                  try {
+                    // First try to get PDF page dimensions for proper sizing
+                    try {
+                      const { PDFDocument: PDFDocFallback } = await import('pdf-lib');
+                      const fallbackPdfBytes = fs.readFileSync(pdfPath);
+                      const fallbackPdfDoc = await PDFDocFallback.load(fallbackPdfBytes);
+                      const [fallbackPage] = fallbackPdfDoc.getPages();
+                      const fallbackPageSize = fallbackPage.getSize();
+                      (file as any).originalPdfBounds = {
+                        xMin: 0, yMin: 0,
+                        xMax: fallbackPageSize.width, yMax: fallbackPageSize.height,
+                        width: fallbackPageSize.width, height: fallbackPageSize.height,
+                        widthMm: fallbackPageSize.width * 0.352778,
+                        heightMm: fallbackPageSize.height * 0.352778
+                      };
+                      console.log(`📐 PDF page size: ${(fallbackPageSize.width * 0.352778).toFixed(0)}×${(fallbackPageSize.height * 0.352778).toFixed(0)}mm`);
+                    } catch (sizeErr) {
+                      console.log(`⚠️ Could not read PDF page size: ${sizeErr}`);
+                    }
+
+                    const gsCmd = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r150 -dMaxBitmap=300000000 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`;
+                    await execAsync(gsCmd, { timeout: 60000 });
+                    
+                    if (fs.existsSync(pngPath) && fs.statSync(pngPath).size > 0) {
+                      // Resize to max 2000px to keep it manageable
+                      try {
+                        const resizedPath = pngPath + '.r.png';
+                        await execAsync(`convert "${pngPath}" -resize 2000x2000 "${resizedPath}"`, { timeout: 15000 });
+                        if (fs.existsSync(resizedPath)) { fs.unlinkSync(pngPath); fs.renameSync(resizedPath, pngPath); }
+                      } catch {}
+
+                      (file as any).originalPdfPath = pdfPath;
+                      (file as any).isCMYKPreserved = true;
+                      (file as any).isComplexFilePngFallback = true;
+                      finalFilename = pngFilename;
+                      finalMimeType = 'image/png';
+                      finalUrl = `/uploads/${pngFilename}`;
+                      console.log(`✅ PNG fallback created for complex CMYK PDF: ${pngFilename}`);
+                    } else {
+                      console.log(`⚠️ PNG fallback also produced empty file — file will show as PDF`);
+                    }
+                  } catch (pngFallbackErr) {
+                    console.error(`❌ PNG fallback failed:`, pngFallbackErr);
                   }
                 }
               } catch (error) {
@@ -2338,7 +2384,14 @@ export async function registerRoutes(app: express.Application) {
                 svgCommand = `convert -density 300 -background none "${pdfPath}[0]" "${svgPath}"`;
               }
               
-              await execAsync(svgCommand);
+              // 30-second timeout — complex vectors will OOM-kill pdf2svg.
+              // Failure here falls through to the PNG fallback branch below.
+              try {
+                await execAsync(svgCommand, { timeout: 30000 });
+              } catch (pdf2svgErr: any) {
+                console.log(`⚠️ pdf2svg failed/killed for RGB file (likely too complex) — will use PNG fallback. Error: ${pdf2svgErr?.message || pdf2svgErr}`);
+                if (fs.existsSync(svgPath)) try { fs.unlinkSync(svgPath); } catch {}
+              }
               
               if (fs.existsSync(svgPath) && fs.statSync(svgPath).size > 0) {
                 // EARLY COMPLEXITY CHECK - Prevent memory crashes from extremely complex files
@@ -2473,6 +2526,48 @@ export async function registerRoutes(app: express.Application) {
                   finalFilename = svgFilename;
                   finalMimeType = 'image/svg+xml';
                   finalUrl = `/uploads/${finalFilename}`;
+                }
+              } else {
+                // SVG missing/empty after pdf2svg failure — render PNG fallback directly
+                console.log(`📸 No SVG from pdf2svg for RGB file — rendering PNG preview`);
+                const pngFilename = `${file.filename}_preview.png`;
+                const pngPath = path.join(uploadDir, pngFilename);
+                try {
+                  // Get PDF page size for proper canvas sizing
+                  try {
+                    const { PDFDocument: PDFDocRGB } = await import('pdf-lib');
+                    const rgbPdfBytes = fs.readFileSync(pdfPath);
+                    const rgbPdfDoc = await PDFDocRGB.load(rgbPdfBytes);
+                    const [rgbPage] = rgbPdfDoc.getPages();
+                    const rgbPageSize = rgbPage.getSize();
+                    (file as any).originalPdfBounds = {
+                      xMin: 0, yMin: 0,
+                      xMax: rgbPageSize.width, yMax: rgbPageSize.height,
+                      width: rgbPageSize.width, height: rgbPageSize.height,
+                      widthMm: rgbPageSize.width * 0.352778,
+                      heightMm: rgbPageSize.height * 0.352778
+                    };
+                  } catch {}
+
+                  const gsCmd = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r150 -dMaxBitmap=300000000 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`;
+                  await execAsync(gsCmd, { timeout: 60000 });
+
+                  if (fs.existsSync(pngPath) && fs.statSync(pngPath).size > 0) {
+                    try {
+                      const resizedPath = pngPath + '.r.png';
+                      await execAsync(`convert "${pngPath}" -resize 2000x2000 "${resizedPath}"`, { timeout: 15000 });
+                      if (fs.existsSync(resizedPath)) { fs.unlinkSync(pngPath); fs.renameSync(resizedPath, pngPath); }
+                    } catch {}
+
+                    (file as any).originalPdfPath = pdfPath;
+                    (file as any).isComplexFilePngFallback = true;
+                    finalFilename = pngFilename;
+                    finalMimeType = 'image/png';
+                    finalUrl = `/uploads/${pngFilename}`;
+                    console.log(`✅ PNG fallback created for complex RGB PDF: ${pngFilename}`);
+                  }
+                } catch (rgbPngErr) {
+                  console.error(`❌ PNG fallback failed for RGB PDF:`, rgbPngErr);
                 }
               }
             }
