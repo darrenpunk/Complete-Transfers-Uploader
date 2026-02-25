@@ -157,18 +157,25 @@ export class MixedContentDetector {
           // Check if this is just embedded raster content
           const isEmbeddedRaster = (hasImage || hasUse) && hasDefs && onlyClippingPaths;
           
+          // Additional check: if SVG has an embedded <image> and the only vector elements
+          // are <rect> tags (PDF page boundary structure) with no actual artwork paths/shapes,
+          // it's a raster-in-PDF regardless of the structural rects.
+          const hasActualArtworkVectors = (hasPath && !onlyClippingPaths) || hasCircle || hasPolygon || hasLine || hasEllipse;
+          const isRasterWithPageBoundary = hasImage && !hasActualArtworkVectors;
+
           console.log('🔍 SVG element analysis:', {
             hasPath, hasRect, hasCircle, hasPolygon, hasLine, hasEllipse, hasText, 
             hasImage, hasUse, hasDefs, hasClipPath, onlyClippingPaths, isEmbeddedRaster,
+            hasActualArtworkVectors, isRasterWithPageBoundary,
             pathCount, clipPathCount
           });
           
-          if (isEmbeddedRaster) {
-            console.log('❌ SVG contains only embedded raster with clipping paths - treating as raster content');
+          if (isEmbeddedRaster || isRasterWithPageBoundary) {
+            console.log('❌ SVG contains only embedded raster (with structural page elements) - treating as raster content');
             analysis.hasRasterContent = true;
             analysis.rasterImages.count = 1;
             analysis.rasterImages.formats.push('embedded');
-          } else if ((hasPath && !onlyClippingPaths) || hasRect || hasCircle || hasPolygon || hasLine || hasEllipse) {
+          } else if (hasActualArtworkVectors || hasRect) {
             analysis.hasVectorContent = true;
             console.log('✅ Vector content detected in PDF via pdf2svg');
             

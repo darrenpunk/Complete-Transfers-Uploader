@@ -2107,8 +2107,10 @@ export async function registerRoutes(app: express.Application) {
                   console.log(`⚠️ Could not read DTF PDF page size: ${sizeErr}`);
                 }
 
-                const gsCmd = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r150 -dMaxBitmap=300000000 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`;
-                await execAsync(gsCmd, { timeout: 60000 });
+                // 96 DPI is sufficient — image is capped at 2000px anyway, and lower DPI
+                // dramatically reduces memory usage for complex vector PDFs (prevents OOM in production).
+                const gsCmd = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r96 -dMaxBitmap=150000000 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`;
+                await execAsync(gsCmd, { timeout: 45000 });
 
                 if (fs.existsSync(pngPath) && fs.statSync(pngPath).size > 0) {
                   // Resize to max 2000px on the longest side for performance
@@ -2126,10 +2128,52 @@ export async function registerRoutes(app: express.Application) {
                   finalUrl = `/uploads/${pngFilename}`;
                   console.log(`✅ Large format DTF PNG preview created: ${pngFilename} (original PDF preserved for output)`);
                 } else {
-                  console.log(`⚠️ Ghostscript produced empty PNG for DTF file — keeping raw PDF`);
+                  // Primary render produced nothing — try emergency 72 DPI low-quality fallback
+                  console.log(`⚠️ 96 DPI render failed — retrying at 72 DPI emergency fallback`);
+                  try {
+                    const emergencyCmd = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r72 -dMaxBitmap=80000000 -sOutputFile="${pngPath}" "${pdfPath}"`;
+                    await execAsync(emergencyCmd, { timeout: 30000 });
+                    if (fs.existsSync(pngPath) && fs.statSync(pngPath).size > 0) {
+                      try {
+                        const resizedPath = pngPath + '.r.png';
+                        await execAsync(`convert "${pngPath}" -resize 1200x1200 "${resizedPath}"`, { timeout: 10000 });
+                        if (fs.existsSync(resizedPath)) { fs.unlinkSync(pngPath); fs.renameSync(resizedPath, pngPath); }
+                      } catch {}
+                      (file as any).originalPdfPath = pdfPath;
+                      (file as any).isCMYKPreserved = hasCMYK;
+                      (file as any).isComplexFilePngFallback = true;
+                      finalFilename = pngFilename;
+                      finalMimeType = 'image/png';
+                      finalUrl = `/uploads/${pngFilename}`;
+                      console.log(`✅ Emergency 72 DPI DTF PNG created: ${pngFilename}`);
+                    } else {
+                      console.log(`⚠️ Emergency fallback also failed — keeping raw PDF`);
+                    }
+                  } catch (emergencyErr) {
+                    console.error(`❌ Emergency DTF PNG fallback failed:`, emergencyErr);
+                  }
                 }
               } catch (dtfPngErr) {
                 console.error(`❌ DTF PNG preview failed:`, dtfPngErr);
+                // Try emergency fallback on primary exception too
+                try {
+                  const emergencyCmd = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r72 -dMaxBitmap=80000000 -sOutputFile="${pngPath}" "${pdfPath}"`;
+                  await execAsync(emergencyCmd, { timeout: 30000 });
+                  if (fs.existsSync(pngPath) && fs.statSync(pngPath).size > 0) {
+                    try {
+                      const resizedPath = pngPath + '.r.png';
+                      await execAsync(`convert "${pngPath}" -resize 1200x1200 "${resizedPath}"`, { timeout: 10000 });
+                      if (fs.existsSync(resizedPath)) { fs.unlinkSync(pngPath); fs.renameSync(resizedPath, pngPath); }
+                    } catch {}
+                    (file as any).originalPdfPath = pdfPath;
+                    (file as any).isCMYKPreserved = hasCMYK;
+                    (file as any).isComplexFilePngFallback = true;
+                    finalFilename = pngFilename;
+                    finalMimeType = 'image/png';
+                    finalUrl = `/uploads/${pngFilename}`;
+                    console.log(`✅ Exception-path emergency 72 DPI DTF PNG created: ${pngFilename}`);
+                  }
+                } catch {}
               }
             } else if (hasCMYK) {
               console.log(`🎨 CMYK PDF detected: ${file.filename} - preserving original PDF to maintain CMYK accuracy`);
