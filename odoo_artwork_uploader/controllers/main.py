@@ -521,15 +521,18 @@ class ArtworkUploaderController(http.Controller):
                 if partner:
                     _logger.info(f"✅ Found customer: {partner.name} (ID: {partner.id}) for email {partner_email}")
                     
-                    # Find or create draft sale order for this customer
+                    # Find or create draft sale order for this customer.
+                    # IMPORTANT: also filter by company to avoid picking up carts from
+                    # a different company (e.g. admin user's cross-company cart).
                     sale_order = request.env['sale.order'].sudo().search([
                         ('partner_id', '=', partner.id),
                         ('website_id', '=', website.id),
                         ('state', '=', 'draft'),
+                        ('company_id', '=', website.company_id.id),
                     ], order='create_date desc', limit=1)
                     
                     if sale_order:
-                        _logger.info(f"🛒 Found existing cart #{sale_order.id} for customer {partner.name}")
+                        _logger.info(f"🛒 Found existing cart #{sale_order.id} (company: {sale_order.company_id.name}) for customer {partner.name}")
                         # Ensure existing order has an access_token
                         if not sale_order.access_token:
                             sale_order.sudo().write({'access_token': str(uuid.uuid4())})

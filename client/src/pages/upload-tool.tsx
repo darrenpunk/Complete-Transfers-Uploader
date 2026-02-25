@@ -1836,6 +1836,18 @@ export default function UploadTool() {
           const newLogos = JSON.parse(xhr.responseText);
           console.log('Upload completed, checking for PDFs with raster content:', newLogos);
           try { trackEvent('upload', { fileCount: files.length, fileNames: files.map(f => f.name).join(', '), project: currentProject?.name }); } catch {}
+
+          // Auto-fill project name from first uploaded file if still using default name
+          if (currentProject && (currentProject.name === 'Untitled Project' || currentProject.name === '')) {
+            const firstName = files[0]?.name || '';
+            if (firstName) {
+              const nameWithoutExt = firstName.includes('.') ? firstName.substring(0, firstName.lastIndexOf('.')) : firstName;
+              const cleanName = nameWithoutExt.replace(/[_-]+/g, ' ').trim();
+              if (cleanName) {
+                updateProjectMutation.mutate({ name: cleanName });
+              }
+            }
+          }
           
           // Update logos cache directly
           queryClient.setQueryData(
