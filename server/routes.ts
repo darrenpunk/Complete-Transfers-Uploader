@@ -1796,7 +1796,11 @@ export async function registerRoutes(app: express.Application) {
       const isSingleColourTemplate = templateSize?.group === "Screen Printed Transfers" && 
         templateSize?.label?.includes("Single Colour");
       
-      console.log(`📐 Template: ${templateSize?.name} (Group: ${templateSize?.group}), Single Colour: ${isSingleColourTemplate}, Ink Color: ${project.inkColor}`);
+      // Large format DTF (1000x550mm or any template ≥1000mm wide) — skip pdf2svg entirely for PDF
+      // uploads and use PNG for canvas display. The original PDF is always kept for production output.
+      const isLargeFormatDTF = (templateSize?.width ?? 0) >= 1000 || (templateSize?.height ?? 0) >= 500;
+      
+      console.log(`📐 Template: ${templateSize?.name} (Group: ${templateSize?.group}), Single Colour: ${isSingleColourTemplate}, Ink Color: ${project.inkColor}, LargeFormatDTF: ${isLargeFormatDTF}`);
 
       const logos = [];
       
@@ -2074,8 +2078,60 @@ export async function registerRoutes(app: express.Application) {
             
             // Check if PDF contains CMYK colors
             const hasCMYK = await CMYKDetector.hasCMYKColors(pdfPath);
-            
-            if (hasCMYK) {
+
+            // ── LARGE FORMAT DTF FAST PATH ──────────────────────────────────────────
+            // For templates ≥ 1000mm wide (e.g. 1000×550mm DTF), skip pdf2svg entirely.
+            // Complex vectors (glitter, fine-detail) always kill pdf2svg on these files.
+            // Render a PNG at 150 DPI for canvas display; original PDF is kept for output.
+            if (isLargeFormatDTF) {
+              console.log(`📐 Large format DTF — skipping pdf2svg, rendering PNG preview directly`);
+              const pngFilename = `${file.filename}_preview.png`;
+              const pngPath = path.join(uploadDir, pngFilename);
+              try {
+                // Get PDF page dimensions for proper sizing on canvas
+                try {
+                  const { PDFDocument: PDFDocLarge } = await import('pdf-lib');
+                  const largePdfBytes = fs.readFileSync(pdfPath);
+                  const largePdfDoc = await PDFDocLarge.load(largePdfBytes);
+                  const [largePage] = largePdfDoc.getPages();
+                  const largePageSize = largePage.getSize();
+                  (file as any).originalPdfBounds = {
+                    xMin: 0, yMin: 0,
+                    xMax: largePageSize.width, yMax: largePageSize.height,
+                    width: largePageSize.width, height: largePageSize.height,
+                    widthMm: largePageSize.width * 0.352778,
+                    heightMm: largePageSize.height * 0.352778
+                  };
+                  console.log(`📐 DTF PDF page: ${(largePageSize.width * 0.352778).toFixed(0)}×${(largePageSize.height * 0.352778).toFixed(0)}mm`);
+                } catch (sizeErr) {
+                  console.log(`⚠️ Could not read DTF PDF page size: ${sizeErr}`);
+                }
+
+                const gsCmd = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r150 -dMaxBitmap=300000000 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`;
+                await execAsync(gsCmd, { timeout: 60000 });
+
+                if (fs.existsSync(pngPath) && fs.statSync(pngPath).size > 0) {
+                  // Resize to max 2000px on the longest side for performance
+                  try {
+                    const resizedPath = pngPath + '.r.png';
+                    await execAsync(`convert "${pngPath}" -resize 2000x2000 "${resizedPath}"`, { timeout: 15000 });
+                    if (fs.existsSync(resizedPath)) { fs.unlinkSync(pngPath); fs.renameSync(resizedPath, pngPath); }
+                  } catch {}
+
+                  (file as any).originalPdfPath = pdfPath;
+                  (file as any).isCMYKPreserved = hasCMYK;
+                  (file as any).isComplexFilePngFallback = true;
+                  finalFilename = pngFilename;
+                  finalMimeType = 'image/png';
+                  finalUrl = `/uploads/${pngFilename}`;
+                  console.log(`✅ Large format DTF PNG preview created: ${pngFilename} (original PDF preserved for output)`);
+                } else {
+                  console.log(`⚠️ Ghostscript produced empty PNG for DTF file — keeping raw PDF`);
+                }
+              } catch (dtfPngErr) {
+                console.error(`❌ DTF PNG preview failed:`, dtfPngErr);
+              }
+            } else if (hasCMYK) {
               console.log(`🎨 CMYK PDF detected: ${file.filename} - preserving original PDF to maintain CMYK accuracy`);
               
               // Convert to SVG for canvas display (vectors preserved)
