@@ -587,8 +587,30 @@ class ArtworkUploaderController(http.Controller):
             # Use template_id from request data if provided (for vectorization service), otherwise use project's template
             template_for_lookup = data.get('template_id') or project.template_size
             _logger.info(f"🔍 Looking up product for template: '{template_for_lookup}' (from request: {bool(data.get('template_id'))}, project: '{project.template_size}')")
+            _logger.info(f"🏢 Sale order company: {sale_order.company_id.name} (ID: {sale_order.company_id.id})")
             product = request.env['artwork.template.mapping'].sudo().get_product_for_template(template_for_lookup)
             
+            # Ensure product is compatible with the sale order's company.
+            # Odoo's _check_company will reject a line if the product's company_id
+            # doesn't match the order's company_id. Fix by finding the same product
+            # in the correct company (by default_code) or a global product (company_id=False).
+            if product and product.company_id and product.company_id.id != sale_order.company_id.id:
+                _logger.warning(
+                    f"⚠️ Product '{product.name}' (ID: {product.id}) belongs to company "
+                    f"'{product.company_id.name}' but order belongs to '{sale_order.company_id.name}'. "
+                    f"Searching for compatible product by code '{product.default_code}'..."
+                )
+                compatible = request.env['product.product'].sudo().search([
+                    ('default_code', '=', product.default_code),
+                    ('company_id', 'in', [sale_order.company_id.id, False]),
+                    ('active', '=', True),
+                ], limit=1)
+                if compatible:
+                    _logger.info(f"✅ Found compatible product: {compatible.name} (ID: {compatible.id}, company: {compatible.company_id.name or 'global'})")
+                    product = compatible
+                else:
+                    _logger.warning(f"⚠️ No compatible product found for company '{sale_order.company_id.name}', using original (may fail company check)")
+
             if not product:
                 _logger.error(f"❌ No product mapped for template: {template_for_lookup}")
                 response = json.dumps({'error': 'No product mapped for this template. Please configure template mappings in Artwork > Configuration > Template Mappings.'})
@@ -700,16 +722,18 @@ class ArtworkUploaderController(http.Controller):
                 'product_uom': product.uom_id.id,
                 'name': line_name,
             }
-            order_line = request.env['sale.order.line'].sudo().create(line_vals)
+            order_line = request.env['sale.order.line'].sudo().with_company(sale_order.company_id).create(line_vals)
             _logger.info(f"✅ Created separate order line #{order_line.id}: {line_name}, price_unit: {order_line.price_unit} (computed by Odoo, qty: {order_qty}, pricelist: {sale_order.pricelist_id.name})")
             
             # Auto-add DST Embroidery Proofing Service for new applique orders
             if data.get('include_dst_proofing'):
                 dst_product_code = data.get('dst_product_code', 'DSTF')
                 try:
-                    dst_product = request.env['product.product'].sudo().search(
-                        [('default_code', '=', dst_product_code)], limit=1
-                    )
+                    dst_product = request.env['product.product'].sudo().search([
+                        ('default_code', '=', dst_product_code),
+                        ('company_id', 'in', [sale_order.company_id.id, False]),
+                        ('active', '=', True),
+                    ], limit=1)
                     if dst_product:
                         dst_line_vals = {
                             'order_id': sale_order.id,
@@ -718,7 +742,7 @@ class ArtworkUploaderController(http.Controller):
                             'product_uom': dst_product.uom_id.id,
                             'name': f"[{dst_product_code}] {dst_product.name}",
                         }
-                        dst_line = request.env['sale.order.line'].sudo().create(dst_line_vals)
+                        dst_line = request.env['sale.order.line'].sudo().with_company(sale_order.company_id).create(dst_line_vals)
                         _logger.info(f"📋 Auto-added DST proofing line #{dst_line.id}: [{dst_product_code}] {dst_product.name}, price: {dst_line.price_unit}")
                     else:
                         _logger.warning(f"⚠️ DST proofing product not found with code: {dst_product_code}")
