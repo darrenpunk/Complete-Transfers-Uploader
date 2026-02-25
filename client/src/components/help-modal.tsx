@@ -237,16 +237,7 @@ export function HelpModal({ open, onOpenChange }: HelpModalProps) {
                       <li>Center horizontally or vertically</li>
                       <li>"Center Logo" button for quick centering</li>
                       <li>"Fit to Bounds" - automatically scale to fit within safety margins</li>
-                      <li>Alignment respects the 3mm safety margins (red dotted lines)</li>
                     </ul>
-                  </div>
-
-                  <div>
-                    <h3 className="font-semibold mb-2">Safety Margins</h3>
-                    <p className="text-sm text-muted-foreground">
-                      The red dotted lines show the 3mm safety margin. Keep your artwork inside 
-                      these boundaries to prevent anything being cut off during production.
-                    </p>
                   </div>
 
                   <div>
