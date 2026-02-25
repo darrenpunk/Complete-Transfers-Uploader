@@ -2109,8 +2109,9 @@ export async function registerRoutes(app: express.Application) {
 
                 // 96 DPI is sufficient — image is capped at 2000px anyway, and lower DPI
                 // dramatically reduces memory usage for complex vector PDFs (prevents OOM in production).
+                // SIGKILL ensures GS is immediately terminated on timeout (SIGTERM is ignored by GS during rendering).
                 const gsCmd = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r96 -dMaxBitmap=150000000 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`;
-                await execAsync(gsCmd, { timeout: 45000 });
+                await execAsync(gsCmd, { timeout: 40000, killSignal: 'SIGKILL' });
 
                 if (fs.existsSync(pngPath) && fs.statSync(pngPath).size > 0) {
                   // Resize to max 2000px on the longest side for performance
@@ -2132,7 +2133,7 @@ export async function registerRoutes(app: express.Application) {
                   console.log(`⚠️ 96 DPI render failed — retrying at 72 DPI emergency fallback`);
                   try {
                     const emergencyCmd = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r72 -dMaxBitmap=80000000 -sOutputFile="${pngPath}" "${pdfPath}"`;
-                    await execAsync(emergencyCmd, { timeout: 30000 });
+                    await execAsync(emergencyCmd, { timeout: 25000, killSignal: 'SIGKILL' });
                     if (fs.existsSync(pngPath) && fs.statSync(pngPath).size > 0) {
                       try {
                         const resizedPath = pngPath + '.r.png';
@@ -2158,7 +2159,7 @@ export async function registerRoutes(app: express.Application) {
                 // Try emergency fallback on primary exception too
                 try {
                   const emergencyCmd = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r72 -dMaxBitmap=80000000 -sOutputFile="${pngPath}" "${pdfPath}"`;
-                  await execAsync(emergencyCmd, { timeout: 30000 });
+                  await execAsync(emergencyCmd, { timeout: 25000, killSignal: 'SIGKILL' });
                   if (fs.existsSync(pngPath) && fs.statSync(pngPath).size > 0) {
                     try {
                       const resizedPath = pngPath + '.r.png';
@@ -2442,8 +2443,8 @@ export async function registerRoutes(app: express.Application) {
                       console.log(`⚠️ Could not read PDF page size: ${sizeErr}`);
                     }
 
-                    const gsCmd = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r150 -dMaxBitmap=300000000 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`;
-                    await execAsync(gsCmd, { timeout: 60000 });
+                    const gsCmd = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r96 -dMaxBitmap=150000000 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`;
+                    await execAsync(gsCmd, { timeout: 40000, killSignal: 'SIGKILL' });
                     
                     if (fs.existsSync(pngPath) && fs.statSync(pngPath).size > 0) {
                       // Resize to max 2000px to keep it manageable
