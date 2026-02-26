@@ -1120,20 +1120,23 @@ export async function registerRoutes(app: express.Application) {
             
             // Check if logo is a PNG/JPEG raster image (not a vector)
             const logoMimeType = (logo as any).mimeType || (logo as any).originalMimeType;
-            const isRasterFile = logoMimeType === 'image/png' || logoMimeType === 'image/jpeg' || 
-                                 ((logo as any).filename && ((logo as any).filename.endsWith('.png') || (logo as any).filename.endsWith('.jpg') || (logo as any).filename.endsWith('.jpeg')));
+            // A logo whose filename is .png may still have an original vector PDF (DTF/complex fallback).
+            // useOriginalPdf is already true in that case — it must take priority over the raster check.
+            const isRasterFile = !useOriginalPdf && (
+                                 logoMimeType === 'image/png' || logoMimeType === 'image/jpeg' || 
+                                 ((logo as any).filename && ((logo as any).filename.endsWith('.png') || (logo as any).filename.endsWith('.jpg') || (logo as any).filename.endsWith('.jpeg'))));
             
-            if (isRasterFile) {
-              console.log(`🖼️ RASTER IMAGE DETECTED: ${(logo as any).filename} - using embedPng/embedJpg`);
-              isRasterImage = true;
-              rasterImageBytes = fs.readFileSync(svgPath); // svgPath actually points to the image file
-            } else if (useOriginalPdf) {
+            if (useOriginalPdf) {
               // CRITICAL FIX: Use original PDF at full page dimensions - NO cropping to painted pixels
               // Cropping to content bounds removes white elements which is unacceptable
               console.log(`🎯 USING ORIGINAL PDF AT FULL PAGE DIMENSIONS - NO cropping to painted pixels`);
               console.log(`📄 This preserves white elements and uses the intended artwork size from the PDF`);
               
               vectorBytes = fs.readFileSync(originalPdfPath);
+            } else if (isRasterFile) {
+              console.log(`🖼️ RASTER IMAGE DETECTED: ${(logo as any).filename} - using embedPng/embedJpg`);
+              isRasterImage = true;
+              rasterImageBytes = fs.readFileSync(svgPath); // svgPath points to the raster image file
             } else {
               // Fallback: Process corrupted SVG
               let svgContent = fs.readFileSync(svgPath, 'utf8');

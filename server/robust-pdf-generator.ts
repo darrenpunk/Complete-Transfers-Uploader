@@ -1120,9 +1120,14 @@ grestore`;
       // RASTER IMAGE HANDLING: Check if logo is a PNG/JPG raster image
       const logoFilename = logo.filename || '';
       const logoMimeType = logo.mimeType || logo.originalMimeType || '';
-      const isRasterImage = logoMimeType.startsWith('image/png') || logoMimeType.startsWith('image/jpeg') || 
+      // A logo whose filename ends in .png may still have an original vector PDF (DTF/complex fallback).
+      // Guard against this: only treat as raster if there is no original PDF to fall back to.
+      const hasOriginalPdf = !!(logo.originalFilename && logo.originalMimeType === 'application/pdf' &&
+                                fs.existsSync(path.join(process.cwd(), 'uploads', logo.originalFilename)));
+      const isRasterImage = !hasOriginalPdf && (
+                            logoMimeType.startsWith('image/png') || logoMimeType.startsWith('image/jpeg') || 
                             logoMimeType.startsWith('image/jpg') ||
-                            logoFilename.endsWith('.png') || logoFilename.endsWith('.jpg') || logoFilename.endsWith('.jpeg');
+                            logoFilename.endsWith('.png') || logoFilename.endsWith('.jpg') || logoFilename.endsWith('.jpeg'));
       
       if (isRasterImage) {
         console.log(`🖼️ RASTER IMAGE DETECTED: ${logoFilename} - using direct image embedding`);
