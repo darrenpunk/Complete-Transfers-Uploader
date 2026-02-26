@@ -51,12 +51,13 @@ export class MixedContentDetector {
         const hasQuantityFooter = /Quantity:\s*\d+/i.test(fullText);
         
         if (hasProjectFooter && hasGarmentFooter && hasQuantityFooter) {
-          console.log('✅ Production PDF detected (contains Project/Garment Color/Quantity footers) - treating as vector pass-through');
+          console.log('✅ Production PDF detected (contains Project/Garment Color/Quantity footers) - will check page 1 for raster artwork');
+          // Mark as production PDF but DO NOT early-return — continue analysis so pdfimages
+          // can still detect raster artwork embedded in page 1 of the file.
           analysis.hasVectorContent = true;
           analysis.vectorElements.types.push('production-pdf', 'text', 'paths');
           analysis.vectorElements.count = 1;
-          analysis.recommendation = 'vector-workflow';
-          return analysis;
+          // Fall through to pdfimages check below
         }
       } catch (preCheckError) {
         console.log('⚠️ Production PDF pre-check failed, continuing with standard analysis');
