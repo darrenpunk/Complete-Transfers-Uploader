@@ -6452,17 +6452,27 @@ export async function registerRoutes(app: express.Application) {
       }
 
       let zipBase64: string | undefined;
+      let zipFileName: string | undefined;
+      let zipTooLarge = false;
       let isRepeatOrder = false;
+      const ZIP_INLINE_MAX_BYTES = 5 * 1024 * 1024; // 5MB limit for inline base64 transmission
       if (!isVectorizationOnly && projectId !== 'vector-service') {
         try {
           const proj = await storage.getProject(projectId);
           if (proj?.attachedZipPath) {
             isRepeatOrder = true;
+            zipFileName = proj.attachedZipName || path.basename(proj.attachedZipPath) || 'repeat-order.zip';
             const zipFilePath = path.join('./uploads', path.basename(proj.attachedZipPath));
             if (fs.existsSync(zipFilePath)) {
-              const zipBuffer = fs.readFileSync(zipFilePath);
-              zipBase64 = zipBuffer.toString('base64');
-              console.log(`📎 Including attached ZIP (${(zipBuffer.length / 1024 / 1024).toFixed(1)}MB): ${proj.attachedZipName || path.basename(zipFilePath)}`);
+              const zipStat = fs.statSync(zipFilePath);
+              if (zipStat.size <= ZIP_INLINE_MAX_BYTES) {
+                const zipBuffer = fs.readFileSync(zipFilePath);
+                zipBase64 = zipBuffer.toString('base64');
+                console.log(`📎 Including attached ZIP (${(zipStat.size / 1024 / 1024).toFixed(1)}MB): ${zipFileName}`);
+              } else {
+                zipTooLarge = true;
+                console.warn(`⚠️ ZIP too large for inline transmission (${(zipStat.size / 1024 / 1024).toFixed(1)}MB > 5MB limit), will include note only: ${zipFileName}`);
+              }
             } else {
               console.warn(`⚠️ Attached ZIP not found on disk: ${zipFilePath}`);
             }
@@ -6492,7 +6502,8 @@ export async function registerRoutes(app: express.Application) {
         artworkFilename,
         ...(productCode && { product_code: productCode }),
         ...(isVectorizationOnly && { template_id: 'vector-service' }),
-        ...(zipBase64 && { zipBase64, zipFileName: proj?.attachedZipName || path.basename(proj?.attachedZipPath || '') || 'repeat-order.zip' }),
+        ...(zipBase64 && zipFileName && { zipBase64, zipFileName }),
+        ...(zipTooLarge && zipFileName && { zipNote: `Repeat order ZIP file available: ${zipFileName} (too large to attach automatically - please retrieve from server)` }),
         ...(includeDstProofing && { include_dst_proofing: true, dst_product_code: 'DSTF' }),
       };
 
