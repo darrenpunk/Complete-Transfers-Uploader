@@ -89,6 +89,7 @@ export default function UploadTool() {
   const [showPassThroughModal, setShowPassThroughModal] = useState(false);
   const [pendingPassThroughLogo, setPendingPassThroughLogo] = useState<{ logoId: string; pageCount: number; fileName: string } | null>(null);
   const [detectedReorderColors, setDetectedReorderColors] = useState<Array<{color: string; colorName: string; quantity: number}>>([]);
+  const [reorderLineId, setReorderLineId] = useState<number | null>(null);
   const [showOrientationMismatch, setShowOrientationMismatch] = useState(false);
   const [orientationMismatchInfo, setOrientationMismatchInfo] = useState<{ logoId: string; logoName: string; logoOrientation: string; templateOrientation: string; elementId?: string } | null>(null);
   const [pendingOrientationCheckLogoIds, setPendingOrientationCheckLogoIds] = useState<string[]>([]);
@@ -500,6 +501,7 @@ export default function UploadTool() {
         partnerEmail: partnerEmail || undefined, // Send partner email if available (for iframe session workaround)
         pdfBase64: pdfBase64, // Send PDF if generated
         odooBaseUrl: dynamicOdooUrl, // Send Odoo URL so backend knows which server to call
+        ...(reorderLineId && { reorderLineId }), // For applique reorders: tells Odoo to copy ZIP from source line
       };
       
       console.log('📦 Sending project data to Odoo:', { ...projectData, pdfBase64: pdfBase64 ? `<${pdfBase64.length} chars>` : undefined });
@@ -937,6 +939,11 @@ export default function UploadTool() {
         })();
       }
       
+      if (reorderData.reorderLineId) {
+        console.log('📦 Applique reorder - storing source line ID for ZIP copy:', reorderData.reorderLineId);
+        setReorderLineId(reorderData.reorderLineId);
+      }
+
       const updates: Record<string, any> = {};
       if (reorderData.projectName && reorderData.projectName !== currentProject.name) {
         updates.name = reorderData.projectName;

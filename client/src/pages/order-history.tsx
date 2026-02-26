@@ -413,6 +413,10 @@ export default function OrderHistory() {
       reorderData.email = userEmail || '';
     }
 
+    if (line.templateSize?.includes('applique')) {
+      reorderData.reorderLineId = line.lineId;
+    }
+
     sessionStorage.setItem('reorder_data', JSON.stringify(reorderData));
     setLocation("/");
   };
