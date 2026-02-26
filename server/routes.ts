@@ -2740,9 +2740,13 @@ export async function registerRoutes(app: express.Application) {
           }
           
           // Override file type based on content analysis
-          if (contentAnalysis.hasRasterContent && !contentAnalysis.hasVectorContent) {
-            // PDF contains ONLY raster content (no vector elements), extract PNG for canvas display
-            console.log(`📷 PDF contains raster-only content, extracting PNG for canvas display`);
+          // For re-uploaded order PDFs (hasGarmentPages=true), treat as raster even when vectors
+          // are detected — those vectors are from app-generated garment text pages, not the artwork.
+          const isRasterArtwork = contentAnalysis.hasRasterContent &&
+            (!contentAnalysis.hasVectorContent || (file as any).hasGarmentPages);
+          if (isRasterArtwork) {
+            // PDF contains raster artwork (either raster-only, or multi-page order PDF)
+            console.log(`📷 PDF contains raster artwork (hasGarmentPages=${(file as any).hasGarmentPages}) - extracting PNG for canvas display`);
             
             // Store original PDF path for later embedding
             (file as any).originalPdfPath = originalPdfPath;
