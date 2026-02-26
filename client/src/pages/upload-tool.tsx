@@ -432,29 +432,35 @@ export default function UploadTool() {
       console.log('🛒 Adding to Odoo cart via backend proxy:', url);
       
       // Generate PDF and convert to base64
-      console.log('📄 Generating PDF for Odoo attachment...');
+      // Skip PDF generation if canvas is empty (e.g. repeat zip-only applique orders)
+      const hasCanvasContent = canvasElements.length > 0;
       let pdfBase64: string | undefined;
-      try {
-        const pdfUrl = `/api/projects/${currentProject.id}/generate-pdf?colorSpace=cmyk`;
-        const pdfResponse = await fetch(pdfUrl);
-        if (pdfResponse.ok) {
-          const pdfBlob = await pdfResponse.blob();
-          const reader = new FileReader();
-          pdfBase64 = await new Promise<string>((resolve, reject) => {
-            reader.onloadend = () => {
-              const base64 = (reader.result as string).split(',')[1]; // Remove data:application/pdf;base64, prefix
-              resolve(base64);
-            };
-            reader.onerror = reject;
-            reader.readAsDataURL(pdfBlob);
-          });
-          console.log('✅ PDF generated and converted to base64');
-        } else {
-          console.warn('⚠️ PDF generation failed, continuing without PDF');
+      if (!hasCanvasContent) {
+        console.log('ℹ️ No canvas elements - skipping PDF generation (zip-only repeat order)');
+      } else {
+        console.log('📄 Generating PDF for Odoo attachment...');
+        try {
+          const pdfUrl = `/api/projects/${currentProject.id}/generate-pdf?colorSpace=cmyk`;
+          const pdfResponse = await fetch(pdfUrl);
+          if (pdfResponse.ok) {
+            const pdfBlob = await pdfResponse.blob();
+            const reader = new FileReader();
+            pdfBase64 = await new Promise<string>((resolve, reject) => {
+              reader.onloadend = () => {
+                const base64 = (reader.result as string).split(',')[1]; // Remove data:application/pdf;base64, prefix
+                resolve(base64);
+              };
+              reader.onerror = reject;
+              reader.readAsDataURL(pdfBlob);
+            });
+            console.log('✅ PDF generated and converted to base64');
+          } else {
+            console.warn('⚠️ PDF generation failed, continuing without PDF');
+          }
+        } catch (error) {
+          console.error('❌ Failed to generate PDF:', error);
+          // Continue without PDF
         }
-      } catch (error) {
-        console.error('❌ Failed to generate PDF:', error);
-        // Continue without PDF
       }
       
       // Check if running in iframe
