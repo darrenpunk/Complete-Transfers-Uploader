@@ -478,26 +478,51 @@ export class MemStorage implements IStorage {
   }
 
   async getCustomerTemplates(customerCode: string): Promise<CustomerTemplate[]> {
-    return Array.from(this.customerTemplatesMap.values()).filter(ct => ct.customerCode === customerCode);
+    try {
+      return await db.select().from(customerTemplates).where(eq(customerTemplates.customerCode, customerCode));
+    } catch (err) {
+      console.warn('⚠️ DB query failed for getCustomerTemplates, using in-memory fallback:', err);
+      return Array.from(this.customerTemplatesMap.values()).filter(ct => ct.customerCode === customerCode);
+    }
   }
 
   async getAllCustomerTemplates(): Promise<CustomerTemplate[]> {
-    return Array.from(this.customerTemplatesMap.values());
+    try {
+      return await db.select().from(customerTemplates);
+    } catch (err) {
+      console.warn('⚠️ DB query failed for getAllCustomerTemplates, using in-memory fallback:', err);
+      return Array.from(this.customerTemplatesMap.values());
+    }
   }
 
   async createCustomerTemplate(assignment: InsertCustomerTemplate): Promise<CustomerTemplate> {
-    const id = randomUUID();
-    const ct: CustomerTemplate = {
-      ...assignment,
-      id,
-      createdAt: new Date().toISOString(),
-    };
-    this.customerTemplatesMap.set(id, ct);
-    return ct;
+    try {
+      const [ct] = await db.insert(customerTemplates).values({
+        customerCode: assignment.customerCode,
+        templateId: assignment.templateId,
+      }).returning();
+      return ct;
+    } catch (err) {
+      console.warn('⚠️ DB insert failed for createCustomerTemplate, using in-memory fallback:', err);
+      const id = randomUUID();
+      const ct: CustomerTemplate = {
+        ...assignment,
+        id,
+        createdAt: new Date().toISOString(),
+      };
+      this.customerTemplatesMap.set(id, ct);
+      return ct;
+    }
   }
 
   async deleteCustomerTemplate(id: string): Promise<boolean> {
-    return this.customerTemplatesMap.delete(id);
+    try {
+      const result = await db.delete(customerTemplates).where(eq(customerTemplates.id, id)).returning();
+      return result.length > 0;
+    } catch (err) {
+      console.warn('⚠️ DB delete failed for deleteCustomerTemplate, using in-memory fallback:', err);
+      return this.customerTemplatesMap.delete(id);
+    }
   }
 
   // Analytics methods - database-backed with retry for resilience
