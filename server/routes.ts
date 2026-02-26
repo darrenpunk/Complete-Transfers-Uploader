@@ -6453,9 +6453,10 @@ export async function registerRoutes(app: express.Application) {
 
       let zipBase64: string | undefined;
       let zipFileName: string | undefined;
+      let zipDropboxPath: string | undefined;
       let zipTooLarge = false;
       let isRepeatOrder = false;
-      const ZIP_INLINE_MAX_BYTES = 5 * 1024 * 1024; // 5MB limit for inline base64 transmission
+      const ZIP_INLINE_MAX_BYTES = 5 * 1024 * 1024; // 5MB fallback limit for inline base64
       if (!isVectorizationOnly && projectId !== 'vector-service') {
         try {
           const proj = await storage.getProject(projectId);
@@ -6465,21 +6466,41 @@ export async function registerRoutes(app: express.Application) {
             const zipFilePath = path.join('./uploads', path.basename(proj.attachedZipPath));
             if (fs.existsSync(zipFilePath)) {
               const zipStat = fs.statSync(zipFilePath);
-              if (zipStat.size <= ZIP_INLINE_MAX_BYTES) {
+              const zipSizeMB = (zipStat.size / 1024 / 1024).toFixed(1);
+              console.log(`📎 ZIP file found (${zipSizeMB}MB): ${zipFileName} — attempting Dropbox upload`);
+              // Primary: upload to Dropbox and send the path to Odoo
+              try {
+                const { uploadFileToDropbox } = await import('./dropbox-service');
                 const zipBuffer = fs.readFileSync(zipFilePath);
-                zipBase64 = zipBuffer.toString('base64');
-                console.log(`📎 Including attached ZIP (${(zipStat.size / 1024 / 1024).toFixed(1)}MB): ${zipFileName}`);
-              } else {
-                zipTooLarge = true;
-                console.warn(`⚠️ ZIP too large for inline transmission (${(zipStat.size / 1024 / 1024).toFixed(1)}MB > 5MB limit), will include note only: ${zipFileName}`);
+                const dropboxDest = `/repeat-orders/${projectId}/${zipFileName}`;
+                const uploaded = await uploadFileToDropbox(zipBuffer, dropboxDest);
+                zipDropboxPath = uploaded.pathDisplay;
+                console.log(`✅ ZIP uploaded to Dropbox: ${zipDropboxPath}`);
+              } catch (dbErr) {
+                console.warn(`⚠️ Dropbox upload failed for ZIP, falling back to inline base64:`, dbErr);
+                // Fallback: send inline base64 if file is small enough
+                if (zipStat.size <= ZIP_INLINE_MAX_BYTES) {
+                  const zipBuffer = fs.readFileSync(zipFilePath);
+                  zipBase64 = zipBuffer.toString('base64');
+                  console.log(`📎 Inline fallback ZIP (${zipSizeMB}MB): ${zipFileName}`);
+                } else {
+                  zipTooLarge = true;
+                  console.warn(`⚠️ ZIP too large for inline fallback (${zipSizeMB}MB > 5MB), will add note only`);
+                }
               }
             } else {
               console.warn(`⚠️ Attached ZIP not found on disk: ${zipFilePath}`);
             }
           }
         } catch (e) {
-          console.warn('⚠️ Could not read attached ZIP:', e);
+          console.warn('⚠️ Could not process attached ZIP:', e);
         }
+      }
+
+      // Also treat order-history reorders (reorderLineId sent from frontend) as repeat orders
+      if (projectData.reorderLineId) {
+        isRepeatOrder = true;
+        console.log(`🔁 Order-history reorder detected (source line: ${projectData.reorderLineId}) — marking as repeat`);
       }
 
       const isAppliqueTemplate = projectData.templateSize?.includes('applique');
@@ -6502,8 +6523,9 @@ export async function registerRoutes(app: express.Application) {
         artworkFilename,
         ...(productCode && { product_code: productCode }),
         ...(isVectorizationOnly && { template_id: 'vector-service' }),
+        ...(zipDropboxPath && { dropboxPath: zipDropboxPath, zipFileName }),
         ...(zipBase64 && zipFileName && { zipBase64, zipFileName }),
-        ...(zipTooLarge && zipFileName && { zipNote: `Repeat order ZIP file available: ${zipFileName} (too large to attach automatically - please retrieve from server)` }),
+        ...(zipTooLarge && zipFileName && { zipNote: `Repeat order ZIP file available: ${zipFileName} (please retrieve manually)` }),
         ...(includeDstProofing && { include_dst_proofing: true, dst_product_code: 'DSTF' }),
       };
 

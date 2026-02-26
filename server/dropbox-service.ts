@@ -123,3 +123,44 @@ export async function downloadFile(path: string): Promise<Buffer> {
     throw new Error(`Failed to download file: ${error.message}`);
   }
 }
+
+export async function uploadFileToDropbox(
+  fileBuffer: Buffer,
+  dropboxPath: string,
+): Promise<{ path: string; pathDisplay: string }> {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const dbx = await getUncachableDropboxClient(attempt > 0);
+      const result = await dbx.filesUpload({
+        path: dropboxPath,
+        contents: fileBuffer,
+        mode: { '.tag': 'overwrite' },
+        autorename: false,
+        mute: true,
+      }) as any;
+      const pathDisplay = result.result.path_display || dropboxPath;
+      console.log(`[Dropbox] File uploaded successfully: ${pathDisplay}`);
+      return { path: dropboxPath, pathDisplay };
+    } catch (error: any) {
+      console.error(`[Dropbox] File upload failed (attempt ${attempt + 1}):`, error.status, error.error || error.message);
+      if (error.status === 401 && attempt === 0) {
+        clearTokenCache();
+        continue;
+      }
+      throw new Error(`Failed to upload file to Dropbox: ${error.message || 'Unknown error'}`);
+    }
+  }
+  throw new Error('Failed to upload file to Dropbox after retries');
+}
+
+export async function listFolderFiles(folderPath: string): Promise<any[]> {
+  const dbx = await getUncachableDropboxClient();
+  try {
+    const result = await dbx.filesListFolder({ path: folderPath }) as any;
+    return result.result.entries || [];
+  } catch (error: any) {
+    if (error.status === 409) return [];
+    console.error('Failed to list Dropbox folder:', error);
+    return [];
+  }
+}
