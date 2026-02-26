@@ -3144,14 +3144,18 @@ export async function registerRoutes(app: express.Application) {
           svgColors: analysisData,
           svgFonts: analysisData?.fonts || null,
           isMixedContent: fileType === FileType.MIXED_CONTENT,
-          isCMYKPreserved: (file as any).isCMYKPreserved || false,
+          // Multi-page order PDFs (re-uploads): CMYK/vector content detected from garment text pages
+          // should NOT contaminate the artwork analysis — artwork is on page 1 only.
+          isCMYKPreserved: (file as any).hasGarmentPages ? false : ((file as any).isCMYKPreserved || false),
           isPdfWithRasterOnly: (file as any).isPdfWithRasterOnly || false,
           // PRODUCTION FLOW: Add preflight results
           preflightData: {
-            colorSpaceDetected: preflightResult.colorSpaceDetected,
-            hasRasterContent: preflightResult.hasRasterContent,
-            hasVectorContent: preflightResult.hasVectorContent,
-            isMixedContent: preflightResult.isMixedContent,
+            colorSpaceDetected: (file as any).hasGarmentPages ? 'RGB' : preflightResult.colorSpaceDetected,
+            hasRasterContent: (file as any).hasGarmentPages
+              ? !preflightResult.hasVectorContent || preflightResult.hasRasterContent
+              : preflightResult.hasRasterContent,
+            hasVectorContent: (file as any).hasGarmentPages ? false : preflightResult.hasVectorContent,
+            isMixedContent: (file as any).hasGarmentPages ? false : preflightResult.isMixedContent,
             contentBounds: preflightResult.contentBounds,
             colorsDetected: preflightResult.colorsDetected,
             requiresVectorization: preflightResult.requiresVectorization,
