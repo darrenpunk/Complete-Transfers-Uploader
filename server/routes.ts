@@ -6462,7 +6462,9 @@ export async function registerRoutes(app: express.Application) {
             if (fs.existsSync(zipFilePath)) {
               const zipBuffer = fs.readFileSync(zipFilePath);
               zipBase64 = zipBuffer.toString('base64');
-              console.log(`📎 Including attached ZIP (${(zipBuffer.length / 1024 / 1024).toFixed(1)}MB): ${proj.attachedZipName}`);
+              console.log(`📎 Including attached ZIP (${(zipBuffer.length / 1024 / 1024).toFixed(1)}MB): ${proj.attachedZipName || path.basename(zipFilePath)}`);
+            } else {
+              console.warn(`⚠️ Attached ZIP not found on disk: ${zipFilePath}`);
             }
           }
         } catch (e) {
@@ -6490,7 +6492,7 @@ export async function registerRoutes(app: express.Application) {
         artworkFilename,
         ...(productCode && { product_code: productCode }),
         ...(isVectorizationOnly && { template_id: 'vector-service' }),
-        ...(zipBase64 && { zipBase64, zipFileName: (await storage.getProject(projectId))?.attachedZipName }),
+        ...(zipBase64 && { zipBase64, zipFileName: proj?.attachedZipName || path.basename(proj?.attachedZipPath || '') || 'repeat-order.zip' }),
         ...(includeDstProofing && { include_dst_proofing: true, dst_product_code: 'DSTF' }),
       };
 
@@ -7945,9 +7947,11 @@ ${svgClose}`;
         templateSize: selectedTemplate.id,
         garmentColor: '#929292',
         quantity: parseInt(req.body?.quantity) || 1,
+        attachedZipPath: `/uploads/${file.filename}`,
+        attachedZipName: file.originalname,
       });
 
-      console.log(`📋 Created repeat applique project: ${project.id} (${projectName})`);
+      console.log(`📋 Created repeat applique project: ${project.id} (${projectName}) with zip: ${file.originalname}`);
 
       const savedArtwork: any[] = [];
       const savedEmbroidery: string[] = [];
@@ -8065,8 +8069,6 @@ ${svgClose}`;
         savedEmbroidery.push(embFile.name);
         console.log(`🧵 Added embroidery file to project: ${embFile.name}`);
       }
-
-      fs.unlinkSync(zipPath);
 
       res.status(201).json({
         project,
