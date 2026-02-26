@@ -939,7 +939,11 @@ export default function ToolsSidebar({
                                        (logo as any).isPdfWithRasterOnly;
             // PNG fallback: PDF was too complex or large-format — display is PNG, not vector SVG
             const isPngFallback = logo.mimeType === 'image/png' && logo.originalMimeType === 'application/pdf';
-            const isVector = !isPdfWithRasterOnly && !isPngFallback &&
+            // For DTF/complex PDFs that use a PNG preview, trust the stored preflight data.
+            // preflightData.hasVectorContent comes from the ORIGINAL PDF analysis, not the preview PNG.
+            const storedPreflight = (logo as any).preflightData;
+            const pngFallbackIsActuallyVector = isPngFallback && storedPreflight?.hasVectorContent === true;
+            const isVector = !isPdfWithRasterOnly && (!isPngFallback || pngFallbackIsActuallyVector) &&
                            (logo.mimeType === 'image/svg+xml' || logo.originalMimeType === 'application/pdf');
             
             if (isVector) {

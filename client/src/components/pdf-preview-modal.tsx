@@ -252,10 +252,21 @@ export default function PDFPreviewModal({
     return svgColors?.hasText || svgColors?.fonts?.length > 0;
   });
   
-  const hasLowResLogos = logos.some(logo => logo.mimeType && logo.mimeType.startsWith('image/') && !logo.mimeType.includes('svg'));
+  const hasLowResLogos = logos.some(logo => {
+    if (!logo.mimeType || !logo.mimeType.startsWith('image/') || logo.mimeType.includes('svg')) return false;
+    // DTF/complex PDFs use a PNG preview but their source is a vector PDF — not low-res
+    const isPngFallbackOfVectorPdf = logo.mimeType === 'image/png' &&
+      logo.originalMimeType === 'application/pdf' &&
+      (logo as any).preflightData?.hasVectorContent === true;
+    return !isPngFallbackOfVectorPdf;
+  });
 
   // Check for CMYK colors in the uploaded logos
   const hasCMYKColors = logos.some(logo => {
+    // Check preflightData first (most reliable — comes from the original PDF analysis)
+    const preflightColorSpace = (logo as any).preflightData?.colorSpaceDetected;
+    if (preflightColorSpace === 'CMYK') return true;
+    if (logo.isCMYKPreserved) return true;
     const svgColors = logo.svgColors as any;
     if (svgColors?.colors && Array.isArray(svgColors.colors)) {
       return svgColors.colors.some((color: any) => color.isCMYK === true);
