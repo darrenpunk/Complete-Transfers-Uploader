@@ -6522,20 +6522,25 @@ export async function registerRoutes(app: express.Application) {
       // Replace generic defaults with a template-based name so Odoo tasks are identifiable
       let rawProjectName = (projectData.name || '').replace(/_/g, ' ').trim();
       if (!rawProjectName || rawProjectName.toLowerCase() === 'untitled project') {
-        const templateLabel = (() => {
-          if (!projectData.templateSize) return '';
-          const t = projectData.templateSize as string;
-          if (t.startsWith('applique-')) return 'Applique Order';
-          if (t.startsWith('dtf-')) return 'DTF Order';
-          if (t.startsWith('single-')) return 'Single Colour Order';
-          if (t.startsWith('metallic-')) return 'Metallic Transfer';
-          if (t.startsWith('sublimation-')) return 'Sublimation Order';
-          if (t.startsWith('woven-')) return 'Custom Badge Order';
-          if (t.startsWith('reflective-')) return 'Reflective Transfer';
-          if (t.startsWith('hd-')) return 'HD Transfer';
-          return 'Artwork Order';
-        })();
-        rawProjectName = templateLabel || 'Artwork Order';
+        if (zipFileName) {
+          // Use the ZIP filename (without extension) as the project name
+          rawProjectName = path.parse(zipFileName).name.replace(/[-_]/g, ' ').trim();
+        } else {
+          const templateLabel = (() => {
+            if (!projectData.templateSize) return '';
+            const t = projectData.templateSize as string;
+            if (t.startsWith('applique-')) return 'Applique Order';
+            if (t.startsWith('dtf-')) return 'DTF Order';
+            if (t.startsWith('single-')) return 'Single Colour Order';
+            if (t.startsWith('metallic-')) return 'Metallic Transfer';
+            if (t.startsWith('sublimation-')) return 'Sublimation Order';
+            if (t.startsWith('woven-')) return 'Custom Badge Order';
+            if (t.startsWith('reflective-')) return 'Reflective Transfer';
+            if (t.startsWith('hd-')) return 'HD Transfer';
+            return 'Artwork Order';
+          })();
+          rawProjectName = templateLabel || 'Artwork Order';
+        }
       }
       const projectName = rawProjectName;
       const orderQty = projectData.totalQuantity || projectData.quantity || 1;
