@@ -152,6 +152,13 @@ class SaleOrderLine(models.Model):
             else:
                 skipped_count += 1
                 _logger.debug(f"⏭️ Task #{task.id} has no PDF on order line, skipping")
+            
+            # Also sync ZIP attachments from order line to task
+            if order_line:
+                try:
+                    self.env['project.task']._sync_zip_attachments_to_task(task, order_line)
+                except Exception as e:
+                    _logger.error(f"❌ Cron failed to sync ZIP to task #{task.id}: {str(e)}")
         
         _logger.info(f"✅ Cron PDF sync complete: {synced_count} synced, {skipped_count} skipped (no PDF on line), {error_count} errors")
     

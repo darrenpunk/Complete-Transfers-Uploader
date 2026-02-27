@@ -62,6 +62,7 @@ class ProjectTask(models.Model):
         Syncs both artwork_image (PDF binary) AND task name (includes PDF filename).
         Checks both artwork_pdf_file (manual upload) and artwork_files_datas (API upload)
         field sets to ensure task naming works regardless of upload path.
+        Also copies ZIP attachments from order line to task.
         """
         if not task.sale_line_id:
             return
@@ -93,3 +94,46 @@ class ProjectTask(models.Model):
                 _logger.info(f"✅ PDF synced to manufacturing task #{task.id} ({task.name}) from order line #{order_line.id}")
             except Exception as e:
                 _logger.error(f"❌ Failed to sync PDF to task #{task.id}: {str(e)}")
+        
+        # Copy ZIP attachments from order line to task
+        self._sync_zip_attachments_to_task(task, order_line)
+    
+    def _sync_zip_attachments_to_task(self, task, order_line):
+        """Copy ZIP ir.attachment records from the sale order line to the task.
+        
+        This ensures ZIP files (e.g. repeat applique orders) are visible
+        on the manufacturing task, not just on the order line.
+        """
+        try:
+            zip_attachments = self.env['ir.attachment'].sudo().search([
+                ('res_model', '=', 'sale.order.line'),
+                ('res_id', '=', order_line.id),
+                ('mimetype', '=', 'application/zip'),
+            ])
+            
+            if not zip_attachments:
+                return
+            
+            for attachment in zip_attachments:
+                existing = self.env['ir.attachment'].sudo().search([
+                    ('res_model', '=', 'project.task'),
+                    ('res_id', '=', task.id),
+                    ('name', '=', attachment.name),
+                    ('mimetype', '=', 'application/zip'),
+                ], limit=1)
+                
+                if existing:
+                    _logger.info(f"⏭️ ZIP '{attachment.name}' already on task #{task.id}, skipping")
+                    continue
+                
+                self.env['ir.attachment'].sudo().create({
+                    'name': attachment.name,
+                    'type': 'binary',
+                    'datas': attachment.datas,
+                    'res_model': 'project.task',
+                    'res_id': task.id,
+                    'mimetype': 'application/zip',
+                })
+                _logger.info(f"📎 ZIP '{attachment.name}' copied to task #{task.id} from order line #{order_line.id}")
+        except Exception as e:
+            _logger.error(f"❌ Failed to copy ZIP attachments to task #{task.id}: {str(e)}")
