@@ -84,18 +84,38 @@ export function DtfQuickUploadModal({
         throw new Error(err.error || "Failed to add to cart");
       }
 
+      const data = await response.json();
+
       toast({ title: "Added to Cart", description: "Your DTF order has been added to your cart." });
       onSuccess?.();
       handleClose(true);
 
-      // Redirect to Odoo cart
+      const base = odooUrl || import.meta.env.VITE_ODOO_URL || "https://www.completetransfers.com";
+      const orderId = data?.website_sale_order;
+      const accessToken = data?.access_token;
+      const cartUrl = `${base}/shop/cart`;
+      const isInIframe = window.self !== window.top;
+
       setTimeout(() => {
-        const base = odooUrl || import.meta.env.VITE_ODOO_URL || "https://www.completetransfers.com";
-        const isInIframe = window.self !== window.top;
-        if (isInIframe) {
-          window.parent.location.href = `${base}/shop/cart`;
+        if (orderId && accessToken) {
+          const claimUrl = `${base}/artwork/claim-cart?order_id=${orderId}&access_token=${accessToken}&redirect=${encodeURIComponent(cartUrl)}`;
+          if (isInIframe) {
+            window.parent.postMessage({
+              type: 'claim-cart',
+              orderId,
+              accessToken,
+              cartUrl,
+            }, '*');
+            setTimeout(() => { window.parent.location.href = claimUrl; }, 1500);
+          } else {
+            window.location.href = claimUrl;
+          }
         } else {
-          window.location.href = `${base}/shop/cart`;
+          if (isInIframe) {
+            window.parent.location.href = cartUrl;
+          } else {
+            window.location.href = cartUrl;
+          }
         }
       }, 800);
     } catch (e: any) {
