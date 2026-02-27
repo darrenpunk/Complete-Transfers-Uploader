@@ -6,9 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Lock, Users, Activity, BarChart3, RefreshCw, Search, X, Upload, ShoppingCart, LayoutTemplate, Plus, Trash2, Zap } from "lucide-react";
+import { Lock, Users, Activity, BarChart3, RefreshCw, Search, X, Upload, ShoppingCart, LayoutTemplate, Plus, Trash2, Zap, TrendingUp, FileText, Eye } from "lucide-react";
 import { queryClient } from "@/lib/queryClient";
 import type { TemplateSize } from "@shared/schema";
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+  PieChart, Pie, Cell,
+} from "recharts";
 
 function getAdminToken(): string | null {
   try { return sessionStorage.getItem("admin_token"); } catch { return null; }
@@ -392,6 +396,401 @@ function CustomerTemplatesManager() {
   );
 }
 
+const CHART_COLORS: Record<string, string> = {
+  login: "#60a5fa",
+  upload: "#34d399",
+  pdf_generate: "#a78bfa",
+  add_to_cart: "#fb923c",
+  template_select: "#facc15",
+};
+const PIE_FALLBACK_COLORS = ["#60a5fa","#34d399","#a78bfa","#fb923c","#facc15","#f472b6","#38bdf8"];
+
+function StatCard({ label, value, sub, icon: Icon, gradient }: {
+  label: string; value: number | string; sub: string;
+  icon: any; gradient: string;
+}) {
+  return (
+    <Card className="relative overflow-hidden border-0">
+      <div className={`absolute inset-0 opacity-10 ${gradient}`} />
+      <CardHeader className="pb-1 relative">
+        <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+          <Icon className="h-3.5 w-3.5" />
+          {label}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="relative">
+        <div className="text-3xl font-bold tracking-tight">{value}</div>
+        <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>
+      </CardContent>
+    </Card>
+  );
+}
+
+function AnalyticsTab({
+  activeData, eventsData, statsData, visibleEvents, filteredEvents,
+  allEventTypes, allUsers, hasActiveFilters, clearFilters,
+  userFilter, setUserFilter, eventFilter, setEventFilter, timeFilter, setTimeFilter,
+}: any) {
+  const totalUploads = useMemo(() => visibleEvents.filter((e: any) => e.eventType === "upload").length, [visibleEvents]);
+  const totalCart = useMemo(() => visibleEvents.filter((e: any) => e.eventType === "add_to_cart").length, [visibleEvents]);
+  const totalPdf = useMemo(() => visibleEvents.filter((e: any) => e.eventType === "pdf_generate").length, [visibleEvents]);
+  const conversionRate = totalUploads > 0 ? Math.round((totalCart / totalUploads) * 100) : 0;
+
+  // Build bar chart data from daily stats — one row per date
+  const barChartData = useMemo(() => {
+    if (!statsData?.stats) return [];
+    const visibleStats = statsData.stats.filter((s: any) => !HIDDEN_EVENT_TYPES.has(s.eventType));
+    const dateMap: Record<string, Record<string, number>> = {};
+    visibleStats.forEach((s: any) => {
+      if (!dateMap[s.date]) dateMap[s.date] = {};
+      dateMap[s.date][s.eventType] = s.count;
+    });
+    return Object.entries(dateMap)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, counts]) => ({
+        date: date.slice(5), // MM-DD
+        ...counts,
+      }));
+  }, [statsData]);
+
+  // Build pie chart data from all-time visible events
+  const pieData = useMemo(() => {
+    const counts: Record<string, number> = {};
+    visibleEvents.forEach((e: any) => {
+      counts[e.eventType] = (counts[e.eventType] || 0) + 1;
+    });
+    return Object.entries(counts).map(([name, value]) => ({ name, value }));
+  }, [visibleEvents]);
+
+  // Top users by event count
+  const topUsers = useMemo(() => {
+    const counts: Record<string, number> = {};
+    visibleEvents.forEach((e: any) => {
+      const key = e.userEmail || "Anonymous";
+      counts[key] = (counts[key] || 0) + 1;
+    });
+    return Object.entries(counts)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 6)
+      .map(([email, count]) => ({ email, count }));
+  }, [visibleEvents]);
+
+  const uniqueEventTypes = useMemo(() => {
+    const types = new Set<string>();
+    barChartData.forEach(row => Object.keys(row).forEach(k => k !== "date" && types.add(k)));
+    return Array.from(types);
+  }, [barChartData]);
+
+  // Funnel data
+  const totalSessions = (activeData?.activeCount ?? 0) + (activeData?.idleCount ?? 0);
+  const funnelSteps = [
+    { label: "Sessions now", value: totalSessions, color: "bg-blue-500" },
+    { label: "Uploads (all time)", value: totalUploads, color: "bg-green-500" },
+    { label: "PDFs generated", value: totalPdf, color: "bg-purple-500" },
+    { label: "Added to cart", value: totalCart, color: "bg-orange-500" },
+  ];
+  const funnelMax = Math.max(...funnelSteps.map(s => s.value), 1);
+
+  return (
+    <div className="space-y-6">
+      {/* KPI cards */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <StatCard label="Active Now" value={activeData?.activeCount ?? 0}
+          sub={(activeData?.idleCount ?? 0) > 0 ? `+${activeData.idleCount} idle` : "Last 3 min"}
+          icon={Users} gradient="bg-gradient-to-br from-blue-500 to-cyan-400" />
+        <StatCard label="Total Events" value={statsData?.summary?.totalEvents ?? 0}
+          sub="All time" icon={Activity}
+          gradient="bg-gradient-to-br from-violet-500 to-purple-400" />
+        <StatCard label="Unique Users" value={statsData?.summary?.uniqueUsers ?? 0}
+          sub="With email" icon={BarChart3}
+          gradient="bg-gradient-to-br from-emerald-500 to-teal-400" />
+        <StatCard label="Uploads" value={totalUploads}
+          sub="Files uploaded" icon={Upload}
+          gradient="bg-gradient-to-br from-green-500 to-lime-400" />
+        <StatCard label="Conversion" value={`${conversionRate}%`}
+          sub={`${totalCart} cart adds`} icon={TrendingUp}
+          gradient="bg-gradient-to-br from-orange-500 to-amber-400" />
+      </div>
+
+      {/* Charts row */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Bar chart — events over 7 days */}
+        <Card className="lg:col-span-2">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <BarChart3 className="h-4 w-4 text-primary" />
+              Events — Last 7 Days
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {barChartData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={barChartData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                  <XAxis dataKey="date" tick={{ fontSize: 11, fill: "#9ca3af" }} />
+                  <YAxis tick={{ fontSize: 11, fill: "#9ca3af" }} allowDecimals={false} />
+                  <Tooltip
+                    contentStyle={{ background: "#1f2937", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, fontSize: 12 }}
+                    labelStyle={{ color: "#f9fafb" }}
+                  />
+                  <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
+                  {uniqueEventTypes.map(type => (
+                    <Bar key={type} dataKey={type} stackId="a"
+                      fill={CHART_COLORS[type] || PIE_FALLBACK_COLORS[0]}
+                      radius={uniqueEventTypes.indexOf(type) === uniqueEventTypes.length - 1 ? [3, 3, 0, 0] : [0, 0, 0, 0]}
+                    />
+                  ))}
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-[220px] flex items-center justify-center text-sm text-muted-foreground">No data yet</div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Pie chart — event type breakdown */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <Activity className="h-4 w-4 text-primary" />
+              Event Breakdown
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {pieData.length > 0 ? (
+              <div>
+                <ResponsiveContainer width="100%" height={160}>
+                  <PieChart>
+                    <Pie data={pieData} cx="50%" cy="50%" innerRadius={45} outerRadius={72}
+                      paddingAngle={3} dataKey="value">
+                      {pieData.map((entry, i) => (
+                        <Cell key={entry.name} fill={CHART_COLORS[entry.name] || PIE_FALLBACK_COLORS[i % PIE_FALLBACK_COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{ background: "#1f2937", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, fontSize: 12 }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="space-y-1.5 mt-1">
+                  {pieData.map((entry, i) => (
+                    <div key={entry.name} className="flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ background: CHART_COLORS[entry.name] || PIE_FALLBACK_COLORS[i % PIE_FALLBACK_COLORS.length] }} />
+                        <span className="text-muted-foreground">{entry.name}</span>
+                      </div>
+                      <span className="font-mono font-medium">{entry.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="h-[220px] flex items-center justify-center text-sm text-muted-foreground">No data yet</div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Funnel + Top Users row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Conversion funnel */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <TrendingUp className="h-4 w-4 text-primary" />
+              Conversion Funnel
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 pt-1">
+            {funnelSteps.map((step, i) => (
+              <div key={step.label}>
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="text-muted-foreground">{step.label}</span>
+                  <span className="font-mono font-semibold">{step.value}</span>
+                </div>
+                <div className="h-7 bg-muted rounded-md overflow-hidden">
+                  <div
+                    className={`h-full ${step.color} rounded-md flex items-center px-2 text-xs font-medium text-white transition-all duration-500`}
+                    style={{ width: `${Math.max((step.value / funnelMax) * 100, step.value > 0 ? 4 : 0)}%`, minWidth: step.value > 0 ? 28 : 0 }}
+                  >
+                    {step.value > 0 && (i > 0 ? `${Math.round((step.value / funnelSteps[i - 1].value) * 100) || 0}%` : "")}
+                  </div>
+                </div>
+              </div>
+            ))}
+            <p className="text-xs text-muted-foreground pt-1">Upload → cart conversion: <span className="font-semibold text-orange-400">{conversionRate}%</span></p>
+          </CardContent>
+        </Card>
+
+        {/* Top users */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <Users className="h-4 w-4 text-primary" />
+              Top Active Users
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-1">
+            {topUsers.length > 0 ? (
+              <div className="space-y-2">
+                {topUsers.map(({ email, count }, i) => (
+                  <div key={email} className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground w-4 text-right">{i + 1}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="h-6 bg-muted rounded overflow-hidden">
+                        <div
+                          className="h-full bg-primary/40 rounded flex items-center px-2"
+                          style={{ width: `${Math.max((count / topUsers[0].count) * 100, 8)}%` }}
+                        />
+                      </div>
+                    </div>
+                    <span className="text-xs truncate max-w-[140px] text-muted-foreground" title={email}>{email}</span>
+                    <span className="text-xs font-mono font-semibold w-8 text-right">{count}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground py-4 text-center">No user data yet</p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Active sessions */}
+      {activeData?.sessions?.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <Eye className="h-4 w-4 text-primary" />
+              Live Sessions
+              <span className="ml-1 inline-flex items-center gap-1">
+                <span className="h-2 w-2 rounded-full bg-green-400 animate-pulse" />
+                <span className="text-xs text-green-400 font-normal">{activeData.activeCount} active</span>
+              </span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>User</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Page</TableHead>
+                  <TableHead>Last Seen</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {activeData.sessions.map((s: any) => (
+                  <TableRow key={s.sessionId}>
+                    <TableCell className="text-xs">{s.userEmail || "Anonymous"}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={s.status === "active"
+                        ? "bg-green-500/20 text-green-400 border-green-500/30"
+                        : "bg-gray-500/20 text-gray-400 border-gray-500/30"}>
+                        {s.status === "active" ? "Active" : "Idle"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="font-mono text-xs text-muted-foreground">{s.currentPage || "/"}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{timeSince(s.lastSeen)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Recent Activity */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <FileText className="h-4 w-4 text-primary" />
+              Recent Activity
+            </CardTitle>
+            {hasActiveFilters && (
+              <Button variant="ghost" size="sm" onClick={clearFilters} className="h-7 text-xs">
+                <X className="h-3 w-3 mr-1" />
+                Clear filters
+              </Button>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-3 pt-2">
+            <Select value={timeFilter} onValueChange={setTimeFilter}>
+              <SelectTrigger className="w-[150px] h-8 text-xs">
+                <SelectValue placeholder="Time range" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All time</SelectItem>
+                <SelectItem value="5">Last 5 min</SelectItem>
+                <SelectItem value="15">Last 15 min</SelectItem>
+                <SelectItem value="30">Last 30 min</SelectItem>
+                <SelectItem value="60">Last hour</SelectItem>
+                <SelectItem value="360">Last 6 hours</SelectItem>
+                <SelectItem value="1440">Last 24 hours</SelectItem>
+              </SelectContent>
+            </Select>
+            <div className="relative">
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+              <Input placeholder="Filter by user..." value={userFilter} onChange={(e) => setUserFilter(e.target.value)}
+                className="h-8 w-[190px] text-xs pl-7" list="user-suggestions" />
+              <datalist id="user-suggestions">{allUsers.map((u: string) => <option key={u} value={u} />)}</datalist>
+            </div>
+            <Select value={eventFilter} onValueChange={setEventFilter}>
+              <SelectTrigger className="w-[150px] h-8 text-xs">
+                <SelectValue placeholder="Event type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All events</SelectItem>
+                {allEventTypes.map((t: string) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            {hasActiveFilters && (
+              <span className="flex items-center text-xs text-muted-foreground">
+                {filteredEvents.length} of {eventsData?.events?.length ?? 0} events
+              </span>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent>
+          {filteredEvents.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Time</TableHead>
+                  <TableHead>User</TableHead>
+                  <TableHead>Event</TableHead>
+                  <TableHead>Details</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredEvents.map((e: any) => (
+                  <TableRow key={e.id}>
+                    <TableCell className="text-xs whitespace-nowrap text-muted-foreground">{formatTime(e.createdAt)}</TableCell>
+                    <TableCell className="text-xs">{e.userEmail || <span className="text-muted-foreground italic">Anonymous</span>}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={eventColors[e.eventType] || ""}>
+                        {e.eventType}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-xs font-mono max-w-[200px] truncate text-muted-foreground">
+                      {e.metadata ? JSON.stringify(e.metadata) : "—"}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <p className="text-sm text-muted-foreground py-8 text-center">
+              {hasActiveFilters ? "No events match your filters" : "No events recorded yet"}
+            </p>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 function Dashboard() {
   const [activeTab, setActiveTab] = useState<"analytics" | "customer-templates">("analytics");
   const [userFilter, setUserFilter] = useState("");
@@ -508,242 +907,23 @@ function Dashboard() {
         )}
 
         {activeTab === "analytics" && (
-        <>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                Active Users
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{activeData?.activeCount ?? 0}</div>
-              <p className="text-xs text-muted-foreground">
-                {(activeData?.idleCount ?? 0) > 0 
-                  ? `+ ${activeData.idleCount} idle`
-                  : "Last 3 minutes"}
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <Activity className="h-4 w-4" />
-                Total Events
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{statsData?.summary?.totalEvents ?? 0}</div>
-              <p className="text-xs text-muted-foreground">All time</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <BarChart3 className="h-4 w-4" />
-                Unique Users
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{statsData?.summary?.uniqueUsers ?? 0}</div>
-              <p className="text-xs text-muted-foreground">With email</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <Upload className="h-4 w-4" />
-                Total Uploads
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{visibleEvents.filter((e: any) => e.eventType === 'upload').length}</div>
-              <p className="text-xs text-muted-foreground">Files uploaded</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <ShoppingCart className="h-4 w-4" />
-                Total Add to Cart
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{visibleEvents.filter((e: any) => e.eventType === 'add_to_cart').length}</div>
-              <p className="text-xs text-muted-foreground">Orders added</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {activeData?.sessions?.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm font-medium">Active Sessions</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>User</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Page</TableHead>
-                    <TableHead>Last Seen</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {activeData.sessions.map((s: any) => (
-                    <TableRow key={s.sessionId}>
-                      <TableCell>{s.userEmail || "Anonymous"}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className={s.status === "active" 
-                          ? "bg-green-500/20 text-green-400 border-green-500/30" 
-                          : "bg-gray-500/20 text-gray-400 border-gray-500/30"}>
-                          {s.status === "active" ? "Active" : "Idle"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="font-mono text-xs">{s.currentPage || "/"}</TableCell>
-                      <TableCell>{timeSince(s.lastSeen)}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        )}
-
-        {statsData?.stats?.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm font-medium">Daily Stats (Last 7 Days)</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Event Type</TableHead>
-                    <TableHead className="text-right">Count</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {statsData.stats.filter((s: any) => !HIDDEN_EVENT_TYPES.has(s.eventType)).map((s: any, i: number) => (
-                    <TableRow key={i}>
-                      <TableCell>{s.date}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className={eventColors[s.eventType] || ""}>
-                          {s.eventType}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right font-mono">{s.count}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        )}
-
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium">Recent Activity</CardTitle>
-              {hasActiveFilters && (
-                <Button variant="ghost" size="sm" onClick={clearFilters} className="h-7 text-xs">
-                  <X className="h-3 w-3 mr-1" />
-                  Clear filters
-                </Button>
-              )}
-            </div>
-            <div className="flex flex-wrap gap-3 pt-2">
-              <Select value={timeFilter} onValueChange={setTimeFilter}>
-                <SelectTrigger className="w-[160px] h-8 text-xs">
-                  <SelectValue placeholder="Time range" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All time</SelectItem>
-                  <SelectItem value="5">Last 5 minutes</SelectItem>
-                  <SelectItem value="15">Last 15 minutes</SelectItem>
-                  <SelectItem value="30">Last 30 minutes</SelectItem>
-                  <SelectItem value="60">Last hour</SelectItem>
-                  <SelectItem value="360">Last 6 hours</SelectItem>
-                  <SelectItem value="1440">Last 24 hours</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <div className="relative">
-                <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
-                <Input
-                  placeholder="Filter by user..."
-                  value={userFilter}
-                  onChange={(e) => setUserFilter(e.target.value)}
-                  className="h-8 w-[200px] text-xs pl-7"
-                  list="user-suggestions"
-                />
-                <datalist id="user-suggestions">
-                  {allUsers.map(u => <option key={u} value={u} />)}
-                </datalist>
-              </div>
-
-              <Select value={eventFilter} onValueChange={setEventFilter}>
-                <SelectTrigger className="w-[160px] h-8 text-xs">
-                  <SelectValue placeholder="Event type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All events</SelectItem>
-                  {allEventTypes.map(t => (
-                    <SelectItem key={t} value={t}>{t}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {hasActiveFilters && (
-                <div className="flex items-center text-xs text-muted-foreground">
-                  Showing {filteredEvents.length} of {eventsData?.events?.length ?? 0} events
-                </div>
-              )}
-            </div>
-          </CardHeader>
-          <CardContent>
-            {filteredEvents.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Time</TableHead>
-                    <TableHead>User</TableHead>
-                    <TableHead>Event</TableHead>
-                    <TableHead>Details</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredEvents.map((e: any) => (
-                    <TableRow key={e.id}>
-                      <TableCell className="text-xs whitespace-nowrap">{formatTime(e.createdAt)}</TableCell>
-                      <TableCell className="text-xs">{e.userEmail || "Anonymous"}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className={eventColors[e.eventType] || ""}>
-                          {e.eventType}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-xs font-mono max-w-[200px] truncate">
-                        {e.metadata ? JSON.stringify(e.metadata) : "\u2014"}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            ) : (
-              <p className="text-sm text-muted-foreground py-4 text-center">
-                {hasActiveFilters ? "No events match your filters" : "No events recorded yet"}
-              </p>
-            )}
-          </CardContent>
-        </Card>
-        </>
+        <AnalyticsTab
+          activeData={activeData}
+          eventsData={eventsData}
+          statsData={statsData}
+          visibleEvents={visibleEvents}
+          filteredEvents={filteredEvents}
+          allEventTypes={allEventTypes}
+          allUsers={allUsers}
+          hasActiveFilters={hasActiveFilters}
+          clearFilters={clearFilters}
+          userFilter={userFilter}
+          setUserFilter={setUserFilter}
+          eventFilter={eventFilter}
+          setEventFilter={setEventFilter}
+          timeFilter={timeFilter}
+          setTimeFilter={setTimeFilter}
+        />
         )}
       </div>
     </div>
