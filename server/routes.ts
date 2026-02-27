@@ -6456,7 +6456,7 @@ export async function registerRoutes(app: express.Application) {
       let zipDropboxPath: string | undefined;
       let zipTooLarge = false;
       let isRepeatOrder = false;
-      const ZIP_INLINE_MAX_BYTES = 5 * 1024 * 1024; // 5MB fallback limit for inline base64
+      const ZIP_INLINE_MAX_BYTES = 8 * 1024 * 1024; // 8MB limit for inline base64
       if (!isVectorizationOnly && projectId !== 'vector-service') {
         try {
           const proj = await storage.getProject(projectId);
@@ -6467,25 +6467,31 @@ export async function registerRoutes(app: express.Application) {
             if (fs.existsSync(zipFilePath)) {
               const zipStat = fs.statSync(zipFilePath);
               const zipSizeMB = (zipStat.size / 1024 / 1024).toFixed(1);
-              console.log(`📎 ZIP file found (${zipSizeMB}MB): ${zipFileName} — attempting Dropbox upload`);
-              // Primary: upload to Dropbox and send the path to Odoo
-              try {
-                const { uploadFileToDropbox } = await import('./dropbox-service');
-                const zipBuffer = fs.readFileSync(zipFilePath);
-                const dropboxDest = `/repeat-orders/${projectId}/${zipFileName}`;
-                const uploaded = await uploadFileToDropbox(zipBuffer, dropboxDest);
-                zipDropboxPath = uploaded.pathDisplay;
-                console.log(`✅ ZIP uploaded to Dropbox: ${zipDropboxPath}`);
-              } catch (dbErr) {
-                console.warn(`⚠️ Dropbox upload failed for ZIP, falling back to inline base64:`, dbErr);
-                // Fallback: send inline base64 if file is small enough
-                if (zipStat.size <= ZIP_INLINE_MAX_BYTES) {
-                  const zipBuffer = fs.readFileSync(zipFilePath);
-                  zipBase64 = zipBuffer.toString('base64');
-                  console.log(`📎 Inline fallback ZIP (${zipSizeMB}MB): ${zipFileName}`);
-                } else {
+              console.log(`📎 ZIP file found (${zipSizeMB}MB): ${zipFileName}`);
+              const zipBuffer = fs.readFileSync(zipFilePath);
+              if (zipStat.size <= ZIP_INLINE_MAX_BYTES) {
+                // Primary: send inline base64 — Odoo just decodes and attaches (no Dropbox credentials needed)
+                zipBase64 = zipBuffer.toString('base64');
+                console.log(`📎 Sending ZIP inline as base64 (${zipSizeMB}MB): ${zipFileName}`);
+                // Also upload to Dropbox as a backup archive (fire-and-forget)
+                import('./dropbox-service').then(({ uploadFileToDropbox }) => {
+                  const dropboxDest = `/repeat-orders/${projectId}/${zipFileName}`;
+                  uploadFileToDropbox(zipBuffer, dropboxDest)
+                    .then(r => console.log(`📦 ZIP archived to Dropbox: ${r.pathDisplay}`))
+                    .catch(e => console.warn(`⚠️ Dropbox archive failed (non-critical):`, e));
+                });
+              } else {
+                // File too large for inline — upload to Dropbox and send path
+                console.log(`📎 ZIP too large for inline (${zipSizeMB}MB) — uploading to Dropbox`);
+                try {
+                  const { uploadFileToDropbox } = await import('./dropbox-service');
+                  const dropboxDest = `/repeat-orders/${projectId}/${zipFileName}`;
+                  const uploaded = await uploadFileToDropbox(zipBuffer, dropboxDest);
+                  zipDropboxPath = uploaded.pathDisplay;
+                  console.log(`✅ Large ZIP uploaded to Dropbox: ${zipDropboxPath}`);
+                } catch (dbErr) {
                   zipTooLarge = true;
-                  console.warn(`⚠️ ZIP too large for inline fallback (${zipSizeMB}MB > 5MB), will add note only`);
+                  console.warn(`⚠️ Dropbox upload failed for large ZIP (${zipSizeMB}MB):`, dbErr);
                 }
               }
             } else {
@@ -6513,7 +6519,25 @@ export async function registerRoutes(app: express.Application) {
       }
 
       const ctWebsiteId = process.env.VITE_ODOO_CT_WEBSITE_ID || '2';
-      const projectName = (projectData.name || 'artwork').replace(/_/g, ' ');
+      // Replace generic defaults with a template-based name so Odoo tasks are identifiable
+      let rawProjectName = (projectData.name || '').replace(/_/g, ' ').trim();
+      if (!rawProjectName || rawProjectName.toLowerCase() === 'untitled project') {
+        const templateLabel = (() => {
+          if (!projectData.templateSize) return '';
+          const t = projectData.templateSize as string;
+          if (t.startsWith('applique-')) return 'Applique Order';
+          if (t.startsWith('dtf-')) return 'DTF Order';
+          if (t.startsWith('single-')) return 'Single Colour Order';
+          if (t.startsWith('metallic-')) return 'Metallic Transfer';
+          if (t.startsWith('sublimation-')) return 'Sublimation Order';
+          if (t.startsWith('woven-')) return 'Custom Badge Order';
+          if (t.startsWith('reflective-')) return 'Reflective Transfer';
+          if (t.startsWith('hd-')) return 'HD Transfer';
+          return 'Artwork Order';
+        })();
+        rawProjectName = templateLabel || 'Artwork Order';
+      }
+      const projectName = rawProjectName;
       const orderQty = projectData.totalQuantity || projectData.quantity || 1;
       const artworkFilename = `${projectName} qty${orderQty}.pdf`;
       const requestBody = {
