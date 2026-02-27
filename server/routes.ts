@@ -8127,6 +8127,80 @@ ${svgClose}`;
     });
   });
 
+  // === CUSTOMER FEATURES ===
+  // Returns feature flags for a customer (e.g. DTF Quick Upload button)
+  app.get('/api/customer-features', async (req, res) => {
+    const email = req.query.email as string;
+    if (!email) return res.json({ dtfQuickUpload: false });
+    try {
+      const assignments = await storage.getCustomerTemplates(email);
+      const dtfQuickUpload = assignments.some((a: any) => a.templateId === '__dtf_quick_upload__');
+      res.json({ dtfQuickUpload });
+    } catch (e) {
+      res.json({ dtfQuickUpload: false });
+    }
+  });
+
+  // === DTF QUICK UPLOAD ===
+  // Bypasses the canvas and adds a customer-supplied PDF directly to Odoo cart
+  app.post('/api/quick-upload-dtf', async (req, res) => {
+    try {
+      const { pdfBase64, quantity, partnerEmail, projectName } = req.body;
+      if (!pdfBase64) return res.status(400).json({ error: 'PDF is required' });
+      if (!quantity || quantity < 1) return res.status(400).json({ error: 'Valid quantity is required' });
+
+      const { randomUUID } = await import('crypto');
+      const projectId = randomUUID();
+      const odooBase = process.env.VITE_ODOO_URL || 'https://www.completetransfers.com';
+      const odooApiUrl = `${odooBase}/artwork/api/projects/${projectId}/add-to-cart`;
+
+      const name = (projectName || `DTF Quick Upload`).replace(/_/g, ' ');
+      const artworkFilename = `${name} qty${quantity}.pdf`;
+      const ctWebsiteId = process.env.VITE_ODOO_CT_WEBSITE_ID || '2';
+
+      const requestBody = {
+        name,
+        templateSize: 'dtf-large',
+        quantity: Number(quantity),
+        totalQuantity: Number(quantity),
+        partnerEmail: partnerEmail || undefined,
+        pdfBase64,
+        artworkFilename,
+        product_code: 'CTDF1000',
+        source: 'completetransfers',
+        website_id: parseInt(ctWebsiteId, 10),
+      };
+
+      const clientCookies = req.headers.cookie || '';
+      console.log(`🚀 DTF Quick Upload: proxying to ${odooApiUrl}`);
+
+      const response = await fetch(odooApiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Cookie': clientCookies,
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      const responseText = await response.text();
+      console.log(`📨 Odoo quick-upload response: ${response.status} — ${responseText.substring(0, 300)}`);
+
+      if (!response.ok) {
+        return res.status(response.status).json({ error: 'Failed to add to cart', details: responseText });
+      }
+
+      try {
+        res.json(JSON.parse(responseText));
+      } catch {
+        res.send(responseText);
+      }
+    } catch (e: any) {
+      console.error('❌ DTF quick-upload error:', e);
+      res.status(500).json({ error: e.message || 'Internal error' });
+    }
+  });
+
   // === SANDBOXED ANALYTICS ===
   try {
     const { registerAnalyticsRoutes } = await import('./analytics-routes');

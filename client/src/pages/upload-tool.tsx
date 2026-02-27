@@ -28,6 +28,7 @@ import { ArtworkRequirementsModal } from "@/components/artwork-requirements-moda
 import { RasterWarningModal } from "@/components/raster-warning-modal";
 import { ExternalFileLinkModal } from "@/components/external-file-link-modal";
 import { DropboxUploadModal } from "@/components/dropbox-upload-modal";
+import { DtfQuickUploadModal } from "@/components/dtf-quick-upload-modal";
 import { UploadGuidanceModal } from "@/components/upload-guidance-modal";
 import { EmbroideryElementSelector } from "@/components/embroidery-element-selector";
 import { EmbroideryWorkflowModal } from "@/components/embroidery-workflow-modal";
@@ -62,6 +63,7 @@ export default function UploadTool() {
   const [showArtworkRequirementsModal, setShowArtworkRequirementsModal] = useState(false);
   const [showExternalFileLinkModal, setShowExternalFileLinkModal] = useState(false);
   const [showDropboxUploadModal, setShowDropboxUploadModal] = useState(false);
+  const [showDtfQuickUpload, setShowDtfQuickUpload] = useState(false);
   const [showUploadGuidanceModal, setShowUploadGuidanceModal] = useState(false);
   const [showLeftPanel, setShowLeftPanel] = useState(false);
   const [showRightPanel, setShowRightPanel] = useState(false);
@@ -2119,6 +2121,11 @@ export default function UploadTool() {
             const email = sessionStorage.getItem('partner_email') || '';
             navigate(email ? `/order-history?email=${encodeURIComponent(email)}` : "/order-history");
           }}
+          partnerEmail={partnerEmail}
+          onQuickUploadDtf={() => {
+            setShowProductLauncher(false);
+            setShowDtfQuickUpload(true);
+          }}
         />
         
         <TemplateSelectorModal
@@ -2556,6 +2563,14 @@ export default function UploadTool() {
       <ArtworkRequirementsModal
         open={showArtworkRequirementsModal}
         onOpenChange={setShowArtworkRequirementsModal}
+      />
+
+      {/* DTF Quick Upload Modal */}
+      <DtfQuickUploadModal
+        open={showDtfQuickUpload}
+        onOpenChange={setShowDtfQuickUpload}
+        partnerEmail={partnerEmail}
+        odooUrl={odooUrlFromParams}
       />
 
       {/* Vectorization Service Form */}

@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Lock, Users, Activity, BarChart3, RefreshCw, Search, X, Upload, ShoppingCart, LayoutTemplate, Plus, Trash2 } from "lucide-react";
+import { Lock, Users, Activity, BarChart3, RefreshCw, Search, X, Upload, ShoppingCart, LayoutTemplate, Plus, Trash2, Zap } from "lucide-react";
 import { queryClient } from "@/lib/queryClient";
 import type { TemplateSize } from "@shared/schema";
 
@@ -119,6 +119,114 @@ const eventColors: Record<string, string> = {
   template_select: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
 };
 
+const DTF_QUICK_UPLOAD_ID = "__dtf_quick_upload__";
+
+function CustomerFeaturesManager() {
+  const [featureEmail, setFeatureEmail] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const { data: assignments, refetch } = useQuery<any[]>({
+    queryKey: ["admin-customer-templates"],
+    queryFn: () => adminFetch("/api/admin/customer-templates"),
+  });
+
+  const enabledEmails = useMemo(() => {
+    if (!assignments) return [] as string[];
+    return assignments
+      .filter((a: any) => a.templateId === DTF_QUICK_UPLOAD_ID)
+      .map((a: any) => ({ id: a.id, email: a.customerCode }));
+  }, [assignments]);
+
+  const handleEnable = async () => {
+    if (!featureEmail.trim()) return;
+    if (enabledEmails.some((e: any) => e.email === featureEmail.trim())) return;
+    setSaving(true);
+    try {
+      const token = getAdminToken();
+      await fetch("/api/admin/customer-templates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ customerCode: featureEmail.trim(), templateId: DTF_QUICK_UPLOAD_ID }),
+      });
+      setFeatureEmail("");
+      refetch();
+    } catch (e) {
+      console.error("Failed to enable feature", e);
+    }
+    setSaving(false);
+  };
+
+  const handleDisable = async (id: string) => {
+    const token = getAdminToken();
+    await fetch(`/api/admin/customer-templates/${id}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    refetch();
+  };
+
+  return (
+    <div className="space-y-6 mt-8">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm font-medium flex items-center gap-2">
+            <Zap className="h-4 w-4 text-yellow-400" />
+            Customer Features
+          </CardTitle>
+          <p className="text-xs text-muted-foreground">
+            Enable special features for specific customers. These are separate from template restrictions.
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="border rounded-lg p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <Zap className="h-4 w-4 text-yellow-400" />
+              <span className="text-sm font-medium">DTF 1000×550 Quick Upload Button</span>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Shows a special "Quick Upload" card on the product selector page. The customer uploads a PDF directly and it goes straight to cart — no canvas step.
+            </p>
+            <div className="flex gap-2 items-end">
+              <div className="space-y-1 flex-1">
+                <label className="text-xs text-muted-foreground">Customer Email</label>
+                <Input
+                  placeholder="customer@example.com"
+                  value={featureEmail}
+                  onChange={(e) => setFeatureEmail(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleEnable()}
+                  className="h-9"
+                />
+              </div>
+              <Button onClick={handleEnable} disabled={saving || !featureEmail.trim()} size="sm" className="h-9">
+                <Plus className="h-4 w-4 mr-1" />
+                Enable
+              </Button>
+            </div>
+            {enabledEmails.length > 0 ? (
+              <div className="space-y-2">
+                <p className="text-xs text-muted-foreground font-medium">Enabled for:</p>
+                {enabledEmails.map((e: any) => (
+                  <div key={e.id} className="flex items-center justify-between bg-yellow-500/10 border border-yellow-500/20 rounded px-3 py-2">
+                    <span className="text-sm text-yellow-300">{e.email}</span>
+                    <button
+                      onClick={() => handleDisable(e.id)}
+                      className="text-muted-foreground hover:text-destructive transition-colors"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground italic">Not enabled for any customers yet.</p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 function CustomerTemplatesManager() {
   const [newCustomerCode, setNewCustomerCode] = useState("");
   const [newTemplateId, setNewTemplateId] = useState("");
@@ -137,6 +245,7 @@ function CustomerTemplatesManager() {
     if (!assignments) return {};
     const grouped: Record<string, any[]> = {};
     for (const a of assignments) {
+      if (a.templateId === DTF_QUICK_UPLOAD_ID) continue; // Managed in CustomerFeaturesManager
       if (!grouped[a.customerCode]) grouped[a.customerCode] = [];
       grouped[a.customerCode].push(a);
     }
@@ -391,7 +500,12 @@ function Dashboard() {
           </div>
         </div>
 
-        {activeTab === "customer-templates" && <CustomerTemplatesManager />}
+        {activeTab === "customer-templates" && (
+          <>
+            <CustomerTemplatesManager />
+            <CustomerFeaturesManager />
+          </>
+        )}
 
         {activeTab === "analytics" && (
         <>

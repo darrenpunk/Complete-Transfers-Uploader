@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import CompleteTransferLogo from "./complete-transfer-logo";
 import { OnboardingTutorial } from "./onboarding-tutorial";
-import { Palette, ShoppingBag, GraduationCap } from "lucide-react";
+import { Palette, ShoppingBag, GraduationCap, Upload } from "lucide-react";
 import type { TemplateSize } from "@shared/schema";
 
 // Import product icons
@@ -117,6 +117,8 @@ interface ProductLauncherModalProps {
   onSelectProduct: (productId: string) => void;
   onOpenVectorizationForm?: () => void;
   onViewOrders?: () => void;
+  onQuickUploadDtf?: () => void;
+  partnerEmail?: string | null;
   inline?: boolean;
 }
 
@@ -125,9 +127,22 @@ function ProductContent({
   onSelectProduct,
   onOpenVectorizationForm,
   onViewOrders,
+  onQuickUploadDtf,
+  partnerEmail,
   hideHeader = false,
 }: Omit<ProductLauncherModalProps, 'open' | 'inline'> & { hideHeader?: boolean }) {
   const [showTutorial, setShowTutorial] = useState(false);
+  const [hasDtfQuickUpload, setHasDtfQuickUpload] = useState(false);
+
+  useEffect(() => {
+    if (!partnerEmail) return;
+    fetch(`/api/customer-features?email=${encodeURIComponent(partnerEmail)}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.dtfQuickUpload) setHasDtfQuickUpload(true);
+      })
+      .catch(() => {});
+  }, [partnerEmail]);
 
   const handleProductSelect = (productId: string) => {
     if (productId === "vectorization-service" && onOpenVectorizationForm) {
@@ -180,6 +195,42 @@ function ProductContent({
         
         <div className="relative px-2 md:px-6 pt-2 pb-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {/* DTF Quick Upload card — only shown to enabled customers */}
+            {hasDtfQuickUpload && onQuickUploadDtf && (
+              <Card
+                className="cursor-pointer hover:shadow-lg transition-shadow duration-200 border border-yellow-500/50 bg-yellow-500/5 hover:border-yellow-400"
+                onClick={() => { onClose(); onQuickUploadDtf(); }}
+                data-testid="product-card-dtf-quick-upload"
+              >
+                <CardContent className="p-4 text-center space-y-3 bg-[#020202]">
+                  <div className="mx-auto w-16 h-16 flex items-center justify-center">
+                    <Upload className="w-10 h-10 text-yellow-400" />
+                  </div>
+                  <div className="space-y-2">
+                    <h3 className="font-semibold text-sm text-yellow-300">
+                      DTF 1000×550 Quick Upload
+                    </h3>
+                    <p className="text-xs text-gray-400 leading-relaxed">
+                      Upload a print-ready PDF directly to cart — no design step needed
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full text-xs bg-transparent border-yellow-500/50 text-yellow-300 hover:bg-yellow-500/10"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onClose();
+                      onQuickUploadDtf();
+                    }}
+                    data-testid="button-dtf-quick-upload"
+                  >
+                    Quick Upload
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+
             {productCategories.map((product) => (
               <Card 
                 key={product.id}
@@ -239,6 +290,8 @@ export default function ProductLauncherModal({
   onSelectProduct,
   onOpenVectorizationForm,
   onViewOrders,
+  onQuickUploadDtf,
+  partnerEmail,
   inline = false,
 }: ProductLauncherModalProps) {
   if (!open) return null;
@@ -251,6 +304,8 @@ export default function ProductLauncherModal({
           onSelectProduct={onSelectProduct}
           onOpenVectorizationForm={onOpenVectorizationForm}
           onViewOrders={onViewOrders}
+          onQuickUploadDtf={onQuickUploadDtf}
+          partnerEmail={partnerEmail}
         />
       </div>
     );
@@ -273,6 +328,8 @@ export default function ProductLauncherModal({
           onSelectProduct={onSelectProduct}
           onOpenVectorizationForm={onOpenVectorizationForm}
           onViewOrders={onViewOrders}
+          onQuickUploadDtf={onQuickUploadDtf}
+          partnerEmail={partnerEmail}
           hideHeader
         />
         <div className="flex justify-center pt-4 border-t border-gray-700">
