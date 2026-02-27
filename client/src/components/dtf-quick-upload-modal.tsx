@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useDropzone } from "react-dropzone";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,7 @@ export function DtfQuickUploadModal({
   const [quantity, setQuantity] = useState<number>(50);
   const [projectName, setProjectName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const wasSubmittedRef = useRef(false);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
@@ -39,11 +40,12 @@ export function DtfQuickUploadModal({
     maxFiles: 1,
   });
 
-  const handleClose = () => {
-    if (isSubmitting) return;
+  const handleClose = (afterSuccess = false) => {
+    if (isSubmitting && !afterSuccess) return;
     setPdfFile(null);
     setQuantity(50);
     setProjectName("");
+    wasSubmittedRef.current = afterSuccess;
     onOpenChange(false);
   };
 
@@ -83,8 +85,8 @@ export function DtfQuickUploadModal({
       }
 
       toast({ title: "Added to Cart", description: "Your DTF order has been added to your cart." });
-      handleClose();
       onSuccess?.();
+      handleClose(true);
 
       // Redirect to Odoo cart
       setTimeout(() => {

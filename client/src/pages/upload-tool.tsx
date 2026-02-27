@@ -64,6 +64,7 @@ export default function UploadTool() {
   const [showExternalFileLinkModal, setShowExternalFileLinkModal] = useState(false);
   const [showDropboxUploadModal, setShowDropboxUploadModal] = useState(false);
   const [showDtfQuickUpload, setShowDtfQuickUpload] = useState(false);
+  const dtfSubmittedRef = useRef(false);
   const [showUploadGuidanceModal, setShowUploadGuidanceModal] = useState(false);
   const [showLeftPanel, setShowLeftPanel] = useState(false);
   const [showRightPanel, setShowRightPanel] = useState(false);
@@ -2100,7 +2101,7 @@ export default function UploadTool() {
   };
 
   if (!currentProject) {
-    const anyModalOpen = showProductLauncher || showTemplateSelector || showAppliqueBadgesModal || showVectorizationForm;
+    const anyModalOpen = showProductLauncher || showTemplateSelector || showAppliqueBadgesModal || showVectorizationForm || showDtfQuickUpload;
     return (
       <div className="min-h-screen bg-background">
         {!anyModalOpen && (
@@ -2172,6 +2173,22 @@ export default function UploadTool() {
           open={showVectorizationForm}
           onOpenChange={setShowVectorizationForm}
           partnerEmail={partnerEmail}
+        />
+
+        <DtfQuickUploadModal
+          open={showDtfQuickUpload}
+          onOpenChange={(open) => {
+            setShowDtfQuickUpload(open);
+            if (!open) {
+              if (!dtfSubmittedRef.current) {
+                setShowProductLauncher(true);
+              }
+              dtfSubmittedRef.current = false;
+            }
+          }}
+          onSuccess={() => { dtfSubmittedRef.current = true; }}
+          partnerEmail={partnerEmail}
+          odooUrl={odooUrlFromParams}
         />
       </div>
     );
