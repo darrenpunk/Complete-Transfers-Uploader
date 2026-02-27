@@ -24,7 +24,7 @@ export function DtfQuickUploadModal({
 }: DtfQuickUploadModalProps) {
   const { toast } = useToast();
   const [pdfFile, setPdfFile] = useState<File | null>(null);
-  const [quantity, setQuantity] = useState<number>(50);
+  const [quantity, setQuantity] = useState<number>(1);
   const [projectName, setProjectName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const wasSubmittedRef = useRef(false);
@@ -43,7 +43,7 @@ export function DtfQuickUploadModal({
   const handleClose = (afterSuccess = false) => {
     if (isSubmitting && !afterSuccess) return;
     setPdfFile(null);
-    setQuantity(50);
+    setQuantity(1);
     setProjectName("");
     wasSubmittedRef.current = afterSuccess;
     onOpenChange(false);
