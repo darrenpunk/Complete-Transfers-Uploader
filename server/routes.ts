@@ -6523,8 +6523,8 @@ export async function registerRoutes(app: express.Application) {
       let rawProjectName = (projectData.name || '').replace(/_/g, ' ').trim();
       if (!rawProjectName || rawProjectName.toLowerCase() === 'untitled project') {
         if (zipFileName) {
-          // Use the ZIP filename (without extension) as the project name
-          rawProjectName = path.parse(zipFileName).name.replace(/[-_]/g, ' ').trim();
+          // Use the ZIP filename as the project name
+          rawProjectName = zipFileName.replace(/[-_]/g, ' ').trim();
         } else {
           const templateLabel = (() => {
             if (!projectData.templateSize) return '';
