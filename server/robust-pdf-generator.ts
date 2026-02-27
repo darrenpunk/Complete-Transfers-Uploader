@@ -1361,14 +1361,36 @@ grestore`;
         const elemAspect = elemWPts / elemHPts;
         const aspectDiff = Math.abs(pdfAspect - elemAspect);
         
-        if (aspectDiff > 0.15 && pdfW > elemWPts + 20 && pdfH > elemHPts + 20) {
+        // Trigger auto-crop when aspect ratios differ AND the PDF page is larger than the element
+        // in EITHER dimension (not just both). This catches the case where a 100×70mm PDF page
+        // has only 100×61.88mm of actual content — same width but extra height — causing squash.
+        if (aspectDiff > 0.05 && (pdfH > elemHPts + 5 || pdfW > elemWPts + 5)) {
           console.log(`⚠️ ASPECT RATIO MISMATCH: PDF page ${pdfW.toFixed(1)}×${pdfH.toFixed(1)}pts (${pdfAspect.toFixed(2)}) vs element ${elemWPts.toFixed(1)}×${elemHPts.toFixed(1)}pts (${elemAspect.toFixed(2)})`);
-          console.log(`📐 Difference: ${aspectDiff.toFixed(3)} - PDF page is larger than element in both dimensions, needs cropping`);
+          console.log(`📐 Difference: ${aspectDiff.toFixed(3)} - PDF page is larger than element in at least one dimension, needs cropping`);
           
           const originalPdfBounds = logo.originalPdfBounds as any;
+          let boundsForCrop = null;
           if (originalPdfBounds && originalPdfBounds.width > 1 && originalPdfBounds.height > 1) {
+            boundsForCrop = originalPdfBounds;
+          } else {
+            // No stored content bounds — derive crop from element vs PDF page size.
+            // Assume content starts at top-left of the PDF page (most common case).
+            // Crop to element dimensions, anchored to the top-left of the page.
+            // In Ghostscript coords (bottom-left origin): content occupies the top elemH pts.
+            console.log(`⚠️ No originalPdfBounds — deriving crop from element vs PDF page size`);
+            boundsForCrop = {
+              xMin: 0,
+              yMin: pdfH - elemHPts,   // Bottom of content area in PDF coords
+              xMax: elemWPts,
+              yMax: pdfH,              // Top of page in PDF coords
+              width: elemWPts,
+              height: elemHPts,
+            };
+            console.log(`📐 Derived crop bounds: ${boundsForCrop.xMin}×${boundsForCrop.yMin} → ${boundsForCrop.xMax}×${boundsForCrop.yMax} (${boundsForCrop.width.toFixed(1)}×${boundsForCrop.height.toFixed(1)}pts)`);
+          }
+          if (boundsForCrop) {
             console.log(`🔪 Auto-cropping PDF to content bounds to prevent distortion`);
-            const croppedPath = await this.cropPdfToContentBounds(logoPdfPath, originalPdfBounds);
+            const croppedPath = await this.cropPdfToContentBounds(logoPdfPath, boundsForCrop);
             if (croppedPath) {
               if (shouldCleanup && logoPdfPath) {
                 try { fs.unlinkSync(logoPdfPath); } catch (e) {}
@@ -1377,8 +1399,6 @@ grestore`;
               shouldCleanup = true;
               console.log(`✅ Auto-cropped PDF to prevent squashing`);
             }
-          } else {
-            console.log(`⚠️ No original bounds available for auto-crop - PDF may be distorted`);
           }
         }
       }
