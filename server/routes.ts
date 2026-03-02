@@ -789,6 +789,54 @@ export async function registerRoutes(app: express.Application) {
         logo.originalFilename && logo.originalMimeType === 'application/pdf'
       );
 
+      // DTF PASSTHROUGH: For DTF templates, serve the original artwork PDF directly without
+      // re-embedding it via pdf-lib (which inflates 35MB → 42MB). Compress with Ghostscript
+      // to bring it under the inline size threshold before returning.
+      const isDtfGeneratePdf = templateSize.id?.toLowerCase().includes('dtf') ||
+        (templateSize.width ?? 0) >= 1000 || (templateSize.height ?? 0) >= 500;
+      if (isDtfGeneratePdf && hasOriginalPDFs) {
+        const dtfLogo = Object.values(logosObject).find((logo: any) =>
+          logo.originalFilename && logo.originalMimeType === 'application/pdf'
+        ) as any;
+        if (dtfLogo) {
+          const origPath = path.join(process.cwd(), 'uploads', dtfLogo.originalFilename);
+          if (fs.existsSync(origPath)) {
+            console.log(`📄 DTF passthrough: compressing original artwork and serving directly`);
+            const origBuf = fs.readFileSync(origPath);
+            const origMB = (origBuf.length / 1024 / 1024).toFixed(1);
+            console.log(`📄 Original DTF artwork: ${origMB}MB`);
+            const tmpIn  = `/tmp/dtf_gen_in_${Date.now()}.pdf`;
+            const tmpOut = `/tmp/dtf_gen_out_${Date.now()}.pdf`;
+            let finalBuf = origBuf;
+            try {
+              fs.writeFileSync(tmpIn, origBuf);
+              await new Promise<void>((resolve, reject) => {
+                exec(
+                  `gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/prepress -dColorConversionStrategy=/LeaveColorUnchanged -dDownsampleColorImages=false -dDownsampleGrayImages=false -dDownsampleMonoImages=false -sOutputFile=${tmpOut} ${tmpIn}`,
+                  { timeout: 60000 },
+                  (err) => { if (err) reject(err); else resolve(); }
+                );
+              });
+              if (fs.existsSync(tmpOut)) {
+                const compressed = fs.readFileSync(tmpOut);
+                if (compressed.length < origBuf.length) {
+                  finalBuf = compressed;
+                  console.log(`🗜️ DTF GS passthrough: ${origMB}MB → ${(finalBuf.length/1024/1024).toFixed(1)}MB`);
+                }
+              }
+            } catch (e: any) {
+              console.warn(`⚠️ DTF GS passthrough compression failed, using original:`, e.message);
+            } finally {
+              try { fs.unlinkSync(tmpIn); } catch {}
+              try { fs.unlinkSync(tmpOut); } catch {}
+            }
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', `attachment; filename="${project.name || 'DTF'} qty${project.quantity || 1}.pdf"`);
+            return res.send(finalBuf);
+          }
+        }
+      }
+
       // USE ROBUST PDF GENERATOR - Embeds original PDFs to preserve CMYK colors and vectors
       if (hasOriginalPDFs) {
         console.log('📄 USING ORIGINAL PDFs: Preserving exact CMYK colors and vectors');
@@ -6561,7 +6609,6 @@ export async function registerRoutes(app: express.Application) {
         try {
           fs.writeFileSync(tmpIn, buf);
           await new Promise<void>((resolve, reject) => {
-            const { exec } = require('child_process');
             exec(
               `gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/prepress -dColorConversionStrategy=/LeaveColorUnchanged -dDownsampleColorImages=false -dDownsampleGrayImages=false -dDownsampleMonoImages=false -sOutputFile=${tmpOut} ${tmpIn}`,
               { timeout: 60000 },
@@ -8347,7 +8394,6 @@ ${svgClose}`;
         try {
           fs.writeFileSync(tmpIn, Buffer.from(pdfBase64, 'base64'));
           await new Promise<void>((resolve, reject) => {
-            const { exec } = require('child_process');
             exec(
               `gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/prepress -dColorConversionStrategy=/LeaveColorUnchanged -dDownsampleColorImages=false -dDownsampleGrayImages=false -dDownsampleMonoImages=false -sOutputFile=${tmpOut} ${tmpIn}`,
               { timeout: 60000 },
