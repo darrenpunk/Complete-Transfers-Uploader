@@ -1,57 +1,38 @@
 import { Dropbox } from 'dropbox';
 
-// Dropbox integration - connection:conn_dropbox_01K71E68E7EB5E5STXWMJ463MR
-let connectionSettings: any;
+// Dropbox integration - connection:conn_dropbox_01KH6AWHCZH0RGXZBFRTP0KV11
+// WARNING: Never cache the client or token — always fetch fresh each request.
 
-function clearTokenCache() {
-  connectionSettings = null;
-}
-
-async function getAccessToken(forceRefresh = false) {
-  // If force refresh or no cached settings, fetch new token
-  if (forceRefresh) {
-    connectionSettings = null;
-  }
-  
-  if (connectionSettings && connectionSettings.settings.expires_at && new Date(connectionSettings.settings.expires_at).getTime() > Date.now()) {
-    return connectionSettings.settings.access_token;
-  }
-  
+async function getUncachableDropboxClient(): Promise<Dropbox> {
   const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME;
-  const xReplitToken = process.env.REPL_IDENTITY 
-    ? 'repl ' + process.env.REPL_IDENTITY 
-    : process.env.WEB_REPL_RENEWAL 
-    ? 'depl ' + process.env.WEB_REPL_RENEWAL 
+  const xReplitToken = process.env.REPL_IDENTITY
+    ? 'repl ' + process.env.REPL_IDENTITY
+    : process.env.WEB_REPL_RENEWAL
+    ? 'depl ' + process.env.WEB_REPL_RENEWAL
     : null;
 
   if (!xReplitToken) {
-    throw new Error('X_REPLIT_TOKEN not found for repl/depl');
+    throw new Error('X-Replit-Token not found for repl/depl');
   }
 
-  console.log('[Dropbox] Fetching fresh access token from Replit connector...');
-  
-  connectionSettings = await fetch(
+  const connectionSettings = await fetch(
     'https://' + hostname + '/api/v2/connection?include_secrets=true&connector_names=dropbox',
     {
       headers: {
         'Accept': 'application/json',
-        'X_REPLIT_TOKEN': xReplitToken
-      }
+        'X-Replit-Token': xReplitToken,
+      },
     }
   ).then(res => res.json()).then(data => data.items?.[0]);
 
-  const accessToken = connectionSettings?.settings?.access_token || connectionSettings.settings?.oauth?.credentials?.access_token;
+  const accessToken =
+    connectionSettings?.settings?.access_token ||
+    connectionSettings?.settings?.oauth?.credentials?.access_token;
 
   if (!connectionSettings || !accessToken) {
     throw new Error('Dropbox not connected. Please reconnect Dropbox in the Integrations panel.');
   }
-  
-  console.log('[Dropbox] Access token obtained, expires:', connectionSettings.settings.expires_at);
-  return accessToken;
-}
 
-async function getUncachableDropboxClient(forceRefresh = false) {
-  const accessToken = await getAccessToken(forceRefresh);
   return new Dropbox({ accessToken });
 }
 
@@ -62,49 +43,28 @@ export async function createFileRequest(
 ): Promise<{ id: string; url: string; title: string; folder: string }> {
   const title = `${projectId}_${fileName}`;
   const destination = `/file_requests/${projectId}`;
-  
-  // Try with cached token first, then retry with fresh token on 401
-  for (let attempt = 0; attempt < 2; attempt++) {
-    try {
-      const dbx = await getUncachableDropboxClient(attempt > 0);
-      
-      const result = await dbx.fileRequestsCreate({
-        title: title,
-        destination: destination,
-        open: true,
-        description: description || `Upload for project ${projectId}`,
-      });
-      
-      console.log('[Dropbox] File request created successfully:', result.result.url);
-      
-      return {
-        id: result.result.id,
-        url: result.result.url,
-        title: result.result.title,
-        folder: destination,
-      };
-    } catch (error: any) {
-      console.error(`[Dropbox] File request creation failed (attempt ${attempt + 1}):`, error.status, error.error);
-      
-      // If 401 and first attempt, clear cache and retry
-      if (error.status === 401 && attempt === 0) {
-        console.log('[Dropbox] Token invalid, refreshing and retrying...');
-        clearTokenCache();
-        continue;
-      }
-      
-      throw new Error(`Failed to create Dropbox file request: ${error.message || 'Unknown error'}`);
-    }
-  }
-  
-  throw new Error('Failed to create Dropbox file request after retries');
+
+  const dbx = await getUncachableDropboxClient();
+  const result = await dbx.fileRequestsCreate({
+    title,
+    destination,
+    open: true,
+    description: description || `Upload for project ${projectId}`,
+  });
+
+  console.log('[Dropbox] File request created successfully:', result.result.url);
+  return {
+    id: result.result.id,
+    url: result.result.url,
+    title: result.result.title,
+    folder: destination,
+  };
 }
 
 export async function getFileRequestFiles(fileRequestId: string): Promise<any[]> {
   const dbx = await getUncachableDropboxClient();
-  
   try {
-    const result = await dbx.fileRequestsGet({ id: fileRequestId });
+    await dbx.fileRequestsGet({ id: fileRequestId });
     return [];
   } catch (error: any) {
     console.error('Failed to get file request:', error);
@@ -112,11 +72,10 @@ export async function getFileRequestFiles(fileRequestId: string): Promise<any[]>
   }
 }
 
-export async function downloadFile(path: string): Promise<Buffer> {
+export async function downloadFile(filePath: string): Promise<Buffer> {
   const dbx = await getUncachableDropboxClient();
-  
   try {
-    const result = await dbx.filesDownload({ path }) as any;
+    const result = await dbx.filesDownload({ path: filePath }) as any;
     return result.result.fileBinary;
   } catch (error: any) {
     console.error('Failed to download file from Dropbox:', error);
@@ -128,29 +87,17 @@ export async function uploadFileToDropbox(
   fileBuffer: Buffer,
   dropboxPath: string,
 ): Promise<{ path: string; pathDisplay: string }> {
-  for (let attempt = 0; attempt < 2; attempt++) {
-    try {
-      const dbx = await getUncachableDropboxClient(attempt > 0);
-      const result = await dbx.filesUpload({
-        path: dropboxPath,
-        contents: fileBuffer,
-        mode: { '.tag': 'overwrite' },
-        autorename: false,
-        mute: true,
-      }) as any;
-      const pathDisplay = result.result.path_display || dropboxPath;
-      console.log(`[Dropbox] File uploaded successfully: ${pathDisplay}`);
-      return { path: dropboxPath, pathDisplay };
-    } catch (error: any) {
-      console.error(`[Dropbox] File upload failed (attempt ${attempt + 1}):`, error.status, error.error || error.message);
-      if (error.status === 401 && attempt === 0) {
-        clearTokenCache();
-        continue;
-      }
-      throw new Error(`Failed to upload file to Dropbox: ${error.message || 'Unknown error'}`);
-    }
-  }
-  throw new Error('Failed to upload file to Dropbox after retries');
+  const dbx = await getUncachableDropboxClient();
+  const result = await dbx.filesUpload({
+    path: dropboxPath,
+    contents: fileBuffer,
+    mode: { '.tag': 'overwrite' },
+    autorename: false,
+    mute: true,
+  }) as any;
+  const pathDisplay = result.result.path_display || dropboxPath;
+  console.log(`[Dropbox] File uploaded successfully: ${pathDisplay}`);
+  return { path: dropboxPath, pathDisplay };
 }
 
 export async function listFolderFiles(folderPath: string): Promise<any[]> {
