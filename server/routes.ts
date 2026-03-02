@@ -6478,20 +6478,12 @@ export async function registerRoutes(app: express.Application) {
               const zipSizeMB = (zipStat.size / 1024 / 1024).toFixed(1);
               console.log(`📎 ZIP file found (${zipSizeMB}MB): ${zipFileName}`);
               const zipBuffer = fs.readFileSync(zipFilePath);
-              // Always send via the direct attach-zip route (no Dropbox dependency).
-              // The /artwork/api/attach-zip endpoint is a lightweight http handler that
-              // accepts base64 ZIP data and creates ir.attachment records — it handles
-              // large files comfortably and is called AFTER the cart is created, so the
-              // add-to-cart body stays clean and small.
+              // Include ZIP inline in the add-to-cart body (same pattern as DTF quick upload).
+              // Odoo's add-to-cart handler creates the ir.attachment on the order line
+              // atomically, so _sync_zip_attachments_to_task reliably finds it when the
+              // manufacturing task is created later. No Dropbox dependency.
               zipBase64 = zipBuffer.toString('base64');
-              console.log(`📎 ZIP ready for attach-zip (${zipSizeMB}MB base64 ${(zipBase64.length / 1024 / 1024).toFixed(1)}MB): ${zipFileName}`);
-              // Also archive to Dropbox as a background backup (fire-and-forget, non-blocking)
-              import('./dropbox-service').then(({ uploadFileToDropbox }) => {
-                const dropboxDest = `/repeat-orders/${projectId}/${zipFileName}`;
-                uploadFileToDropbox(zipBuffer, dropboxDest)
-                  .then(r => console.log(`📦 ZIP archived to Dropbox: ${r.pathDisplay}`))
-                  .catch(e => console.warn(`⚠️ Dropbox archive failed (non-critical):`, e));
-              });
+              console.log(`📎 ZIP ready for inline add-to-cart (${zipSizeMB}MB → ${(zipBase64.length / 1024 / 1024).toFixed(1)}MB base64): ${zipFileName}`);
             } else {
               console.warn(`⚠️ Attached ZIP not found on disk: ${zipFilePath}`);
             }
