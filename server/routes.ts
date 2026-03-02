@@ -1,5 +1,6 @@
 import express from 'express';
 import multer from 'multer';
+import { backupToDropbox } from './dropbox-backup';
 import path from 'path';
 import os from 'os';
 import fs from 'fs';
@@ -3253,6 +3254,17 @@ export async function registerRoutes(app: express.Application) {
         
         // Add the logo to the logos array immediately after creation
         logos.push(logo);
+
+        // Fire-and-forget: back up all files created for this logo to Dropbox.
+        // This ensures files survive redeployment — they will be transparently
+        // restored from Dropbox if the local ./uploads directory is wiped.
+        const filesToBackup = new Set<string>();
+        if (file.filename) filesToBackup.add(file.filename);
+        if (finalFilename && finalFilename !== file.filename) filesToBackup.add(finalFilename);
+        if (logoData.originalFilename && logoData.originalFilename !== file.filename) filesToBackup.add(logoData.originalFilename);
+        if ((logoData as any).canvasFallbackFilename) filesToBackup.add((logoData as any).canvasFallbackFilename);
+        if ((file as any).extractedRasterPath) filesToBackup.add(path.basename((file as any).extractedRasterPath));
+        for (const fn of filesToBackup) backupToDropbox(fn);
 
         // Auto-recolor for single colour templates with ink color
         if (isSingleColourTemplate && project.inkColor && (finalMimeType === 'image/svg+xml' || finalMimeType === 'application/pdf')) {
@@ -8047,6 +8059,9 @@ ${svgClose}`;
         attachedZipPath: `/uploads/${file.filename}`,
         attachedZipName: file.originalname,
       });
+
+      // Back up the ZIP to Dropbox so it survives redeployment
+      backupToDropbox(file.filename);
 
       console.log(`📋 Created repeat applique project: ${project.id} (${projectName}) with zip: ${file.originalname}`);
 

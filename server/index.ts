@@ -63,6 +63,23 @@ app.get('/health', async (_req, res) => {
 app.use(express.json({ limit: '200mb' }));
 app.use(express.urlencoded({ extended: false, limit: '200mb' }));
 
+// Transparent Dropbox restore: if a file in /uploads is missing locally (e.g. after a
+// redeploy wiped the container filesystem), try to pull it back from Dropbox before
+// Express static serving tries to handle the request.
+app.use('/uploads', async (req: Request, res: Response, next: NextFunction) => {
+  const filename = req.path.replace(/^\//, '').split('?')[0];
+  if (!filename) return next();
+  const localPath = path.join('./uploads', filename);
+  if (fs.existsSync(localPath)) return next();
+  try {
+    const { restoreFromDropbox } = await import('./dropbox-backup');
+    await restoreFromDropbox(filename);
+  } catch {
+    // ignore — static middleware will 404 naturally
+  }
+  next();
+});
+
 app.get('/uploads/:filename', async (req, res, next) => {
   const { filename } = req.params;
   const { inkColor, recolor } = req.query;
