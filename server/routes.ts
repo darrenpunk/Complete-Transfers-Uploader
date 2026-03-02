@@ -6481,9 +6481,16 @@ export async function registerRoutes(app: express.Application) {
               // Include ZIP inline in the add-to-cart body (same pattern as DTF quick upload).
               // Odoo's add-to-cart handler creates the ir.attachment on the order line
               // atomically, so _sync_zip_attachments_to_task reliably finds it when the
-              // manufacturing task is created later. No Dropbox dependency.
+              // manufacturing task is created later.
               zipBase64 = zipBuffer.toString('base64');
               console.log(`📎 ZIP ready for inline add-to-cart (${zipSizeMB}MB → ${(zipBase64.length / 1024 / 1024).toFixed(1)}MB base64): ${zipFileName}`);
+              // Also archive to Dropbox in the background as a backup copy
+              import('./dropbox-service').then(({ uploadFileToDropbox }) => {
+                const dropboxDest = `/repeat-orders/${zipFileName}`;
+                uploadFileToDropbox(zipBuffer, dropboxDest)
+                  .then(r => console.log(`☁️ ZIP archived to Dropbox: ${r.pathDisplay}`))
+                  .catch(e => console.warn(`⚠️ Dropbox ZIP archive failed (non-critical):`, e.message));
+              });
             } else {
               console.warn(`⚠️ Attached ZIP not found on disk: ${zipFilePath}`);
             }
