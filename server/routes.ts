@@ -6558,15 +6558,27 @@ export async function registerRoutes(app: express.Application) {
       const orderQty = projectData.totalQuantity || projectData.quantity || 1;
       const artworkFilename = `${projectName} qty${orderQty}.pdf`;
 
-      // NOTE: zipBase64 is intentionally excluded from the main add-to-cart body.
-      // It is sent in a separate follow-up request to /artwork/api/attach-zip
-      // after add-to-cart succeeds. This prevents megabytes of base64 from flooding
-      // Odoo's request logs on every repeat-order submission.
+      // --- Large PDF offload ---
+      // If the production PDF is too large to send inline (Odoo's nginx API endpoint
+      // has a lower body size limit than its file upload endpoint), strip it from the
+      // add-to-cart body and send it separately via /artwork/api/attach-zip after the
+      // order line is created — exactly like we do for repeat-order ZIPs.
+      const PDF_INLINE_MAX_CHARS = 40 * 1024 * 1024; // ~30MB decoded PDF
+      let offloadedPdfBase64: string | undefined;
+      let offloadedPdfFilename: string | undefined;
+      if (projectData.pdfBase64 && projectData.pdfBase64.length > PDF_INLINE_MAX_CHARS) {
+        const sizeMB = (projectData.pdfBase64.length / 1024 / 1024).toFixed(1);
+        console.log(`📦 Large production PDF (${sizeMB}MB) — will attach separately after cart creation`);
+        offloadedPdfBase64 = projectData.pdfBase64;
+        offloadedPdfFilename = artworkFilename;
+      }
+
       if (projectData.pdfBase64) {
         const pdfSizeMB = (projectData.pdfBase64.length / 1024 / 1024).toFixed(1);
-        console.log(`📄 Production PDF size: ${pdfSizeMB}MB base64`);
+        console.log(`📄 Production PDF size: ${pdfSizeMB}MB base64 (inline: ${!offloadedPdfBase64})`);
       }
-      const requestBody = {
+
+      const requestBody: any = {
         ...projectData,
         source: 'completetransfers',
         website_id: parseInt(ctWebsiteId, 10),
@@ -6577,6 +6589,10 @@ export async function registerRoutes(app: express.Application) {
         ...(zipTooLarge && zipFileName && { zipNote: `Repeat order ZIP file available: ${zipFileName} (please retrieve manually)` }),
         ...(includeDstProofing && { include_dst_proofing: true, dst_product_code: 'DSTF' }),
       };
+      // Strip the PDF from the body if it's being sent separately
+      if (offloadedPdfBase64) {
+        delete requestBody.pdfBase64;
+      }
 
       // Call Odoo add-to-cart API with one automatic retry on transient connection errors
       // (e.g. "socket hang up" caused by Odoo worker restarts or brief overload)
