@@ -412,6 +412,10 @@ grestore`;
     // Detect applique template and split elements by canvas
     const isAppliqueTemplate = data.templateSize?.id?.includes('applique') || 
       data.canvasElements.some((el: any) => el.canvasIndex === 1);
+    // DTF templates only need page 1 (transparent/production artwork) — no garment colour page
+    const isDtfTemplate = data.templateSize?.id?.toLowerCase().includes('dtf') ||
+      (data.templateSize?.width ?? 0) >= 1000 ||
+      (data.templateSize?.height ?? 0) >= 500;
     const badgeElements = isAppliqueTemplate 
       ? data.canvasElements.filter((el: any) => !el.canvasIndex || el.canvasIndex === 0)
       : data.canvasElements;
@@ -476,9 +480,11 @@ grestore`;
       console.log(`  - Default ${getGarmentColorName(data.garmentColor || '#171816')}: ${defaultColorElements.length} elements`);
     }
     
-    // Create page 2 only if NOT using pass-through mode
+    // Create page 2 only if NOT using pass-through mode AND not a DTF template
     let page2: typeof page1 | null = null;
-    if (!usePassThrough) {
+    if (isDtfTemplate) {
+      console.log(`📄 DTF template: skipping garment colour page — single-page production output only`);
+    } else if (!usePassThrough) {
       // MULTI-COLOR ORDER SUPPORT: Check if garmentColors array is provided (from project-level modal)
       // OR element-level garment colors
       if (data.garmentColors && Array.isArray(data.garmentColors) && data.garmentColors.length > 0) {

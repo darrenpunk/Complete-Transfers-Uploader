@@ -6553,6 +6553,36 @@ export async function registerRoutes(app: express.Application) {
       let offloadedPdfBase64: string | undefined;
       let offloadedPdfFilename: string | undefined;
 
+      // Compress a PDF buffer using Ghostscript /prepress settings (high quality, smaller file).
+      // Returns a smaller buffer or the original if compression fails or doesn't help.
+      const compressPdfBuffer = async (buf: Buffer): Promise<Buffer> => {
+        const tmpIn  = `/tmp/compress_in_${Date.now()}.pdf`;
+        const tmpOut = `/tmp/compress_out_${Date.now()}.pdf`;
+        try {
+          fs.writeFileSync(tmpIn, buf);
+          await new Promise<void>((resolve, reject) => {
+            const { exec } = require('child_process');
+            exec(
+              `gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/prepress -dColorConversionStrategy=/LeaveColorUnchanged -dDownsampleColorImages=false -dDownsampleGrayImages=false -dDownsampleMonoImages=false -sOutputFile=${tmpOut} ${tmpIn}`,
+              { timeout: 60000 },
+              (err: Error | null) => { if (err) reject(err); else resolve(); }
+            );
+          });
+          if (fs.existsSync(tmpOut)) {
+            const compressed = fs.readFileSync(tmpOut);
+            const ratio = ((1 - compressed.length / buf.length) * 100).toFixed(0);
+            console.log(`🗜️ GS compression: ${(buf.length/1024/1024).toFixed(1)}MB → ${(compressed.length/1024/1024).toFixed(1)}MB (${ratio}% reduction)`);
+            return compressed.length < buf.length ? compressed : buf;
+          }
+        } catch (e: any) {
+          console.warn(`⚠️ GS compression failed (using original):`, e.message);
+        } finally {
+          try { fs.unlinkSync(tmpIn); } catch {}
+          try { fs.unlinkSync(tmpOut); } catch {}
+        }
+        return buf;
+      };
+
       if (projectData.pdfBase64 && projectData.pdfBase64.length > PDF_INLINE_MAX_CHARS) {
         const sizeMB = (projectData.pdfBase64.length / 1024 / 1024).toFixed(1);
         console.log(`📦 Client PDF too large (${sizeMB}MB base64) — regenerating server-side`);
@@ -6563,16 +6593,21 @@ export async function registerRoutes(app: express.Application) {
             headers: { cookie: req.headers.cookie || '' },
           });
           if (genRes.ok) {
-            const pdfBuf = Buffer.from(await genRes.arrayBuffer());
+            let pdfBuf = Buffer.from(await genRes.arrayBuffer());
+            const rawSizeMB = (pdfBuf.length / 1024 / 1024).toFixed(1);
+            console.log(`✅ Server PDF generated: ${rawSizeMB}MB raw`);
+            // Compress with Ghostscript before checking size
+            pdfBuf = await compressPdfBuffer(pdfBuf);
             const serverPdfBase64 = pdfBuf.toString('base64');
             const serverSizeMB = (serverPdfBase64.length / 1024 / 1024).toFixed(1);
-            console.log(`✅ Server PDF generated: ${serverSizeMB}MB base64 — using instead of client PDF`);
+            console.log(`📄 Server PDF (after compression): ${serverSizeMB}MB base64`);
             if (serverPdfBase64.length <= PDF_INLINE_MAX_CHARS) {
               // Small enough — send inline just like a normal order
               projectData.pdfBase64 = serverPdfBase64;
+              console.log(`✅ Compressed PDF fits inline — sending in add-to-cart body`);
             } else {
-              // Still large (unusual) — fall back to separate attach-pdf
-              console.warn(`⚠️ Server PDF still large (${serverSizeMB}MB) — will attach separately`);
+              // Still large — fall back to separate attach-pdf with compressed version
+              console.warn(`⚠️ Server PDF still large after compression (${serverSizeMB}MB) — will attach separately`);
               offloadedPdfBase64 = serverPdfBase64;
               offloadedPdfFilename = artworkFilename;
             }
@@ -8301,13 +8336,46 @@ ${svgClose}`;
       const artworkFilename = `${name} qty${quantity}.pdf`;
       const ctWebsiteId = process.env.VITE_ODOO_CT_WEBSITE_ID || '2';
 
+      // Compress the PDF with Ghostscript if it's large (>30MB decoded ≈ >40MB base64)
+      const DTF_MAX_BASE64 = 40 * 1024 * 1024;
+      let finalPdfBase64 = pdfBase64;
+      if (pdfBase64.length > DTF_MAX_BASE64) {
+        const rawMB = (pdfBase64.length / 1024 / 1024).toFixed(1);
+        console.log(`📦 DTF Quick Upload PDF large (${rawMB}MB base64) — compressing with Ghostscript`);
+        const tmpIn  = `/tmp/dtf_in_${Date.now()}.pdf`;
+        const tmpOut = `/tmp/dtf_out_${Date.now()}.pdf`;
+        try {
+          fs.writeFileSync(tmpIn, Buffer.from(pdfBase64, 'base64'));
+          await new Promise<void>((resolve, reject) => {
+            const { exec } = require('child_process');
+            exec(
+              `gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/prepress -dColorConversionStrategy=/LeaveColorUnchanged -dDownsampleColorImages=false -dDownsampleGrayImages=false -dDownsampleMonoImages=false -sOutputFile=${tmpOut} ${tmpIn}`,
+              { timeout: 60000 },
+              (err: Error | null) => { if (err) reject(err); else resolve(); }
+            );
+          });
+          if (fs.existsSync(tmpOut)) {
+            const compressed = fs.readFileSync(tmpOut);
+            const compressedB64 = compressed.toString('base64');
+            const newMB = (compressedB64.length / 1024 / 1024).toFixed(1);
+            console.log(`🗜️ DTF GS compression: ${rawMB}MB → ${newMB}MB base64`);
+            if (compressedB64.length < pdfBase64.length) finalPdfBase64 = compressedB64;
+          }
+        } catch (e: any) {
+          console.warn(`⚠️ DTF GS compression failed (using original):`, e.message);
+        } finally {
+          try { fs.unlinkSync(tmpIn); } catch {}
+          try { fs.unlinkSync(tmpOut); } catch {}
+        }
+      }
+
       const requestBody = {
         name,
         templateSize: 'dtf-large',
         quantity: Number(quantity),
         totalQuantity: Number(quantity),
         partnerEmail: partnerEmail || undefined,
-        pdfBase64,
+        pdfBase64: finalPdfBase64,
         artworkFilename,
         product_code: 'CTDF1000',
         source: 'completetransfers',
