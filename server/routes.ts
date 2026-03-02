@@ -6573,16 +6573,33 @@ export async function registerRoutes(app: express.Application) {
         ...(includeDstProofing && { include_dst_proofing: true, dst_product_code: 'DSTF' }),
       };
 
-      // Call Odoo add-to-cart API
-      // Forward cookies so Odoo can identify customer and apply customer-specific pricelist
-      const response = await fetch(odooApiUrl, {
+      // Call Odoo add-to-cart API with one automatic retry on transient connection errors
+      // (e.g. "socket hang up" caused by Odoo worker restarts or brief overload)
+      const RETRYABLE = ['socket hang up', 'ECONNRESET', 'ETIMEDOUT', 'ECONNREFUSED', 'network timeout'];
+      const isRetryable = (err: unknown) =>
+        err instanceof Error && RETRYABLE.some(msg => err.message.toLowerCase().includes(msg.toLowerCase()));
+
+      const fetchOdoo = () => fetch(odooApiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Cookie': clientCookies,  // Forward Odoo session for customer identification
+          'Cookie': clientCookies,
         },
         body: JSON.stringify(requestBody),
       });
+
+      let response: Awaited<ReturnType<typeof fetchOdoo>>;
+      try {
+        response = await fetchOdoo();
+      } catch (firstErr) {
+        if (isRetryable(firstErr)) {
+          console.warn(`⚠️ Odoo connection dropped (${(firstErr as Error).message}) — retrying in 2s...`);
+          await new Promise(r => setTimeout(r, 2000));
+          response = await fetchOdoo(); // let second failure propagate naturally
+        } else {
+          throw firstErr;
+        }
+      }
 
       const responseText = await response.text();
       console.log(`📨 Odoo response status: ${response.status}`);
