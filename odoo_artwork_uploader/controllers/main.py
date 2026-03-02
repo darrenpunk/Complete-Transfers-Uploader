@@ -787,7 +787,27 @@ class ArtworkUploaderController(http.Controller):
                     })
                     _logger.info(f"📄 Artwork uploaded to PRODUCTION fields (artwork_files_datas + artwork_file_name): {artwork_filename}")
                     _logger.info(f"✅ Dropbox workflow will automatically move file to Dropbox via shipping_dropbox_customization module")
-                
+
+                # Attach ZIP file directly on the order line (repeat orders / applique artwork ZIPs).
+                # Doing this inside the add-to-cart handler (not via a separate attach-zip call)
+                # guarantees the ir.attachment exists BEFORE the manufacturing task is created,
+                # so _sync_zip_attachments_to_task reliably copies it to the task.
+                zip_b64 = data.get('zipBase64') or data.get('zip_base64')
+                zip_name = (data.get('zipFilename') or data.get('zip_filename') or 'repeat-order.zip').strip()
+                if zip_b64 and zip_name:
+                    try:
+                        request.env['ir.attachment'].sudo().create({
+                            'name': zip_name,
+                            'type': 'binary',
+                            'datas': zip_b64,
+                            'res_model': 'sale.order.line',
+                            'res_id': order_line.id,
+                            'mimetype': 'application/zip',
+                        })
+                        _logger.info(f"📎 ZIP '{zip_name}' attached to order line #{order_line.id} (will sync to task at task-creation time)")
+                    except Exception as ze:
+                        _logger.error(f"❌ Failed to attach ZIP to order line #{order_line.id}: {ze}")
+
                 _logger.info(f"✅ Linked order line #{order_line.id} to project")
             else:
                 _logger.warning(f"⚠️ Could not find order line for product {product.id}")

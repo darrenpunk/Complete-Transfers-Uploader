@@ -6602,6 +6602,10 @@ export async function registerRoutes(app: express.Application) {
         ...(productCode && { product_code: productCode }),
         ...(isVectorizationOnly && { template_id: 'vector-service' }),
         ...(includeDstProofing && { include_dst_proofing: true, dst_product_code: 'DSTF' }),
+        // Include ZIP inline in the add-to-cart body so Odoo creates the ir.attachment
+        // atomically at order-line creation time — this guarantees _sync_zip_attachments_to_task
+        // finds it when the manufacturing task is created later (same approach as DTF quick upload).
+        ...(zipBase64 && zipFileName && { zipBase64, zipFilename: zipFileName }),
       };
       // Strip the large client PDF if we're falling back to separate attach-pdf
       if (offloadedPdfBase64) {
@@ -6656,36 +6660,12 @@ export async function registerRoutes(app: express.Application) {
         data = { message: responseText };
       }
 
-      // --- Follow-up: attach ZIP via dedicated endpoint (keeps add-to-cart body clean) ---
-      if (zipBase64 && zipFileName && data?.order_line_id) {
-        const attachZipUrl = `${odooBaseUrl}/artwork/api/attach-zip`;
-        console.log(`📎 Sending ZIP to /artwork/api/attach-zip for order_line #${data.order_line_id} (${zipFileName})`);
-        // Fire-and-await so the ZIP is definitely attached before we respond to the client
-        try {
-          const zipResponse = await fetch(attachZipUrl, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Cookie': clientCookies,
-            },
-            body: JSON.stringify({
-              order_line_id: data.order_line_id,
-              sale_order_id: data.website_sale_order,
-              zip_base64: zipBase64,
-              zip_filename: zipFileName,
-            }),
-          });
-          const zipResult = await zipResponse.json().catch(() => ({}));
-          if (zipResponse.ok) {
-            console.log(`✅ ZIP attached via /artwork/api/attach-zip:`, zipResult.attached_to);
-          } else {
-            console.warn(`⚠️ ZIP attach-zip call failed (${zipResponse.status}):`, zipResult);
-          }
-        } catch (zipErr) {
-          console.warn(`⚠️ ZIP attach-zip request error (non-critical):`, zipErr);
-        }
-      } else if (zipBase64 && zipFileName && !data?.order_line_id) {
-        console.warn(`⚠️ ZIP ready but no order_line_id in Odoo response — ZIP not attached. Response keys:`, Object.keys(data || {}));
+      // ZIP is included inline in the add-to-cart body (zipBase64 + zipFilename fields).
+      // Odoo's add-to-cart handler creates the ir.attachment on the order line atomically,
+      // so _sync_zip_attachments_to_task will find it when the manufacturing task is created.
+      if (zipBase64 && zipFileName) {
+        const zipSizeMB = (zipBase64.length / 1024 / 1024).toFixed(1);
+        console.log(`📎 ZIP sent inline in add-to-cart body (${zipSizeMB}MB): ${zipFileName} — Odoo will attach to order line #${data?.order_line_id}`);
       }
 
       // --- Follow-up: attach large PDF via /artwork/api/attach-pdf ---
