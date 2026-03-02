@@ -6558,40 +6558,28 @@ export async function registerRoutes(app: express.Application) {
       const orderQty = projectData.totalQuantity || projectData.quantity || 1;
       const artworkFilename = `${projectName} qty${orderQty}.pdf`;
 
-      // --- Server-side PDF compression for large files ---
-      // If the pdfBase64 payload is > 15MB of base64 chars (≈ 11MB decoded PDF),
-      // compress it with Ghostscript /prepress settings before forwarding to Odoo.
-      // This prevents Odoo dropping the connection on very large artwork files.
-      const PDF_COMPRESS_THRESHOLD_CHARS = 15 * 1024 * 1024; // 15MB base64 chars
+      // --- Dropbox fallback for very large production PDFs ---
+      // If pdfBase64 exceeds Odoo's nginx request body limit, save the full-quality
+      // PDF to Dropbox and remove it from the inline request. A note is added to the
+      // Odoo order so the PDF can be retrieved from Dropbox manually.
+      const PDF_DROPBOX_THRESHOLD_CHARS = 50 * 1024 * 1024; // ~37MB decoded PDF
       let finalPdfBase64: string | undefined = projectData.pdfBase64;
-      if (finalPdfBase64 && finalPdfBase64.length > PDF_COMPRESS_THRESHOLD_CHARS) {
+      let pdfDropboxNote: string | undefined;
+      if (finalPdfBase64 && finalPdfBase64.length > PDF_DROPBOX_THRESHOLD_CHARS) {
         const rawSizeMB = (finalPdfBase64.length / 1024 / 1024).toFixed(1);
-        console.log(`📦 Large PDF detected (${rawSizeMB}MB base64) — compressing with Ghostscript...`);
+        console.log(`📦 Oversized production PDF (${rawSizeMB}MB base64) — uploading to Dropbox instead of inline...`);
         try {
-          const tmpIn = path.join('./uploads', `tmp_cart_in_${Date.now()}.pdf`);
-          const tmpOut = path.join('./uploads', `tmp_cart_out_${Date.now()}.pdf`);
-          fs.writeFileSync(tmpIn, Buffer.from(finalPdfBase64, 'base64'));
-          await new Promise<void>((resolve, reject) => {
-            const { exec } = require('child_process');
-            exec(
-              `gs -dBATCH -dNOPAUSE -dSAFER -sDEVICE=pdfwrite -dPDFSETTINGS=/prepress -dCompatibilityLevel=1.4 -sOutputFile="${tmpOut}" "${tmpIn}"`,
-              { timeout: 60000 },
-              (err: any) => {
-                if (err) reject(err);
-                else resolve();
-              }
-            );
-          });
-          const compressed = fs.readFileSync(tmpOut);
-          const compressedBase64 = compressed.toString('base64');
-          const newSizeMB = (compressedBase64.length / 1024 / 1024).toFixed(1);
-          console.log(`✅ PDF compressed: ${rawSizeMB}MB → ${newSizeMB}MB base64`);
-          finalPdfBase64 = compressedBase64;
-          // Clean up temp files
-          try { fs.unlinkSync(tmpIn); fs.unlinkSync(tmpOut); } catch {}
-        } catch (compressErr) {
-          console.warn(`⚠️ PDF compression failed (using original):`, compressErr);
-          // Fall through with original pdfBase64
+          const { uploadFileToDropbox } = await import('./dropbox-service');
+          const pdfBuffer = Buffer.from(finalPdfBase64, 'base64');
+          const dropboxFilename = `${Date.now()}_${artworkFilename}`;
+          const dropboxPdfPath = `/production-pdfs/${dropboxFilename}`;
+          await uploadFileToDropbox(pdfBuffer, dropboxPdfPath);
+          console.log(`✅ Production PDF uploaded to Dropbox: ${dropboxPdfPath}`);
+          pdfDropboxNote = `Production PDF (${rawSizeMB}MB) stored in Dropbox: ${dropboxPdfPath}`;
+          finalPdfBase64 = undefined; // Don't send inline
+        } catch (dropboxErr) {
+          console.warn(`⚠️ Dropbox PDF upload failed — sending inline anyway:`, dropboxErr);
+          // Fall through and send pdfBase64 inline as before
         }
       }
 
@@ -6604,13 +6592,18 @@ export async function registerRoutes(app: express.Application) {
         source: 'completetransfers',
         website_id: parseInt(ctWebsiteId, 10),
         artworkFilename,
-        ...(finalPdfBase64 !== projectData.pdfBase64 && { pdfBase64: finalPdfBase64 }),
+        ...(finalPdfBase64 === undefined && projectData.pdfBase64 && { pdfBase64: undefined }),
+        ...(pdfDropboxNote && { pdfNote: pdfDropboxNote }),
         ...(productCode && { product_code: productCode }),
         ...(isVectorizationOnly && { template_id: 'vector-service' }),
         ...(zipDropboxPath && { dropboxPath: zipDropboxPath, zipFileName }),
         ...(zipTooLarge && zipFileName && { zipNote: `Repeat order ZIP file available: ${zipFileName} (please retrieve manually)` }),
         ...(includeDstProofing && { include_dst_proofing: true, dst_product_code: 'DSTF' }),
       };
+      // If we offloaded the PDF to Dropbox, strip it from the spread of projectData
+      if (finalPdfBase64 === undefined && projectData.pdfBase64) {
+        delete (requestBody as any).pdfBase64;
+      }
 
       // Call Odoo add-to-cart API with one automatic retry on transient connection errors
       // (e.g. "socket hang up" caused by Odoo worker restarts or brief overload)
