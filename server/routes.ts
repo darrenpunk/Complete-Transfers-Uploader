@@ -6557,6 +6557,44 @@ export async function registerRoutes(app: express.Application) {
       const projectName = rawProjectName;
       const orderQty = projectData.totalQuantity || projectData.quantity || 1;
       const artworkFilename = `${projectName} qty${orderQty}.pdf`;
+
+      // --- Server-side PDF compression for large files ---
+      // If the pdfBase64 payload is > 15MB of base64 chars (≈ 11MB decoded PDF),
+      // compress it with Ghostscript /prepress settings before forwarding to Odoo.
+      // This prevents Odoo dropping the connection on very large artwork files.
+      const PDF_COMPRESS_THRESHOLD_CHARS = 15 * 1024 * 1024; // 15MB base64 chars
+      let finalPdfBase64: string | undefined = projectData.pdfBase64;
+      if (finalPdfBase64 && finalPdfBase64.length > PDF_COMPRESS_THRESHOLD_CHARS) {
+        const rawSizeMB = (finalPdfBase64.length / 1024 / 1024).toFixed(1);
+        console.log(`📦 Large PDF detected (${rawSizeMB}MB base64) — compressing with Ghostscript...`);
+        try {
+          const tmpIn = path.join('./uploads', `tmp_cart_in_${Date.now()}.pdf`);
+          const tmpOut = path.join('./uploads', `tmp_cart_out_${Date.now()}.pdf`);
+          fs.writeFileSync(tmpIn, Buffer.from(finalPdfBase64, 'base64'));
+          await new Promise<void>((resolve, reject) => {
+            const { exec } = require('child_process');
+            exec(
+              `gs -dBATCH -dNOPAUSE -dSAFER -sDEVICE=pdfwrite -dPDFSETTINGS=/prepress -dCompatibilityLevel=1.4 -sOutputFile="${tmpOut}" "${tmpIn}"`,
+              { timeout: 60000 },
+              (err: any) => {
+                if (err) reject(err);
+                else resolve();
+              }
+            );
+          });
+          const compressed = fs.readFileSync(tmpOut);
+          const compressedBase64 = compressed.toString('base64');
+          const newSizeMB = (compressedBase64.length / 1024 / 1024).toFixed(1);
+          console.log(`✅ PDF compressed: ${rawSizeMB}MB → ${newSizeMB}MB base64`);
+          finalPdfBase64 = compressedBase64;
+          // Clean up temp files
+          try { fs.unlinkSync(tmpIn); fs.unlinkSync(tmpOut); } catch {}
+        } catch (compressErr) {
+          console.warn(`⚠️ PDF compression failed (using original):`, compressErr);
+          // Fall through with original pdfBase64
+        }
+      }
+
       // NOTE: zipBase64 is intentionally excluded from the main add-to-cart body.
       // It is sent in a separate follow-up request to /artwork/api/attach-zip
       // after add-to-cart succeeds. This prevents megabytes of base64 from flooding
@@ -6566,6 +6604,7 @@ export async function registerRoutes(app: express.Application) {
         source: 'completetransfers',
         website_id: parseInt(ctWebsiteId, 10),
         artworkFilename,
+        ...(finalPdfBase64 !== projectData.pdfBase64 && { pdfBase64: finalPdfBase64 }),
         ...(productCode && { product_code: productCode }),
         ...(isVectorizationOnly && { template_id: 'vector-service' }),
         ...(zipDropboxPath && { dropboxPath: zipDropboxPath, zipFileName }),
