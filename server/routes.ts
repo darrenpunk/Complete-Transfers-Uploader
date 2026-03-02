@@ -6558,52 +6558,25 @@ export async function registerRoutes(app: express.Application) {
       const orderQty = projectData.totalQuantity || projectData.quantity || 1;
       const artworkFilename = `${projectName} qty${orderQty}.pdf`;
 
-      // --- Dropbox fallback for very large production PDFs ---
-      // If pdfBase64 exceeds Odoo's nginx request body limit, save the full-quality
-      // PDF to Dropbox and remove it from the inline request. A note is added to the
-      // Odoo order so the PDF can be retrieved from Dropbox manually.
-      const PDF_DROPBOX_THRESHOLD_CHARS = 50 * 1024 * 1024; // ~37MB decoded PDF
-      let finalPdfBase64: string | undefined = projectData.pdfBase64;
-      let pdfDropboxNote: string | undefined;
-      if (finalPdfBase64 && finalPdfBase64.length > PDF_DROPBOX_THRESHOLD_CHARS) {
-        const rawSizeMB = (finalPdfBase64.length / 1024 / 1024).toFixed(1);
-        console.log(`📦 Oversized production PDF (${rawSizeMB}MB base64) — uploading to Dropbox instead of inline...`);
-        try {
-          const { uploadFileToDropbox } = await import('./dropbox-service');
-          const pdfBuffer = Buffer.from(finalPdfBase64, 'base64');
-          const dropboxFilename = `${Date.now()}_${artworkFilename}`;
-          const dropboxPdfPath = `/production-pdfs/${dropboxFilename}`;
-          await uploadFileToDropbox(pdfBuffer, dropboxPdfPath);
-          console.log(`✅ Production PDF uploaded to Dropbox: ${dropboxPdfPath}`);
-          pdfDropboxNote = `Production PDF (${rawSizeMB}MB) stored in Dropbox: ${dropboxPdfPath}`;
-          finalPdfBase64 = undefined; // Don't send inline
-        } catch (dropboxErr) {
-          console.warn(`⚠️ Dropbox PDF upload failed — sending inline anyway:`, dropboxErr);
-          // Fall through and send pdfBase64 inline as before
-        }
-      }
-
       // NOTE: zipBase64 is intentionally excluded from the main add-to-cart body.
       // It is sent in a separate follow-up request to /artwork/api/attach-zip
       // after add-to-cart succeeds. This prevents megabytes of base64 from flooding
       // Odoo's request logs on every repeat-order submission.
+      if (projectData.pdfBase64) {
+        const pdfSizeMB = (projectData.pdfBase64.length / 1024 / 1024).toFixed(1);
+        console.log(`📄 Production PDF size: ${pdfSizeMB}MB base64`);
+      }
       const requestBody = {
         ...projectData,
         source: 'completetransfers',
         website_id: parseInt(ctWebsiteId, 10),
         artworkFilename,
-        ...(finalPdfBase64 === undefined && projectData.pdfBase64 && { pdfBase64: undefined }),
-        ...(pdfDropboxNote && { pdfNote: pdfDropboxNote }),
         ...(productCode && { product_code: productCode }),
         ...(isVectorizationOnly && { template_id: 'vector-service' }),
         ...(zipDropboxPath && { dropboxPath: zipDropboxPath, zipFileName }),
         ...(zipTooLarge && zipFileName && { zipNote: `Repeat order ZIP file available: ${zipFileName} (please retrieve manually)` }),
         ...(includeDstProofing && { include_dst_proofing: true, dst_product_code: 'DSTF' }),
       };
-      // If we offloaded the PDF to Dropbox, strip it from the spread of projectData
-      if (finalPdfBase64 === undefined && projectData.pdfBase64) {
-        delete (requestBody as any).pdfBase64;
-      }
 
       // Call Odoo add-to-cart API with one automatic retry on transient connection errors
       // (e.g. "socket hang up" caused by Odoo worker restarts or brief overload)
