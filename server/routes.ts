@@ -6545,6 +6545,10 @@ export async function registerRoutes(app: express.Application) {
       const projectName = rawProjectName;
       const orderQty = projectData.totalQuantity || projectData.quantity || 1;
       const artworkFilename = `${projectName} qty${orderQty}.pdf`;
+      // NOTE: zipBase64 is intentionally excluded from the main add-to-cart body.
+      // It is sent in a separate follow-up request to /artwork/api/attach-zip
+      // after add-to-cart succeeds. This prevents megabytes of base64 from flooding
+      // Odoo's request logs on every repeat-order submission.
       const requestBody = {
         ...projectData,
         source: 'completetransfers',
@@ -6553,7 +6557,6 @@ export async function registerRoutes(app: express.Application) {
         ...(productCode && { product_code: productCode }),
         ...(isVectorizationOnly && { template_id: 'vector-service' }),
         ...(zipDropboxPath && { dropboxPath: zipDropboxPath, zipFileName }),
-        ...(zipBase64 && zipFileName && { zipBase64, zipFileName }),
         ...(zipTooLarge && zipFileName && { zipNote: `Repeat order ZIP file available: ${zipFileName} (please retrieve manually)` }),
         ...(includeDstProofing && { include_dst_proofing: true, dst_product_code: 'DSTF' }),
       };
@@ -6588,8 +6591,40 @@ export async function registerRoutes(app: express.Application) {
       } catch (e) {
         data = { message: responseText };
       }
-      
-      console.log(`✅ Successfully added to cart:`, data);
+
+      // --- Follow-up: attach ZIP via dedicated endpoint (keeps add-to-cart body clean) ---
+      if (zipBase64 && zipFileName && data?.order_line_id) {
+        const attachZipUrl = `${odooBaseUrl}/artwork/api/attach-zip`;
+        console.log(`📎 Sending ZIP to /artwork/api/attach-zip for order_line #${data.order_line_id} (${zipFileName})`);
+        // Fire-and-await so the ZIP is definitely attached before we respond to the client
+        try {
+          const zipResponse = await fetch(attachZipUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Cookie': clientCookies,
+            },
+            body: JSON.stringify({
+              order_line_id: data.order_line_id,
+              sale_order_id: data.website_sale_order,
+              zip_base64: zipBase64,
+              zip_filename: zipFileName,
+            }),
+          });
+          const zipResult = await zipResponse.json().catch(() => ({}));
+          if (zipResponse.ok) {
+            console.log(`✅ ZIP attached via /artwork/api/attach-zip:`, zipResult.attached_to);
+          } else {
+            console.warn(`⚠️ ZIP attach-zip call failed (${zipResponse.status}):`, zipResult);
+          }
+        } catch (zipErr) {
+          console.warn(`⚠️ ZIP attach-zip request error (non-critical):`, zipErr);
+        }
+      } else if (zipBase64 && zipFileName && !data?.order_line_id) {
+        console.warn(`⚠️ ZIP ready but no order_line_id in Odoo response — ZIP not attached. Response keys:`, Object.keys(data || {}));
+      }
+
+      console.log(`✅ Successfully added to cart:`, { ...data, order_line_id: data?.order_line_id });
       res.json(data);
     } catch (error) {
       console.error('❌ Add to cart API error:', error);

@@ -788,38 +788,6 @@ class ArtworkUploaderController(http.Controller):
                     _logger.info(f"📄 Artwork uploaded to PRODUCTION fields (artwork_files_datas + artwork_file_name): {artwork_filename}")
                     _logger.info(f"✅ Dropbox workflow will automatically move file to Dropbox via shipping_dropbox_customization module")
                 
-                # Handle attached ZIP file (repeat applique orders)
-                if data.get('zipBase64') and data.get('zipFileName'):
-                    try:
-                        zip_base64_string = data['zipBase64']
-                        zip_filename = data['zipFileName']
-                        
-                        # Create ir.attachment linked to the sale order line
-                        attachment_vals = {
-                            'name': zip_filename,
-                            'type': 'binary',
-                            'datas': zip_base64_string,
-                            'res_model': 'sale.order.line',
-                            'res_id': order_line.id,
-                            'mimetype': 'application/zip',
-                        }
-                        attachment = request.env['ir.attachment'].sudo().create(attachment_vals)
-                        _logger.info(f"📎 ZIP attached to order line #{order_line.id}: {zip_filename} (attachment #{attachment.id})")
-                        
-                        # Also attach to the sale order itself for easy access
-                        so_attachment_vals = {
-                            'name': zip_filename,
-                            'type': 'binary',
-                            'datas': zip_base64_string,
-                            'res_model': 'sale.order',
-                            'res_id': sale_order.id,
-                            'mimetype': 'application/zip',
-                        }
-                        so_attachment = request.env['ir.attachment'].sudo().create(so_attachment_vals)
-                        _logger.info(f"📎 ZIP also attached to sale order #{sale_order.id} (attachment #{so_attachment.id})")
-                    except Exception as zip_err:
-                        _logger.error(f"❌ Failed to attach ZIP to order line: {str(zip_err)}")
-                
                 _logger.info(f"✅ Linked order line #{order_line.id} to project")
             else:
                 _logger.warning(f"⚠️ Could not find order line for product {product.id}")
@@ -832,6 +800,7 @@ class ArtworkUploaderController(http.Controller):
                 'website_sale_order': sale_order.id,
                 'access_token': sale_order.access_token or '',
                 'partner_id': sale_order.partner_id.id,
+                'order_line_id': order_line.id if order_line else None,
             }
             
             response = json.dumps(response_data)
@@ -854,7 +823,111 @@ class ArtworkUploaderController(http.Controller):
                 ('Access-Control-Allow-Credentials', 'true'),
             ]
             return request.make_response(response, headers=headers, status=500)
-    
+
+    @http.route('/artwork/api/attach-zip', type='http', auth='public', methods=['POST', 'OPTIONS'], csrf=False)
+    def attach_zip(self, **kwargs):
+        """Attach a ZIP file to an existing sale order line (and its linked task).
+        
+        Accepts JSON body: { order_line_id, zip_base64, zip_filename, sale_order_id }
+        Creates ir.attachment on sale.order.line, sale.order, and project.task.
+        Called as a follow-up after add-to-cart succeeds, so the request body
+        stays small and Odoo logs are not flooded with base64 data.
+        """
+        origin = request.httprequest.headers.get('Origin', '*')
+        cors_headers = [
+            ('Access-Control-Allow-Origin', origin),
+            ('Access-Control-Allow-Credentials', 'true'),
+        ]
+
+        if request.httprequest.method == 'OPTIONS':
+            return request.make_response('', cors_headers + [
+                ('Access-Control-Allow-Methods', 'POST, OPTIONS'),
+                ('Access-Control-Allow-Headers', 'Content-Type'),
+                ('Access-Control-Max-Age', '86400'),
+            ])
+
+        try:
+            try:
+                data = json.loads(request.httprequest.data.decode('utf-8')) if request.httprequest.data else {}
+            except (json.JSONDecodeError, UnicodeDecodeError):
+                data = {}
+
+            order_line_id = data.get('order_line_id')
+            sale_order_id = data.get('sale_order_id')
+            zip_base64 = data.get('zip_base64') or data.get('zipBase64')
+            zip_filename = data.get('zip_filename') or data.get('zipFileName') or 'attachment.zip'
+
+            _logger.info(f"📎 attach-zip: order_line={order_line_id}, so={sale_order_id}, file={zip_filename}, size={len(zip_base64) if zip_base64 else 0} chars")
+
+            if not zip_base64 or not order_line_id:
+                return request.make_response(
+                    json.dumps({'error': 'order_line_id and zip_base64 are required'}),
+                    cors_headers + [('Content-Type', 'application/json')],
+                    status=400,
+                )
+
+            attached_to = []
+
+            # 1. Attach to sale order line
+            order_line = request.env['sale.order.line'].sudo().browse(int(order_line_id))
+            if order_line.exists():
+                att = request.env['ir.attachment'].sudo().create({
+                    'name': zip_filename,
+                    'type': 'binary',
+                    'datas': zip_base64,
+                    'res_model': 'sale.order.line',
+                    'res_id': order_line.id,
+                    'mimetype': 'application/zip',
+                })
+                _logger.info(f"📎 ZIP attached to order line #{order_line.id} (att #{att.id})")
+                attached_to.append(f'order_line:{order_line.id}')
+
+                # 2. Attach to sale order
+                so = order_line.order_id
+                if so:
+                    so_att = request.env['ir.attachment'].sudo().create({
+                        'name': zip_filename,
+                        'type': 'binary',
+                        'datas': zip_base64,
+                        'res_model': 'sale.order',
+                        'res_id': so.id,
+                        'mimetype': 'application/zip',
+                    })
+                    _logger.info(f"📎 ZIP attached to sale order #{so.id} (att #{so_att.id})")
+                    attached_to.append(f'sale_order:{so.id}')
+
+                # 3. Attach to linked project task(s)
+                tasks = request.env['project.task'].sudo().search([('sale_line_id', '=', order_line.id)])
+                if not tasks and order_line.task_id:
+                    tasks = order_line.task_id
+                for task in tasks:
+                    task_att = request.env['ir.attachment'].sudo().create({
+                        'name': zip_filename,
+                        'type': 'binary',
+                        'datas': zip_base64,
+                        'res_model': 'project.task',
+                        'res_id': task.id,
+                        'mimetype': 'application/zip',
+                    })
+                    _logger.info(f"📎 ZIP attached to task #{task.id} '{task.name}' (att #{task_att.id})")
+                    attached_to.append(f'task:{task.id}')
+            else:
+                _logger.warning(f"⚠️ attach-zip: order line #{order_line_id} not found")
+
+            return request.make_response(
+                json.dumps({'success': True, 'attached_to': attached_to}),
+                cors_headers + [('Content-Type', 'application/json')],
+            )
+
+        except Exception as e:
+            _logger.error(f"❌ attach-zip FAILED: {str(e)}")
+            _logger.exception("Full traceback:")
+            return request.make_response(
+                json.dumps({'error': str(e)}),
+                cors_headers + [('Content-Type', 'application/json')],
+                status=500,
+            )
+
     @http.route('/artwork/claim-cart', type='http', auth='public', website=True, methods=['GET', 'POST', 'OPTIONS'], csrf=False)
     def claim_cart(self, order_id=None, access_token=None, **kwargs):
         """Claim a cart into the current browser session.
