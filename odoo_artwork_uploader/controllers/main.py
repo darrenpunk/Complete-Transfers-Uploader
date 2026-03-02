@@ -824,6 +824,110 @@ class ArtworkUploaderController(http.Controller):
             ]
             return request.make_response(response, headers=headers, status=500)
 
+    @http.route('/artwork/api/attach-pdf', type='http', auth='public', methods=['POST', 'OPTIONS'], csrf=False)
+    def attach_pdf(self, **kwargs):
+        """Attach a production PDF to an existing sale order line by setting artwork_files_datas.
+
+        This is the correct path for large PDFs that were too big to send inline during
+        add-to-cart.  Setting artwork_files_datas (rather than creating a bare ir.attachment)
+        triggers the existing sale.order.line write hook, which syncs artwork_image to the
+        linked manufacturing task and populates the 'File Name' / 'Attachment Upload' fields
+        visible in Odoo.
+
+        Accepts JSON body: { order_line_id, pdf_base64, pdf_filename, sale_order_id }
+        """
+        origin = request.httprequest.headers.get('Origin', '*')
+        cors_headers = [
+            ('Access-Control-Allow-Origin', origin),
+            ('Access-Control-Allow-Credentials', 'true'),
+        ]
+
+        if request.httprequest.method == 'OPTIONS':
+            return request.make_response('', cors_headers + [
+                ('Access-Control-Allow-Methods', 'POST, OPTIONS'),
+                ('Access-Control-Allow-Headers', 'Content-Type'),
+                ('Access-Control-Max-Age', '86400'),
+            ])
+
+        try:
+            try:
+                data = json.loads(request.httprequest.data.decode('utf-8')) if request.httprequest.data else {}
+            except (json.JSONDecodeError, UnicodeDecodeError):
+                data = {}
+
+            order_line_id = data.get('order_line_id')
+            sale_order_id = data.get('sale_order_id')
+            pdf_base64 = data.get('pdf_base64') or data.get('pdfBase64')
+            pdf_filename = data.get('pdf_filename') or data.get('pdfFilename') or 'artwork.pdf'
+
+            size_chars = len(pdf_base64) if pdf_base64 else 0
+            _logger.info(f"📄 attach-pdf: order_line={order_line_id}, so={sale_order_id}, file={pdf_filename}, size={size_chars} chars")
+
+            if not pdf_base64 or not order_line_id:
+                return request.make_response(
+                    json.dumps({'error': 'order_line_id and pdf_base64 are required'}),
+                    cors_headers + [('Content-Type', 'application/json')],
+                    status=400,
+                )
+
+            attached_to = []
+
+            order_line = request.env['sale.order.line'].sudo().browse(int(order_line_id))
+            if order_line.exists():
+                # Write to artwork_files_datas — this triggers the write hook in sale_order.py
+                # which syncs artwork_image to the linked manufacturing task.
+                write_vals = {}
+                if hasattr(order_line, 'artwork_files_datas'):
+                    write_vals['artwork_files_datas'] = pdf_base64
+                if hasattr(order_line, 'artwork_file_name'):
+                    write_vals['artwork_file_name'] = pdf_filename
+                if write_vals:
+                    order_line.write(write_vals)
+                    _logger.info(f"📄 PDF set on order line #{order_line.id} via artwork_files_datas ({size_chars} chars)")
+                    attached_to.append(f'order_line_field:{order_line.id}')
+
+                # Also create an ir.attachment so the PDF is visible in the chatter
+                att = request.env['ir.attachment'].sudo().create({
+                    'name': pdf_filename,
+                    'type': 'binary',
+                    'datas': pdf_base64,
+                    'res_model': 'sale.order.line',
+                    'res_id': order_line.id,
+                    'mimetype': 'application/pdf',
+                })
+                _logger.info(f"📄 PDF ir.attachment created on order line #{order_line.id} (att #{att.id})")
+                attached_to.append(f'order_line_att:{order_line.id}')
+
+                # Also attach to the sale order chatter
+                so = order_line.order_id
+                if so:
+                    so_att = request.env['ir.attachment'].sudo().create({
+                        'name': pdf_filename,
+                        'type': 'binary',
+                        'datas': pdf_base64,
+                        'res_model': 'sale.order',
+                        'res_id': so.id,
+                        'mimetype': 'application/pdf',
+                    })
+                    _logger.info(f"📄 PDF ir.attachment created on sale order #{so.id} (att #{so_att.id})")
+                    attached_to.append(f'sale_order:{so.id}')
+            else:
+                _logger.warning(f"⚠️ attach-pdf: order line #{order_line_id} not found")
+
+            return request.make_response(
+                json.dumps({'success': True, 'attached_to': attached_to}),
+                cors_headers + [('Content-Type', 'application/json')],
+            )
+
+        except Exception as e:
+            _logger.error(f"❌ attach-pdf FAILED: {str(e)}")
+            _logger.exception("Full traceback:")
+            return request.make_response(
+                json.dumps({'error': str(e)}),
+                cors_headers + [('Content-Type', 'application/json')],
+                status=500,
+            )
+
     @http.route('/artwork/api/attach-zip', type='http', auth='public', methods=['POST', 'OPTIONS'], csrf=False)
     def attach_zip(self, **kwargs):
         """Attach a ZIP file to an existing sale order line (and its linked task).

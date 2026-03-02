@@ -6558,19 +6558,49 @@ export async function registerRoutes(app: express.Application) {
       const orderQty = projectData.totalQuantity || projectData.quantity || 1;
       const artworkFilename = `${projectName} qty${orderQty}.pdf`;
 
-      // --- Large PDF offload ---
-      // If the production PDF is too large to send inline (Odoo's nginx API endpoint
-      // has a lower body size limit than its file upload endpoint), strip it from the
-      // add-to-cart body and send it separately via /artwork/api/attach-zip after the
-      // order line is created — exactly like we do for repeat-order ZIPs.
-      const PDF_INLINE_MAX_CHARS = 40 * 1024 * 1024; // ~30MB decoded PDF
+      // --- Large PDF replacement ---
+      // pdf-lib (client-side) embeds the raw source file, which inflates the production PDF
+      // to 50–70 MB for large artwork files. Odoo's nginx API endpoint rejects bodies above
+      // ~40 MB (ECONNRESET). When the client PDF is too large we replace it with the
+      // server-generated production PDF, which uses Ghostscript and produces a much smaller
+      // file (~1–2 MB) while preserving the same layout, CMYK colours, and quality.
+      const PDF_INLINE_MAX_CHARS = 40 * 1024 * 1024; // ~30 MB decoded ≈ ~40 MB base64
       let offloadedPdfBase64: string | undefined;
       let offloadedPdfFilename: string | undefined;
+
       if (projectData.pdfBase64 && projectData.pdfBase64.length > PDF_INLINE_MAX_CHARS) {
         const sizeMB = (projectData.pdfBase64.length / 1024 / 1024).toFixed(1);
-        console.log(`📦 Large production PDF (${sizeMB}MB) — will attach separately after cart creation`);
-        offloadedPdfBase64 = projectData.pdfBase64;
-        offloadedPdfFilename = artworkFilename;
+        console.log(`📦 Client PDF too large (${sizeMB}MB base64) — regenerating server-side`);
+        try {
+          // Call our own generate-pdf endpoint (same host, port 5000 in dev / same process in prod)
+          const selfBase = `http://localhost:${process.env.PORT || 5000}`;
+          const genRes = await fetch(`${selfBase}/api/projects/${projectId}/generate-pdf`, {
+            headers: { cookie: req.headers.cookie || '' },
+          });
+          if (genRes.ok) {
+            const pdfBuf = Buffer.from(await genRes.arrayBuffer());
+            const serverPdfBase64 = pdfBuf.toString('base64');
+            const serverSizeMB = (serverPdfBase64.length / 1024 / 1024).toFixed(1);
+            console.log(`✅ Server PDF generated: ${serverSizeMB}MB base64 — using instead of client PDF`);
+            if (serverPdfBase64.length <= PDF_INLINE_MAX_CHARS) {
+              // Small enough — send inline just like a normal order
+              projectData.pdfBase64 = serverPdfBase64;
+            } else {
+              // Still large (unusual) — fall back to separate attach-pdf
+              console.warn(`⚠️ Server PDF still large (${serverSizeMB}MB) — will attach separately`);
+              offloadedPdfBase64 = serverPdfBase64;
+              offloadedPdfFilename = artworkFilename;
+            }
+          } else {
+            console.warn(`⚠️ Server PDF generation failed (${genRes.status}) — will attach client PDF separately`);
+            offloadedPdfBase64 = projectData.pdfBase64;
+            offloadedPdfFilename = artworkFilename;
+          }
+        } catch (genErr) {
+          console.warn(`⚠️ Server PDF generation error — will attach client PDF separately:`, genErr);
+          offloadedPdfBase64 = projectData.pdfBase64;
+          offloadedPdfFilename = artworkFilename;
+        }
       }
 
       if (projectData.pdfBase64) {
@@ -6589,7 +6619,7 @@ export async function registerRoutes(app: express.Application) {
         ...(zipTooLarge && zipFileName && { zipNote: `Repeat order ZIP file available: ${zipFileName} (please retrieve manually)` }),
         ...(includeDstProofing && { include_dst_proofing: true, dst_product_code: 'DSTF' }),
       };
-      // Strip the PDF from the body if it's being sent separately
+      // Strip the large client PDF if we're falling back to separate attach-pdf
       if (offloadedPdfBase64) {
         delete requestBody.pdfBase64;
       }
@@ -6672,6 +6702,39 @@ export async function registerRoutes(app: express.Application) {
         }
       } else if (zipBase64 && zipFileName && !data?.order_line_id) {
         console.warn(`⚠️ ZIP ready but no order_line_id in Odoo response — ZIP not attached. Response keys:`, Object.keys(data || {}));
+      }
+
+      // --- Follow-up: attach large PDF via /artwork/api/attach-pdf ---
+      // This sets artwork_files_datas on the order line (not just an ir.attachment),
+      // which triggers the write hook that syncs artwork_image to the task.
+      if (offloadedPdfBase64 && offloadedPdfFilename && data?.order_line_id) {
+        const attachPdfUrl = `${odooBaseUrl}/artwork/api/attach-pdf`;
+        console.log(`📄 Sending large PDF to /artwork/api/attach-pdf for order_line #${data.order_line_id} (${offloadedPdfFilename})`);
+        try {
+          const pdfResponse = await fetch(attachPdfUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Cookie': clientCookies,
+            },
+            body: JSON.stringify({
+              order_line_id: data.order_line_id,
+              sale_order_id: data.website_sale_order,
+              pdf_base64: offloadedPdfBase64,
+              pdf_filename: offloadedPdfFilename,
+            }),
+          });
+          const pdfResult = await pdfResponse.json().catch(() => ({}));
+          if (pdfResponse.ok) {
+            console.log(`✅ Large PDF attached via /artwork/api/attach-pdf:`, pdfResult.attached_to);
+          } else {
+            console.warn(`⚠️ attach-pdf call failed (${pdfResponse.status}):`, pdfResult);
+          }
+        } catch (pdfErr) {
+          console.warn(`⚠️ attach-pdf request error (non-critical):`, pdfErr);
+        }
+      } else if (offloadedPdfBase64 && !data?.order_line_id) {
+        console.warn(`⚠️ Large PDF ready but no order_line_id in response — PDF not attached. Keys:`, Object.keys(data || {}));
       }
 
       console.log(`✅ Successfully added to cart:`, { ...data, order_line_id: data?.order_line_id });
