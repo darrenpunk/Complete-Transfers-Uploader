@@ -6465,10 +6465,7 @@ export async function registerRoutes(app: express.Application) {
 
       let zipBase64: string | undefined;
       let zipFileName: string | undefined;
-      let zipDropboxPath: string | undefined;
-      let zipTooLarge = false;
       let isRepeatOrder = false;
-      const ZIP_INLINE_MAX_BYTES = 8 * 1024 * 1024; // 8MB limit for inline base64
       if (!isVectorizationOnly && projectId !== 'vector-service') {
         try {
           const proj = await storage.getProject(projectId);
@@ -6481,31 +6478,20 @@ export async function registerRoutes(app: express.Application) {
               const zipSizeMB = (zipStat.size / 1024 / 1024).toFixed(1);
               console.log(`📎 ZIP file found (${zipSizeMB}MB): ${zipFileName}`);
               const zipBuffer = fs.readFileSync(zipFilePath);
-              if (zipStat.size <= ZIP_INLINE_MAX_BYTES) {
-                // Primary: send inline base64 — Odoo just decodes and attaches (no Dropbox credentials needed)
-                zipBase64 = zipBuffer.toString('base64');
-                console.log(`📎 Sending ZIP inline as base64 (${zipSizeMB}MB): ${zipFileName}`);
-                // Also upload to Dropbox as a backup archive (fire-and-forget)
-                import('./dropbox-service').then(({ uploadFileToDropbox }) => {
-                  const dropboxDest = `/repeat-orders/${projectId}/${zipFileName}`;
-                  uploadFileToDropbox(zipBuffer, dropboxDest)
-                    .then(r => console.log(`📦 ZIP archived to Dropbox: ${r.pathDisplay}`))
-                    .catch(e => console.warn(`⚠️ Dropbox archive failed (non-critical):`, e));
-                });
-              } else {
-                // File too large for inline — upload to Dropbox and send path
-                console.log(`📎 ZIP too large for inline (${zipSizeMB}MB) — uploading to Dropbox`);
-                try {
-                  const { uploadFileToDropbox } = await import('./dropbox-service');
-                  const dropboxDest = `/repeat-orders/${projectId}/${zipFileName}`;
-                  const uploaded = await uploadFileToDropbox(zipBuffer, dropboxDest);
-                  zipDropboxPath = uploaded.pathDisplay;
-                  console.log(`✅ Large ZIP uploaded to Dropbox: ${zipDropboxPath}`);
-                } catch (dbErr) {
-                  zipTooLarge = true;
-                  console.warn(`⚠️ Dropbox upload failed for large ZIP (${zipSizeMB}MB):`, dbErr);
-                }
-              }
+              // Always send via the direct attach-zip route (no Dropbox dependency).
+              // The /artwork/api/attach-zip endpoint is a lightweight http handler that
+              // accepts base64 ZIP data and creates ir.attachment records — it handles
+              // large files comfortably and is called AFTER the cart is created, so the
+              // add-to-cart body stays clean and small.
+              zipBase64 = zipBuffer.toString('base64');
+              console.log(`📎 ZIP ready for attach-zip (${zipSizeMB}MB base64 ${(zipBase64.length / 1024 / 1024).toFixed(1)}MB): ${zipFileName}`);
+              // Also archive to Dropbox as a background backup (fire-and-forget, non-blocking)
+              import('./dropbox-service').then(({ uploadFileToDropbox }) => {
+                const dropboxDest = `/repeat-orders/${projectId}/${zipFileName}`;
+                uploadFileToDropbox(zipBuffer, dropboxDest)
+                  .then(r => console.log(`📦 ZIP archived to Dropbox: ${r.pathDisplay}`))
+                  .catch(e => console.warn(`⚠️ Dropbox archive failed (non-critical):`, e));
+              });
             } else {
               console.warn(`⚠️ Attached ZIP not found on disk: ${zipFilePath}`);
             }
@@ -6615,8 +6601,6 @@ export async function registerRoutes(app: express.Application) {
         artworkFilename,
         ...(productCode && { product_code: productCode }),
         ...(isVectorizationOnly && { template_id: 'vector-service' }),
-        ...(zipDropboxPath && { dropboxPath: zipDropboxPath, zipFileName }),
-        ...(zipTooLarge && zipFileName && { zipNote: `Repeat order ZIP file available: ${zipFileName} (please retrieve manually)` }),
         ...(includeDstProofing && { include_dst_proofing: true, dst_product_code: 'DSTF' }),
       };
       // Strip the large client PDF if we're falling back to separate attach-pdf
