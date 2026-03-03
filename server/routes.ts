@@ -4687,10 +4687,13 @@ export async function registerRoutes(app: express.Application) {
 
           } else {
             // Fallback: for large documents with no detectable content bounds
-            // BUT preserve dimensions if already set for complex file PNG fallback
+            // BUT preserve dimensions if already set for complex file PNG fallback or direct raster upload
             if ((file as any).isComplexFilePngFallback && (file as any).originalPdfBounds) {
               console.log(`Large format complex file - using pre-extracted PDF bounds: ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm`);
               // displayWidth and displayHeight already set from originalPdfBounds
+            } else if (isDirectRasterUpload && (file as any).imageDpi) {
+              console.log(`Large format direct raster upload - preserving native DPI dimensions: ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm @ ${(file as any).imageDpi} DPI`);
+              // displayWidth and displayHeight already set from embedded DPI in isDirectRasterUpload block
             } else {
               console.log(`Large format document with no detectable content bounds, using conservative sizing`);
               displayWidth = 200;
