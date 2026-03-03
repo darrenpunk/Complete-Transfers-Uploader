@@ -3749,12 +3749,29 @@ export async function registerRoutes(app: express.Application) {
                       console.log(`✅ GS BBOX TRUSTED: Content covers ${(areaCoverage * 100).toFixed(0)}% of page`);
                     }
                     
+                    // If ArtBox (Illustrator artboard) is available and larger than GS ink-area, prefer it.
+                    // ArtBox = designer's explicit artboard boundary = intended print/transfer size.
+                    // GS bbox = tight ink area only (excludes white ink on dark backgrounds, masked/clipped content).
+                    const artBoxFromPdfGs = pdfPageDimensions && (pdfPageDimensions as any).artBoxPts;
+                    if (artBoxFromPdfGs && (artBoxFromPdfGs.width > gsBounds.width + 2 || artBoxFromPdfGs.height > gsBounds.height + 2)) {
+                      console.log(`🎨 ArtBox (${artBoxFromPdfGs.width.toFixed(1)}×${artBoxFromPdfGs.height.toFixed(1)}pts) is larger than GS bbox (${gsBounds.width.toFixed(1)}×${gsBounds.height.toFixed(1)}pts) — using ArtBox as intended print area`);
+                      gsBounds = {
+                        xMin: artBoxFromPdfGs.x,
+                        yMin: artBoxFromPdfGs.y,
+                        xMax: artBoxFromPdfGs.x + artBoxFromPdfGs.width,
+                        yMax: artBoxFromPdfGs.y + artBoxFromPdfGs.height,
+                        width: artBoxFromPdfGs.width,
+                        height: artBoxFromPdfGs.height
+                      };
+                      boundsSourceIsArtBox = true;
+                    }
+                    
                     contentBoundsForNormalization = gsBounds;
                     const pxToMm = 1 / 2.834645669;
                     
                     boundsResult = {
                       success: true,
-                      method: 'ghostscript-bbox',
+                      method: boundsSourceIsArtBox ? 'artbox' : 'ghostscript-bbox',
                       contentBounds: {
                         xMin: 0,
                         yMin: 0,
@@ -3768,7 +3785,7 @@ export async function registerRoutes(app: express.Application) {
                     
                     displayWidth = gsBounds.width * pxToMm;
                     displayHeight = gsBounds.height * pxToMm;
-                    console.log(`📐 Using Ghostscript dimensions: ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm`);
+                    console.log(`📐 Using ${boundsSourceIsArtBox ? 'ArtBox' : 'Ghostscript'} dimensions: ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm`);
                   } else {
                     // Ghostscript bbox returned zero/empty bounds (common with white-on-white content)
                     // Try Inkscape first for accurate content detection, then fall back to SVG geometry
