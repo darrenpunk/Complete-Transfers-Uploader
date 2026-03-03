@@ -629,7 +629,11 @@ class ArtworkUploaderController(http.Controller):
             # NOW determine the correct pricelist based on the product
             # This mirrors the logic in get_pricing() - check if special pricelist has rules for THIS product
             if has_special_pricelist:
-                # Check if special pricelist has a SPECIFIC rule for this product
+                # Check if special pricelist has ANY rule that covers this product:
+                # 1. Exact product variant rule
+                # 2. Product template (product.template) rule
+                # 3. Product category rule (covers all products in a category, e.g. "DTF Transfers")
+                # 4. Global rule (applies to all products — still a deliberate special pricelist)
                 has_specific_product_rule = False
                 
                 # First check: exact product variant match
@@ -653,6 +657,32 @@ class ArtworkUploaderController(http.Controller):
                     if template_rule:
                         has_specific_product_rule = True
                         _logger.info(f"✅ Found PRODUCT TEMPLATE rule in {original_pricelist.name} for {product.name}")
+                    else:
+                        # Third check: product category rule (covers all products in the same category)
+                        categ_ids = []
+                        categ = product.categ_id
+                        while categ:
+                            categ_ids.append(categ.id)
+                            categ = categ.parent_id
+                        if categ_ids:
+                            category_rule = request.env['product.pricelist.item'].sudo().search([
+                                ('pricelist_id', '=', original_pricelist.id),
+                                ('applied_on', '=', '2_product_category'),
+                                ('categ_id', 'in', categ_ids)
+                            ], limit=1)
+                            if category_rule:
+                                has_specific_product_rule = True
+                                _logger.info(f"✅ Found PRODUCT CATEGORY rule in {original_pricelist.name} for category '{category_rule.categ_id.name}'")
+                        
+                        if not has_specific_product_rule:
+                            # Fourth check: global rule (applies to all products — pricelist is intentionally broad)
+                            global_rule = request.env['product.pricelist.item'].sudo().search([
+                                ('pricelist_id', '=', original_pricelist.id),
+                                ('applied_on', '=', '3_global')
+                            ], limit=1)
+                            if global_rule:
+                                has_specific_product_rule = True
+                                _logger.info(f"✅ Found GLOBAL rule in {original_pricelist.name} — keeping customer pricelist")
                 
                 if has_specific_product_rule:
                     # Customer's special pricelist has rules for this product - keep it
@@ -1440,10 +1470,11 @@ class ArtworkUploaderController(http.Controller):
                 customer_pricelist = partner.property_product_pricelist
                 # Only use it if it's a special pricelist (not a standard one)
                 if customer_pricelist.name not in standard_pricelists:
-                    # Check if this special pricelist has a SPECIFIC rule for this exact product
-                    # IMPORTANT: Only match product-specific or template-specific rules
-                    # DO NOT match global rules or category rules - those are too broad
-                    # e.g., DTF pricelist should only apply to DTF products, not Full Colour
+                    # Check if special pricelist has ANY rule covering this product:
+                    # 1. Product variant rule (most specific)
+                    # 2. Product template rule
+                    # 3. Product category rule (e.g., all products in "DTF Transfers" category)
+                    # 4. Global rule (applies to all products — pricelist is intentionally broad)
                     has_specific_product_rule = False
                     
                     # First check: exact product variant match
@@ -1467,14 +1498,40 @@ class ArtworkUploaderController(http.Controller):
                         if template_rule:
                             has_specific_product_rule = True
                             _logger.info(f"✅ Found PRODUCT TEMPLATE rule in {customer_pricelist.name} for {product.name}")
+                        else:
+                            # Third check: product category rule
+                            categ_ids = []
+                            categ = product.categ_id
+                            while categ:
+                                categ_ids.append(categ.id)
+                                categ = categ.parent_id
+                            if categ_ids:
+                                category_rule = request.env['product.pricelist.item'].sudo().search([
+                                    ('pricelist_id', '=', customer_pricelist.id),
+                                    ('applied_on', '=', '2_product_category'),
+                                    ('categ_id', 'in', categ_ids)
+                                ], limit=1)
+                                if category_rule:
+                                    has_specific_product_rule = True
+                                    _logger.info(f"✅ Found PRODUCT CATEGORY rule in {customer_pricelist.name} for category '{category_rule.categ_id.name}'")
+                            
+                            if not has_specific_product_rule:
+                                # Fourth check: global rule
+                                global_rule = request.env['product.pricelist.item'].sudo().search([
+                                    ('pricelist_id', '=', customer_pricelist.id),
+                                    ('applied_on', '=', '3_global')
+                                ], limit=1)
+                                if global_rule:
+                                    has_specific_product_rule = True
+                                    _logger.info(f"✅ Found GLOBAL rule in {customer_pricelist.name} — keeping customer pricelist")
                     
                     if has_specific_product_rule:
                         pricelist = customer_pricelist
-                        _logger.info(f"⭐ Using customer's SPECIAL pricelist: {pricelist.name} (has specific rule for {product.name})")
+                        _logger.info(f"⭐ Using customer's SPECIAL pricelist: {pricelist.name} (has applicable rule for {product.name})")
                     else:
-                        # Special pricelist doesn't have a SPECIFIC rule for this product
+                        # Special pricelist has no applicable rule for this product
                         # Will fall back to CT Euro Pricelist
-                        _logger.info(f"⚠️ Customer has SPECIAL pricelist '{customer_pricelist.name}' but NO specific rule for '{product.name}'")
+                        _logger.info(f"⚠️ Customer has SPECIAL pricelist '{customer_pricelist.name}' but NO applicable rule for '{product.name}'")
                         _logger.info(f"🔄 Will fall back to CT Euro Pricelist for this product")
             
             # PRIORITY 2: If request is from Complete Transfers (detected via referrer, origin, or website), force CT Euro/GBP
