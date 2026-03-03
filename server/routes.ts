@@ -3512,8 +3512,9 @@ export async function registerRoutes(app: express.Application) {
               console.log(`📐 Using PNG dimensions with 300 DPI: ${directDimensions.width}×${directDimensions.height}px = ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm`);
             }
           }
-        } else if ((file as any).extractedPngWidth && (file as any).extractedPngHeight) {
+        } else if (!isDirectRasterUpload && (file as any).extractedPngWidth && (file as any).extractedPngHeight) {
           // For extracted PNGs with stored dimensions, check if we have original PDF path
+          // NOTE: isDirectRasterUpload already set correct displayWidth/displayHeight from embedded DPI — don't override
           if ((file as any).originalPdfPath) {
             try {
               const { PDFDocument } = await import('pdf-lib');
@@ -4723,6 +4724,19 @@ export async function registerRoutes(app: express.Application) {
             height: heightPx
           };
           console.log(`⚠️ Bounds extraction failed - using fallback content bounds from display size: ${displayWidth}×${displayHeight}mm = ${widthPx.toFixed(1)}×${heightPx.toFixed(1)}px`);
+        }
+        
+        // For direct raster uploads (JPEG/PNG), embed native DPI and pixel dimensions into svgColors
+        // so the frontend can compute accurate effective resolution for the preflight check
+        if (isDirectRasterUpload && (file as any).imageDpi) {
+          const rasterMeta = {
+            imageDpi: (file as any).imageDpi,
+            imageWidthPx: (file as any).extractedPngWidth,
+            imageHeightPx: (file as any).extractedPngHeight,
+            nativePrintWidthMm: displayWidth,
+            nativePrintHeightMm: displayHeight
+          };
+          analysisData = analysisData ? { ...analysisData, ...rasterMeta } : rasterMeta;
         }
         
         const updatedLogo = await storage.updateLogo(logo.id, {

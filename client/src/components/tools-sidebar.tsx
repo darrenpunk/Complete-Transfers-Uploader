@@ -953,16 +953,26 @@ export default function ToolsSidebar({
                 value: "Vector (Resolution Independent)"
               });
             } else {
-              const scaleX = selectedElement.width / (logo.width || 1);
-              const scaleY = selectedElement.height / (logo.height || 1);
-              const effectiveResolution = Math.min(logo.width || 0, logo.height || 0) / Math.max(scaleX, scaleY);
-              const hasGoodResolution = effectiveResolution >= 150;
+              const svgMeta = logo.svgColors as any;
+              const nativeDpi: number | null = svgMeta?.imageDpi || null;
+              const nativeWidthMm: number | null = svgMeta?.nativePrintWidthMm || null;
               
-              checks.push({
-                name: "Print Resolution",
-                status: hasGoodResolution ? "pass" : "warning",
-                value: hasGoodResolution ? `${Math.round(effectiveResolution)} DPI` : "Low DPI"
-              });
+              if (nativeDpi && nativeWidthMm && selectedElement.width > 0) {
+                const scale = selectedElement.width / nativeWidthMm;
+                const effectiveResolution = nativeDpi / Math.max(scale, 1);
+                const hasGoodResolution = effectiveResolution >= 150;
+                checks.push({
+                  name: "Print Resolution",
+                  status: hasGoodResolution ? "pass" : "warning",
+                  value: hasGoodResolution ? `${Math.round(effectiveResolution)} DPI` : `Low DPI (${Math.round(effectiveResolution)})`
+                });
+              } else {
+                checks.push({
+                  name: "Print Resolution",
+                  status: "warning",
+                  value: "Check Resolution"
+                });
+              }
             }
             
             // File Format Check  

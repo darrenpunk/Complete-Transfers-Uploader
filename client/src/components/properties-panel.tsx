@@ -601,17 +601,31 @@ export default function PropertiesPanel({
           value: "Vector (Resolution Independent)"
         });
       } else {
-        // Calculate effective resolution for raster files only
-        const scaleX = currentElement.width / (logo.width || 1);
-        const scaleY = currentElement.height / (logo.height || 1);
-        const effectiveResolution = Math.min(logo.width || 0, logo.height || 0) / Math.max(scaleX, scaleY);
-        const hasGoodResolution = effectiveResolution >= 150; // 150 DPI minimum for print
+        // Calculate effective resolution for raster files
+        // Use native DPI and print dimensions stored at upload time (from embedded EXIF/metadata)
+        const svgMeta = logo.svgColors as any;
+        const nativeDpi: number | null = svgMeta?.imageDpi || null;
+        const nativeWidthMm: number | null = svgMeta?.nativePrintWidthMm || null;
         
-        checks.push({
-          name: "Print Resolution",
-          status: hasGoodResolution ? "pass" : "warning",
-          value: hasGoodResolution ? `${Math.round(effectiveResolution)} DPI` : "Low DPI"
-        });
+        if (nativeDpi && nativeWidthMm && currentElement.width > 0) {
+          // effectiveDPI = nativeDPI × (nativePrintSize / currentDisplaySize)
+          // If the image is scaled up beyond its native size, DPI drops proportionally
+          const scale = currentElement.width / nativeWidthMm;
+          const effectiveResolution = nativeDpi / Math.max(scale, 1);
+          const hasGoodResolution = effectiveResolution >= 150;
+          checks.push({
+            name: "Print Resolution",
+            status: hasGoodResolution ? "pass" : "warning",
+            value: hasGoodResolution ? `${Math.round(effectiveResolution)} DPI` : `Low DPI (${Math.round(effectiveResolution)})`
+          });
+        } else {
+          // No DPI metadata available — flag for review
+          checks.push({
+            name: "Print Resolution",
+            status: "warning",
+            value: "Check Resolution"
+          });
+        }
       }
       
       // File Format Check
