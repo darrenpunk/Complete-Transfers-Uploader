@@ -3586,14 +3586,39 @@ export async function registerRoutes(app: express.Application) {
                   const pageWidth = mediaBox.width;
                   const pageHeight = mediaBox.height;
                   
+                  // Check for ArtBox (Illustrator artboard) or TrimBox — these define intended output area
+                  let artBoxPts: { x: number; y: number; width: number; height: number } | null = null;
+                  try {
+                    const artBox = firstPage.getArtBox();
+                    // Only use ArtBox if it's meaningfully smaller than MediaBox (not just a fallback copy)
+                    const wDiff = Math.abs(artBox.width - pageWidth);
+                    const hDiff = Math.abs(artBox.height - pageHeight);
+                    if (artBox.width > 10 && artBox.height > 10 && (wDiff > 5 || hDiff > 5)) {
+                      artBoxPts = artBox;
+                      const pxToMmArt = 1 / 2.834645669;
+                      console.log(`🎨 ArtBox found: (${artBox.x.toFixed(1)}, ${artBox.y.toFixed(1)}) ${artBox.width.toFixed(1)}×${artBox.height.toFixed(1)}pts = ${(artBox.width * pxToMmArt).toFixed(1)}×${(artBox.height * pxToMmArt).toFixed(1)}mm`);
+                    }
+                  } catch {}
+                  try {
+                    const trimBox = firstPage.getTrimBox();
+                    const wDiff = Math.abs(trimBox.width - pageWidth);
+                    const hDiff = Math.abs(trimBox.height - pageHeight);
+                    if (!artBoxPts && trimBox.width > 10 && trimBox.height > 10 && (wDiff > 5 || hDiff > 5)) {
+                      artBoxPts = trimBox;
+                      const pxToMmTrim = 1 / 2.834645669;
+                      console.log(`✂️ TrimBox found: (${trimBox.x.toFixed(1)}, ${trimBox.y.toFixed(1)}) ${trimBox.width.toFixed(1)}×${trimBox.height.toFixed(1)}pts = ${(trimBox.width * pxToMmTrim).toFixed(1)}×${(trimBox.height * pxToMmTrim).toFixed(1)}mm`);
+                    }
+                  } catch {}
+
                   // CRITICAL: Store PDF page dimensions for fallback use
                   const pxToMm = 1 / 2.834645669; // 72 DPI standard
                   pdfPageDimensions = {
                     widthMm: pageWidth * pxToMm,
                     heightMm: pageHeight * pxToMm,
                     widthPts: pageWidth,
-                    heightPts: pageHeight
-                  };
+                    heightPts: pageHeight,
+                    artBoxPts: artBoxPts || undefined
+                  } as any;
                   
                   console.log(`✅ PDF PAGE DIMENSIONS EXTRACTED: ${pageWidth.toFixed(1)}×${pageHeight.toFixed(1)}pts (MediaBox)`);
                   console.log(`📄 Stored for fallback: ${pdfPageDimensions.widthMm.toFixed(1)}×${pdfPageDimensions.heightMm.toFixed(1)}mm`);
@@ -3630,6 +3655,7 @@ export async function registerRoutes(app: express.Application) {
                   
                   // Use Ghostscript bounds if available, otherwise fall back to SVG geometry
                   let contentBoundsForNormalization: { xMin: number; yMin: number; xMax: number; yMax: number; width: number; height: number };
+                  let boundsSourceIsArtBox = false; // True when ArtBox was the authoritative source — prevents secondary Inkscape check from overriding
                   
                   // CRITICAL FIX: Ghostscript bbox misses white content on its default white background
                   // This causes partial bounds for files with mixed colored + white artwork
@@ -3650,6 +3676,8 @@ export async function registerRoutes(app: express.Application) {
                         const queryResult = execSync(`inkscape --query-all "${svgPath}" 2>/dev/null`, { encoding: 'utf8', timeout: 10000 });
                         const lines = queryResult.trim().split('\n');
                         let globalXMin = Infinity, globalYMin = Infinity, globalXMax = -Infinity, globalYMax = -Infinity;
+                        const verifyPageW = pdfPageDimensions?.widthPts ?? Infinity;
+                        const verifyPageH = pdfPageDimensions?.heightPts ?? Infinity;
                         for (const line of lines) {
                           const parts = line.split(',');
                           if (parts.length >= 5) {
@@ -3658,10 +3686,17 @@ export async function registerRoutes(app: express.Application) {
                             const elW = parseFloat(parts[3]) || 0;
                             const elH = parseFloat(parts[4]) || 0;
                             if (elW > 0.5 && elH > 0.5) {
-                              globalXMin = Math.min(globalXMin, elX);
-                              globalYMin = Math.min(globalYMin, elY);
-                              globalXMax = Math.max(globalXMax, elX + elW);
-                              globalYMax = Math.max(globalYMax, elY + elH);
+                              // Clamp each element to page bounds before accumulating global bbox
+                              const clampedX = Math.max(elX, 0);
+                              const clampedY = Math.max(elY, 0);
+                              const clampedXMax = Math.min(elX + elW, verifyPageW);
+                              const clampedYMax = Math.min(elY + elH, verifyPageH);
+                              if (clampedXMax > clampedX && clampedYMax > clampedY) {
+                                globalXMin = Math.min(globalXMin, clampedX);
+                                globalYMin = Math.min(globalYMin, clampedY);
+                                globalXMax = Math.max(globalXMax, clampedXMax);
+                                globalYMax = Math.max(globalYMax, clampedYMax);
+                              }
                             }
                           }
                         }
@@ -3682,19 +3717,27 @@ export async function registerRoutes(app: express.Application) {
                         const pageArea = pageWidth * pageHeight;
                         const inkArea = inkscapeVerifyBounds.width * inkscapeVerifyBounds.height;
                         
+                        const inkPageCoverage = inkArea / pageArea;
                         if (inkArea > gsArea * 1.15) {
                           const inkWidthBigger = inkscapeVerifyBounds.width > gsBounds.width * 1.1;
                           const inkHeightBigger = inkscapeVerifyBounds.height > gsBounds.height * 1.1;
                           
-                          if (inkWidthBigger || inkHeightBigger) {
+                          // CRITICAL: If Inkscape reports nearly full-page bounds (>90% coverage), it's almost
+                          // certainly detecting a background rectangle, not real white artwork content.
+                          // In this case, GS bbox is more accurate — trust it.
+                          const inkscapeIsFullPage = inkPageCoverage > 0.90;
+                          
+                          if ((inkWidthBigger || inkHeightBigger) && !inkscapeIsFullPage) {
                             const gsPageCov = (gsArea / pageArea * 100).toFixed(0);
-                            const inkPageCov = (inkArea / pageArea * 100).toFixed(0);
+                            const inkPageCov = (inkPageCoverage * 100).toFixed(0);
                             console.log(`🔄 Inkscape found more content than GS (${(inkArea / gsArea).toFixed(1)}x area) - white content detected!`);
                             console.log(`   GS: ${gsBounds.width.toFixed(1)}×${gsBounds.height.toFixed(1)}pts (${gsPageCov}% page)`);
                             console.log(`   Inkscape: ${inkscapeVerifyBounds.width.toFixed(1)}×${inkscapeVerifyBounds.height.toFixed(1)}pts (${inkPageCov}% page)`);
                             gsBounds = inkscapeVerifyBounds;
                             (gsBounds as any).__fromSvgCoords = true;
                             console.log(`✅ Using Inkscape bounds: ${gsBounds.width.toFixed(1)}×${gsBounds.height.toFixed(1)}pts`);
+                          } else if (inkscapeIsFullPage) {
+                            console.log(`✅ Inkscape reports full-page bounds (${(inkPageCoverage * 100).toFixed(0)}% coverage) — likely background rect, trusting GS bbox: ${gsBounds.width.toFixed(1)}×${gsBounds.height.toFixed(1)}pts`);
                           } else {
                             console.log(`✅ Inkscape bounds slightly larger but dimensions similar - trusting GS bbox`);
                           }
@@ -3733,22 +3776,51 @@ export async function registerRoutes(app: express.Application) {
                     
                     let inkscapeBounds: { xMin: number; yMin: number; xMax: number; yMax: number; width: number; height: number } | null = null;
                     
-                    try {
-                      const { execSync: execSyncBounds } = await import('child_process');
-                      const queryResult = execSyncBounds(`inkscape --query-all "${svgPath}" 2>/dev/null | head -1`, { encoding: 'utf8', timeout: 10000 });
-                      const parts = queryResult.trim().split(',');
-                      if (parts.length >= 5) {
-                        const inkX = parseFloat(parts[1]) || 0;
-                        const inkY = parseFloat(parts[2]) || 0;
-                        const inkW = parseFloat(parts[3]) || 0;
-                        const inkH = parseFloat(parts[4]) || 0;
-                        if (inkW > 1 && inkH > 1) {
-                          inkscapeBounds = { xMin: inkX, yMin: inkY, xMax: inkX + inkW, yMax: inkY + inkH, width: inkW, height: inkH };
-                          console.log(`✅ Inkscape content bounds: (${inkX.toFixed(1)}, ${inkY.toFixed(1)}) size ${inkW.toFixed(1)}×${inkH.toFixed(1)}pts`);
+                    // If PDF has an ArtBox (Illustrator artboard) that differs from MediaBox, use it directly
+                    // This is the most accurate representation of the intended artwork area
+                    const artBoxFromPdf = pdfPageDimensions && (pdfPageDimensions as any).artBoxPts;
+                    if (artBoxFromPdf && pdfPageDimensions) {
+                      const pxToMm = 1 / 2.834645669;
+                      inkscapeBounds = {
+                        xMin: artBoxFromPdf.x,
+                        yMin: artBoxFromPdf.y,
+                        xMax: artBoxFromPdf.x + artBoxFromPdf.width,
+                        yMax: artBoxFromPdf.y + artBoxFromPdf.height,
+                        width: artBoxFromPdf.width,
+                        height: artBoxFromPdf.height
+                      };
+                      boundsSourceIsArtBox = true;
+                      console.log(`✅ Using ArtBox as content bounds: ${artBoxFromPdf.width.toFixed(1)}×${artBoxFromPdf.height.toFixed(1)}pts = ${(artBoxFromPdf.width * pxToMm).toFixed(1)}×${(artBoxFromPdf.height * pxToMm).toFixed(1)}mm`);
+                    }
+
+                    if (!inkscapeBounds) {
+                      try {
+                        const { execSync: execSyncBounds } = await import('child_process');
+                        const queryResult = execSyncBounds(`inkscape --query-all "${svgPath}" 2>/dev/null | head -1`, { encoding: 'utf8', timeout: 10000 });
+                        const parts = queryResult.trim().split(',');
+                        if (parts.length >= 5) {
+                          let inkX = parseFloat(parts[1]) || 0;
+                          let inkY = parseFloat(parts[2]) || 0;
+                          let inkXMax = inkX + (parseFloat(parts[3]) || 0);
+                          let inkYMax = inkY + (parseFloat(parts[4]) || 0);
+                          // Clamp to PDF MediaBox — bleed/margin elements outside the page inflate bounds
+                          if (pdfPageDimensions) {
+                            inkX = Math.max(inkX, 0);
+                            inkY = Math.max(inkY, 0);
+                            inkXMax = Math.min(inkXMax, pdfPageDimensions.widthPts);
+                            inkYMax = Math.min(inkYMax, pdfPageDimensions.heightPts);
+                            console.log(`📏 Inkscape bounds clamped to MediaBox (${pdfPageDimensions.widthPts.toFixed(1)}×${pdfPageDimensions.heightPts.toFixed(1)}pts)`);
+                          }
+                          const inkW = inkXMax - inkX;
+                          const inkH = inkYMax - inkY;
+                          if (inkW > 1 && inkH > 1) {
+                            inkscapeBounds = { xMin: inkX, yMin: inkY, xMax: inkXMax, yMax: inkYMax, width: inkW, height: inkH };
+                            console.log(`✅ Inkscape content bounds (clamped): (${inkX.toFixed(1)}, ${inkY.toFixed(1)}) size ${inkW.toFixed(1)}×${inkH.toFixed(1)}pts`);
+                          }
                         }
+                      } catch (inkErr) {
+                        console.log(`⚠️ Inkscape query failed:`, inkErr);
                       }
-                    } catch (inkErr) {
-                      console.log(`⚠️ Inkscape query failed:`, inkErr);
                     }
                     
                     if (inkscapeBounds) {
@@ -3877,15 +3949,27 @@ export async function registerRoutes(app: express.Application) {
                           if (parts.length >= 5) {
                             svgBoundsX = parseFloat(parts[1]) || 0;
                             svgBoundsY = parseFloat(parts[2]) || 0;
-                            const inkscapeWidth = parseFloat(parts[3]) || 0;
-                            const inkscapeHeight = parseFloat(parts[4]) || 0;
+                            let inkscapeWidth = parseFloat(parts[3]) || 0;
+                            let inkscapeHeight = parseFloat(parts[4]) || 0;
+                            // Clamp to PDF MediaBox — bleed elements outside the page must not inflate bounds
+                            if (pdfPageDimensions) {
+                              const clampedXMax = Math.min(svgBoundsX + inkscapeWidth, pdfPageDimensions.widthPts);
+                              const clampedYMax = Math.min(svgBoundsY + inkscapeHeight, pdfPageDimensions.heightPts);
+                              svgBoundsX = Math.max(svgBoundsX, 0);
+                              svgBoundsY = Math.max(svgBoundsY, 0);
+                              inkscapeWidth = clampedXMax - svgBoundsX;
+                              inkscapeHeight = clampedYMax - svgBoundsY;
+                            }
                             console.log(`🔍 Inkscape query-all: SVG at (${svgBoundsX.toFixed(2)}, ${svgBoundsY.toFixed(2)}) size ${inkscapeWidth.toFixed(2)}×${inkscapeHeight.toFixed(2)}pts`);
                             
                             // CRITICAL: Use Inkscape dimensions if they're larger than Ghostscript
                             // But ONLY if Inkscape isn't just reporting background/invisible elements
+                            // And NEVER override ArtBox bounds — ArtBox is the designer's explicit artboard definition
+                            // And NEVER override when Inkscape just returns full-page bounds (= background rect)
                             const TOLERANCE = 1.0; // 1pt tolerance
                             const inkPageCoverage2 = pdfPageDimensions ? (inkscapeWidth * inkscapeHeight) / (pdfPageDimensions.widthPts * pdfPageDimensions.heightPts) : 0;
-                            if (inkscapeWidth > contentWidthPts + TOLERANCE || inkscapeHeight > contentHeightPts + TOLERANCE) {
+                            const inkscapeIsFullPage2 = inkPageCoverage2 > 0.90;
+                            if (!boundsSourceIsArtBox && !inkscapeIsFullPage2 && (inkscapeWidth > contentWidthPts + TOLERANCE || inkscapeHeight > contentHeightPts + TOLERANCE)) {
                               {
                               console.log(`⚠️ Inkscape reports LARGER bounds than Ghostscript!`);
                               console.log(`   Ghostscript: ${contentWidthPts.toFixed(2)}×${contentHeightPts.toFixed(2)}pts`);
