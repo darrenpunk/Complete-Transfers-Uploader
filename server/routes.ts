@@ -6683,14 +6683,18 @@ export async function registerRoutes(app: express.Application) {
         ...(productCode && { product_code: productCode }),
         ...(isVectorizationOnly && { template_id: 'vector-service' }),
         ...(includeDstProofing && { include_dst_proofing: true, dst_product_code: 'DSTF' }),
-        // Include ZIP inline in the add-to-cart body so Odoo creates the ir.attachment
-        // atomically at order-line creation time — this guarantees _sync_zip_attachments_to_task
-        // finds it when the manufacturing task is created later (same approach as DTF quick upload).
-        ...(zipBase64 && zipFileName && { zipBase64, zipFilename: zipFileName }),
       };
       // Strip the large client PDF if we're falling back to separate attach-pdf
       if (offloadedPdfBase64) {
         delete requestBody.pdfBase64;
+      }
+      // For repeat orders with a ZIP: send the ZIP as pdfBase64 so Odoo stores it as
+      // artwork_files_datas — exactly the same mechanism as DTF Quick Upload.
+      // No Odoo module changes needed; the existing add-to-cart handler already handles pdfBase64.
+      if (zipBase64 && zipFileName) {
+        requestBody.pdfBase64 = zipBase64;
+        requestBody.artworkFilename = zipFileName;
+        console.log(`📎 ZIP sent as pdfBase64 (${(zipBase64.length/1024/1024).toFixed(1)}MB base64): ${zipFileName}`);
       }
 
       // Call Odoo add-to-cart API with one automatic retry on transient connection errors
@@ -6739,14 +6743,6 @@ export async function registerRoutes(app: express.Application) {
         data = JSON.parse(responseText);
       } catch (e) {
         data = { message: responseText };
-      }
-
-      // ZIP is included inline in the add-to-cart body (zipBase64 + zipFilename fields).
-      // Odoo's add-to-cart handler creates the ir.attachment on the order line atomically,
-      // so _sync_zip_attachments_to_task will find it when the manufacturing task is created.
-      if (zipBase64 && zipFileName) {
-        const zipSizeMB = (zipBase64.length / 1024 / 1024).toFixed(1);
-        console.log(`📎 ZIP sent inline in add-to-cart body (${zipSizeMB}MB): ${zipFileName} — Odoo will attach to order line #${data?.order_line_id}`);
       }
 
       // --- Follow-up: attach large PDF via /artwork/api/attach-pdf ---
