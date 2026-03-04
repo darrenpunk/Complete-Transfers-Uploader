@@ -7859,13 +7859,19 @@ ${svgClose}`;
         }
         
         // 1. Add vectorization service product to cart with customer's uploaded file
-        const vectorServiceResponse = await fetch(`${odooBaseUrl}/artwork/api/projects/vector-service/add-to-cart`, {
+        // IMPORTANT: Use a unique project UUID per request (vec-<id>) so each vectorization
+        // order gets its own artwork.project record in Odoo. Using a shared ID (e.g. 'vector-service')
+        // causes all requests to share one project — when comments update, they overwrite every
+        // previously linked order line.
+        const vecProjectUuid = `vec-${vectorizationRequest.id}`;
+        const vectorServiceResponse = await fetch(`${odooBaseUrl}/artwork/api/projects/${vecProjectUuid}/add-to-cart`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Cookie': clientCookies,
           },
           body: JSON.stringify({
+            name: `Vectorization - ${customerFileName}`,
             serviceType: 'vectorization-only',
             requestId: vectorizationRequest.id,
             source: 'completetransfers',
