@@ -177,6 +177,18 @@ async function main() {
   const startTime = Date.now();
   console.log(`[SERVER] Starting in ${isProduction ? 'production' : 'development'} mode...`);
 
+  if (isProduction) {
+    // In production, start listening FIRST so the health check responds immediately
+    // during route registration (which may take several seconds).
+    await new Promise<void>((resolve) => {
+      server.listen(port, "0.0.0.0", () => {
+        console.log(`[SERVER] Listening on port ${port} — health check now available`);
+        log(`serving on port ${port}`);
+        resolve();
+      });
+    });
+  }
+
   try {
     console.log('[SERVER] Starting route registration...');
     const routeTimeout = new Promise((_, reject) => 
@@ -217,12 +229,8 @@ async function main() {
         res.status(503).json({ error: 'Application is starting up' });
       });
     }
-
-    server.listen(port, "0.0.0.0", () => {
-      const elapsed = Date.now() - startTime;
-      log(`serving on port ${port}`);
-      console.log(`[SERVER] Server fully initialized in ${elapsed}ms`);
-    });
+    const elapsed = Date.now() - startTime;
+    console.log(`[SERVER] Server fully initialized in ${elapsed}ms`);
   }
 }
 
