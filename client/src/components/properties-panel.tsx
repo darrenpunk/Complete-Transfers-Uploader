@@ -451,15 +451,8 @@ export default function PropertiesPanel({
     
     // Set new timeout to update the server
     debouncedUpdateRef.current = setTimeout(() => {
-      // For rotated elements, swap width/height back before saving
-      const isRotated = currentElement?.rotation === 90 || currentElement?.rotation === 270;
-      let actualProperty = property;
-      if (isRotated && property === 'width') {
-        actualProperty = 'height';
-      } else if (isRotated && property === 'height') {
-        actualProperty = 'width';
-      }
-      handlePropertyChange(actualProperty as keyof CanvasElement, value);
+      // Pass the visual property name through — handlePropertyChange handles the rotation swap
+      handlePropertyChange(property, value);
     }, 500); // 500ms delay
   };
 
@@ -516,8 +509,15 @@ export default function PropertiesPanel({
     }
     let updates: Partial<CanvasElement>;
     
-    // Simple property update without any rotation-specific logic
-    updates = { [property]: processedValue };
+    // For width/height: map visual property name to the actual stored field.
+    // At 90°/270° rotation visual width == stored height and vice-versa.
+    const _isRotatedForUpdate = currentElement?.rotation === 90 || currentElement?.rotation === 270;
+    if ((property === 'width' || property === 'height') && _isRotatedForUpdate) {
+      const storedProp = property === 'width' ? 'height' : 'width';
+      updates = { [storedProp]: processedValue };
+    } else {
+      updates = { [property]: processedValue };
+    }
 
     // Handle aspect ratio maintenance for width/height changes (only if not a rotation change)
     if (maintainAspectRatio && (property === 'width' || property === 'height')) {
