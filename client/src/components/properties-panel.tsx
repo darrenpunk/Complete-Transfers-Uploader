@@ -590,9 +590,11 @@ export default function PropertiesPanel({
     
     // File Resolution Check - skip for vector files as they're resolution-independent
     if (logo) {
-      // PNG fallback: PDF was too complex or large-format — display is PNG, not vector SVG
-      const isPngFallback = logo.mimeType === 'image/png' && logo.originalMimeType === 'application/pdf';
-      const isVector = !isPngFallback && (logo.mimeType === 'image/svg+xml' || logo.originalMimeType === 'application/pdf');
+      // A PDF is vector unless explicitly flagged raster-only at upload time.
+      // PNG fallback mode just means the canvas renders a rasterized preview for
+      // performance — it does NOT mean the source artwork is raster.
+      const isPdfRasterOnly = (logo as any).isPdfWithRasterOnly === true;
+      const isVector = !isPdfRasterOnly && (logo.mimeType === 'image/svg+xml' || logo.originalMimeType === 'application/pdf');
       
       if (isVector) {
         checks.push({

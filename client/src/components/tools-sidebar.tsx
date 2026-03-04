@@ -933,17 +933,11 @@ export default function ToolsSidebar({
           
           // File Resolution Check - skip for vector files
           if (logo) {
-            // Check if it's a PDF with raster only (should be treated as raster)
-            const isPdfWithRasterOnly = logo.originalMimeType === 'application/pdf' && 
-                                       logo.mimeType === 'image/svg+xml' && 
-                                       (logo as any).isPdfWithRasterOnly;
-            // PNG fallback: PDF was too complex or large-format — display is PNG, not vector SVG
-            const isPngFallback = logo.mimeType === 'image/png' && logo.originalMimeType === 'application/pdf';
-            // For DTF/complex PDFs that use a PNG preview, trust the stored preflight data.
-            // preflightData.hasVectorContent comes from the ORIGINAL PDF analysis, not the preview PNG.
-            const storedPreflight = (logo as any).preflightData;
-            const pngFallbackIsActuallyVector = isPngFallback && storedPreflight?.hasVectorContent === true;
-            const isVector = !isPdfWithRasterOnly && (!isPngFallback || pngFallbackIsActuallyVector) &&
+            // A PDF is vector unless explicitly flagged raster-only at upload time.
+            // PNG fallback mode just means the canvas renders a rasterized preview for
+            // performance — it does NOT mean the source artwork is raster.
+            const isPdfRasterOnly = (logo as any).isPdfWithRasterOnly === true;
+            const isVector = !isPdfRasterOnly &&
                            (logo.mimeType === 'image/svg+xml' || logo.originalMimeType === 'application/pdf');
             
             if (isVector) {
