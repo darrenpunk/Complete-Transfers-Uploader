@@ -6714,7 +6714,19 @@ export async function registerRoutes(app: express.Application) {
         }
       }
       const projectName = rawProjectName;
-      const orderQty = projectData.totalQuantity || projectData.quantity || 1;
+      // Read the project from the DB to get the authoritative quantity.
+      // The frontend sends currentProject.quantity but that can be stale or defaulted to 1
+      // if the user didn't go through the template selector (e.g. Odoo-launched projects).
+      let dbProjectQty: number | null = null;
+      if (projectId && projectId !== 'vector-service') {
+        try {
+          const dbProj = await storage.getProject(projectId);
+          if (dbProj && dbProj.quantity && dbProj.quantity > 1) {
+            dbProjectQty = dbProj.quantity;
+          }
+        } catch (_e) { /* non-critical */ }
+      }
+      const orderQty = dbProjectQty || projectData.totalQuantity || projectData.quantity || 1;
       const artworkFilename = `${projectName} qty${orderQty}.pdf`;
 
       // --- Large PDF replacement ---
