@@ -31,10 +31,8 @@ const execAsync = promisify(exec);
 
 function buildPdfFilename(projectName: string, quantity: number, productCode?: string | null, suffix?: string): string {
   const name = (projectName || 'artwork').replace(/_/g, ' ');
-  const now = new Date();
-  const dateStr = `${String(now.getDate()).padStart(2, '0')}-${String(now.getMonth() + 1).padStart(2, '0')}-${now.getFullYear()}`;
   const suffixStr = suffix ? ` ${suffix}` : '';
-  return `${name}${suffixStr} ${dateStr}.pdf`;
+  return `${name}${suffixStr}.pdf`;
 }
 
 const SERVER_BUILD_VERSION = Date.now().toString();
@@ -835,7 +833,7 @@ export async function registerRoutes(app: express.Application) {
               try { fs.unlinkSync(tmpOut); } catch {}
             }
             res.setHeader('Content-Type', 'application/pdf');
-            res.setHeader('Content-Disposition', `attachment; filename="${project.name || 'DTF'} qty${project.quantity || 1}.pdf"`);
+            res.setHeader('Content-Disposition', `attachment; filename="${buildPdfFilename(project.name || 'DTF', project.quantity || 1)}"`);
             return res.send(finalBuf);
           }
         }
