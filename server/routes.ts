@@ -3723,22 +3723,26 @@ export async function registerRoutes(app: express.Application) {
                           const inkWidthBigger = inkscapeVerifyBounds.width > gsBounds.width * 1.1;
                           const inkHeightBigger = inkscapeVerifyBounds.height > gsBounds.height * 1.1;
                           
-                          // CRITICAL: If Inkscape reports nearly full-page bounds (>90% coverage), it's almost
-                          // certainly detecting a background rectangle, not real white artwork content.
-                          // In this case, GS bbox is more accurate — trust it.
+                          // If Inkscape reports nearly full-page bounds (>90% coverage) AND GS already
+                          // covers a large portion of the page (>60%), Inkscape is likely just
+                          // picking up a background rectangle — trust GS in that case.
+                          // BUT if GS coverage is low (<60%), it means GS missed real content
+                          // (e.g. white ink, clipped paths, CorelDRAW transparency) — trust Inkscape.
                           const inkscapeIsFullPage = inkPageCoverage > 0.90;
+                          const gsBboxPageCoverage = gsArea / pageArea;
+                          const shouldTrustGSOverInkscape = inkscapeIsFullPage && gsBboxPageCoverage > 0.60;
                           
-                          if ((inkWidthBigger || inkHeightBigger) && !inkscapeIsFullPage) {
+                          if ((inkWidthBigger || inkHeightBigger) && !shouldTrustGSOverInkscape) {
                             const gsPageCov = (gsArea / pageArea * 100).toFixed(0);
                             const inkPageCov = (inkPageCoverage * 100).toFixed(0);
-                            console.log(`🔄 Inkscape found more content than GS (${(inkArea / gsArea).toFixed(1)}x area) - white content detected!`);
+                            console.log(`🔄 Inkscape found more content than GS (${(inkArea / gsArea).toFixed(1)}x area) - white/clipped content detected!`);
                             console.log(`   GS: ${gsBounds.width.toFixed(1)}×${gsBounds.height.toFixed(1)}pts (${gsPageCov}% page)`);
                             console.log(`   Inkscape: ${inkscapeVerifyBounds.width.toFixed(1)}×${inkscapeVerifyBounds.height.toFixed(1)}pts (${inkPageCov}% page)`);
                             gsBounds = inkscapeVerifyBounds;
                             (gsBounds as any).__fromSvgCoords = true;
                             console.log(`✅ Using Inkscape bounds: ${gsBounds.width.toFixed(1)}×${gsBounds.height.toFixed(1)}pts`);
-                          } else if (inkscapeIsFullPage) {
-                            console.log(`✅ Inkscape reports full-page bounds (${(inkPageCoverage * 100).toFixed(0)}% coverage) — likely background rect, trusting GS bbox: ${gsBounds.width.toFixed(1)}×${gsBounds.height.toFixed(1)}pts`);
+                          } else if (shouldTrustGSOverInkscape) {
+                            console.log(`✅ Inkscape reports full-page bounds (${(inkPageCoverage * 100).toFixed(0)}% coverage) but GS covers ${(gsBboxPageCoverage * 100).toFixed(0)}% — likely background rect, trusting GS bbox: ${gsBounds.width.toFixed(1)}×${gsBounds.height.toFixed(1)}pts`);
                           } else {
                             console.log(`✅ Inkscape bounds slightly larger but dimensions similar - trusting GS bbox`);
                           }
