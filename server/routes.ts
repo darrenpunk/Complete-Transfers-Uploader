@@ -792,9 +792,13 @@ export async function registerRoutes(app: express.Application) {
       // DTF PASSTHROUGH: For DTF templates, serve the original artwork PDF directly without
       // re-embedding it via pdf-lib (which inflates 35MB → 42MB). Compress with Ghostscript
       // to bring it under the inline size threshold before returning.
+      // IMPORTANT: Only passthrough when the user hasn't done any canvas layout work —
+      // i.e. exactly one canvas element placed. If the user used the imposition tool or
+      // arranged multiple copies, we must run the full canvas-based PDF generator instead.
       const isDtfGeneratePdf = templateSize.id?.toLowerCase().includes('dtf') ||
         (templateSize.width ?? 0) >= 1000 || (templateSize.height ?? 0) >= 500;
-      if (isDtfGeneratePdf && hasOriginalPDFs) {
+      const isSingleElementLayout = canvasElements.length === 1;
+      if (isDtfGeneratePdf && hasOriginalPDFs && isSingleElementLayout) {
         const dtfLogo = Object.values(logosObject).find((logo: any) =>
           logo.originalFilename && logo.originalMimeType === 'application/pdf'
         ) as any;
