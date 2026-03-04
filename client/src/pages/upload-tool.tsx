@@ -1015,14 +1015,14 @@ export default function UploadTool() {
       const isSingleColourTemplate = selectedTemplate.group === "Screen Printed Transfers" && 
         (selectedTemplate.label?.includes("Single Colour") || selectedTemplate.label?.includes("Zero"));
       const isCustomBadgesTemplate = selectedTemplate.group === "Digital Transfers" && 
-        (selectedTemplate.label?.includes("Applique") || selectedTemplate.label?.includes("Woven"));
+        selectedTemplate.label?.includes("Applique");
       const isDTFTemplate = selectedTemplate.group === "Digital Transfers" && (selectedTemplate.id?.startsWith("dtf-") || selectedTemplate.label?.includes("DTF"));
       
       console.log('Template checks:', { isFullColourTemplate, isSingleColourTemplate, isCustomBadgesTemplate, isDTFTemplate, actualGroup: selectedTemplate.group });
       
-      // If Custom Badges or Applique Badges template, show the applique badges modal first
+      // Only Applique Badges templates show the embroidery form — Woven/Custom Badge templates do not
       if (isCustomBadgesTemplate) {
-        console.log('Custom/Applique Badges template detected, triggering form modal');
+        console.log('Applique Badges template detected, triggering embroidery form modal');
         setPendingTemplateData({
           templateId,
           garmentColor: "#929292",
