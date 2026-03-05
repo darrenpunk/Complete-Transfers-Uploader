@@ -65,7 +65,7 @@ export class MixedContentDetector {
 
       // Method 1: Use pdfimages to detect raster images
       try {
-        const { stdout } = await execAsync(`pdfimages -list "${pdfPath}" 2>/dev/null || true`);
+        const { stdout } = await execAsync(`pdfimages -f 1 -l 1 -list "${pdfPath}" 2>/dev/null || true`);
         const lines = stdout.split('\n');
         
         // Skip header lines
@@ -90,7 +90,7 @@ export class MixedContentDetector {
       }
 
       // Method 2: Use Ghostscript to analyze PDF content
-      const gsCommand = `gs -dNODISPLAY -q -dNOSAFER -c "${pdfPath}" (r) file runpdfbegin 1 1 pdfpagecount {pdfgetpage /Page exch def Page /Resources get /XObject .knownget {dup {exch pop dup /Subtype get /Image eq {(IMAGE) print} {pop} ifelse} forall} if} for quit 2>/dev/null || true`;
+      const gsCommand = `gs -dNODISPLAY -q -dNOSAFER -c "${pdfPath}" (r) file runpdfbegin 1 1 1 {pdfgetpage /Page exch def Page /Resources get /XObject .knownget {dup {exch pop dup /Subtype get /Image eq {(IMAGE) print} {pop} ifelse} forall} if} for quit 2>/dev/null || true`;
       
       try {
         const { stdout: gsOutput } = await execAsync(gsCommand);
@@ -106,7 +106,7 @@ export class MixedContentDetector {
 
       // Method 3: Convert PDF to text to check for vector content
       try {
-        const { stdout: textOutput } = await execAsync(`pdftotext -q "${pdfPath}" - 2>/dev/null || true`);
+        const { stdout: textOutput } = await execAsync(`pdftotext -q -f 1 -l 1 "${pdfPath}" - 2>/dev/null || true`);
         if (textOutput.trim().length > 0) {
           analysis.hasVectorContent = true;
           analysis.vectorElements.types.push('text');

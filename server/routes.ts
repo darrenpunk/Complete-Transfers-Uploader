@@ -2030,8 +2030,8 @@ export async function registerRoutes(app: express.Application) {
               const pdfDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
               const pageCount = pdfDoc.getPageCount();
               (file as any).pageCount = pageCount;
-              (file as any).hasGarmentPages = pageCount > 1;
-              console.log(`📄 PDF page count detected: ${pageCount} pages (hasGarmentPages: ${pageCount > 1})`);
+              (file as any).hasGarmentPages = false; // Set to true only if garment footer text is actually detected below
+              console.log(`📄 PDF page count detected: ${pageCount} pages`);
               
               // Extract garment colors and quantities from PDF footer text (for reorder detection)
               if (pageCount > 1) {
@@ -2114,7 +2114,8 @@ export async function registerRoutes(app: express.Application) {
                   
                   if (detectedColors.length > 0) {
                     (file as any).detectedGarmentColors = detectedColors;
-                    console.log(`🎨 Detected garment colors from PDF reorder:`, detectedColors);
+                    (file as any).hasGarmentPages = true; // Confirmed: this is a garment order PDF
+                    console.log(`🎨 Detected garment colors from PDF reorder (hasGarmentPages=true):`, detectedColors);
                   }
                 } catch (extractErr) {
                   console.log('⚠️ Could not extract garment info from PDF:', extractErr);
