@@ -42,9 +42,9 @@ export default function AppliqueBadgesModal({
     console.log('AppliqueBadgesModal open state changed:', open);
   }, [open]);
   const [formData, setFormData] = useState<AppliqueBadgesFormData>({
-    embroideryFileOptions: [],
-    embroideryThreadOptions: [],
-    position: [],
+    embroideryFileOptions: ["DST", "EMB"],
+    embroideryThreadOptions: ["Maderia Polyneon 40"],
+    position: ["LEFT BREAST"],
     graphicSize: "",
     embroideredParts: ""
   });
@@ -125,9 +125,9 @@ export default function AppliqueBadgesModal({
               <X className="h-4 w-4" />
             </Button>
           </div>
-          <DialogDescription className="text-xs mt-1">
-            We will automatically produce a DST and EMB file for your order. Select any additional machine files below.
-          </DialogDescription>
+            <DialogDescription className="text-xs mt-1">
+              Select embroidery options. You can also just add notes in the "Embroidered Parts" section if you have a file that doesn't fit the canvas system.
+            </DialogDescription>
         </div>
 
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5" style={{ overscrollBehavior: 'contain' }}>
@@ -218,17 +218,17 @@ export default function AppliqueBadgesModal({
 
           <div>
             <Label htmlFor="embroidered-parts" className="text-sm font-medium mb-1 block">
-              Embroidered Parts
+              Embroidered Parts / Special Instructions
             </Label>
             <p className="text-xs text-muted-foreground mb-2">
-              Detail the parts of your graphic that need embroidering
+              Detail which parts of your graphic need embroidering, or add any other instructions.
             </p>
             <Textarea
               id="embroidered-parts"
               value={formData.embroideredParts}
               onChange={(e) => handleTextChange('embroideredParts', e.target.value)}
-              placeholder="Detail the parts that need embroidering..."
-              className="min-h-[60px] text-sm"
+              placeholder="e.g., 'Embroider the red text only', or 'Apply as-is from uploaded file'..."
+              className="min-h-[100px] text-sm"
             />
           </div>
         </div>

@@ -1821,6 +1821,12 @@ export default function UploadTool() {
   const handleFilesUpload = (files: File[]) => {
     console.log('handleFilesUpload called with files:', files.map(f => ({ name: f.name, type: f.type, size: f.size })));
     if (!currentProject) return;
+
+    // For applique, if we're uploading a new logo, we trigger the form automatically
+    // to capture instructions, especially if they aren't using the dual-canvas.
+    if (currentProject.templateSize?.startsWith('applique-')) {
+      setTriggerAppliqueBadgesModal(true);
+    }
     
     // Show upload modal with file info
     setUploadFileName(files.map(f => f.name).join(', '));
