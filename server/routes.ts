@@ -1078,7 +1078,36 @@ export async function registerRoutes(app: express.Application) {
           // Original PDF has full artboard dimensions which causes scaling issues
           const originalPdfPath = path.join(process.cwd(), 'uploads', (logo as any).originalFilename || '');
           const svgPath = path.join(process.cwd(), 'uploads', (logo as any).filename);
-          
+
+          // Helper: ensure file exists on disk, attempting Dropbox restore if missing
+          const ensureFileOnDisk = async (filePath: string): Promise<boolean> => {
+            if (fs.existsSync(filePath)) return true;
+            try {
+              const { restoreFromDropbox } = await import('./dropbox-backup');
+              const restored = await restoreFromDropbox(path.basename(filePath));
+              if (restored) console.log(`✅ Restored from Dropbox: ${path.basename(filePath)}`);
+              return restored;
+            } catch {
+              return false;
+            }
+          };
+
+          // Helper: draw a visible "file missing" error on all pages instead of blank
+          const drawMissingFileError = (targetPages: any[], filename: string) => {
+            const errMsg = `⚠️ Artwork file missing: ${filename}`;
+            for (const pg of targetPages) {
+              try {
+                pg.page.drawText(errMsg, {
+                  x: 20, y: (pg.page.getHeight ? pg.page.getHeight() : pageHeight) / 2,
+                  size: 12, color: rgb(0.8, 0, 0),
+                });
+              } catch {}
+            }
+            page1.drawText(errMsg, {
+              x: 20, y: pageHeight / 2, size: 12, color: rgb(0.8, 0, 0),
+            });
+          };
+
           let usePath = svgPath;
           let useOriginalPdf = false;
           
@@ -1088,16 +1117,20 @@ export async function registerRoutes(app: express.Application) {
           
           if (isTightContent) {
             console.log(`🎯 USING TIGHT-CONTENT SVG: ${(logo as any).filename} (exact content bounds)`);
+            // Attempt restore if missing
+            await ensureFileOnDisk(svgPath);
             usePath = svgPath;
             useOriginalPdf = false;
-          } else if ((logo as any).originalFilename && fs.existsSync(originalPdfPath)) {
+          } else if ((logo as any).originalFilename && await ensureFileOnDisk(originalPdfPath)) {
             console.log(`🎯 USING ORIGINAL PDF WITH EXACT CMYK COLORS: ${(logo as any).originalFilename}`);
             usePath = originalPdfPath;
             useOriginalPdf = true;
           } else {
             console.log(`📄 Processing SVG: ${(logo as any).filename}`);
-            if (!fs.existsSync(svgPath)) {
-              console.log(`❌ SVG not found: ${svgPath}`);
+            const svgExists = await ensureFileOnDisk(svgPath);
+            if (!svgExists) {
+              console.log(`❌ SVG not found even after Dropbox restore attempt: ${svgPath}`);
+              drawMissingFileError(garmentColorPages, path.basename(svgPath));
               continue;
             }
           }
