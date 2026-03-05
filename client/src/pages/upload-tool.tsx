@@ -1825,7 +1825,8 @@ export default function UploadTool() {
     // For applique, if we're uploading a new logo, we trigger the form automatically
     // to capture instructions, especially if they aren't using the dual-canvas.
     if (currentProject.templateSize?.startsWith('applique-')) {
-      setTriggerAppliqueBadgesModal(true);
+      console.log('🔔 Triggering applique modal automatically for template:', currentProject.templateSize);
+      setShowAppliqueBadgesModal(true);
     }
     
     // Show upload modal with file info

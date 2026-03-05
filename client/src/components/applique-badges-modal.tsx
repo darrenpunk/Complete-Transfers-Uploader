@@ -41,13 +41,13 @@ export default function AppliqueBadgesModal({
   useEffect(() => {
     console.log('AppliqueBadgesModal open state changed:', open);
   }, [open]);
-  const [formData, setFormData] = useState<AppliqueBadgesFormData>({
+  const [formData, setFormData] = useState<AppliqueBadgesFormData>(() => ({
     embroideryFileOptions: ["DST", "EMB"],
     embroideryThreadOptions: ["Maderia Polyneon 40"],
     position: ["LEFT BREAST"],
     graphicSize: "",
     embroideredParts: ""
-  });
+  }));
 
   const embroideryFileOptions = [
     "EMB Ver: 2006", "EMB Ver: E1", "EMB Ver: E2",
