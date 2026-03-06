@@ -1349,7 +1349,10 @@ grestore`;
       // from content bounds. This causes drawPage to squash/distort the content.
       // Most common with landscape PDFs rotated to fit portrait templates.
       const MM_TO_POINTS = 2.834645669;
-      const isFullPagePdf = (element as any)._isFullPagePdf === true;
+      // Only use full-page mode when drawing on page 1 (transparent artwork page).
+      // For garment color pages (page1 === null), always use canvas-element-positioned
+      // embedding so that white PDF backgrounds don't paint over the garment colour.
+      const isFullPagePdf = (element as any)._isFullPagePdf === true && page1 !== null;
       
       if (!isFullPagePdf) {
         const { PDFDocument: PDFDocAspect } = await import('pdf-lib');
