@@ -2064,7 +2064,13 @@ export async function registerRoutes(app: express.Application) {
               const pageCount = pdfDoc.getPageCount();
               (file as any).pageCount = pageCount;
               (file as any).hasGarmentPages = false; // Set to true only if garment footer text is actually detected below
-              console.log(`📄 PDF page count detected: ${pageCount} pages`);
+              console.log(`📄 PDF page count detected: ${pageCount} pages for ${file.filename}`);
+              
+              // Force hasGarmentPages to true for any multi-page PDF to ensure pass-through
+              if (pageCount > 1) {
+                (file as any).hasGarmentPages = true;
+                console.log(`📄 Multi-page PDF detected - enabling pass-through mode`);
+              }
               
               // Extract garment colors and quantities from PDF footer text (for reorder detection)
               if (pageCount > 1) {
