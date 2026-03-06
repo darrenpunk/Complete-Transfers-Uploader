@@ -5731,7 +5731,7 @@ export async function registerRoutes(app: express.Application) {
   app.post('/api/logos/:logoId/extract-elements', async (req, res) => {
     try {
       const logoId = req.params.logoId;
-      const { selectedIndices, projectId } = req.body;
+      const { selectedIndices, projectId, outlinesOnly } = req.body;
       
       if (!selectedIndices || !Array.isArray(selectedIndices) || selectedIndices.length === 0) {
         return res.status(400).json({ error: 'selectedIndices array is required' });
@@ -5775,6 +5775,16 @@ export async function registerRoutes(app: express.Application) {
         const currentIndex = elementIndex++;
         if (selectedSet.has(currentIndex)) {
           keepSet.add(el);
+          
+          // Apply outlines-only if requested: remove fill, ensure stroke
+          if (outlinesOnly) {
+            el.setAttribute('fill', 'none');
+            // If it had no stroke, give it a default one so it's visible
+            if (!el.getAttribute('stroke') || el.getAttribute('stroke') === 'none') {
+              el.setAttribute('stroke', '#000000');
+              el.setAttribute('stroke-width', '1');
+            }
+          }
         }
         Array.from(el.children).forEach(c => indexElements(c));
       };

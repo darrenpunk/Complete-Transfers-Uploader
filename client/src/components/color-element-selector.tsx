@@ -14,7 +14,7 @@ interface ColorElementSelectorProps {
   open: boolean;
   onClose: () => void;
   onSelectByColors: (indices: number[]) => void;
-  onSendToEmbroidery: (indices: number[]) => void;
+  onSendToEmbroidery: (indices: number[], outlinesOnly?: boolean) => void;
   selectedIndices: Set<number>;
   isProcessing?: boolean;
 }
@@ -31,6 +31,7 @@ export function ColorElementSelector({
   const [colorGroups, setColorGroups] = useState<ColorGroup[]>([]);
   const [selectedColors, setSelectedColors] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
+  const [outlinesOnly, setOutlinesOnly] = useState(false);
 
   useEffect(() => {
     if (open && logoId) {
@@ -40,6 +41,7 @@ export function ColorElementSelector({
         .then((data: ColorGroup[]) => {
           setColorGroups(data);
           setSelectedColors(new Set());
+          setOutlinesOnly(false);
         })
         .catch(() => setColorGroups([]))
         .finally(() => setLoading(false));
@@ -145,12 +147,24 @@ export function ColorElementSelector({
       </div>
 
       {selectedColors.size > 0 && (
-        <div className="px-3 py-2 border-t border-border bg-muted/30">
+        <div className="px-3 py-2 border-t border-border bg-muted/30 space-y-2">
+          <div className="flex items-center gap-2 px-1">
+            <input 
+              type="checkbox" 
+              id="outline-only-extract"
+              className="w-3.5 h-3.5 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+              checked={outlinesOnly}
+              onChange={(e) => setOutlinesOnly(e.target.checked)}
+            />
+            <label htmlFor="outline-only-extract" className="text-[11px] font-medium cursor-pointer">
+              Send as Outlines Only
+            </label>
+          </div>
           <Button
             size="sm"
-            onClick={() => onSendToEmbroidery(selectedIndicesFromColors)}
+            onClick={() => onSendToEmbroidery(selectedIndicesFromColors, outlinesOnly)}
             disabled={isProcessing}
-            className="w-full bg-purple-600 hover:bg-purple-700 text-white text-xs h-8"
+            className="w-full bg-purple-600 hover:bg-purple-700 text-white text-xs h-8 font-semibold shadow-sm"
           >
             {isProcessing ? (
               <>
