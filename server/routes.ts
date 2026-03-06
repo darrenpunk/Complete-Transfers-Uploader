@@ -3825,12 +3825,30 @@ export async function registerRoutes(app: express.Application) {
                       boundsSourceIsArtBox = true;
                     }
                     
+                    // LOW-COVERAGE FALLBACK: If GS coverage is very low (< 55%), GS is clearly
+                    // missing large portions of the artwork (white elements, clipped paths, etc).
+                    // In that case, fall back to the full PDF page (MediaBox) dimensions so the
+                    // entire artwork is visible on canvas — much safer than a heavily cropped view.
+                    const gsCoverageRatio = (gsBounds.width * gsBounds.height) / (pageWidth * pageHeight);
+                    if (!boundsSourceIsArtBox && gsCoverageRatio < 0.55 && pdfPageDimensions) {
+                      console.log(`⚠️ GS coverage is only ${(gsCoverageRatio * 100).toFixed(0)}% — using full PDF page (MediaBox) to avoid cropping white artwork`);
+                      gsBounds = {
+                        xMin: 0,
+                        yMin: 0,
+                        xMax: pdfPageDimensions.widthPts,
+                        yMax: pdfPageDimensions.heightPts,
+                        width: pdfPageDimensions.widthPts,
+                        height: pdfPageDimensions.heightPts
+                      };
+                      console.log(`📐 Falling back to MediaBox: ${pdfPageDimensions.widthMm.toFixed(1)}×${pdfPageDimensions.heightMm.toFixed(1)}mm`);
+                    }
+
                     contentBoundsForNormalization = gsBounds;
                     const pxToMm = 1 / 2.834645669;
                     
                     boundsResult = {
                       success: true,
-                      method: boundsSourceIsArtBox ? 'artbox' : 'ghostscript-bbox',
+                      method: boundsSourceIsArtBox ? 'artbox' : (gsCoverageRatio < 0.55 ? 'mediabox-fallback' : 'ghostscript-bbox'),
                       contentBounds: {
                         xMin: 0,
                         yMin: 0,
