@@ -3776,9 +3776,17 @@ export async function registerRoutes(app: express.Application) {
                             console.log(`🔄 Inkscape found more content than GS (${(inkArea / gsArea).toFixed(1)}x area) - white/clipped content detected!`);
                             console.log(`   GS: ${gsBounds.width.toFixed(1)}×${gsBounds.height.toFixed(1)}pts (${gsPageCov}% page)`);
                             console.log(`   Inkscape: ${inkscapeVerifyBounds.width.toFixed(1)}×${inkscapeVerifyBounds.height.toFixed(1)}pts (${inkPageCov}% page)`);
-                            gsBounds = inkscapeVerifyBounds;
-                            (gsBounds as any).__fromSvgCoords = true;
-                            console.log(`✅ Using Inkscape bounds: ${gsBounds.width.toFixed(1)}×${gsBounds.height.toFixed(1)}pts`);
+                            
+                            // If Inkscape bounds are significantly larger but still within the page, 
+                            // use them to ensure no content is clipped on the canvas.
+                            // CRITICAL: Ensure we don't pick up full-page background rectangles if GS already found the logo.
+                            if (inkPageCoverage < 0.95 || gsBboxPageCoverage < 0.10) {
+                              gsBounds = inkscapeVerifyBounds;
+                              (gsBounds as any).__fromSvgCoords = true;
+                              console.log(`✅ Using Inkscape bounds (white/clipped content): ${gsBounds.width.toFixed(1)}×${gsBounds.height.toFixed(1)}pts`);
+                            } else {
+                              console.log(`⚠️ Inkscape found full page but GS has logo - likely background rect, sticking with GS`);
+                            }
                           } else if (shouldTrustGSOverInkscape) {
                             console.log(`✅ Inkscape reports full-page bounds (${(inkPageCoverage * 100).toFixed(0)}% coverage) but GS covers ${(gsBboxPageCoverage * 100).toFixed(0)}% — likely background rect, trusting GS bbox: ${gsBounds.width.toFixed(1)}×${gsBounds.height.toFixed(1)}pts`);
                           } else {

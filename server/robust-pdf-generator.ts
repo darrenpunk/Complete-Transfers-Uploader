@@ -760,15 +760,17 @@ grestore`;
     // Enable for any multi-page PDF to preserve Front/Back layouts or garment pages
     const hasExplicitGarmentColors = data.garmentColors && Array.isArray(data.garmentColors) && data.garmentColors.length > 0;
     let passThroughSucceeded = false;
-    if (!hasExplicitGarmentColors) {
-      console.log(`📄 PASS-THROUGH MODE: Looking for multi-page PDF to append pages 2+`);
-      
-      // Find a logo with multiple pages
-      const multiPageLogo = data.logos.find((logo: any) => 
-        logo.pageCount > 1 && 
-        logo.originalFilename && 
-        logo.originalMimeType === 'application/pdf'
-      );
+    
+    // Always check for multi-page logos regardless of hasExplicitGarmentColors
+    // This ensures that even if colors are set, we still have access to the pages if needed
+    const multiPageLogo = data.logos.find((logo: any) => 
+      logo.pageCount > 1 && 
+      logo.originalFilename && 
+      logo.originalMimeType === 'application/pdf'
+    );
+
+    if (!hasExplicitGarmentColors && multiPageLogo) {
+      console.log(`📄 PASS-THROUGH MODE: Appending pages 2+ from ${multiPageLogo.originalFilename}`);
       
       if (multiPageLogo) {
         const originalPdfPath = path.join(process.cwd(), 'uploads', multiPageLogo.originalFilename);
