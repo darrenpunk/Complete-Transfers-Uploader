@@ -5778,10 +5778,11 @@ export async function registerRoutes(app: express.Application) {
           
           // Apply outlines-only if requested: remove fill, ensure stroke
           if (outlinesOnly) {
-            const currentFill = el.getAttribute('fill');
-            const currentStroke = el.getAttribute('stroke');
+            const currentFill = el.getAttribute('fill') || el.style.fill;
+            const currentStroke = el.getAttribute('stroke') || el.style.stroke;
             
             el.setAttribute('fill', 'none');
+            el.style.fill = 'none';
             
             // If it had a fill and no stroke, use the fill color for the stroke
             if (currentFill && currentFill !== 'none' && (!currentStroke || currentStroke === 'none')) {
@@ -5793,6 +5794,7 @@ export async function registerRoutes(app: express.Application) {
             
             // Apply adjustable stroke width (default to 1 if not provided)
             el.setAttribute('stroke-width', String(strokeWidth || '1'));
+            el.style.strokeWidth = String(strokeWidth || '1');
           }
         }
         Array.from(el.children).forEach(c => indexElements(c));
