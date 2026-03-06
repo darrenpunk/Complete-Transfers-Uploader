@@ -900,10 +900,10 @@ function Dashboard() {
         </div>
 
         {activeTab === "customer-templates" && (
-          <>
+          <div className="space-y-8">
             <CustomerTemplatesManager />
             <CustomerFeaturesManager />
-          </>
+          </div>
         )}
 
         {activeTab === "analytics" && (

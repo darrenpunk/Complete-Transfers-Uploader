@@ -488,39 +488,37 @@ grestore`;
       // MULTI-COLOR ORDER SUPPORT: Check if garmentColors array is provided (from project-level modal)
       // OR element-level garment colors
       if (data.garmentColors && Array.isArray(data.garmentColors) && data.garmentColors.length > 0) {
-        console.log(`🎨 Multi-Color Order: Creating ${data.garmentColors.length} pages for different garment colors`);
-        
-        for (const garmentColorItem of data.garmentColors) {
-          const colorPage = pdfDoc.addPage([pageWidth, pageHeight]);
-          const colorHex = garmentColorItem.color || '#FFFFFF';
-          const colorName = garmentColorItem.colorName || getGarmentColorName(colorHex);
-          const qty = garmentColorItem.quantity || 0;
+          console.log(`🎨 Multi-Color Order: Creating ${data.garmentColors.length} pages for different garment colors`);
           
-          // Fill page with garment color background
-          const parsedColor = await this.parseGarmentColor(colorHex);
-          console.log(`🎨 Drawing background for ${colorName}: hex=${colorHex}, parsedColor=`, parsedColor);
-          colorPage.drawRectangle({
-            x: 0,
-            y: 0,
-            width: pageWidth,
-            height: pageHeight,
-            color: parsedColor,
-          });
-          console.log(`🎨 Background rectangle drawn: x=0, y=0, width=${pageWidth}, height=${pageHeight}`);
+          for (const garmentColorItem of data.garmentColors) {
+            const colorPage = pdfDoc.addPage([pageWidth, pageHeight]);
+            const colorHex = garmentColorItem.color || '#FFFFFF';
+            const colorName = garmentColorItem.colorName || getGarmentColorName(colorHex);
+            const qty = garmentColorItem.quantity || 0;
+            
+            // Fill page with garment color background
+            const parsedColor = await this.parseGarmentColor(colorHex);
+            colorPage.drawRectangle({
+              x: 0,
+              y: 0,
+              width: pageWidth,
+              height: pageHeight,
+              color: parsedColor,
+            });
+            
+            garmentColorPages.push({
+              page: colorPage,
+              color: colorHex,
+              colorName,
+              quantity: qty
+            });
+            
+            console.log(`✅ Created page for ${colorName} (Qty: ${qty})`);
+          }
           
-          garmentColorPages.push({
-            page: colorPage,
-            color: colorHex,
-            colorName,
-            quantity: qty
-          });
-          
-          console.log(`✅ Created page for ${colorName} (Qty: ${qty})`);
-        }
-        
-        // Use first garment color page as page2 for logo embedding
-        page2 = garmentColorPages[0]?.page || null;
-      } else if (hasElementLevelColors) {
+          // Use first garment color page as page2 for logo embedding
+          page2 = garmentColorPages.length > 0 ? garmentColorPages[0].page : null;
+        } else if (hasElementLevelColors) {
         // ELEMENT-LEVEL COLORS: Create single page 2 with individual background rectangles per element
         // Each logo gets its own colored rectangle behind it (like the canvas preview)
         console.log(`🎨 Element-Level Colors: Creating single page with individual element backgrounds`);
