@@ -772,9 +772,8 @@ grestore`;
     if (!hasExplicitGarmentColors && multiPageLogo) {
       console.log(`📄 PASS-THROUGH MODE: Appending pages 2+ from ${multiPageLogo.originalFilename}`);
       
-      if (multiPageLogo) {
-        const originalPdfPath = path.join(process.cwd(), 'uploads', multiPageLogo.originalFilename);
-        console.log(`📄 Found multi-page PDF: ${multiPageLogo.originalFilename} with ${multiPageLogo.pageCount} pages`);
+      const originalPdfPath = path.join(process.cwd(), 'uploads', multiPageLogo.originalFilename);
+      console.log(`📄 Found multi-page PDF: ${multiPageLogo.originalFilename} with ${multiPageLogo.pageCount} pages`);
         
         if (fs.existsSync(originalPdfPath)) {
           try {

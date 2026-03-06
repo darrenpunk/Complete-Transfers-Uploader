@@ -3780,12 +3780,14 @@ export async function registerRoutes(app: express.Application) {
                             // If Inkscape bounds are significantly larger but still within the page, 
                             // use them to ensure no content is clipped on the canvas.
                             // CRITICAL: Ensure we don't pick up full-page background rectangles if GS already found the logo.
-                            if (inkPageCoverage < 0.95 || gsBboxPageCoverage < 0.10) {
+                            // RELAXED: Use a 99% threshold to be even safer for near-full-page content
+                            // AND only switch if Inkscape is at least 5% larger than GS (prevents jitter)
+                            if (inkPageCoverage < 0.99 && (inkArea > gsArea * 1.05 || gsBboxPageCoverage < 0.05)) {
                               gsBounds = inkscapeVerifyBounds;
                               (gsBounds as any).__fromSvgCoords = true;
                               console.log(`✅ Using Inkscape bounds (white/clipped content): ${gsBounds.width.toFixed(1)}×${gsBounds.height.toFixed(1)}pts`);
                             } else {
-                              console.log(`⚠️ Inkscape found full page but GS has logo - likely background rect, sticking with GS`);
+                              console.log(`⚠️ Inkscape found near-full page or is not significantly larger - sticking with GS`);
                             }
                           } else if (shouldTrustGSOverInkscape) {
                             console.log(`✅ Inkscape reports full-page bounds (${(inkPageCoverage * 100).toFixed(0)}% coverage) but GS covers ${(gsBboxPageCoverage * 100).toFixed(0)}% — likely background rect, trusting GS bbox: ${gsBounds.width.toFixed(1)}×${gsBounds.height.toFixed(1)}pts`);
