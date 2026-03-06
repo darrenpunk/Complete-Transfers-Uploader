@@ -2687,8 +2687,8 @@ export default function UploadTool() {
             onSelectByColors={(indices) => {
               setSelectedSvgIndices(new Set(indices));
             }}
-            onSendToEmbroidery={(indices) => {
-              sendIndicesToEmbroidery(indices);
+            onSendToEmbroidery={(indices, outlinesOnly) => {
+              sendIndicesToEmbroidery(indices, outlinesOnly);
             }}
             selectedIndices={selectedSvgIndices}
             isProcessing={isEmbroideryProcessing}
