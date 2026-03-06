@@ -14,7 +14,7 @@ interface ColorElementSelectorProps {
   open: boolean;
   onClose: () => void;
   onSelectByColors: (indices: number[]) => void;
-  onSendToEmbroidery: (indices: number[], outlinesOnly?: boolean) => void;
+  onSendToEmbroidery: (indices: number[], outlinesOnly?: boolean, strokeWidth?: number) => void;
   selectedIndices: Set<number>;
   isProcessing?: boolean;
 }
@@ -32,6 +32,7 @@ export function ColorElementSelector({
   const [selectedColors, setSelectedColors] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
   const [outlinesOnly, setOutlinesOnly] = useState(false);
+  const [strokeWidth, setStrokeWidth] = useState(1);
 
   useEffect(() => {
     if (open && logoId) {
@@ -42,6 +43,7 @@ export function ColorElementSelector({
           setColorGroups(data);
           setSelectedColors(new Set());
           setOutlinesOnly(false);
+          setStrokeWidth(1);
         })
         .catch(() => setColorGroups([]))
         .finally(() => setLoading(false));
@@ -160,9 +162,28 @@ export function ColorElementSelector({
               Send as Outlines Only
             </label>
           </div>
+
+          {outlinesOnly && (
+            <div className="px-1 space-y-1">
+              <div className="flex justify-between items-center">
+                <label className="text-[10px] text-muted-foreground font-medium">Outline Thickness</label>
+                <span className="text-[10px] font-mono bg-background px-1 rounded border border-border">{strokeWidth}px</span>
+              </div>
+              <input 
+                type="range"
+                min="0.1"
+                max="10"
+                step="0.1"
+                value={strokeWidth}
+                onChange={(e) => setStrokeWidth(parseFloat(e.target.value))}
+                className="w-full h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-purple-600"
+              />
+            </div>
+          )}
+
           <Button
             size="sm"
-            onClick={() => onSendToEmbroidery(selectedIndicesFromColors, outlinesOnly)}
+            onClick={() => onSendToEmbroidery(selectedIndicesFromColors, outlinesOnly, strokeWidth)}
             disabled={isProcessing}
             className="w-full bg-purple-600 hover:bg-purple-700 text-white text-xs h-8 font-semibold shadow-sm"
           >

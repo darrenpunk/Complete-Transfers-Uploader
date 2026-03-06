@@ -1540,7 +1540,7 @@ export default function UploadTool() {
     setHiddenIndicesHistory(prev => prev.slice(0, -1));
   };
 
-  const sendIndicesToEmbroidery = async (indices: number[], outlinesOnly: boolean = false) => {
+  const sendIndicesToEmbroidery = async (indices: number[], outlinesOnly: boolean = false, strokeWidth: number = 1) => {
     if (!currentProject || !elementSelectTargetId || indices.length === 0) return;
     setIsEmbroideryProcessing(true);
     try {
@@ -1550,7 +1550,8 @@ export default function UploadTool() {
       const response = await apiRequest("POST", `/api/logos/${element.logoId}/extract-elements`, {
         selectedIndices: indices,
         projectId: currentProject.id,
-        outlinesOnly
+        outlinesOnly,
+        strokeWidth
       });
       const data = await response.json();
       
@@ -2687,8 +2688,8 @@ export default function UploadTool() {
             onSelectByColors={(indices) => {
               setSelectedSvgIndices(new Set(indices));
             }}
-            onSendToEmbroidery={(indices, outlinesOnly) => {
-              sendIndicesToEmbroidery(indices, outlinesOnly);
+            onSendToEmbroidery={(indices, outlinesOnly, strokeWidth) => {
+              sendIndicesToEmbroidery(indices, outlinesOnly, strokeWidth);
             }}
             selectedIndices={selectedSvgIndices}
             isProcessing={isEmbroideryProcessing}

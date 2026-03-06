@@ -5731,7 +5731,7 @@ export async function registerRoutes(app: express.Application) {
   app.post('/api/logos/:logoId/extract-elements', async (req, res) => {
     try {
       const logoId = req.params.logoId;
-      const { selectedIndices, projectId, outlinesOnly } = req.body;
+      const { selectedIndices, projectId, outlinesOnly, strokeWidth } = req.body;
       
       if (!selectedIndices || !Array.isArray(selectedIndices) || selectedIndices.length === 0) {
         return res.status(400).json({ error: 'selectedIndices array is required' });
@@ -5778,12 +5778,21 @@ export async function registerRoutes(app: express.Application) {
           
           // Apply outlines-only if requested: remove fill, ensure stroke
           if (outlinesOnly) {
+            const currentFill = el.getAttribute('fill');
+            const currentStroke = el.getAttribute('stroke');
+            
             el.setAttribute('fill', 'none');
-            // If it had no stroke, give it a default one so it's visible
-            if (!el.getAttribute('stroke') || el.getAttribute('stroke') === 'none') {
+            
+            // If it had a fill and no stroke, use the fill color for the stroke
+            if (currentFill && currentFill !== 'none' && (!currentStroke || currentStroke === 'none')) {
+              el.setAttribute('stroke', currentFill);
+            } else if (!currentStroke || currentStroke === 'none') {
+              // Fallback to black if no color info at all
               el.setAttribute('stroke', '#000000');
-              el.setAttribute('stroke-width', '1');
             }
+            
+            // Apply adjustable stroke width (default to 1 if not provided)
+            el.setAttribute('stroke-width', String(strokeWidth || '1'));
           }
         }
         Array.from(el.children).forEach(c => indexElements(c));
