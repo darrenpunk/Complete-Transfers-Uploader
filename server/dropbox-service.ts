@@ -6,15 +6,20 @@ import { Dropbox } from 'dropbox';
 let connectionSettings: any;
 
 async function getAccessToken(): Promise<string> {
+  // Clear cache if we just got a 401 alert or if manual reconnection happened
+  const forceRefresh = !connectionSettings;
+  
   // Use cached token if it hasn't expired yet
   if (
+    !forceRefresh &&
     connectionSettings &&
     connectionSettings.settings?.expires_at &&
-    new Date(connectionSettings.settings.expires_at).getTime() > Date.now()
+    new Date(connectionSettings.settings.expires_at).getTime() > (Date.now() + 60000) // Buffer of 1 minute
   ) {
     return connectionSettings.settings.access_token;
   }
 
+  console.log('[Dropbox] Fetching fresh access token from Replit connector...');
   const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME;
   const xReplitToken = process.env.REPL_IDENTITY
     ? 'repl ' + process.env.REPL_IDENTITY
