@@ -757,53 +757,52 @@ grestore`;
     }
     
     // PASS-THROUGH MODE: Append original PDF pages 2+ from customer's file
-    // Enable for any multi-page PDF to preserve Front/Back layouts or garment pages
+    // This preserves Front/Back layouts and any garment color pages in the source PDF.
+    // NOTE: We do NOT rely on logo.pageCount (which is stored in-memory and lost on restart).
+    // Instead we open the actual file on disk and check its page count at generation time.
     const hasExplicitGarmentColors = data.garmentColors && Array.isArray(data.garmentColors) && data.garmentColors.length > 0;
     let passThroughSucceeded = false;
-    
-    // Always check for multi-page logos regardless of hasExplicitGarmentColors
-    // This ensures that even if colors are set, we still have access to the pages if needed
-    const multiPageLogo = data.logos.find((logo: any) => 
-      logo.pageCount > 1 && 
-      logo.originalFilename && 
-      logo.originalMimeType === 'application/pdf'
-    );
 
-    if (!hasExplicitGarmentColors && multiPageLogo) {
-      console.log(`📄 PASS-THROUGH MODE: Appending pages 2+ from ${multiPageLogo.originalFilename}`);
-      
-      const originalPdfPath = path.join(process.cwd(), 'uploads', multiPageLogo.originalFilename);
-      console.log(`📄 Found multi-page PDF: ${multiPageLogo.originalFilename} with ${multiPageLogo.pageCount} pages`);
-        
+    if (!hasExplicitGarmentColors) {
+      // Find any logo whose original file is a PDF saved on disk
+      const pdfLogoCandidate = data.logos.find((logo: any) =>
+        logo.originalFilename &&
+        logo.originalMimeType === 'application/pdf'
+      );
+
+      if (pdfLogoCandidate) {
+        const originalPdfPath = path.join(process.cwd(), 'uploads', pdfLogoCandidate.originalFilename);
+        console.log(`📄 PASS-THROUGH CHECK: Inspecting original PDF on disk: ${pdfLogoCandidate.originalFilename}`);
+
         if (fs.existsSync(originalPdfPath)) {
           try {
             const { PDFDocument } = await import('pdf-lib');
             const originalPdfBytes = fs.readFileSync(originalPdfPath);
             const originalPdf = await PDFDocument.load(originalPdfBytes, { ignoreEncryption: true });
             const originalPageCount = originalPdf.getPageCount();
-            
-            console.log(`📄 Original PDF has ${originalPageCount} pages - appending pages 2 to ${originalPageCount}`);
-            
+
+            console.log(`📄 Original PDF on disk has ${originalPageCount} pages`);
+
             if (originalPageCount > 1) {
-              // Copy pages 2+ (indices 1 to end) from original PDF
+              // Append pages 2+ from the original PDF (index 1 onwards)
               const pageIndicesToCopy = Array.from({ length: originalPageCount - 1 }, (_, i) => i + 1);
               const copiedPages = await pdfDoc.copyPages(originalPdf, pageIndicesToCopy);
-              
               for (const copiedPage of copiedPages) {
                 pdfDoc.addPage(copiedPage);
               }
-              
-              console.log(`✅ PASS-THROUGH: Appended ${copiedPages.length} original garment color pages`);
+              console.log(`✅ PASS-THROUGH: Appended ${copiedPages.length} page(s) from original PDF`);
               passThroughSucceeded = true;
+            } else {
+              console.log(`📄 Original PDF is single-page — no extra pages to append`);
             }
           } catch (passThroughError) {
             console.error(`❌ Failed to append original PDF pages:`, passThroughError);
           }
         } else {
-          console.warn(`⚠️ Original PDF file not found: ${originalPdfPath}`);
+          console.warn(`⚠️ Original PDF not found on disk: ${originalPdfPath}`);
         }
       } else {
-        console.warn(`⚠️ No multi-page PDF found in logos - cannot append garment pages`);
+        console.log(`📄 No original PDF logo found — skipping pass-through`);
       }
     }
     

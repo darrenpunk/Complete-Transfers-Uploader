@@ -47,10 +47,6 @@ externalPort = 80
 localPort = 5001
 externalPort = 3000
 
-[[ports]]
-localPort = 5904
-externalPort = 3003
-
 [agent]
 integrations = ["dropbox:1.0.0", "github:1.0.0", "javascript_gemini_ai_integrations:2.0.0"]
 
