@@ -101,31 +101,54 @@ export async function getFileRequestFiles(fileRequestId: string): Promise<any[]>
 }
 
 export async function downloadFile(filePath: string): Promise<Buffer> {
-  const dbx = await getUncachableDropboxClient();
-  try {
-    const result = await dbx.filesDownload({ path: filePath }) as any;
-    return result.result.fileBinary;
-  } catch (error: any) {
-    console.error('Failed to download file from Dropbox:', error);
-    throw new Error(`Failed to download file: ${error.message}`);
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const dbx = await getUncachableDropboxClient();
+      const result = await dbx.filesDownload({ path: filePath }) as any;
+      return result.result.fileBinary;
+    } catch (error: any) {
+      const status = error?.status || error?.response?.status;
+      if ((status === 401 || status === 400) && attempt === 1) {
+        console.warn(`[Dropbox] Got ${status} on download attempt 1 — clearing token cache and retrying...`);
+        clearDropboxCache();
+        continue;
+      }
+      console.error('Failed to download file from Dropbox:', error);
+      throw new Error(`Failed to download file: ${error.message}`);
+    }
   }
+  throw new Error('Dropbox download failed after retry');
 }
 
 export async function uploadFileToDropbox(
   fileBuffer: Buffer,
   dropboxPath: string,
 ): Promise<{ path: string; pathDisplay: string }> {
-  const dbx = await getUncachableDropboxClient();
-  const result = await dbx.filesUpload({
-    path: dropboxPath,
-    contents: fileBuffer,
-    mode: { '.tag': 'overwrite' },
-    autorename: false,
-    mute: true,
-  }) as any;
-  const pathDisplay = result.result.path_display || dropboxPath;
-  console.log(`[Dropbox] File uploaded successfully: ${pathDisplay}`);
-  return { path: dropboxPath, pathDisplay };
+  // Retry once on 401 — clears cached token so a fresh one is fetched
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const dbx = await getUncachableDropboxClient();
+      const result = await dbx.filesUpload({
+        path: dropboxPath,
+        contents: fileBuffer,
+        mode: { '.tag': 'overwrite' },
+        autorename: false,
+        mute: true,
+      }) as any;
+      const pathDisplay = result.result.path_display || dropboxPath;
+      console.log(`[Dropbox] File uploaded successfully: ${pathDisplay}`);
+      return { path: dropboxPath, pathDisplay };
+    } catch (error: any) {
+      const status = error?.status || error?.response?.status;
+      if ((status === 401 || status === 400) && attempt === 1) {
+        console.warn(`[Dropbox] Got ${status} on upload attempt 1 — clearing token cache and retrying...`);
+        clearDropboxCache();
+        continue;
+      }
+      throw error;
+    }
+  }
+  throw new Error('Dropbox upload failed after retry');
 }
 
 export async function listFolderFiles(folderPath: string): Promise<any[]> {
