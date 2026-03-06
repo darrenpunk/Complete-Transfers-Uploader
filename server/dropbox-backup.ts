@@ -63,7 +63,14 @@ export function backupToDropbox(filename: string): void {
       await uploadFileToDropbox(buffer, dest);
       console.log(`☁️ [backup] ${filename} → Dropbox ${dest}`);
     })
-    .catch((err: Error) => {
+    .catch(async (err: Error) => {
+      // If we got a 401, it means our cached token is definitely bad
+      if (err.message.includes('401')) {
+        console.warn(`[backup] 401 detected for ${filename}, clearing Dropbox cache`);
+        const { clearDropboxCache } = await import('./dropbox-service');
+        clearDropboxCache();
+      }
+      
       console.warn(`⚠️ [backup] Dropbox backup failed for ${filename}:`, err.message);
       sendDropboxAlert(
         '⚠️ Dropbox Backup Failed — Artwork at Risk',

@@ -6,15 +6,11 @@ import { Dropbox } from 'dropbox';
 let connectionSettings: any;
 
 async function getAccessToken(): Promise<string> {
-  // Clear cache if we just got a 401 alert or if manual reconnection happened
-  const forceRefresh = !connectionSettings;
-  
   // Use cached token if it hasn't expired yet
   if (
-    !forceRefresh &&
     connectionSettings &&
     connectionSettings.settings?.expires_at &&
-    new Date(connectionSettings.settings.expires_at).getTime() > (Date.now() + 60000) // Buffer of 1 minute
+    new Date(connectionSettings.settings.expires_at).getTime() > (Date.now() + 120000) // Buffer of 2 minutes
   ) {
     return connectionSettings.settings.access_token;
   }
@@ -52,10 +48,20 @@ async function getAccessToken(): Promise<string> {
   return accessToken;
 }
 
+export function clearDropboxCache() {
+  connectionSettings = null;
+}
+
 // WARNING: Never cache this client — always call fresh. Tokens expire.
 async function getUncachableDropboxClient(): Promise<Dropbox> {
-  const accessToken = await getAccessToken();
-  return new Dropbox({ accessToken });
+  try {
+    const accessToken = await getAccessToken();
+    return new Dropbox({ accessToken });
+  } catch (error) {
+    // If fetching fails, clear cache to force fresh fetch on next call
+    connectionSettings = null;
+    throw error;
+  }
 }
 
 export async function createFileRequest(
