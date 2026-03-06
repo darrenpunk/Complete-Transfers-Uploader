@@ -757,15 +757,14 @@ grestore`;
     }
     
     // PASS-THROUGH MODE: Append original PDF pages 2+ from customer's file
-    // BUT only if the user hasn't set their own garment colors (which means they modified the order)
+    // Enable for any multi-page PDF to preserve Front/Back layouts or garment pages
     const hasExplicitGarmentColors = data.garmentColors && Array.isArray(data.garmentColors) && data.garmentColors.length > 0;
     let passThroughSucceeded = false;
-    if (usePassThrough && !hasExplicitGarmentColors) {
+    if (!hasExplicitGarmentColors) {
       console.log(`📄 PASS-THROUGH MODE: Looking for multi-page PDF to append pages 2+`);
       
-      // Find a logo with hasGarmentPages=true that has original PDF
+      // Find a logo with multiple pages
       const multiPageLogo = data.logos.find((logo: any) => 
-        logo.hasGarmentPages === true && 
         logo.pageCount > 1 && 
         logo.originalFilename && 
         logo.originalMimeType === 'application/pdf'

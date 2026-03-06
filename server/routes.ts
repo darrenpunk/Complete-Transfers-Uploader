@@ -2101,10 +2101,12 @@ export async function registerRoutes(app: express.Application) {
                       console.log(`📄 Page ${p} extracted text:`, pageText.trim().substring(0, 200));
                       
                       // Match "Garment Color: ColorName (#HEXCODE)" or "Garment Color: ColorName"
+                      // REQUIRE "Project:" to be present on the page to confirm it's an app-generated order PDF
+                      const hasProjectLabel = pageText.includes('Project:');
                       const colorMatch = pageText.match(/Garment\s*Colou?r:\s*(.+?)(?:\s{2,}|\n|Quantity)/i);
                       const qtyMatch = pageText.match(/Quantity:\s*(\d+)/i);
                       
-                      if (colorMatch && qtyMatch) {
+                      if (hasProjectLabel && colorMatch && qtyMatch) {
                         let rawColorPart = colorMatch[1].trim();
                         const quantity = parseInt(qtyMatch[1], 10);
                         
