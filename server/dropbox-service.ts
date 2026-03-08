@@ -6,6 +6,12 @@ import { Dropbox } from 'dropbox';
 let connectionSettings: any;
 
 async function getAccessToken(): Promise<string> {
+  // If a permanent token is configured as a secret, use it (never expires)
+  if (process.env.DROPBOX_ACCESS_TOKEN) {
+    return process.env.DROPBOX_ACCESS_TOKEN;
+  }
+
+  // Otherwise use the Replit OAuth connector (expires every 4 hours)
   // Use cached token if it hasn't expired yet
   if (
     connectionSettings &&
