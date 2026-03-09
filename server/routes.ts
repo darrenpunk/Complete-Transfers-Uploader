@@ -6935,6 +6935,7 @@ export async function registerRoutes(app: express.Application) {
         headers: {
           'Content-Type': 'application/json',
           'Cookie': clientCookies,
+          ...(requestBody.partnerEmail && { 'X-Partner-Email': requestBody.partnerEmail }),
         },
         body: JSON.stringify(requestBody),
       });
