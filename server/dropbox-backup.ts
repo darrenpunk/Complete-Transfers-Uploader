@@ -8,9 +8,9 @@ const ALERT_EMAIL = 'darren@serigraf.com';
 const RETRY_INTERVAL_MS = 15 * 60 * 1000; // 15 minutes between retries
 const MAX_RETRIES = 12; // Give up after ~3 hours (12 × 15 min)
 
-// Rate-limit: only send one alert email per failure type per hour
+// Rate-limit: only send one alert email per failure type per 24 hours
 const lastAlertSent: Record<string, number> = {};
-const ALERT_COOLDOWN_MS = 60 * 60 * 1000;
+const ALERT_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 
 // In-memory retry queue: filename → attempt count
 const retryQueue: Map<string, number> = new Map();
