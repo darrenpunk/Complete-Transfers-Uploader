@@ -693,6 +693,38 @@ export async function registerRoutes(app: express.Application) {
     });
     res.json({ version: SERVER_BUILD_VERSION });
   });
+
+  // Fetch current logged-in user from Odoo
+  app.get('/api/user/current', async (req, res) => {
+    try {
+      const odooBaseUrl = process.env.VITE_ODOO_URL || 'https://www.completetransfers.com';
+      const clientCookies = req.headers.cookie || '';
+      
+      // Fetch current user from Odoo's web controller
+      const response = await fetch(`${odooBaseUrl}/web/session/info`, {
+        method: 'GET',
+        headers: {
+          'Cookie': clientCookies,
+          'Accept': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        return res.status(401).json({ error: 'Not authenticated' });
+      }
+      
+      const data = await response.json();
+      if (data.uid && data.user_id) {
+        // User is logged in - return their email
+        return res.json({ email: data.user_id[1] || null, id: data.uid });
+      }
+      
+      res.status(401).json({ error: 'Not authenticated' });
+    } catch (error: any) {
+      console.warn('[user/current] Failed to fetch user:', error.message);
+      res.status(500).json({ error: 'Failed to fetch user' });
+    }
+  });
   
   // PDF Generation endpoint - Must be before other routes
   app.get('/api/projects/:projectId/generate-pdf', async (req, res) => {

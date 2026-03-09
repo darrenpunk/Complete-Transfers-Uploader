@@ -174,8 +174,10 @@ export default function UploadTool() {
   // Detect if in iframe and get logged-in user's email from parent Odoo window
   useEffect(() => {
     const isInIframe = window !== window.parent;
+    let resolved = false;
+    const authTimeouts: NodeJS.Timeout[] = [];
     
-    // Check for email in URL params (for fullscreen/standalone mode from iframe)
+    // Check for email in URL params first (for fullscreen/standalone mode from iframe)
     const urlParams = new URLSearchParams(window.location.search);
     const emailFromUrl = urlParams.get('email');
     
@@ -183,74 +185,73 @@ export default function UploadTool() {
       console.log('✅ User email from URL params:', emailFromUrl);
       setPartnerEmail(emailFromUrl);
       setAuthStatus('authenticated');
-      return;
+      return () => { authTimeouts.forEach(t => clearTimeout(t)); };
     }
     
-    if (isInIframe) {
-      console.log('🔍 App running in iframe - requesting user data from parent window');
-      let resolved = false;
-      
-      // Set a timeout - if no response in 5 seconds, try backend fallback
-      const authTimeout = setTimeout(async () => {
-        if (resolved) return;
-        console.log('⏰ Auth timeout - trying backend fallback to fetch user data');
-        try {
-          // Try to fetch current user from Odoo backend
-          const response = await fetch('/api/user/current', { credentials: 'include' });
-          if (response.ok) {
-            const userData = await response.json();
-            if (userData.email) {
-              console.log('✅ Fetched user email from backend:', userData.email);
-              resolved = true;
-              setPartnerEmail(userData.email);
-              setAuthStatus('authenticated');
-              return;
-            }
-          }
-        } catch (e) {
-          console.warn('⚠️ Backend user fetch failed:', e);
-        }
-        console.log('❌ Could not identify user - orders will be created as guest');
-        console.log('💡 Tip: Make sure "Order More" button passes ?email= parameter to uploader');
-        setAuthStatus('not-authenticated');
-      }, 5000);
-      
-      // Listen for user data from parent window
-      const handleMessage = (event: MessageEvent) => {
-        if (event.data.type === 'odoo-user-data') {
-          if (resolved) return;
-          resolved = true;
-          clearTimeout(authTimeout);
-          if (event.data.email) {
-            console.log('✅ Received user email from Odoo:', event.data.email);
-            setPartnerEmail(event.data.email);
+    // PRIORITY: Always try to fetch from backend first (uses session cookies)
+    console.log('🔍 Attempting to fetch logged-in user from backend...');
+    fetch('/api/user/current', { credentials: 'include' })
+      .then(async res => {
+        if (res.ok) {
+          const userData = await res.json();
+          if (userData.email) {
+            console.log('✅ Fetched user email from backend:', userData.email);
+            resolved = true;
+            setPartnerEmail(userData.email);
             setAuthStatus('authenticated');
-          } else {
-            console.log('⚠️ User data received but no email - user not logged in');
-            setAuthStatus('not-authenticated');
+            authTimeouts.forEach(t => clearTimeout(t));
+            return;
           }
         }
-      };
-      
-      window.addEventListener('message', handleMessage);
-      
-      // Request user data from parent
-      window.parent.postMessage({ type: 'request-user-data' }, '*');
-      
-      return () => {
-        clearTimeout(authTimeout);
-        window.removeEventListener('message', handleMessage);
-      };
-    } else {
-      // Standalone mode - check if coming from Odoo referrer
-      const referrer = document.referrer;
-      if (referrer && !referrer.includes('replit') && !referrer.includes('localhost')) {
-        console.log('🔗 Standalone mode, coming from Odoo at:', referrer);
-        console.log('⚠️ No email parameter - orders will not be linked to customer cart');
-        console.log('💡 Tip: Odoo "Order More" button should pass ?email=customer@example.com');
-      }
-      setAuthStatus('not-authenticated');
-    }
+        throw new Error('No user data');
+      })
+      .catch(e => {
+        if (resolved) return;
+        console.warn('ℹ️ Backend fetch did not return logged-in user:', e.message);
+        
+        // If in iframe, also try iframe message approach as fallback
+        if (isInIframe) {
+          console.log('🔍 Trying iframe postMessage approach...');
+          
+          // Set a timeout - if no response in 3 seconds, mark as not authenticated
+          const authTimeout = setTimeout(() => {
+            if (resolved) return;
+            console.log('❌ Could not identify user via any method - orders will be created as guest');
+            resolved = true;
+            setAuthStatus('not-authenticated');
+          }, 3000);
+          authTimeouts.push(authTimeout);
+          
+          // Listen for user data from parent window
+          const handleMessage = (event: MessageEvent) => {
+            if (event.data.type === 'odoo-user-data') {
+              if (resolved) return;
+              resolved = true;
+              authTimeouts.forEach(t => clearTimeout(t));
+              if (event.data.email) {
+                console.log('✅ Received user email from Odoo iframe:', event.data.email);
+                setPartnerEmail(event.data.email);
+                setAuthStatus('authenticated');
+              }
+            }
+          };
+          
+          window.addEventListener('message', handleMessage);
+          window.parent.postMessage({ type: 'request-user-data' }, '*');
+          
+          return () => {
+            window.removeEventListener('message', handleMessage);
+            authTimeouts.forEach(t => clearTimeout(t));
+          };
+        } else {
+          // Not in iframe, not in URL params, not in backend - not authenticated
+          console.log('⚠️ Not authenticated - will create orders as guest');
+          resolved = true;
+          setAuthStatus('not-authenticated');
+        }
+      });
+    
+    return () => { authTimeouts.forEach(t => clearTimeout(t)); };
   }, []);
 
   // Fetch template sizes - with direct fetch fallback for production reliability
