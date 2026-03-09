@@ -49,6 +49,14 @@ app.get('/health', async (_req, res) => {
   checks.filesystem = fs.existsSync(uploadsDir) ? 'ok' : 'missing uploads directory';
   if (checks.filesystem !== 'ok') healthy = false;
 
+  if (process.env.NODE_ENV === 'production') {
+    const buildDir = path.resolve(import.meta.dirname, 'public', 'assets');
+    const hasCSS = fs.existsSync(buildDir) && fs.readdirSync(buildDir).some(f => f.endsWith('.css'));
+    const hasJS = fs.existsSync(buildDir) && fs.readdirSync(buildDir).some(f => f.endsWith('.js'));
+    checks.static_assets = hasCSS && hasJS ? 'ok' : 'missing build assets';
+    if (checks.static_assets !== 'ok') healthy = false;
+  }
+
   checks.uptime = `${Math.floor(process.uptime())}s`;
   checks.memory = `${Math.round(process.memoryUsage().rss / 1024 / 1024)}MB`;
 
