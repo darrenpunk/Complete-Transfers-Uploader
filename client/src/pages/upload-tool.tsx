@@ -188,16 +188,38 @@ export default function UploadTool() {
     
     if (isInIframe) {
       console.log('🔍 App running in iframe - requesting user data from parent window');
+      let resolved = false;
       
-      // Set a timeout - if no response in 5 seconds, mark as not authenticated
-      const authTimeout = setTimeout(() => {
-        console.log('⏰ Auth timeout - no user data received from parent');
+      // Set a timeout - if no response in 5 seconds, try backend fallback
+      const authTimeout = setTimeout(async () => {
+        if (resolved) return;
+        console.log('⏰ Auth timeout - trying backend fallback to fetch user data');
+        try {
+          // Try to fetch current user from Odoo backend
+          const response = await fetch('/api/user/current', { credentials: 'include' });
+          if (response.ok) {
+            const userData = await response.json();
+            if (userData.email) {
+              console.log('✅ Fetched user email from backend:', userData.email);
+              resolved = true;
+              setPartnerEmail(userData.email);
+              setAuthStatus('authenticated');
+              return;
+            }
+          }
+        } catch (e) {
+          console.warn('⚠️ Backend user fetch failed:', e);
+        }
+        console.log('❌ Could not identify user - orders will be created as guest');
+        console.log('💡 Tip: Make sure "Order More" button passes ?email= parameter to uploader');
         setAuthStatus('not-authenticated');
       }, 5000);
       
       // Listen for user data from parent window
       const handleMessage = (event: MessageEvent) => {
         if (event.data.type === 'odoo-user-data') {
+          if (resolved) return;
+          resolved = true;
           clearTimeout(authTimeout);
           if (event.data.email) {
             console.log('✅ Received user email from Odoo:', event.data.email);
@@ -220,8 +242,13 @@ export default function UploadTool() {
         window.removeEventListener('message', handleMessage);
       };
     } else {
-      // Not in iframe and no email param - not authenticated
-      console.log('⚠️ Standalone mode without email param - access restricted');
+      // Standalone mode - check if coming from Odoo referrer
+      const referrer = document.referrer;
+      if (referrer && !referrer.includes('replit') && !referrer.includes('localhost')) {
+        console.log('🔗 Standalone mode, coming from Odoo at:', referrer);
+        console.log('⚠️ No email parameter - orders will not be linked to customer cart');
+        console.log('💡 Tip: Odoo "Order More" button should pass ?email=customer@example.com');
+      }
       setAuthStatus('not-authenticated');
     }
   }, []);
