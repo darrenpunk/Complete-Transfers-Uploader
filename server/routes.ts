@@ -8070,16 +8070,90 @@ ${svgClose}`;
         if (serviceType === 'vectorization-with-product' && req.body.transferProduct) {
           console.log(`  2. ${req.body.transferProduct} - Quantity: ${req.body.quantity}`);
           
-          // Use placeholder PDF for the transfer product line
-          const placeholderPdfPath = path.join(process.cwd(), 'attached_assets', 'Vector_Service_1768292962486.pdf');
-          let pdfBase64 = '';
+          const placeholderMap: Record<string, string> = {
+            'A3': 'A3 Placeholder.pdf',
+            'A4': 'A4 Placeholder.pdf',
+            'A5': 'A5 Placeholder.pdf',
+            'A6': 'A6 Placeholder.pdf',
+            '295x100': '295x100 Placeholder.pdf',
+            '295x300': '295X300 Placeholder.pdf',
+            '60x60': '60X60 Placeholder.pdf',
+            '70x100': '70x100 Placeholder.pdf',
+            '100x70': '70x100 Placeholder.pdf',
+            '95x95': '95x95 Placeholder.pdf',
+          };
           
-          if (fs.existsSync(placeholderPdfPath)) {
-            const pdfBuffer = fs.readFileSync(placeholderPdfPath);
-            pdfBase64 = pdfBuffer.toString('base64');
-            console.log(`📄 Placeholder PDF loaded for transfer line: ${pdfBase64.length} chars base64`);
-          } else {
-            console.warn('⚠️ Placeholder PDF not found at:', placeholderPdfPath);
+          const findPlaceholder = (templateId: string): string | null => {
+            const tid = templateId.toLowerCase();
+            for (const [key, file] of Object.entries(placeholderMap)) {
+              if (tid.includes(key.toLowerCase())) {
+                return path.join(process.cwd(), 'server', 'placeholders', file);
+              }
+            }
+            return null;
+          };
+          
+          let pdfBase64 = '';
+          const selectedPlaceholder = findPlaceholder(req.body.transferProduct);
+          const garmentColorHex = req.body.garmentColor || '';
+          
+          try {
+            const { PDFDocument, rgb } = await import('pdf-lib');
+            
+            let placeholderDoc: any;
+            let pageWidth: number;
+            let pageHeight: number;
+            
+            if (selectedPlaceholder && fs.existsSync(selectedPlaceholder)) {
+              const placeholderBytes = fs.readFileSync(selectedPlaceholder);
+              placeholderDoc = await PDFDocument.load(placeholderBytes);
+              const firstPage = placeholderDoc.getPage(0);
+              const { width, height } = firstPage.getSize();
+              pageWidth = width;
+              pageHeight = height;
+              console.log(`📄 Loaded sized placeholder: ${path.basename(selectedPlaceholder)} (${pageWidth}×${pageHeight}pts)`);
+            } else {
+              const fallbackPath = path.join(process.cwd(), 'attached_assets', 'Vector_Service_1768292962486.pdf');
+              if (fs.existsSync(fallbackPath)) {
+                placeholderDoc = await PDFDocument.load(fs.readFileSync(fallbackPath));
+                const firstPage = placeholderDoc.getPage(0);
+                const { width, height } = firstPage.getSize();
+                pageWidth = width;
+                pageHeight = height;
+                console.log(`📄 Using fallback placeholder (${pageWidth}×${pageHeight}pts)`);
+              } else {
+                placeholderDoc = await PDFDocument.create();
+                pageWidth = 841.89;
+                pageHeight = 1190.55;
+                placeholderDoc.addPage([pageWidth, pageHeight]);
+                console.log('⚠️ No placeholder found, created blank A3 page');
+              }
+            }
+            
+            if (garmentColorHex) {
+              const hex = garmentColorHex.replace('#', '');
+              const r = parseInt(hex.substring(0, 2), 16) / 255;
+              const g = parseInt(hex.substring(2, 4), 16) / 255;
+              const b = parseInt(hex.substring(4, 6), 16) / 255;
+              
+              const colorPage = placeholderDoc.addPage([pageWidth, pageHeight]);
+              colorPage.drawRectangle({
+                x: 0, y: 0,
+                width: pageWidth, height: pageHeight,
+                color: rgb(r, g, b),
+              });
+              console.log(`🎨 Added garment colour page: ${garmentColorHex} (${pageWidth}×${pageHeight}pts)`);
+            }
+            
+            const pdfBytes = await placeholderDoc.save();
+            pdfBase64 = Buffer.from(pdfBytes).toString('base64');
+            console.log(`📄 Generated ${placeholderDoc.getPageCount()}-page placeholder PDF: ${(pdfBase64.length / 1024).toFixed(0)}KB base64`);
+          } catch (pdfErr) {
+            console.warn('⚠️ Placeholder PDF generation failed, using raw file:', pdfErr);
+            const fallbackPath = path.join(process.cwd(), 'attached_assets', 'Vector_Service_1768292962486.pdf');
+            if (fs.existsSync(fallbackPath)) {
+              pdfBase64 = fs.readFileSync(fallbackPath).toString('base64');
+            }
           }
           
           // Create a project UUID for this transfer order
