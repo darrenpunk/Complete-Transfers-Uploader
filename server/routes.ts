@@ -3789,6 +3789,18 @@ export async function registerRoutes(app: express.Application) {
                         console.log(`⚠️ Inkscape verification failed:`, inkErr);
                       }
                       
+                      if (!inkscapeVerifyBounds && areaCoverage < 0.30 && pdfPageDimensions) {
+                        console.log(`⚠️ Inkscape verification failed AND GS coverage very low (${(areaCoverage * 100).toFixed(0)}%) — falling back to MediaBox as safety measure`);
+                        gsBounds = {
+                          xMin: 0,
+                          yMin: 0,
+                          xMax: pdfPageDimensions.widthPts,
+                          yMax: pdfPageDimensions.heightPts,
+                          width: pdfPageDimensions.widthPts,
+                          height: pdfPageDimensions.heightPts
+                        };
+                      }
+                      
                       if (inkscapeVerifyBounds) {
                         const gsArea = gsBounds.width * gsBounds.height;
                         const pageArea = pageWidth * pageHeight;
@@ -3857,12 +3869,16 @@ export async function registerRoutes(app: express.Application) {
                       boundsSourceIsArtBox = true;
                     }
                     
-                    // LOW-COVERAGE FALLBACK: If GS coverage is very low (< 55%), GS is clearly
+                    // LOW-COVERAGE FALLBACK: If GS coverage is extremely low (< 15%), GS is clearly
                     // missing large portions of the artwork (white elements, clipped paths, etc).
                     // In that case, fall back to the full PDF page (MediaBox) dimensions so the
                     // entire artwork is visible on canvas — much safer than a heavily cropped view.
+                    // NOTE: Threshold was lowered from 55% to 15% because artwork that covers
+                    // 30-50% of its page (e.g. 50×33mm content on a 60×60mm page) was being
+                    // incorrectly expanded to full page dimensions.
+                    let usedMediaBoxFallback = false;
                     const gsCoverageRatio = (gsBounds.width * gsBounds.height) / (pageWidth * pageHeight);
-                    if (!boundsSourceIsArtBox && gsCoverageRatio < 0.55 && pdfPageDimensions) {
+                    if (!boundsSourceIsArtBox && gsCoverageRatio < 0.15 && pdfPageDimensions) {
                       console.log(`⚠️ GS coverage is only ${(gsCoverageRatio * 100).toFixed(0)}% — using full PDF page (MediaBox) to avoid cropping white artwork`);
                       gsBounds = {
                         xMin: 0,
@@ -3872,6 +3888,7 @@ export async function registerRoutes(app: express.Application) {
                         width: pdfPageDimensions.widthPts,
                         height: pdfPageDimensions.heightPts
                       };
+                      usedMediaBoxFallback = true;
                       console.log(`📐 Falling back to MediaBox: ${pdfPageDimensions.widthMm.toFixed(1)}×${pdfPageDimensions.heightMm.toFixed(1)}mm`);
                     }
 
@@ -3880,7 +3897,7 @@ export async function registerRoutes(app: express.Application) {
                     
                     boundsResult = {
                       success: true,
-                      method: boundsSourceIsArtBox ? 'artbox' : (gsCoverageRatio < 0.55 ? 'mediabox-fallback' : 'ghostscript-bbox'),
+                      method: boundsSourceIsArtBox ? 'artbox' : (usedMediaBoxFallback ? 'mediabox-fallback' : 'ghostscript-bbox'),
                       contentBounds: {
                         xMin: 0,
                         yMin: 0,
