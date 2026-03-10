@@ -8044,7 +8044,7 @@ ${svgClose}`;
             partnerEmail: partnerEmail,
             pdfBase64: customerFileBase64,
             artworkFilename: customerFileName,
-            comments: `Vectorization Request #${vectorizationRequest.id}\nFile: ${customerFileName}\nPrint Size: ${req.body.printSize}\nRequirements: ${req.body.comments}`,
+            comments: `Vectorization Request #${vectorizationRequest.id}\nFile: ${customerFileName}\nPrint Size: ${req.body.printSize}${req.body.garmentColor ? `\nGarment Colour: ${req.body.garmentColor}` : ''}\nRequirements: ${req.body.comments}`,
             printSize: req.body.printSize || '',
           }),
         });
@@ -8098,7 +8098,7 @@ ${svgClose}`;
               quantity: parseInt(req.body.quantity) || 1,
               garmentColor: req.body.garmentColor || '',
               inkColor: req.body.inkColor || '',
-              comments: `Vectorization Request #${vectorizationRequest.id}\nOriginal File: ${vectorizationRequest.originalName}\nPrint Size: ${req.body.printSize}\nRequirements: ${req.body.comments}`,
+              comments: `Vectorization Request #${vectorizationRequest.id}\nOriginal File: ${vectorizationRequest.originalName}\nPrint Size: ${req.body.printSize}${req.body.garmentColor ? `\nGarment Colour: ${req.body.garmentColor}` : ''}\nRequirements: ${req.body.comments}`,
               source: 'completetransfers',
               website_id: parseInt(ctWebsiteId, 10),
               pdfBase64: pdfBase64,  // Placeholder PDF for transfer line
