@@ -90,7 +90,7 @@ async function extractOriginalPNG(pdfPath: string, outputPrefix: string): Promis
       const timestamp = Date.now();
       const outputPath = path.join(path.dirname(pdfPath), `${path.basename(outputPrefix)}_direct_${timestamp}.png`);
       
-      const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r${renderDPI} -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -dMaxBitmap=300000000 -sOutputFile="${outputPath}" "${pdfPath}"`;
+      const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r${renderDPI} -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -dMaxBitmap=150000000 -sOutputFile="${outputPath}" "${pdfPath}"`;
       
       console.log('📋 Ghostscript direct rendering command:', gsCommand);
       await execAsync(gsCommand, { timeout: gsTimeout });
@@ -2419,7 +2419,7 @@ export async function registerRoutes(app: express.Application) {
                       const pngPath = path.join(uploadDir, pngFilename);
                       
                       try {
-                        const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r150 -dMaxBitmap=500000000 -dAlignToPixels=0 -dGridFitTT=2 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`;
+                        const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r150 -dMaxBitmap=200000000 -dAlignToPixels=0 -dGridFitTT=2 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`;
                         execSync(gsCommand, { encoding: 'buffer', timeout: 120000 });
                         
                         // CRITICAL: Crop PNG to content bounds if bounds are available
@@ -2673,7 +2673,7 @@ export async function registerRoutes(app: express.Application) {
                     const pngPath = path.join(uploadDir, pngFilename);
                     
                     try {
-                      const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r150 -dMaxBitmap=500000000 -dAlignToPixels=0 -dGridFitTT=2 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`;
+                      const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r150 -dMaxBitmap=200000000 -dAlignToPixels=0 -dGridFitTT=2 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`;
                       execSync(gsCommand, { encoding: 'buffer', timeout: 120000 });
                       
                       if (fs.existsSync(pngPath) && fs.statSync(pngPath).size > 0) {
@@ -2778,7 +2778,7 @@ export async function registerRoutes(app: express.Application) {
                     };
                   } catch {}
 
-                  const gsCmd = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r150 -dMaxBitmap=300000000 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`;
+                  const gsCmd = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r150 -dMaxBitmap=150000000 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`;
                   await execAsync(gsCmd, { timeout: 60000 });
 
                   if (fs.existsSync(pngPath) && fs.statSync(pngPath).size > 0) {

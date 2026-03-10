@@ -21,6 +21,19 @@ process.on('unhandledRejection', (reason, promise) => {
   console.error('[CRASH PROTECTION] Unhandled promise rejection:', reason);
 });
 
+if (process.env.NODE_ENV === 'production') {
+  const MEMORY_CHECK_INTERVAL = 60_000;
+  const MEMORY_WARN_MB = 400;
+  setInterval(() => {
+    const mem = process.memoryUsage();
+    const rssMB = Math.round(mem.rss / 1024 / 1024);
+    const heapMB = Math.round(mem.heapUsed / 1024 / 1024);
+    if (rssMB > MEMORY_WARN_MB) {
+      console.warn(`[MEMORY WARNING] RSS: ${rssMB}MB, Heap: ${heapMB}MB — approaching container limit`);
+    }
+  }, MEMORY_CHECK_INTERVAL);
+}
+
 const app = express();
 
 const requiredDirs = ['./uploads', './public'];
