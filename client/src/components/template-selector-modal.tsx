@@ -56,6 +56,7 @@ interface PricingData {
   pricePerUnit: number;
   totalPrice: number;
   currency: string;
+  minQuantity?: number;
 }
 
 const getCurrencySymbol = (currency: string): string => {
@@ -123,17 +124,12 @@ export default function TemplateSelectorModal({
   // Get pricing data for selected template and copies
   const selectedTemplateData = selectedTemplate ? templates.find(t => t.id === selectedTemplate) : null;
   
-  // Determine minimum quantity based on template type
-  const getMinQuantity = (template: TemplateSize | null): number => {
+  const getDefaultMinQuantity = (template: TemplateSize | null): number => {
     if (!template) return 10;
-    // Only DTF and UV DTF templates have minimum quantity of 1
-    // Check template ID for dtf or uv-dtf patterns
     const templateId = template.id.toLowerCase();
     const isDtfTemplate = templateId.includes('dtf') || templateId.includes('uv-dtf');
     return isDtfTemplate ? 1 : 10;
   };
-  
-  const minQuantity = getMinQuantity(selectedTemplateData || null);
   
   // Debounce effect for copies
   useEffect(() => {
@@ -196,6 +192,15 @@ export default function TemplateSelectorModal({
     staleTime: 30000, // Cache for 30 seconds
   });
 
+  const minQuantity = pricingData?.minQuantity ?? getDefaultMinQuantity(selectedTemplateData || null);
+
+  useEffect(() => {
+    if (pricingData?.minQuantity && copies < pricingData.minQuantity) {
+      setCopies(pricingData.minQuantity);
+      setInputValue(String(pricingData.minQuantity));
+    }
+  }, [pricingData?.minQuantity]);
+
   // Debug pricing query
   useEffect(() => {
     if (selectedTemplate && debouncedCopies > 0) {
@@ -222,7 +227,7 @@ export default function TemplateSelectorModal({
     // Update copies to minimum when template changes
     const template = templates.find(t => t.id === templateId);
     if (template) {
-      const newMinQuantity = getMinQuantity(template);
+      const newMinQuantity = getDefaultMinQuantity(template);
       // Always set to minimum quantity when selecting a template
       setCopies(newMinQuantity);
       setInputValue(String(newMinQuantity));

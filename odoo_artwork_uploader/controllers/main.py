@@ -1613,11 +1613,14 @@ class ArtworkUploaderController(http.Controller):
             
             _logger.info(f"💵 Final pricing - Unit: {price_per_unit}, Total: {total_price} for {copies} items")
             
+            mapping_min_qty = request.env['artwork.template.mapping'].sudo().get_min_quantity_for_template(templateId)
+            
             response_data = {
                 'pricePerUnit': round(price_per_unit, 2),
                 'totalPrice': round(total_price, 2),
                 'currency': pricelist.currency_id.name if pricelist and pricelist.currency_id else (product.currency_id.name if product.currency_id else 'EUR'),
                 'productName': product.name,
+                'minQuantity': mapping_min_qty,
             }
             headers = [
                 ('Content-Type', 'application/json'),
