@@ -866,6 +866,19 @@ export default function UploadTool() {
           
           setHasInitialized(true);
           setShowProductLauncher(true);
+          if (reorderData.hasPdf || reorderData.pdfLineId) {
+            toast({
+              title: "Reorder: Select a Template",
+              description: "This is an older order without a saved template. Please select a product and template — your artwork will be loaded automatically.",
+              duration: 8000,
+            });
+          } else {
+            toast({
+              title: "Reorder: Select a Template",
+              description: "This is an older order without saved artwork. Please select a product and template, then re-upload your artwork.",
+              duration: 8000,
+            });
+          }
           return;
         }
       } catch (e) {
@@ -882,6 +895,7 @@ export default function UploadTool() {
     if (currentProject && pendingReorderRef.current) {
       const reorderData = pendingReorderRef.current;
       pendingReorderRef.current = null;
+      setUploadGuidanceTriggered(true);
       
       if (reorderData.pdfLineId) {
         console.log('📦 Downloading reorder PDF for line:', reorderData.pdfLineId);
@@ -1074,12 +1088,15 @@ export default function UploadTool() {
         // Create project directly for other template types
         // DTF and Single Colour templates use gray (#929292), Full Colour needs selection, others use white
         const defaultGarmentColor = isFullColourTemplate ? "" : ((isDTFTemplate || isSingleColourTemplate) ? "#929292" : "#FFFFFF");
+        const reorderName = pendingReorderRef.current?.projectName;
+        const reorderQty = pendingReorderRef.current?.quantity;
+        const reorderGarmentColor = pendingReorderRef.current?.garmentColors?.[0]?.color;
         createProjectMutation.mutate({
-          name: "Untitled Project",
+          name: reorderName || "Untitled Project",
           templateSize: templateId,
-          garmentColor: defaultGarmentColor,
+          garmentColor: reorderGarmentColor || defaultGarmentColor,
           inkColor: isSingleColourTemplate ? "" : undefined,
-          quantity: copies
+          quantity: reorderQty || copies
         });
       }
     }
