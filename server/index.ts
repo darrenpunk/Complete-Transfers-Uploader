@@ -31,14 +31,20 @@ for (const dir of requiredDirs) {
   }
 }
 
+app.get('/ping', (_req, res) => {
+  res.status(200).send('pong');
+});
+
 app.get('/health', async (_req, res) => {
   const checks: Record<string, string> = {};
   let healthy = true;
 
   try {
     const { pool } = await import('./db');
-    const result = await pool.query('SELECT 1');
-    checks.database = result.rows.length > 0 ? 'ok' : 'no response';
+    const dbCheck = pool.query('SELECT 1');
+    const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000));
+    const result: any = await Promise.race([dbCheck, timeout]);
+    checks.database = result.rows?.length > 0 ? 'ok' : 'no response';
     if (checks.database !== 'ok') healthy = false;
   } catch (err: any) {
     checks.database = 'error: ' + (err.message || 'unknown');
@@ -239,6 +245,13 @@ async function main() {
     }
     const elapsed = Date.now() - startTime;
     console.log(`[SERVER] Server fully initialized in ${elapsed}ms`);
+
+    const KEEP_ALIVE_INTERVAL = 4 * 60 * 1000;
+    setInterval(() => {
+      const url = `http://0.0.0.0:${port}/ping`;
+      fetch(url).catch(() => {});
+    }, KEEP_ALIVE_INTERVAL);
+    console.log(`[SERVER] Keep-alive self-ping every ${KEEP_ALIVE_INTERVAL / 1000}s`);
   }
 }
 
