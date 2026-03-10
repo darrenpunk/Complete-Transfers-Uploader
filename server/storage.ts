@@ -18,6 +18,12 @@ import {
   type ActiveSession,
   type CustomerTemplate,
   type InsertCustomerTemplate,
+  users,
+  projects,
+  logos,
+  canvasElements,
+  vectorizationRequests,
+  supportTickets,
   analyticsEvents,
   activeSessions,
   customerTemplates
@@ -622,4 +628,498 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export class DatabaseStorage implements IStorage {
+  private templateSizesMap: Map<string, TemplateSize> = new Map();
+
+  constructor() {
+    this.initializeTemplateSizes();
+  }
+
+  private initializeTemplateSizes() {
+    const standardSizes = [
+      { id: "template-A3", name: "A3", label: "A3", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Screen Printed Transfers", description: "Full-Colour screen printed heat applied transfers", placeholderImage: null, bleedMargin: 3, productCode: "CTCCA3" },
+      { id: "template-A4", name: "A4", label: "A4", width: 210, height: 297, pixelWidth: 595, pixelHeight: 842, group: "Screen Printed Transfers", description: "Full-Colour screen printed heat applied transfers", placeholderImage: null, productCode: "CTCCA4" },
+      { id: "template-A5", name: "A5", label: "A5", width: 148, height: 210, pixelWidth: 420, pixelHeight: 595, group: "Screen Printed Transfers", description: "Full-Colour screen printed heat applied transfers", placeholderImage: null, productCode: "CTCCA5" },
+      { id: "template-A6", name: "A6", label: "A6", width: 148, height: 105, pixelWidth: 420, pixelHeight: 298, group: "Screen Printed Transfers", description: "Full-Colour screen printed heat applied transfers", placeholderImage: null, productCode: "CTCCA6" },
+      { id: "template-transfer-size", name: "transfer_size", label: "295×100mm", width: 295, height: 100, pixelWidth: 836, pixelHeight: 283, group: "Screen Printed Transfers", description: "Full-Colour screen printed heat applied transfers", placeholderImage: null, productCode: "CTCC295" },
+      { id: "template-square", name: "square", label: "95×95mm", width: 95, height: 95, pixelWidth: 269, pixelHeight: 269, group: "Screen Printed Transfers", description: "Full-Colour screen printed heat applied transfers", placeholderImage: null, productCode: "CTCC95" },
+      { id: "template-badge", name: "badge", label: "100×70mm", width: 100, height: 70, pixelWidth: 283, pixelHeight: 198, group: "Screen Printed Transfers", description: "Full-Colour screen printed heat applied transfers", placeholderImage: null, productCode: "CTCC100" },
+      { id: "template-small", name: "small", label: "60×60mm", width: 60, height: 60, pixelWidth: 170, pixelHeight: 170, group: "Screen Printed Transfers", description: "Full-Colour screen printed heat applied transfers", placeholderImage: null, productCode: "CTCC60" },
+      { id: "template-295x300", name: "295x300", label: "295×300mm", width: 295, height: 300, pixelWidth: 836, pixelHeight: 850, group: "Screen Printed Transfers", description: "Full-Colour screen printed heat applied transfers", placeholderImage: null, productCode: "CTCC295300" },
+      { id: "metallic-A3", name: "metallic_A3", label: "A3 Metallic", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Screen Printed Transfers", description: "Full-Colour screen printed with metallic finish", placeholderImage: null, bleedMargin: 3, productCode: "CTMCA3" },
+      { id: "metallic-A4", name: "metallic_A4", label: "A4 Metallic", width: 210, height: 297, pixelWidth: 595, pixelHeight: 842, group: "Screen Printed Transfers", description: "Full-Colour screen printed with metallic finish", placeholderImage: null, productCode: "CTMCA4" },
+      { id: "metallic-A5", name: "metallic_A5", label: "A5 Metallic", width: 148, height: 210, pixelWidth: 420, pixelHeight: 595, group: "Screen Printed Transfers", description: "Full-Colour screen printed with metallic finish", placeholderImage: null, productCode: "CTMCA5" },
+      { id: "metallic-A6", name: "metallic_A6", label: "A6 Metallic", width: 148, height: 105, pixelWidth: 420, pixelHeight: 298, group: "Screen Printed Transfers", description: "Full-Colour screen printed with metallic finish", placeholderImage: null, productCode: "CTMCA6" },
+      { id: "metallic-transfer-size", name: "metallic_transfer_size", label: "295×100mm Metallic", width: 295, height: 100, pixelWidth: 836, pixelHeight: 283, group: "Screen Printed Transfers", description: "Full-Colour screen printed with metallic finish", placeholderImage: null, productCode: "CTMC295" },
+      { id: "metallic-square", name: "metallic_square", label: "95×95mm Metallic", width: 95, height: 95, pixelWidth: 269, pixelHeight: 269, group: "Screen Printed Transfers", description: "Full-Colour screen printed with metallic finish", placeholderImage: null, productCode: "CTMC95" },
+      { id: "metallic-badge", name: "metallic_badge", label: "100×70mm Metallic", width: 100, height: 70, pixelWidth: 283, pixelHeight: 198, group: "Screen Printed Transfers", description: "Full-Colour screen printed with metallic finish", placeholderImage: null, productCode: "CTMC100" },
+      { id: "metallic-small", name: "metallic_small", label: "60×60mm Metallic", width: 60, height: 60, pixelWidth: 170, pixelHeight: 170, group: "Screen Printed Transfers", description: "Full-Colour screen printed with metallic finish", placeholderImage: null, productCode: "CTMC60" },
+      { id: "hd-A3", name: "hd_A3", label: "A3 HD", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Screen Printed Transfers", description: "High-definition full-colour screen printed transfers", placeholderImage: null, bleedMargin: 3, productCode: "CTHDA3" },
+      { id: "hd-A4", name: "hd_A4", label: "A4 HD", width: 210, height: 297, pixelWidth: 595, pixelHeight: 842, group: "Screen Printed Transfers", description: "High-definition full-colour screen printed transfers", placeholderImage: null, productCode: "CTHDA4" },
+      { id: "single-A3", name: "single_A3", label: "A3 Single Colour", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Screen Printed Transfers", description: "Screen printed using our off-the-shelf colour range", placeholderImage: null, bleedMargin: 3, productCode: "STCCA3" },
+      { id: "single-A4", name: "single_A4", label: "A4 Single Colour", width: 210, height: 297, pixelWidth: 595, pixelHeight: 842, group: "Screen Printed Transfers", description: "Screen printed using our off-the-shelf colour range", placeholderImage: null, productCode: "STCCA4" },
+      { id: "single-A5", name: "single_A5", label: "A5 Single Colour", width: 148, height: 210, pixelWidth: 420, pixelHeight: 595, group: "Screen Printed Transfers", description: "Screen printed using our off-the-shelf colour range", placeholderImage: null, productCode: "STCCA5" },
+      { id: "single-A6", name: "single_A6", label: "A6 Single Colour", width: 148, height: 105, pixelWidth: 420, pixelHeight: 298, group: "Screen Printed Transfers", description: "Screen printed using our off-the-shelf colour range", placeholderImage: null, productCode: "STCCA6" },
+      { id: "single-transfer-size", name: "single_transfer_size", label: "295×100mm Single Colour", width: 295, height: 100, pixelWidth: 836, pixelHeight: 283, group: "Screen Printed Transfers", description: "Screen printed using our off-the-shelf colour range", placeholderImage: null, productCode: "STCC295" },
+      { id: "single-square", name: "single_square", label: "95×95mm Single Colour", width: 95, height: 95, pixelWidth: 269, pixelHeight: 269, group: "Screen Printed Transfers", description: "Screen printed using our off-the-shelf colour range", placeholderImage: null, productCode: "STCC95" },
+      { id: "single-badge", name: "single_badge", label: "100×70mm Single Colour", width: 100, height: 70, pixelWidth: 283, pixelHeight: 198, group: "Screen Printed Transfers", description: "Screen printed using our off-the-shelf colour range", placeholderImage: null, productCode: "STCC100" },
+      { id: "single-small", name: "single_small", label: "60×60mm Single Colour", width: 60, height: 60, pixelWidth: 170, pixelHeight: 170, group: "Screen Printed Transfers", description: "Screen printed using our off-the-shelf colour range", placeholderImage: null, productCode: "STCC60" },
+      { id: "zero-A3", name: "zero_A3", label: "A3 Zero", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Screen Printed Transfers", description: "Zero inks are super stretchy and do not bleed!", placeholderImage: null, bleedMargin: 3, productCode: "CTZCA3" },
+      { id: "zero-A4", name: "zero_A4", label: "A4 Zero", width: 210, height: 297, pixelWidth: 595, pixelHeight: 842, group: "Screen Printed Transfers", description: "Zero inks are super stretchy and do not bleed!", placeholderImage: null, productCode: "CTZCA4" },
+      { id: "zero-A5", name: "zero_A5", label: "A5 Zero", width: 148, height: 210, pixelWidth: 420, pixelHeight: 595, group: "Screen Printed Transfers", description: "Zero inks are super stretchy and do not bleed!", placeholderImage: null, productCode: "CTZCA5" },
+      { id: "zero-A6", name: "zero_A6", label: "A6 Zero", width: 148, height: 105, pixelWidth: 420, pixelHeight: 298, group: "Screen Printed Transfers", description: "Zero inks are super stretchy and do not bleed!", placeholderImage: null, productCode: "CTZCA6" },
+      { id: "zero-transfer-size", name: "zero_transfer_size", label: "295×100mm Zero", width: 295, height: 100, pixelWidth: 836, pixelHeight: 283, group: "Screen Printed Transfers", description: "Zero inks are super stretchy and do not bleed!", placeholderImage: null, productCode: "CTZC295" },
+      { id: "zero-square", name: "zero_square", label: "95×95mm Zero", width: 95, height: 95, pixelWidth: 269, pixelHeight: 269, group: "Screen Printed Transfers", description: "Zero inks are super stretchy and do not bleed!", placeholderImage: null, productCode: "CTZC95" },
+      { id: "zero-badge", name: "zero_badge", label: "100×70mm Zero", width: 100, height: 70, pixelWidth: 283, pixelHeight: 198, group: "Screen Printed Transfers", description: "Zero inks are super stretchy and do not bleed!", placeholderImage: null, productCode: "CTZC100" },
+      { id: "zero-small", name: "zero_small", label: "60×60mm Zero", width: 60, height: 60, pixelWidth: 170, pixelHeight: 170, group: "Screen Printed Transfers", description: "Zero inks are super stretchy and do not bleed!", placeholderImage: null, productCode: "CTZC60" },
+      { id: "dtf-SRA3", name: "SRA3", label: "SRA3", width: 320, height: 450, pixelWidth: 907, pixelHeight: 1276, group: "Digital Transfers", description: "Small order digital heat transfers", placeholderImage: null, productCode: "CTDFSRA3" },
+      { id: "dtf-large", name: "large_dtf", label: "1000×550mm DTF", width: 1000, height: 550, pixelWidth: 2834, pixelHeight: 1559, group: "Digital Transfers", description: "Small order digital heat transfers", placeholderImage: "placeholders/dtf_large.svg", bleedMargin: 3, productCode: "CTDF1000" },
+      { id: "uvdtf-A3", name: "uv_dtf_A3", label: "A3 UV DTF", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Digital Transfers", description: "Hard Surface Transfers", placeholderImage: null, bleedMargin: 3, productCode: "CTUVDTFA3" },
+      { id: "woven-A6", name: "woven_A6", label: "A6 Woven", width: 148, height: 105, pixelWidth: 420, pixelHeight: 298, group: "Digital Transfers", description: "Polyester textile woven badges", placeholderImage: null, productCode: "CTWBA6" },
+      { id: "woven-square", name: "woven_square", label: "95×95mm Woven", width: 95, height: 95, pixelWidth: 269, pixelHeight: 269, group: "Digital Transfers", description: "Polyester textile woven badges", placeholderImage: null, productCode: "CTWB95" },
+      { id: "woven-badge", name: "woven_badge", label: "100×70mm Woven", width: 100, height: 70, pixelWidth: 283, pixelHeight: 198, group: "Digital Transfers", description: "Polyester textile woven badges", placeholderImage: null, productCode: "CTWB100" },
+      { id: "woven-small", name: "woven_small", label: "60×60mm Woven", width: 60, height: 60, pixelWidth: 170, pixelHeight: 170, group: "Digital Transfers", description: "Polyester textile woven badges", placeholderImage: null, productCode: "CTWB60" },
+      { id: "applique-square", name: "applique_square", label: "95×95mm Applique", width: 95, height: 95, pixelWidth: 269, pixelHeight: 269, group: "Digital Transfers", description: "Fabric applique badges", placeholderImage: null, productCode: "CTAB95" },
+      { id: "applique-badge", name: "applique_badge", label: "100×70mm Applique", width: 100, height: 70, pixelWidth: 283, pixelHeight: 198, group: "Digital Transfers", description: "Fabric applique badges", placeholderImage: null, productCode: "CTAB100" },
+      { id: "applique-small", name: "applique_small", label: "60×60mm Applique", width: 60, height: 60, pixelWidth: 170, pixelHeight: 170, group: "Digital Transfers", description: "Fabric applique badges", placeholderImage: null, productCode: "CTAB60" },
+      { id: "reflective-A3", name: "reflective_A3", label: "A3", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Screen Printed Transfers", description: "Our silver reflective helps enhance the visibility of the wearer at night", placeholderImage: null, bleedMargin: 3, productCode: "CTRFA3" },
+      { id: "reflective-A4", name: "reflective_A4", label: "A4", width: 210, height: 297, pixelWidth: 595, pixelHeight: 842, group: "Screen Printed Transfers", description: "Our silver reflective helps enhance the visibility of the wearer at night", placeholderImage: null, productCode: "CTRFA4" },
+      { id: "reflective-A5", name: "reflective_A5", label: "A5", width: 148, height: 210, pixelWidth: 420, pixelHeight: 595, group: "Screen Printed Transfers", description: "Our silver reflective helps enhance the visibility of the wearer at night", placeholderImage: null, productCode: "CTRFA5" },
+      { id: "reflective-A6", name: "reflective_A6", label: "A6", width: 148, height: 105, pixelWidth: 420, pixelHeight: 298, group: "Screen Printed Transfers", description: "Our silver reflective helps enhance the visibility of the wearer at night", placeholderImage: null, productCode: "CTRFA6" },
+      { id: "reflective-transfer-size", name: "reflective_transfer_size", label: "295×100mm", width: 295, height: 100, pixelWidth: 836, pixelHeight: 283, group: "Screen Printed Transfers", description: "Our silver reflective helps enhance the visibility of the wearer at night", placeholderImage: null, productCode: "CTRF295" },
+      { id: "reflective-square", name: "reflective_square", label: "95×95mm", width: 95, height: 95, pixelWidth: 269, pixelHeight: 269, group: "Screen Printed Transfers", description: "Our silver reflective helps enhance the visibility of the wearer at night", placeholderImage: null, productCode: "CTRF95" },
+      { id: "reflective-badge", name: "reflective_badge", label: "100×70mm", width: 100, height: 70, pixelWidth: 283, pixelHeight: 198, group: "Screen Printed Transfers", description: "Our silver reflective helps enhance the visibility of the wearer at night", placeholderImage: null, productCode: "CTRF100" },
+      { id: "reflective-small", name: "reflective_small", label: "60×60mm", width: 60, height: 60, pixelWidth: 170, pixelHeight: 170, group: "Screen Printed Transfers", description: "Our silver reflective helps enhance the visibility of the wearer at night", placeholderImage: null, productCode: "CTRF60" },
+      { id: "sublimation-A2-fabric", name: "sublimation_A2_fabric", label: "A2 Fabric", width: 420, height: 594, pixelWidth: 1191, pixelHeight: 1684, group: "Digital Transfers", description: "Sublimation heat transfers are designed for full-colour decoration of white, 100% polyester", placeholderImage: null, productCode: "CTSFA2" },
+      { id: "sublimation-A3-fabric", name: "sublimation_A3_fabric", label: "A3 Fabric", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Digital Transfers", description: "Sublimation heat transfers are designed for full-colour decoration of white, 100% polyester", placeholderImage: null, productCode: "CTSFA3" },
+      { id: "sublimation-A4-fabric", name: "sublimation_A4_fabric", label: "A4 Fabric", width: 210, height: 297, pixelWidth: 595, pixelHeight: 842, group: "Digital Transfers", description: "Sublimation heat transfers are designed for full-colour decoration of white, 100% polyester", placeholderImage: null, productCode: "CTSFA4" },
+      { id: "sublimation-A3", name: "sublimation_A3", label: "A3 Hard Surface", width: 297, height: 420, pixelWidth: 842, pixelHeight: 1191, group: "Digital Transfers", description: "Sublimation heat transfers are designed for full-colour decoration of white, 100% polyester", placeholderImage: null, bleedMargin: 3, productCode: "CTSHA3" },
+      { id: "sublimation-A4", name: "sublimation_A4", label: "A4 Hard Surface", width: 210, height: 297, pixelWidth: 595, pixelHeight: 842, group: "Digital Transfers", description: "Sublimation heat transfers are designed for full-colour decoration of white, 100% polyester", placeholderImage: null, productCode: "CTSHA4" },
+      { id: "sublimation-mug", name: "sublimation_mug", label: "Mug Size", width: 240, height: 100, pixelWidth: 680, pixelHeight: 283, group: "Digital Transfers", description: "Sublimation heat transfers are designed for full-colour decoration of white, 100% polyester", placeholderImage: null, productCode: "CTSMUG" },
+      { id: "sublimation-A5", name: "sublimation_A5", label: "A5 Sublimation", width: 148, height: 210, pixelWidth: 420, pixelHeight: 595, group: "Digital Transfers", description: "Sublimation heat transfers are designed for full-colour decoration of white, 100% polyester", placeholderImage: null, productCode: "CTSA5" },
+      { id: "sublimation-A6", name: "sublimation_A6", label: "A6 Sublimation", width: 148, height: 105, pixelWidth: 420, pixelHeight: 298, group: "Digital Transfers", description: "Sublimation heat transfers are designed for full-colour decoration of white, 100% polyester", placeholderImage: null, productCode: "CTSA6" },
+      { id: "sublimation-transfer-size", name: "sublimation_transfer_size", label: "295×100mm Sublimation", width: 295, height: 100, pixelWidth: 836, pixelHeight: 283, group: "Digital Transfers", description: "Sublimation heat transfers are designed for full-colour decoration of white, 100% polyester", placeholderImage: null, productCode: "CTS295" },
+      { id: "sublimation-square", name: "sublimation_square", label: "95×95mm Sublimation", width: 95, height: 95, pixelWidth: 269, pixelHeight: 269, group: "Digital Transfers", description: "Sublimation heat transfers are designed for full-colour decoration of white, 100% polyester", placeholderImage: null, productCode: "CTS95" },
+      { id: "sublimation-badge", name: "sublimation_badge", label: "100×70mm Sublimation", width: 100, height: 70, pixelWidth: 283, pixelHeight: 198, group: "Digital Transfers", description: "Sublimation heat transfers are designed for full-colour decoration of white, 100% polyester", placeholderImage: null, productCode: "CTS100" },
+      { id: "sublimation-small", name: "sublimation_small", label: "60×60mm Sublimation", width: 60, height: 60, pixelWidth: 170, pixelHeight: 170, group: "Digital Transfers", description: "Sublimation heat transfers are designed for full-colour decoration of white, 100% polyester", placeholderImage: null, productCode: "CTS60" },
+      { id: "sublimation-1100x1000-fabric", name: "sublimation_1100x1000_fabric", label: "1100×1000mm Fabric", width: 1100, height: 1000, pixelWidth: 3118, pixelHeight: 2835, group: "Digital Transfers", description: "Sublimation heat transfers are designed for full-colour decoration of white, 100% polyester", placeholderImage: null, productCode: "CTSF1100" },
+      { id: "sublimation-1100x1000-hard", name: "sublimation_1100x1000_hard", label: "1100×1000mm Hard Surface", width: 1100, height: 1000, pixelWidth: 3118, pixelHeight: 2835, group: "Digital Transfers", description: "Sublimation heat transfers are designed for full-colour decoration of white, 100% polyester", placeholderImage: null, bleedMargin: 3, productCode: "CTSH1100" },
+    ];
+    standardSizes.forEach(size => {
+      this.templateSizesMap.set(size.id, {
+        ...size,
+        description: size.description ?? null,
+        placeholderImage: size.placeholderImage ?? null,
+        bleedMargin: size.bleedMargin ?? null,
+        productCode: size.productCode ?? null,
+      } as TemplateSize);
+    });
+  }
+
+  private async dbRetry<T>(fn: () => Promise<T>, fallback: T, label: string): Promise<T> {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        return await fn();
+      } catch (err: any) {
+        const msg = err?.message || String(err);
+        console.error(`DB ${label} attempt ${attempt + 1}/3 failed:`, msg);
+        if (attempt < 2) await new Promise(r => setTimeout(r, 500 * (attempt + 1)));
+      }
+    }
+    return fallback;
+  }
+
+  async getUser(id: string): Promise<User | undefined> {
+    return this.dbRetry(async () => {
+      const [user] = await db.select().from(users).where(eq(users.id, id));
+      return user || undefined;
+    }, undefined, "getUser");
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    return this.dbRetry(async () => {
+      const [user] = await db.select().from(users).where(eq(users.username, username));
+      return user || undefined;
+    }, undefined, "getUserByUsername");
+  }
+
+  async createUser(insertUser: any): Promise<User> {
+    const id = randomUUID();
+    const [user] = await db.insert(users).values({ ...insertUser, id }).returning();
+    return user;
+  }
+
+  async getProject(id: string): Promise<Project | undefined> {
+    return this.dbRetry(async () => {
+      const [project] = await db.select().from(projects).where(eq(projects.id, id));
+      return project || undefined;
+    }, undefined, "getProject");
+  }
+
+  async getProjects(): Promise<Project[]> {
+    return this.dbRetry(
+      () => db.select().from(projects).orderBy(desc(projects.createdAt)),
+      [],
+      "getProjects"
+    );
+  }
+
+  async createProject(insertProject: InsertProject): Promise<Project> {
+    const id = randomUUID();
+    const [project] = await db.insert(projects).values({
+      ...insertProject,
+      id,
+      status: insertProject.status || "draft",
+      createdAt: new Date().toISOString(),
+      inkColor: insertProject.inkColor || null,
+      appliqueBadgesForm: insertProject.appliqueBadgesForm || null,
+    }).returning();
+    return project;
+  }
+
+  async updateProject(id: string, updates: Partial<Project>): Promise<Project | undefined> {
+    const { id: _id, ...rest } = updates as any;
+    const result = await db.update(projects).set(rest).where(eq(projects.id, id)).returning();
+    return result[0] || undefined;
+  }
+
+  async deleteProject(id: string): Promise<boolean> {
+    const result = await db.delete(projects).where(eq(projects.id, id)).returning();
+    return result.length > 0;
+  }
+
+  async getLogo(id: string): Promise<Logo | undefined> {
+    return this.dbRetry(async () => {
+      const [logo] = await db.select().from(logos).where(eq(logos.id, id));
+      return logo || undefined;
+    }, undefined, "getLogo");
+  }
+
+  async getLogosByProject(projectId: string): Promise<Logo[]> {
+    return this.dbRetry(
+      () => db.select().from(logos).where(eq(logos.projectId, projectId)),
+      [],
+      "getLogosByProject"
+    );
+  }
+
+  async createLogo(insertLogo: InsertLogo): Promise<Logo> {
+    const id = (insertLogo as any).id || randomUUID();
+    const [logo] = await db.insert(logos).values({
+      ...insertLogo,
+      id,
+      width: insertLogo.width || null,
+      height: insertLogo.height || null,
+      originalFilename: insertLogo.originalFilename ?? null,
+      originalMimeType: insertLogo.originalMimeType ?? null,
+      originalUrl: insertLogo.originalUrl ?? null,
+      svgColors: insertLogo.svgColors || null,
+      svgFonts: insertLogo.svgFonts || null,
+      fontsOutlined: insertLogo.fontsOutlined || false,
+      contentBounds: insertLogo.contentBounds || null,
+      isMixedContent: insertLogo.isMixedContent || false,
+      isPhotographic: insertLogo.isPhotographic || false,
+      isCMYKPreserved: insertLogo.isCMYKPreserved || false,
+      isPdfWithRasterOnly: insertLogo.isPdfWithRasterOnly || false,
+      extractedRasterPath: insertLogo.extractedRasterPath ?? null,
+      previewFilename: insertLogo.previewFilename || null,
+      isComplexVector: insertLogo.isComplexVector || false,
+      vectorComplexityMetrics: insertLogo.vectorComplexityMetrics || null,
+      canvasFallbackFilename: insertLogo.canvasFallbackFilename || null,
+      isComplexFilePngFallback: insertLogo.isComplexFilePngFallback || false,
+      detectedGarmentColors: insertLogo.detectedGarmentColors || null,
+    }).returning();
+    return logo;
+  }
+
+  async updateLogo(id: string, updates: Partial<Logo>): Promise<Logo | undefined> {
+    const { id: _id, ...rest } = updates as any;
+    const result = await db.update(logos).set(rest).where(eq(logos.id, id)).returning();
+    return result[0] || undefined;
+  }
+
+  async deleteLogo(id: string): Promise<boolean> {
+    const result = await db.delete(logos).where(eq(logos.id, id)).returning();
+    return result.length > 0;
+  }
+
+  async getCanvasElement(id: string): Promise<CanvasElement | undefined> {
+    return this.dbRetry(async () => {
+      const [el] = await db.select().from(canvasElements).where(eq(canvasElements.id, id));
+      return el || undefined;
+    }, undefined, "getCanvasElement");
+  }
+
+  async getCanvasElementsByProject(projectId: string): Promise<CanvasElement[]> {
+    return this.dbRetry(
+      () => db.select().from(canvasElements).where(eq(canvasElements.projectId, projectId)).orderBy(canvasElements.zIndex),
+      [],
+      "getCanvasElementsByProject"
+    );
+  }
+
+  async createCanvasElement(insertElement: InsertCanvasElement): Promise<CanvasElement> {
+    console.log(`🔍 DEBUG: Creating canvas element with logoId: ${insertElement.logoId}`);
+    const id = randomUUID();
+    const [element] = await db.insert(canvasElements).values({
+      ...insertElement,
+      id,
+      elementType: insertElement.elementType || 'logo',
+      x: insertElement.x || 0,
+      y: insertElement.y || 0,
+      rotation: insertElement.rotation || 0,
+      zIndex: insertElement.zIndex || 0,
+      isVisible: insertElement.isVisible !== undefined ? insertElement.isVisible : true,
+      isLocked: insertElement.isLocked !== undefined ? insertElement.isLocked : false,
+      colorOverrides: insertElement.colorOverrides || null,
+      garmentColor: insertElement.garmentColor ?? null,
+      logoId: insertElement.logoId ?? null,
+      textContent: insertElement.textContent ?? null,
+      fontSize: insertElement.fontSize ?? null,
+      fontFamily: insertElement.fontFamily ?? null,
+      textColor: insertElement.textColor ?? null,
+      textAlign: insertElement.textAlign ?? null,
+      fontWeight: insertElement.fontWeight ?? null,
+      fontStyle: insertElement.fontStyle ?? null,
+      fillColor: insertElement.fillColor ?? null,
+      strokeColor: insertElement.strokeColor ?? null,
+      strokeWidth: insertElement.strokeWidth ?? null,
+      opacity: insertElement.opacity ?? null,
+    }).returning();
+    return element;
+  }
+
+  async updateCanvasElement(id: string, updates: Partial<CanvasElement>): Promise<CanvasElement | undefined> {
+    const existing = await this.getCanvasElement(id);
+    if (!existing) return undefined;
+    console.log('Storage updateCanvasElement:', { id, existing: existing.rotation, updates });
+    const { id: _id, ...rest } = updates as any;
+    const result = await db.update(canvasElements).set(rest).where(eq(canvasElements.id, id)).returning();
+    const updated = result[0];
+    if (updated) console.log('Storage updated element:', { id, rotation: updated.rotation });
+    return updated || undefined;
+  }
+
+  async deleteCanvasElement(id: string): Promise<boolean> {
+    const result = await db.delete(canvasElements).where(eq(canvasElements.id, id)).returning();
+    return result.length > 0;
+  }
+
+  async duplicateCanvasElement(id: string): Promise<CanvasElement | undefined> {
+    const original = await this.getCanvasElement(id);
+    if (!original) return undefined;
+
+    console.log('Original element for duplication:', {
+      id: original.id,
+      x: original.x,
+      y: original.y,
+      width: original.width,
+      height: original.height
+    });
+
+    const allElements = await this.getCanvasElementsByProject(original.projectId);
+    const maxZ = allElements.length > 0 ? Math.max(...allElements.map(el => el.zIndex)) : 0;
+
+    const duplicateId = randomUUID();
+    const { id: _origId, ...rest } = original as any;
+    const [duplicate] = await db.insert(canvasElements).values({
+      ...rest,
+      id: duplicateId,
+      x: original.x + 20,
+      y: original.y + 20,
+      zIndex: maxZ + 1,
+    }).returning();
+
+    console.log('Created duplicate element:', {
+      id: duplicate.id,
+      x: duplicate.x,
+      y: duplicate.y,
+      width: duplicate.width,
+      height: duplicate.height
+    });
+
+    return duplicate;
+  }
+
+  async deleteCanvasElementsByLogo(logoId: string): Promise<void> {
+    await db.delete(canvasElements).where(eq(canvasElements.logoId, logoId));
+  }
+
+  async getTemplateSize(id: string): Promise<TemplateSize | undefined> {
+    return this.templateSizesMap.get(id);
+  }
+
+  async getTemplateSizes(): Promise<TemplateSize[]> {
+    return Array.from(this.templateSizesMap.values());
+  }
+
+  async createTemplateSize(insertTemplateSize: InsertTemplateSize): Promise<TemplateSize> {
+    const id = randomUUID();
+    const templateSize: TemplateSize = {
+      ...insertTemplateSize,
+      id,
+      description: insertTemplateSize.description ?? null
+    };
+    this.templateSizesMap.set(id, templateSize);
+    return templateSize;
+  }
+
+  async getVectorizationRequest(id: string): Promise<VectorizationRequest | undefined> {
+    return this.dbRetry(async () => {
+      const [req] = await db.select().from(vectorizationRequests).where(eq(vectorizationRequests.id, id));
+      return req || undefined;
+    }, undefined, "getVectorizationRequest");
+  }
+
+  async getVectorizationRequests(): Promise<VectorizationRequest[]> {
+    return this.dbRetry(
+      () => db.select().from(vectorizationRequests).orderBy(desc(vectorizationRequests.createdAt)),
+      [],
+      "getVectorizationRequests"
+    );
+  }
+
+  async createVectorizationRequest(insertRequest: InsertVectorizationRequest): Promise<VectorizationRequest> {
+    const id = randomUUID();
+    const [req] = await db.insert(vectorizationRequests).values({
+      ...insertRequest,
+      id,
+      charge: insertRequest.charge || 15,
+      status: insertRequest.status || "pending",
+      createdAt: new Date().toISOString(),
+      webcartOrderId: insertRequest.webcartOrderId ?? null,
+      completedAt: null,
+    }).returning();
+    return req;
+  }
+
+  async updateVectorizationRequest(id: string, updates: Partial<VectorizationRequest>): Promise<VectorizationRequest | undefined> {
+    const { id: _id, ...rest } = updates as any;
+    const result = await db.update(vectorizationRequests).set(rest).where(eq(vectorizationRequests.id, id)).returning();
+    return result[0] || undefined;
+  }
+
+  async createSupportTicket(insertTicket: InsertSupportTicket): Promise<SupportTicket> {
+    const id = randomUUID();
+    const [ticket] = await db.insert(supportTickets).values({
+      ...insertTicket,
+      id,
+      status: "open",
+      createdAt: new Date().toISOString(),
+    }).returning();
+    return ticket;
+  }
+
+  async getCustomerTemplates(customerCode: string): Promise<CustomerTemplate[]> {
+    return this.dbRetry(
+      () => db.select().from(customerTemplates).where(eq(customerTemplates.customerCode, customerCode)),
+      [],
+      "getCustomerTemplates"
+    );
+  }
+
+  async getAllCustomerTemplates(): Promise<CustomerTemplate[]> {
+    return this.dbRetry(
+      () => db.select().from(customerTemplates),
+      [],
+      "getAllCustomerTemplates"
+    );
+  }
+
+  async createCustomerTemplate(assignment: InsertCustomerTemplate): Promise<CustomerTemplate> {
+    const [ct] = await db.insert(customerTemplates).values({
+      customerCode: assignment.customerCode,
+      templateId: assignment.templateId,
+    }).returning();
+    return ct;
+  }
+
+  async deleteCustomerTemplate(id: string): Promise<boolean> {
+    const result = await db.delete(customerTemplates).where(eq(customerTemplates.id, id)).returning();
+    return result.length > 0;
+  }
+
+  async logAnalyticsEvent(event: InsertAnalyticsEvent): Promise<AnalyticsEvent> {
+    const id = randomUUID();
+    const fallback: AnalyticsEvent = {
+      id,
+      sessionId: event.sessionId,
+      userEmail: event.userEmail || null,
+      eventType: event.eventType,
+      metadata: event.metadata || null,
+      createdAt: new Date().toISOString(),
+    };
+    return this.dbRetry(async () => {
+      const [result] = await db.insert(analyticsEvents).values(fallback).returning();
+      return result;
+    }, fallback, "logAnalyticsEvent");
+  }
+
+  async upsertActiveSession(session: { sessionId: string; userEmail?: string; lastSeen: string; currentPage?: string; metadata?: any }): Promise<void> {
+    await this.dbRetry(async () => {
+      await db.insert(activeSessions).values({
+        sessionId: session.sessionId,
+        userEmail: session.userEmail || null,
+        lastSeen: session.lastSeen,
+        currentPage: session.currentPage || null,
+        metadata: session.metadata || null,
+      }).onConflictDoUpdate({
+        target: activeSessions.sessionId,
+        set: {
+          userEmail: session.userEmail || null,
+          lastSeen: session.lastSeen,
+          currentPage: session.currentPage || null,
+          metadata: session.metadata || null,
+        },
+      });
+    }, undefined, "upsertActiveSession");
+  }
+
+  async getActiveSessions(sinceMinutes: number = 5): Promise<ActiveSession[]> {
+    const cutoff = new Date(Date.now() - sinceMinutes * 60 * 1000).toISOString();
+    return this.dbRetry(
+      () => db.select().from(activeSessions).where(gte(activeSessions.lastSeen, cutoff)),
+      [],
+      "getActiveSessions"
+    );
+  }
+
+  async getAnalyticsEvents(limit: number = 50, offset: number = 0, eventType?: string): Promise<AnalyticsEvent[]> {
+    return this.dbRetry(async () => {
+      if (eventType) {
+        return db.select().from(analyticsEvents).where(eq(analyticsEvents.eventType, eventType)).orderBy(desc(analyticsEvents.createdAt)).limit(limit).offset(offset);
+      }
+      return db.select().from(analyticsEvents).orderBy(desc(analyticsEvents.createdAt)).limit(limit).offset(offset);
+    }, [], "getAnalyticsEvents");
+  }
+
+  async getAnalyticsStats(days: number = 7): Promise<{ date: string; eventType: string; count: number }[]> {
+    return this.dbRetry(async () => {
+      const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+      const events = await db.select().from(analyticsEvents).where(gte(analyticsEvents.createdAt, cutoff));
+      const counts: Record<string, number> = {};
+      for (const e of events) {
+        const date = new Date(e.createdAt).toISOString().split("T")[0];
+        const key = `${date}|${e.eventType}`;
+        counts[key] = (counts[key] || 0) + 1;
+      }
+      return Object.entries(counts)
+        .map(([key, count]) => {
+          const [date, eventType] = key.split("|");
+          return { date, eventType, count };
+        })
+        .sort((a, b) => b.date.localeCompare(a.date));
+    }, [], "getAnalyticsStats");
+  }
+
+  async cleanupOldSessions(olderThanMinutes: number = 10): Promise<void> {
+    await this.dbRetry(async () => {
+      const cutoff = new Date(Date.now() - olderThanMinutes * 60 * 1000).toISOString();
+      await db.delete(activeSessions).where(
+        sql`${activeSessions.lastSeen} < ${cutoff}`
+      );
+    }, undefined, "cleanupOldSessions");
+  }
+}
+
+export const storage = new DatabaseStorage();
