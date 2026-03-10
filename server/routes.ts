@@ -6906,11 +6906,15 @@ export async function registerRoutes(app: express.Application) {
         return buf;
       };
 
-      if (projectData.pdfBase64 && projectData.pdfBase64.length > PDF_INLINE_MAX_CHARS) {
-        const sizeMB = (projectData.pdfBase64.length / 1024 / 1024).toFixed(1);
-        console.log(`📦 Client PDF too large (${sizeMB}MB base64) — regenerating server-side`);
+      const needsServerPdf = (projectData.pdfBase64 && projectData.pdfBase64.length > PDF_INLINE_MAX_CHARS)
+        || (!projectData.pdfBase64 && projectId && projectId !== 'vector-service');
+
+      if (needsServerPdf) {
+        const reason = projectData.pdfBase64
+          ? `Client PDF too large (${(projectData.pdfBase64.length / 1024 / 1024).toFixed(1)}MB base64)`
+          : 'No PDF sent by client (skipped large PDF)';
+        console.log(`📦 ${reason} — generating server-side`);
         try {
-          // Call our own generate-pdf endpoint (same host, port 5000 in dev / same process in prod)
           const selfBase = `http://localhost:${process.env.PORT || 5000}`;
           const genRes = await fetch(`${selfBase}/api/projects/${projectId}/generate-pdf`, {
             headers: { cookie: req.headers.cookie || '' },
@@ -6919,30 +6923,31 @@ export async function registerRoutes(app: express.Application) {
             let pdfBuf = Buffer.from(await genRes.arrayBuffer());
             const rawSizeMB = (pdfBuf.length / 1024 / 1024).toFixed(1);
             console.log(`✅ Server PDF generated: ${rawSizeMB}MB raw`);
-            // Compress with Ghostscript before checking size
             pdfBuf = await compressPdfBuffer(pdfBuf);
             const serverPdfBase64 = pdfBuf.toString('base64');
             const serverSizeMB = (serverPdfBase64.length / 1024 / 1024).toFixed(1);
             console.log(`📄 Server PDF (after compression): ${serverSizeMB}MB base64`);
             if (serverPdfBase64.length <= PDF_INLINE_MAX_CHARS) {
-              // Small enough — send inline just like a normal order
               projectData.pdfBase64 = serverPdfBase64;
               console.log(`✅ Compressed PDF fits inline — sending in add-to-cart body`);
             } else {
-              // Still large — fall back to separate attach-pdf with compressed version
               console.warn(`⚠️ Server PDF still large after compression (${serverSizeMB}MB) — will attach separately`);
               offloadedPdfBase64 = serverPdfBase64;
               offloadedPdfFilename = artworkFilename;
             }
           } else {
             console.warn(`⚠️ Server PDF generation failed (${genRes.status}) — will attach client PDF separately`);
-            offloadedPdfBase64 = projectData.pdfBase64;
-            offloadedPdfFilename = artworkFilename;
+            if (projectData.pdfBase64) {
+              offloadedPdfBase64 = projectData.pdfBase64;
+              offloadedPdfFilename = artworkFilename;
+            }
           }
         } catch (genErr) {
           console.warn(`⚠️ Server PDF generation error — will attach client PDF separately:`, genErr);
-          offloadedPdfBase64 = projectData.pdfBase64;
-          offloadedPdfFilename = artworkFilename;
+          if (projectData.pdfBase64) {
+            offloadedPdfBase64 = projectData.pdfBase64;
+            offloadedPdfFilename = artworkFilename;
+          }
         }
       }
 

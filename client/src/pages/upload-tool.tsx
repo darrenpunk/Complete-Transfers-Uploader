@@ -154,12 +154,13 @@ export default function UploadTool() {
     if (emailFromUrl) {
       console.log('✅ Partner email from URL params:', emailFromUrl);
       setPartnerEmail(emailFromUrl);
+      try { localStorage.setItem('partner_email', emailFromUrl); } catch {}
       try { sessionStorage.setItem('partner_email', emailFromUrl); } catch {}
     } else {
       try {
-        const storedEmail = sessionStorage.getItem('partner_email');
+        const storedEmail = localStorage.getItem('partner_email') || sessionStorage.getItem('partner_email');
         if (storedEmail) {
-          console.log('✅ Partner email restored from session:', storedEmail);
+          console.log('✅ Partner email restored from storage:', storedEmail);
           setPartnerEmail(storedEmail);
         }
       } catch {}
@@ -176,30 +177,54 @@ export default function UploadTool() {
     const isInIframe = window !== window.parent;
     let resolved = false;
     const authTimeouts: NodeJS.Timeout[] = [];
-    
+
+    const resolveEmail = (email: string, source: string) => {
+      if (resolved) return;
+      resolved = true;
+      authTimeouts.forEach(t => clearTimeout(t));
+      console.log(`✅ User email identified via ${source}:`, email);
+      setPartnerEmail(email);
+      setAuthStatus('authenticated');
+      try { localStorage.setItem('partner_email', email); } catch {}
+      try { sessionStorage.setItem('partner_email', email); } catch {}
+    };
+
     // Check for email in URL params first (for fullscreen/standalone mode from iframe)
     const urlParams = new URLSearchParams(window.location.search);
     const emailFromUrl = urlParams.get('email');
-    
+
     if (emailFromUrl) {
-      console.log('✅ User email from URL params:', emailFromUrl);
-      setPartnerEmail(emailFromUrl);
-      setAuthStatus('authenticated');
+      resolveEmail(emailFromUrl, 'URL params');
       return () => { authTimeouts.forEach(t => clearTimeout(t)); };
     }
-    
-    // PRIORITY: Always try to fetch from backend first (uses session cookies)
+
+    // IMMEDIATELY set up iframe message listener so we catch the parent's auto-send
+    // (parent sends user data ~500ms after iframe load — we must be listening by then)
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'odoo-user-data') {
+        console.log('📨 Received odoo-user-data message:', { email: event.data.email, isPublic: event.data.isPublic });
+        if (event.data.email) {
+          resolveEmail(event.data.email, 'iframe postMessage');
+        } else {
+          console.warn('⚠️ Parent sent odoo-user-data but email is empty (user may be public on Odoo)');
+        }
+      }
+    };
+
+    if (isInIframe) {
+      console.log('🔍 In iframe — listening for parent postMessage immediately');
+      window.addEventListener('message', handleMessage);
+      window.parent.postMessage({ type: 'request-user-data' }, '*');
+    }
+
+    // Also try backend session fetch in parallel (non-blocking)
     console.log('🔍 Attempting to fetch logged-in user from backend...');
     fetch('/api/user/current', { credentials: 'include' })
       .then(async res => {
         if (res.ok) {
           const userData = await res.json();
           if (userData.email) {
-            console.log('✅ Fetched user email from backend:', userData.email);
-            resolved = true;
-            setPartnerEmail(userData.email);
-            setAuthStatus('authenticated');
-            authTimeouts.forEach(t => clearTimeout(t));
+            resolveEmail(userData.email, 'backend session');
             return;
           }
         }
@@ -208,50 +233,28 @@ export default function UploadTool() {
       .catch(e => {
         if (resolved) return;
         console.warn('ℹ️ Backend fetch did not return logged-in user:', e.message);
-        
-        // If in iframe, also try iframe message approach as fallback
-        if (isInIframe) {
-          console.log('🔍 Trying iframe postMessage approach...');
-          
-          // Set a timeout - if no response in 3 seconds, mark as not authenticated
-          const authTimeout = setTimeout(() => {
-            if (resolved) return;
-            console.log('❌ Could not identify user via any method - orders will be created as guest');
-            resolved = true;
-            setAuthStatus('not-authenticated');
-          }, 3000);
-          authTimeouts.push(authTimeout);
-          
-          // Listen for user data from parent window
-          const handleMessage = (event: MessageEvent) => {
-            if (event.data.type === 'odoo-user-data') {
-              if (resolved) return;
-              resolved = true;
-              authTimeouts.forEach(t => clearTimeout(t));
-              if (event.data.email) {
-                console.log('✅ Received user email from Odoo iframe:', event.data.email);
-                setPartnerEmail(event.data.email);
-                setAuthStatus('authenticated');
-              }
-            }
-          };
-          
-          window.addEventListener('message', handleMessage);
-          window.parent.postMessage({ type: 'request-user-data' }, '*');
-          
-          return () => {
-            window.removeEventListener('message', handleMessage);
-            authTimeouts.forEach(t => clearTimeout(t));
-          };
-        } else {
-          // Not in iframe, not in URL params, not in backend - not authenticated
-          console.log('⚠️ Not authenticated - will create orders as guest');
-          resolved = true;
-          setAuthStatus('not-authenticated');
-        }
       });
-    
-    return () => { authTimeouts.forEach(t => clearTimeout(t)); };
+
+    // Fallback timeout: if nothing resolves within 4 seconds, try localStorage then give up
+    const fallbackTimeout = setTimeout(() => {
+      if (resolved) return;
+      try {
+        const storedEmail = localStorage.getItem('partner_email') || sessionStorage.getItem('partner_email');
+        if (storedEmail) {
+          resolveEmail(storedEmail, 'localStorage fallback');
+          return;
+        }
+      } catch {}
+      console.log('❌ Could not identify user via any method - orders will be created as guest');
+      resolved = true;
+      setAuthStatus('not-authenticated');
+    }, 4000);
+    authTimeouts.push(fallbackTimeout);
+
+    return () => {
+      window.removeEventListener('message', handleMessage);
+      authTimeouts.forEach(t => clearTimeout(t));
+    };
   }, []);
 
   // Fetch template sizes - with direct fetch fallback for production reliability
@@ -529,13 +532,16 @@ export default function UploadTool() {
         quantity: currentProject.quantity,
         totalQuantity: currentProject.quantity, // Use regular quantity as fallback
         comments: currentProject.comments || '', // Send user comments from modal
-        partnerEmail: partnerEmail || undefined, // Send partner email if available (for iframe session workaround)
-        pdfBase64: pdfBase64, // Send PDF if generated
+        partnerEmail: partnerEmail || (() => { try { return localStorage.getItem('partner_email') || sessionStorage.getItem('partner_email') || undefined; } catch { return undefined; } })(), // Send partner email if available (for iframe session workaround)
+        pdfBase64: pdfBase64 && pdfBase64.length < 100 * 1024 * 1024 ? pdfBase64 : undefined, // Skip sending PDF if >100MB base64 — backend will regenerate
         odooBaseUrl: dynamicOdooUrl, // Send Odoo URL so backend knows which server to call
         ...(reorderLineId && { reorderLineId }), // For applique reorders: tells Odoo to copy ZIP from source line
       };
       
-      console.log('📦 Sending project data to Odoo:', { ...projectData, pdfBase64: pdfBase64 ? `<${pdfBase64.length} chars>` : undefined });
+      if (pdfBase64 && !projectData.pdfBase64) {
+        console.log(`📦 PDF too large for request body (${(pdfBase64.length / 1024 / 1024).toFixed(1)}MB base64) — backend will regenerate`);
+      }
+      console.log('📦 Sending project data to Odoo:', { ...projectData, pdfBase64: projectData.pdfBase64 ? `<${projectData.pdfBase64.length} chars>` : undefined });
       console.log('🎯 TEMPLATE SIZE FOR ADD-TO-CART:', currentProject.templateSize);
       console.log('🎯 IS SINGLE COLOUR:', currentProject.templateSize?.includes('single') || currentProject.inkColor);
       if (partnerEmail) {
