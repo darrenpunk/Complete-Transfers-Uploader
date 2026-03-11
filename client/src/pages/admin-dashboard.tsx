@@ -14,6 +14,26 @@ import {
   PieChart, Pie, Cell,
 } from "recharts";
 
+function parseBrowser(ua: string | null | undefined): string {
+  if (!ua) return "—";
+  if (ua.includes("Edg/")) return "Edge";
+  if (ua.includes("OPR/") || ua.includes("Opera")) return "Opera";
+  if (ua.includes("Chrome/") && !ua.includes("Edg/")) return "Chrome";
+  if (ua.includes("Safari/") && !ua.includes("Chrome/")) return "Safari";
+  if (ua.includes("Firefox/")) return "Firefox";
+  return "Other";
+}
+
+function parseOS(ua: string | null | undefined): string {
+  if (!ua) return "";
+  if (ua.includes("Windows")) return "Win";
+  if (ua.includes("Mac OS")) return "Mac";
+  if (ua.includes("iPhone") || ua.includes("iPad")) return "iOS";
+  if (ua.includes("Android")) return "Android";
+  if (ua.includes("Linux")) return "Linux";
+  return "";
+}
+
 function getAdminToken(): string | null {
   try { return sessionStorage.getItem("admin_token"); } catch { return null; }
 }
@@ -675,12 +695,17 @@ function AnalyticsTab({
                 <TableRow>
                   <TableHead>User</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Browser</TableHead>
                   <TableHead>Page</TableHead>
                   <TableHead>Last Seen</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {activeData.sessions.map((s: any) => (
+                {activeData.sessions.map((s: any) => {
+                  const ua = s.metadata?.userAgent;
+                  const browser = parseBrowser(ua);
+                  const os = parseOS(ua);
+                  return (
                   <TableRow key={s.sessionId}>
                     <TableCell className="text-xs">{s.userEmail || "Anonymous"}</TableCell>
                     <TableCell>
@@ -690,10 +715,18 @@ function AnalyticsTab({
                         {s.status === "active" ? "Active" : "Idle"}
                       </Badge>
                     </TableCell>
+                    <TableCell className="text-xs">
+                      {browser !== "—" ? (
+                        <span title={ua}>{browser}{os ? ` · ${os}` : ""}</span>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
                     <TableCell className="font-mono text-xs text-muted-foreground">{s.currentPage || "/"}</TableCell>
                     <TableCell className="text-xs text-muted-foreground">{timeSince(s.lastSeen)}</TableCell>
                   </TableRow>
-                ))}
+                  );
+                })}
               </TableBody>
             </Table>
           </CardContent>

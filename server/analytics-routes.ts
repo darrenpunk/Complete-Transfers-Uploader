@@ -41,7 +41,7 @@ export function registerAnalyticsRoutes(app: Express, storage: IStorage) {
 
   app.post("/api/analytics/heartbeat", async (req, res) => {
     try {
-      const { sessionId, userEmail, currentPage, isActive } = req.body;
+      const { sessionId, userEmail, currentPage, isActive, userAgent } = req.body;
       if (!sessionId) {
         return res.status(400).json({ error: "sessionId required" });
       }
@@ -50,7 +50,7 @@ export function registerAnalyticsRoutes(app: Express, storage: IStorage) {
         userEmail: userEmail || undefined,
         lastSeen: new Date().toISOString(),
         currentPage: currentPage || undefined,
-        metadata: { isActive: isActive !== false },
+        metadata: { isActive: isActive !== false, userAgent: userAgent || null },
       });
       if (Math.random() < 0.1) {
         try { await storage.cleanupOldSessions(3); } catch {}

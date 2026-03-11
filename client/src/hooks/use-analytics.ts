@@ -72,6 +72,7 @@ export function useAnalytics(userEmail?: string | null) {
             userEmail: userEmail || undefined,
             currentPage: window.location.pathname,
             isActive: true,
+            userAgent: navigator.userAgent,
           }),
         }).catch(() => {});
       } catch {}
