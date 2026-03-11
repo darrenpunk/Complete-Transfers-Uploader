@@ -21,35 +21,52 @@ async function getAccessToken(): Promise<string> {
     return connectionSettings.settings.access_token;
   }
 
-  console.log('[Dropbox] Fetching fresh access token from Replit connector...');
   const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME;
+  const tokenType = process.env.REPL_IDENTITY ? 'repl' : process.env.WEB_REPL_RENEWAL ? 'depl' : null;
   const xReplitToken = process.env.REPL_IDENTITY
     ? 'repl ' + process.env.REPL_IDENTITY
     : process.env.WEB_REPL_RENEWAL
     ? 'depl ' + process.env.WEB_REPL_RENEWAL
     : null;
 
+  console.log(`[Dropbox] Fetching fresh access token (type=${tokenType}, hostname=${hostname ? 'SET' : 'MISSING'})...`);
+
   if (!xReplitToken) {
     throw new Error('X-Replit-Token not found for repl/depl');
   }
 
-  connectionSettings = await fetch(
-    'https://' + hostname + '/api/v2/connection?include_secrets=true&connector_names=dropbox',
-    {
-      headers: {
-        'Accept': 'application/json',
-        'X-Replit-Token': xReplitToken,
-      },
-    }
-  ).then(res => res.json()).then(data => data.items?.[0]);
+  if (!hostname) {
+    throw new Error('REPLIT_CONNECTORS_HOSTNAME not set');
+  }
+
+  const connectorUrl = 'https://' + hostname + '/api/v2/connection?include_secrets=true&connector_names=dropbox';
+  const connectorRes = await fetch(connectorUrl, {
+    headers: {
+      'Accept': 'application/json',
+      'X-Replit-Token': xReplitToken,
+    },
+  });
+
+  if (!connectorRes.ok) {
+    const errText = await connectorRes.text().catch(() => '');
+    console.error(`[Dropbox] Connector API returned ${connectorRes.status}: ${errText.substring(0, 200)}`);
+    throw new Error(`Connector API error: ${connectorRes.status}`);
+  }
+
+  const connectorData = await connectorRes.json();
+  connectionSettings = connectorData.items?.[0];
 
   const accessToken =
     connectionSettings?.settings?.access_token ||
     connectionSettings?.settings?.oauth?.credentials?.access_token;
 
   if (!connectionSettings || !accessToken) {
+    console.error('[Dropbox] No connection found. Connector response:', JSON.stringify(connectorData).substring(0, 300));
     throw new Error('Dropbox not connected. Please reconnect Dropbox in the Integrations panel.');
   }
+
+  const expiresAt = connectionSettings.settings?.expires_at;
+  console.log(`[Dropbox] Got token (prefix=${accessToken.substring(0, 10)}..., expires=${expiresAt || 'never'})`);
 
   return accessToken;
 }
