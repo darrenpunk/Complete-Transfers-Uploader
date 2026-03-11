@@ -5,16 +5,18 @@ const DROPBOX_FOLDER = '/artwork-uploads';
 const UPLOAD_DIR = './uploads';
 const ALERT_EMAIL = 'darren@serigraf.com';
 
-const RETRY_INTERVAL_MS = 15 * 60 * 1000; // 15 minutes between retries
-const MAX_RETRIES = 12; // Give up after ~3 hours (12 × 15 min)
+const BASE_RETRY_INTERVAL_MS = 15 * 60 * 1000;
+const MAX_RETRIES = 12;
 
-// Rate-limit: only send one alert email per failure type per 24 hours
 const lastAlertSent: Record<string, number> = {};
 const ALERT_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 
-// In-memory retry queue: filename → attempt count
 const retryQueue: Map<string, number> = new Map();
 let retryTimerStarted = false;
+
+let consecutive401s = 0;
+const AUTH_CIRCUIT_BREAKER_THRESHOLD = 6;
+let circuitBroken = false;
 
 async function sendDropboxAlert(subject: string, body: string): Promise<void> {
   const key = subject;
@@ -74,10 +76,18 @@ function startRetryTimer(): void {
 
   setInterval(async () => {
     if (retryQueue.size === 0) return;
+
+    if (circuitBroken) {
+      console.log(`🔌 [backup] Circuit breaker OPEN — skipping retry of ${retryQueue.size} file(s). Dropbox auth is broken, will retry after next republish.`);
+      return;
+    }
+
     console.log(`🔄 [backup] Retrying ${retryQueue.size} queued file(s)...`);
 
     const { clearDropboxCache } = await import('./dropbox-service');
-    clearDropboxCache(); // Force a fresh token on every retry cycle
+    clearDropboxCache();
+
+    let batchHad401 = false;
 
     const filenames = Array.from(retryQueue.keys());
     for (const filename of filenames) {
@@ -85,55 +95,71 @@ function startRetryTimer(): void {
       try {
         await attemptUpload(filename);
         retryQueue.delete(filename);
+        consecutive401s = 0;
         console.log(`✅ [backup] Retry succeeded for ${filename} (attempt ${attempts + 1})`);
       } catch (err: any) {
+        const is401 = err.message.includes('401') || err.message.includes('400');
+        if (is401) batchHad401 = true;
+
         const nextAttempts = attempts + 1;
         if (nextAttempts >= MAX_RETRIES) {
           retryQueue.delete(filename);
           console.error(`❌ [backup] Giving up on ${filename} after ${MAX_RETRIES} attempts`);
           sendDropboxAlert(
             '⚠️ Dropbox Backup Failed — Artwork at Risk',
-            `A file could not be backed up to Dropbox after ${MAX_RETRIES} attempts over ~3 hours.\n\nFile: ${filename}\nLast error: ${err.message}\n\nUntil this is resolved, uploaded artwork files will be lost on the next redeployment.\n\nPlease reconnect Dropbox in the Replit Integrations panel.`
+            `A file could not be backed up to Dropbox after ${MAX_RETRIES} attempts over ~3 hours.\n\nFile: ${filename}\nLast error: ${err.message}\n\nUntil this is resolved, uploaded artwork files will be lost on the next redeployment.\n\nPlease reconnect Dropbox in the Replit Integrations panel and republish.`
           );
         } else {
           retryQueue.set(filename, nextAttempts);
-          console.warn(`⏳ [backup] Retry ${nextAttempts}/${MAX_RETRIES} failed for ${filename}: ${err.message}`);
         }
       }
     }
-  }, RETRY_INTERVAL_MS);
+
+    if (batchHad401) {
+      consecutive401s++;
+      if (consecutive401s >= AUTH_CIRCUIT_BREAKER_THRESHOLD) {
+        circuitBroken = true;
+        console.error(`🔌 [backup] Circuit breaker TRIPPED after ${consecutive401s} consecutive 401 cycles. Stopping all Dropbox retries until next republish.`);
+        sendDropboxAlert(
+          '🔌 Dropbox Backup DISABLED — Auth Permanently Failing',
+          `Dropbox backup has been automatically disabled after ${consecutive401s} consecutive authentication failures.\n\nAll uploaded artwork is at risk of being lost on the next redeployment.\n\nTo fix: Reconnect Dropbox in the Replit Integrations panel, then republish the app.`
+        );
+      }
+    } else {
+      consecutive401s = 0;
+    }
+  }, BASE_RETRY_INTERVAL_MS);
 }
 
-/**
- * Fire-and-forget backup: copies a file from ./uploads/{filename} to
- * Dropbox at /artwork-uploads/{filename}. Non-blocking — call without await.
- * On failure, automatically retries every 15 minutes for up to 3 hours.
- */
 export function backupToDropbox(filename: string): void {
   const localPath = path.join(UPLOAD_DIR, filename);
   if (!fs.existsSync(localPath)) return;
+
+  if (circuitBroken) {
+    retryQueue.set(filename, 0);
+    return;
+  }
 
   startRetryTimer();
 
   attemptUpload(filename).catch(async (err: Error) => {
     const is401 = err.message.includes('401') || err.message.includes('400');
     if (is401) {
-      console.warn(`[backup] Auth error for ${filename} — queuing for retry in ${RETRY_INTERVAL_MS / 60000} min`);
+      console.warn(`[backup] Auth error for ${filename} — queuing for retry`);
       const { clearDropboxCache } = await import('./dropbox-service');
       clearDropboxCache();
     } else {
       console.warn(`⚠️ [backup] Dropbox backup failed for ${filename}: ${err.message} — queuing for retry`);
     }
-    // Queue for retry regardless of error type
     retryQueue.set(filename, 1);
   });
 }
 
-/**
- * Try to restore a missing file from Dropbox.
- * Returns true if the file was restored, false if not found or on error.
- */
 export async function restoreFromDropbox(filename: string): Promise<boolean> {
+  if (circuitBroken) {
+    return false;
+  }
+
   try {
     const { downloadFile } = await import('./dropbox-service');
     const src = `${DROPBOX_FOLDER}/${filename}`;
@@ -142,14 +168,25 @@ export async function restoreFromDropbox(filename: string): Promise<boolean> {
     fs.mkdirSync(UPLOAD_DIR, { recursive: true });
     fs.writeFileSync(localPath, buffer);
     console.log(`✅ [restore] ${filename} ← Dropbox`);
+    consecutive401s = 0;
     return true;
   } catch (err: any) {
     const isNotFound = err?.message?.includes('not_found') || err?.status === 409;
+    const is401 = err?.message?.includes('401') || err?.message?.includes('400');
+
+    if (is401) {
+      consecutive401s++;
+      if (consecutive401s >= AUTH_CIRCUIT_BREAKER_THRESHOLD) {
+        circuitBroken = true;
+        console.error(`🔌 [backup] Circuit breaker TRIPPED during restore. Stopping Dropbox operations.`);
+      }
+    }
+
     if (!isNotFound) {
       console.warn(`⚠️ [restore] Dropbox restore failed for ${filename}:`, err.message);
       sendDropboxAlert(
         '⚠️ Dropbox Connection Error — File Restore Failed',
-        `A file could not be restored from Dropbox after a redeployment.\n\nFile: ${filename}\nError: ${err.message}\n\nThis means a customer may see a blank or broken PDF.\n\nPlease reconnect Dropbox in the Replit Integrations panel immediately.`
+        `A file could not be restored from Dropbox after a redeployment.\n\nFile: ${filename}\nError: ${err.message}\n\nThis means a customer may see a blank or broken PDF.\n\nPlease reconnect Dropbox in the Replit Integrations panel and republish.`
       );
     }
     return false;
