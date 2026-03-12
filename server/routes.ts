@@ -1918,6 +1918,8 @@ export async function registerRoutes(app: express.Application) {
       // Large format DTF (1000x550mm or any template ≥1000mm wide) — skip pdf2svg entirely for PDF
       // uploads and use PNG for canvas display. The original PDF is always kept for production output.
       const isLargeFormatDTF = (templateSize?.width ?? 0) >= 1000 || (templateSize?.height ?? 0) >= 500;
+      const dtfTemplateWmm = templateSize?.width ?? 1000;
+      const dtfTemplateHmm = templateSize?.height ?? 550;
       
       console.log(`📐 Template: ${templateSize?.name} (Group: ${templateSize?.group}), Single Colour: ${isSingleColourTemplate}, Ink Color: ${project.inkColor}, LargeFormatDTF: ${isLargeFormatDTF}`);
 
@@ -2241,15 +2243,13 @@ export async function registerRoutes(app: express.Application) {
 
                   const pageWmm = pageWidthPts * 0.352778;
                   const pageHmm = pageHeightPts * 0.352778;
-                  const templateWmm = templateSize?.width ?? 1000;
-                  const templateHmm = templateSize?.height ?? 550;
                   const pageFitsTemplate = (
-                    (Math.abs(pageWmm - templateWmm) < templateWmm * 0.15 && Math.abs(pageHmm - templateHmm) < templateHmm * 0.15) ||
-                    (Math.abs(pageWmm - templateHmm) < templateHmm * 0.15 && Math.abs(pageHmm - templateWmm) < templateWmm * 0.15)
+                    (Math.abs(pageWmm - dtfTemplateWmm) < dtfTemplateWmm * 0.15 && Math.abs(pageHmm - dtfTemplateHmm) < dtfTemplateHmm * 0.15) ||
+                    (Math.abs(pageWmm - dtfTemplateHmm) < dtfTemplateHmm * 0.15 && Math.abs(pageHmm - dtfTemplateWmm) < dtfTemplateWmm * 0.15)
                   );
 
                   if (pageFitsTemplate) {
-                    console.log(`📐 DTF PDF page (${pageWmm.toFixed(0)}×${pageHmm.toFixed(0)}mm) matches template (${templateWmm}×${templateHmm}mm) — using full page dimensions (production-ready file)`);
+                    console.log(`📐 DTF PDF page (${pageWmm.toFixed(0)}×${pageHmm.toFixed(0)}mm) matches template (${dtfTemplateWmm}×${dtfTemplateHmm}mm) — using full page dimensions (production-ready file)`);
                   } else {
                     try {
                       const gsBboxOutput = execSync(`gs -dBATCH -dNOPAUSE -dQUIET -sDEVICE=bbox "${pdfPath}" 2>&1`, { encoding: 'utf8', timeout: 15000 });
