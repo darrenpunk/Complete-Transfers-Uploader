@@ -2215,22 +2215,62 @@ export async function registerRoutes(app: express.Application) {
               console.log(`📐 Large format DTF — skipping pdf2svg, rendering PNG preview directly`);
               const pngFilename = `${file.filename}_preview.png`;
               const pngPath = path.join(uploadDir, pngFilename);
+              let dtfPageWidthPts = 0;
+              let dtfPageHeightPts = 0;
               try {
-                // Get PDF page dimensions for proper sizing on canvas
+                // Get PDF page dimensions AND content bounds for proper sizing on canvas
                 try {
                   const { PDFDocument: PDFDocLarge } = await import('pdf-lib');
                   const largePdfBytes = fs.readFileSync(pdfPath);
                   const largePdfDoc = await PDFDocLarge.load(largePdfBytes);
                   const [largePage] = largePdfDoc.getPages();
                   const largePageSize = largePage.getSize();
-                  (file as any).originalPdfBounds = {
+                  const pageWidthPts = largePageSize.width;
+                  const pageHeightPts = largePageSize.height;
+                  dtfPageWidthPts = pageWidthPts;
+                  dtfPageHeightPts = pageHeightPts;
+                  console.log(`📐 DTF PDF page: ${(pageWidthPts * 0.352778).toFixed(0)}×${(pageHeightPts * 0.352778).toFixed(0)}mm`);
+
+                  let dtfContentBounds = {
                     xMin: 0, yMin: 0,
-                    xMax: largePageSize.width, yMax: largePageSize.height,
-                    width: largePageSize.width, height: largePageSize.height,
-                    widthMm: largePageSize.width * 0.352778,
-                    heightMm: largePageSize.height * 0.352778
+                    xMax: pageWidthPts, yMax: pageHeightPts,
+                    width: pageWidthPts, height: pageHeightPts,
+                    widthMm: pageWidthPts * 0.352778,
+                    heightMm: pageHeightPts * 0.352778
                   };
-                  console.log(`📐 DTF PDF page: ${(largePageSize.width * 0.352778).toFixed(0)}×${(largePageSize.height * 0.352778).toFixed(0)}mm`);
+
+                  try {
+                    const gsBboxOutput = execSync(`gs -dBATCH -dNOPAUSE -dQUIET -sDEVICE=bbox "${pdfPath}" 2>&1`, { encoding: 'utf8', timeout: 15000 });
+                    const hiResMatch = gsBboxOutput.match(/%%HiResBoundingBox:\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)/);
+                    if (hiResMatch) {
+                      const [, bx1, by1, bx2, by2] = hiResMatch.map(Number);
+                      const bw = bx2 - bx1;
+                      const bh = by2 - by1;
+                      const pageArea = pageWidthPts * pageHeightPts;
+                      const contentArea = bw * bh;
+                      const coverage = contentArea / pageArea;
+                      console.log(`🎯 DTF GS bbox: (${bx1.toFixed(1)},${by1.toFixed(1)}) to (${bx2.toFixed(1)},${by2.toFixed(1)}) = ${bw.toFixed(1)}×${bh.toFixed(1)}pts (${(coverage * 100).toFixed(0)}% of page)`);
+
+                      if (bw > 1 && bh > 1 && coverage >= 0.01) {
+                        dtfContentBounds = {
+                          xMin: bx1, yMin: by1,
+                          xMax: bx2, yMax: by2,
+                          width: bw, height: bh,
+                          widthMm: bw * 0.352778,
+                          heightMm: bh * 0.352778
+                        };
+                        console.log(`✅ DTF using content bounds: ${dtfContentBounds.widthMm.toFixed(1)}×${dtfContentBounds.heightMm.toFixed(1)}mm (instead of full page ${(pageWidthPts * 0.352778).toFixed(0)}×${(pageHeightPts * 0.352778).toFixed(0)}mm)`);
+                      } else {
+                        console.log(`⚠️ DTF GS bbox too small or empty — using full page as bounds`);
+                      }
+                    } else {
+                      console.log(`⚠️ DTF GS bbox returned no HiResBoundingBox — using full page`);
+                    }
+                  } catch (gsBboxErr) {
+                    console.log(`⚠️ DTF GS bbox extraction failed, using full page:`, gsBboxErr);
+                  }
+
+                  (file as any).originalPdfBounds = dtfContentBounds;
                 } catch (sizeErr) {
                   console.log(`⚠️ Could not read DTF PDF page size: ${sizeErr}`);
                 }
@@ -2242,6 +2282,43 @@ export async function registerRoutes(app: express.Application) {
                 await execAsync(gsCmd, { timeout: 40000, killSignal: 'SIGKILL' });
 
                 if (fs.existsSync(pngPath) && fs.statSync(pngPath).size > 0) {
+                  // Crop PNG to content bounds if GS detected smaller content area
+                  const dtfBounds = (file as any).originalPdfBounds;
+                  if (dtfBounds && dtfBounds.xMin !== undefined) {
+                    const pageW = dtfBounds.xMin === 0 && dtfBounds.yMin === 0 ? dtfBounds.width : (dtfBounds.xMax > dtfBounds.width ? dtfBounds.xMax : null);
+                    // Only crop if content bounds are smaller than the page
+                    try {
+                      const identifyOut = execSync(`identify -format "%w %h" "${pngPath}"`, { encoding: 'utf8', timeout: 5000 }).trim();
+                      const [pngW, pngH] = identifyOut.split(' ').map(Number);
+                      if (pngW > 0 && pngH > 0 && dtfPageWidthPts > 0 && dtfPageHeightPts > 0) {
+                        const scaleX = pngW / dtfPageWidthPts;
+                        const scaleY = pngH / dtfPageHeightPts;
+                        // PDF bbox uses bottom-left origin; PNG uses top-left origin
+                        const cropX = Math.max(0, Math.floor(dtfBounds.xMin * scaleX));
+                        const cropYFromBottom = dtfBounds.yMin * scaleY;
+                        const cropW = Math.ceil(dtfBounds.width * scaleX);
+                        const cropH = Math.ceil(dtfBounds.height * scaleY);
+                        const cropY = Math.max(0, Math.floor(pngH - cropYFromBottom - cropH));
+                        
+                        const contentPageRatio = (dtfBounds.width * dtfBounds.height) / (dtfPageWidthPts * dtfPageHeightPts);
+                        if (contentPageRatio < 0.90 && cropW > 10 && cropH > 10) {
+                          console.log(`✂️ DTF cropping PNG to content: ${cropW}×${cropH}px at (${cropX},${cropY}) from ${pngW}×${pngH}px`);
+                          const croppedPath = pngPath + '.crop.png';
+                          await execAsync(`convert "${pngPath}" -crop ${cropW}x${cropH}+${cropX}+${cropY} +repage "${croppedPath}"`, { timeout: 15000 });
+                          if (fs.existsSync(croppedPath) && fs.statSync(croppedPath).size > 0) {
+                            fs.unlinkSync(pngPath);
+                            fs.renameSync(croppedPath, pngPath);
+                            console.log(`✅ DTF PNG cropped to content bounds`);
+                          }
+                        } else {
+                          console.log(`📐 DTF content covers ${(contentPageRatio * 100).toFixed(0)}% of page — no crop needed`);
+                        }
+                      }
+                    } catch (cropErr) {
+                      console.log(`⚠️ DTF PNG crop failed (non-critical):`, cropErr);
+                    }
+                  }
+
                   // Resize to max 2000px on the longest side for performance
                   try {
                     const resizedPath = pngPath + '.r.png';
