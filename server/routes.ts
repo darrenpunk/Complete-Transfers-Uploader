@@ -2239,35 +2239,48 @@ export async function registerRoutes(app: express.Application) {
                     heightMm: pageHeightPts * 0.352778
                   };
 
-                  try {
-                    const gsBboxOutput = execSync(`gs -dBATCH -dNOPAUSE -dQUIET -sDEVICE=bbox "${pdfPath}" 2>&1`, { encoding: 'utf8', timeout: 15000 });
-                    const hiResMatch = gsBboxOutput.match(/%%HiResBoundingBox:\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)/);
-                    if (hiResMatch) {
-                      const [, bx1, by1, bx2, by2] = hiResMatch.map(Number);
-                      const bw = bx2 - bx1;
-                      const bh = by2 - by1;
-                      const pageArea = pageWidthPts * pageHeightPts;
-                      const contentArea = bw * bh;
-                      const coverage = contentArea / pageArea;
-                      console.log(`🎯 DTF GS bbox: (${bx1.toFixed(1)},${by1.toFixed(1)}) to (${bx2.toFixed(1)},${by2.toFixed(1)}) = ${bw.toFixed(1)}×${bh.toFixed(1)}pts (${(coverage * 100).toFixed(0)}% of page)`);
+                  const pageWmm = pageWidthPts * 0.352778;
+                  const pageHmm = pageHeightPts * 0.352778;
+                  const templateWmm = templateSize?.width ?? 1000;
+                  const templateHmm = templateSize?.height ?? 550;
+                  const pageFitsTemplate = (
+                    (Math.abs(pageWmm - templateWmm) < templateWmm * 0.15 && Math.abs(pageHmm - templateHmm) < templateHmm * 0.15) ||
+                    (Math.abs(pageWmm - templateHmm) < templateHmm * 0.15 && Math.abs(pageHmm - templateWmm) < templateWmm * 0.15)
+                  );
 
-                      if (bw > 1 && bh > 1 && coverage >= 0.01) {
-                        dtfContentBounds = {
-                          xMin: bx1, yMin: by1,
-                          xMax: bx2, yMax: by2,
-                          width: bw, height: bh,
-                          widthMm: bw * 0.352778,
-                          heightMm: bh * 0.352778
-                        };
-                        console.log(`✅ DTF using content bounds: ${dtfContentBounds.widthMm.toFixed(1)}×${dtfContentBounds.heightMm.toFixed(1)}mm (instead of full page ${(pageWidthPts * 0.352778).toFixed(0)}×${(pageHeightPts * 0.352778).toFixed(0)}mm)`);
+                  if (pageFitsTemplate) {
+                    console.log(`📐 DTF PDF page (${pageWmm.toFixed(0)}×${pageHmm.toFixed(0)}mm) matches template (${templateWmm}×${templateHmm}mm) — using full page dimensions (production-ready file)`);
+                  } else {
+                    try {
+                      const gsBboxOutput = execSync(`gs -dBATCH -dNOPAUSE -dQUIET -sDEVICE=bbox "${pdfPath}" 2>&1`, { encoding: 'utf8', timeout: 15000 });
+                      const hiResMatch = gsBboxOutput.match(/%%HiResBoundingBox:\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)/);
+                      if (hiResMatch) {
+                        const [, bx1, by1, bx2, by2] = hiResMatch.map(Number);
+                        const bw = bx2 - bx1;
+                        const bh = by2 - by1;
+                        const pageArea = pageWidthPts * pageHeightPts;
+                        const contentArea = bw * bh;
+                        const coverage = contentArea / pageArea;
+                        console.log(`🎯 DTF GS bbox: (${bx1.toFixed(1)},${by1.toFixed(1)}) to (${bx2.toFixed(1)},${by2.toFixed(1)}) = ${bw.toFixed(1)}×${bh.toFixed(1)}pts (${(coverage * 100).toFixed(0)}% of page)`);
+
+                        if (bw > 1 && bh > 1 && coverage >= 0.01) {
+                          dtfContentBounds = {
+                            xMin: bx1, yMin: by1,
+                            xMax: bx2, yMax: by2,
+                            width: bw, height: bh,
+                            widthMm: bw * 0.352778,
+                            heightMm: bh * 0.352778
+                          };
+                          console.log(`✅ DTF using content bounds: ${dtfContentBounds.widthMm.toFixed(1)}×${dtfContentBounds.heightMm.toFixed(1)}mm (instead of full page ${pageWmm.toFixed(0)}×${pageHmm.toFixed(0)}mm)`);
+                        } else {
+                          console.log(`⚠️ DTF GS bbox too small or empty — using full page as bounds`);
+                        }
                       } else {
-                        console.log(`⚠️ DTF GS bbox too small or empty — using full page as bounds`);
+                        console.log(`⚠️ DTF GS bbox returned no HiResBoundingBox — using full page`);
                       }
-                    } else {
-                      console.log(`⚠️ DTF GS bbox returned no HiResBoundingBox — using full page`);
+                    } catch (gsBboxErr) {
+                      console.log(`⚠️ DTF GS bbox extraction failed, using full page:`, gsBboxErr);
                     }
-                  } catch (gsBboxErr) {
-                    console.log(`⚠️ DTF GS bbox extraction failed, using full page:`, gsBboxErr);
                   }
 
                   (file as any).originalPdfBounds = dtfContentBounds;
