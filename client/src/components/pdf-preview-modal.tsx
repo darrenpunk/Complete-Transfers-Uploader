@@ -254,11 +254,9 @@ export default function PDFPreviewModal({
   
   const hasLowResLogos = logos.some(logo => {
     if (!logo.mimeType || !logo.mimeType.startsWith('image/') || logo.mimeType.includes('svg')) return false;
-    // DTF/complex PDFs use a PNG preview but their source is a vector PDF — not low-res
-    const isPngFallbackOfVectorPdf = logo.mimeType === 'image/png' &&
-      logo.originalMimeType === 'application/pdf' &&
-      (logo as any).preflightData?.hasVectorContent === true;
-    return !isPngFallbackOfVectorPdf;
+    if (logo.isComplexFilePngFallback) return false;
+    if (logo.originalMimeType === 'application/pdf') return false;
+    return true;
   });
 
   // Check for CMYK colors in the uploaded logos
