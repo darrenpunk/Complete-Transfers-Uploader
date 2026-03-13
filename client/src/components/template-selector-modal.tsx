@@ -13,9 +13,9 @@ import { ArrowLeft, AlertCircle } from "lucide-react";
 
 // Import the same icons used in the sidebar
 import dtfIconPath from "@assets/DTF_1753540006979.png";
-import fullColourIconPath from "@assets/Full Colour tshirt mock_1753540286823.png";
-import uvdtfIconPath from "@assets/UVDTF page2_1753544185426.png";
-import wovenBadgeIconPath from "@assets/image (2)_1753544203744.png";
+import fullColourIconPath from "@assets/fullcolour_tshirt_mock.png";
+import uvdtfIconPath from "@assets/uvdtf_page2.png";
+import wovenBadgeIconPath from "@assets/woven_badge_icon.png";
 
 // Template group icons - updated for new grouping structure
 const getTemplateGroupIcon = (group: string) => {

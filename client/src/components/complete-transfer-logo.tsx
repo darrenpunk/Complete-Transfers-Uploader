@@ -1,4 +1,4 @@
-import completeTransfersLogoPath from "@assets/Artboard 1@4x_1753539065182.png";
+import completeTransfersLogoPath from "@assets/artboard_logo.png";
 
 interface CompleteTransferLogoProps {
   size?: "xs" | "sm" | "md" | "lg" | "xl";

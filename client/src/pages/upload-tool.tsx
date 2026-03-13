@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Download, RotateCcw, RotateCw, HelpCircle, Palette, GraduationCap, FileText, AlertCircle, AlertTriangle, Upload, ShoppingCart, Maximize2, Minimize2, PanelLeft, PanelRight, X, Scissors, ClipboardList, RefreshCw, CheckCircle2, Loader2, Video } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
-import completeTransfersLogoPath from "@assets/Artboard 1@4x_1753539065182.png";
+import completeTransfersLogoPath from "@assets/artboard_logo.png";
 import { HelpModal } from "@/components/help-modal";
 import { VectorizationServiceForm } from "@/components/vectorization-service-form";
 import { OnboardingTutorial } from "@/components/onboarding-tutorial";
