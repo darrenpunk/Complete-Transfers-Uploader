@@ -262,7 +262,8 @@ function CustomerTemplatesManager() {
   });
 
   const { data: allTemplates } = useQuery<TemplateSize[]>({
-    queryKey: ["/api/template-sizes"],
+    queryKey: ["admin-all-templates"],
+    queryFn: () => adminFetch("/api/admin/all-templates"),
   });
 
   const groupedAssignments = useMemo(() => {

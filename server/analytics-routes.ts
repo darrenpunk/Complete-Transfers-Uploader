@@ -161,13 +161,30 @@ export function registerAnalyticsRoutes(app: Express, storage: IStorage) {
     }
   });
 
+  app.get("/api/admin/all-templates", adminAuth, async (req, res) => {
+    try {
+      const templateSizes = await storage.getTemplateSizes();
+      res.json(templateSizes);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to get template sizes" });
+    }
+  });
+
   app.post("/api/admin/customer-templates", adminAuth, async (req, res) => {
     try {
       const { customerCode, templateId } = req.body;
       if (!customerCode || !templateId) {
         return res.status(400).json({ error: "Customer code and template ID are required" });
       }
-      const assignment = await storage.createCustomerTemplate({ customerCode: customerCode.trim(), templateId });
+      const trimmedCode = customerCode.trim();
+      const existing = await storage.getAllCustomerTemplates();
+      const duplicate = existing.find(
+        (a) => a.customerCode === trimmedCode && a.templateId === templateId
+      );
+      if (duplicate) {
+        return res.status(409).json({ error: "This assignment already exists" });
+      }
+      const assignment = await storage.createCustomerTemplate({ customerCode: trimmedCode, templateId });
       res.json(assignment);
     } catch (error) {
       res.status(500).json({ error: "Failed to create customer template assignment" });
