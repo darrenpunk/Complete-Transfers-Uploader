@@ -429,24 +429,6 @@ export default function UploadTool() {
         throw new Error('Please provide a project name before generating PDF');
       }
       
-      if (canvasWorkspaceRef.current && currentProject?.id) {
-        try {
-          console.log('📸 Capturing canvas screenshot for PDF...');
-          const screenshotDataUrl = await canvasWorkspaceRef.current.captureCanvasAsImage();
-          if (screenshotDataUrl) {
-            const base64Data = screenshotDataUrl.split(',')[1];
-            await fetch(`/api/projects/${currentProject.id}/canvas-screenshot`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ screenshot: base64Data }),
-            });
-            console.log('✅ Canvas screenshot uploaded for PDF inclusion');
-          }
-        } catch (err) {
-          console.warn('⚠️ Canvas screenshot capture failed, PDF will generate without it:', err);
-        }
-      }
-      
       const url = `/api/projects/${currentProject?.id}/generate-pdf?colorSpace=cmyk`;
       const filename = `${name}_qty${quantity}_cmyk.pdf`;
       
@@ -485,21 +467,6 @@ export default function UploadTool() {
       console.log('🛒 Adding to Odoo cart via backend proxy:', url);
       
       const hasCanvasContent = canvasElements.length > 0;
-      if (hasCanvasContent && canvasWorkspaceRef.current) {
-        try {
-          const screenshotDataUrl = await canvasWorkspaceRef.current.captureCanvasAsImage();
-          if (screenshotDataUrl) {
-            const base64Data = screenshotDataUrl.split(',')[1];
-            await fetch(`/api/projects/${currentProject.id}/canvas-screenshot`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ screenshot: base64Data }),
-            });
-          }
-        } catch (err) {
-          console.warn('⚠️ Canvas screenshot capture failed:', err);
-        }
-      }
       
       let pdfBase64: string | undefined;
       if (!hasCanvasContent) {
