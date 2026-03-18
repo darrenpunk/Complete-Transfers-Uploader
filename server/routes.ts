@@ -726,28 +726,36 @@ export async function registerRoutes(app: express.Application) {
     }
   });
   
-  app.post('/api/projects/:projectId/canvas-screenshot', async (req, res) => {
+  app.post('/api/projects/:projectId/canvas-screenshot', upload.single('screenshot'), async (req: any, res) => {
     try {
       const projectId = req.params.projectId;
       const project = await storage.getProject(projectId);
       if (!project) {
         return res.status(404).json({ error: 'Project not found' });
       }
-      const { screenshot } = req.body;
-      if (!screenshot || typeof screenshot !== 'string') {
+
+      let buf: Buffer | null = null;
+
+      if (req.file) {
+        buf = fs.readFileSync(req.file.path);
+        try { fs.unlinkSync(req.file.path); } catch {}
+      } else if (req.body?.screenshot && typeof req.body.screenshot === 'string') {
+        buf = Buffer.from(req.body.screenshot, 'base64');
+      }
+
+      if (!buf || buf.length < 8) {
         return res.status(400).json({ error: 'No screenshot data provided' });
       }
-      const maxSize = 10 * 1024 * 1024;
-      if (screenshot.length > maxSize) {
-        return res.status(413).json({ error: 'Screenshot too large' });
-      }
-      const buf = Buffer.from(screenshot, 'base64');
-      if (buf.length < 8 || buf[0] !== 0x89 || buf[1] !== 0x50 || buf[2] !== 0x4E || buf[3] !== 0x47) {
+      if (buf[0] !== 0x89 || buf[1] !== 0x50 || buf[2] !== 0x4E || buf[3] !== 0x47) {
         return res.status(400).json({ error: 'Invalid PNG data' });
+      }
+      const maxSize = 10 * 1024 * 1024;
+      if (buf.length > maxSize) {
+        return res.status(413).json({ error: 'Screenshot too large' });
       }
       const screenshotPath = path.join(process.cwd(), 'uploads', `canvas_screenshot_${projectId}.png`);
       fs.writeFileSync(screenshotPath, buf);
-      console.log(`📸 Canvas screenshot saved for project ${projectId}: ${screenshotPath}`);
+      console.log(`📸 Canvas screenshot saved for project ${projectId}: ${buf.length} bytes`);
       res.json({ success: true });
     } catch (error: any) {
       console.error('❌ Failed to save canvas screenshot:', error);

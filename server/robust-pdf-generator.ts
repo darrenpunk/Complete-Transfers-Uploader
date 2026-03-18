@@ -640,6 +640,11 @@ grestore`;
     // NON-APPLIQUE: Process each canvas element and embed logos on page 1 and matching garment color pages
     // NOTE: Labels are added AFTER logo embedding to appear on top
     console.log(`🔍 DEBUG: Starting logo processing loop - ${data.canvasElements.length} elements, ${data.logos.length} logos`);
+    if (data.canvasElements.length > 1) {
+      for (const el of data.canvasElements) {
+        (el as any)._multipleElements = true;
+      }
+    }
     for (let i = 0; i < data.canvasElements.length; i++) {
       const element = data.canvasElements[i];
       console.log(`🔍 DEBUG: Processing element ${i}: logoId=${element.logoId}, position=(${element.x}, ${element.y}), size=${element.width}x${element.height}, garmentColor=${element.garmentColor || 'default'}`);
@@ -763,8 +768,8 @@ grestore`;
     const hasExplicitGarmentColors = data.garmentColors && Array.isArray(data.garmentColors) && data.garmentColors.length > 0;
     let passThroughSucceeded = false;
 
-    if (!hasExplicitGarmentColors) {
-      // Find any logo whose original file is a PDF saved on disk
+    const hasMultipleCanvasElements = data.canvasElements.length > 1;
+    if (!hasExplicitGarmentColors && !hasMultipleCanvasElements) {
       const pdfLogoCandidate = data.logos.find((logo: any) =>
         logo.originalFilename &&
         logo.originalMimeType === 'application/pdf'
@@ -1369,7 +1374,10 @@ grestore`;
       // Only use full-page mode when drawing on page 1 (transparent artwork page).
       // For garment color pages (page1 === null), always use canvas-element-positioned
       // embedding so that white PDF backgrounds don't paint over the garment colour.
-      const isFullPagePdf = (element as any)._isFullPagePdf === true && page1 !== null;
+      // Also disable full-page override when there are MULTIPLE elements on the canvas,
+      // because each element needs its own position — placing all at (0,0) makes them overlap.
+      const hasMultipleElements = (element as any)._multipleElements === true;
+      const isFullPagePdf = (element as any)._isFullPagePdf === true && page1 !== null && !hasMultipleElements;
       
       if (!isFullPagePdf) {
         const { PDFDocument: PDFDocAspect } = await import('pdf-lib');
