@@ -434,7 +434,7 @@ grestore`;
     console.log(`📄 Created page 1: Badge Artwork (transparent) - ${pageWidth.toFixed(1)}×${pageHeight.toFixed(1)}pt`);
     
     // Check for pass-through mode: use customer's original garment color pages
-    const usePassThrough = data.useOriginalGarmentPages === true;
+    const usePassThrough = data.useOriginalGarmentPages === true && data.canvasElements.length <= 1;
     
     // Track all garment color pages for multi-color orders
     interface GarmentColorPage {

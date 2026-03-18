@@ -195,9 +195,9 @@ export default function PDFPreviewModal({
 
   const canProceed = designApproved && rightsConfirmed;
 
-  // Check if pass-through mode is enabled and find the multi-page PDF logo
   const passThroughInfo = useMemo(() => {
     if (!project?.useOriginalGarmentPages) return null;
+    if (canvasElements.length > 1) return null;
     
     const multiPageLogo = logos.find((logo: any) => 
       logo.hasGarmentPages === true && 
@@ -212,7 +212,7 @@ export default function PDFPreviewModal({
       pageCount: multiPageLogo.pageCount || 1,
       originalFilename: multiPageLogo.originalFilename
     };
-  }, [project, logos]);
+  }, [project, logos, canvasElements]);
 
   const handleApprove = () => {
     if (canProceed) {
@@ -543,9 +543,9 @@ export default function PDFPreviewModal({
                     <h4 className="text-sm font-medium text-muted-foreground mb-2">Page 2 - Garment Background</h4>
                     <div className="border rounded-lg bg-gray-100 dark:bg-gray-800 p-3 flex-1 flex items-center justify-center relative overflow-hidden">
                       <div 
-                        className="relative border border-dashed border-gray-300 shadow-sm"
+                        className="relative border border-dashed border-gray-300 shadow-sm overflow-hidden"
                         style={{
-                          backgroundColor: '#f3f4f6',
+                          backgroundColor: project?.garmentColor || '#d7da14',
                           aspectRatio: template ? `${template.width}/${template.height}` : '297/420',
                           ...(template && template.width > template.height
                             ? { width: '95%', maxHeight: '90%' }
@@ -553,27 +553,20 @@ export default function PDFPreviewModal({
                           ),
                         }}
                       >
-                        {/* Render individual garment color backgrounds for each logo */}
                         {canvasElements.map((element) => {
                           const logo = logos.find(l => l.id === element.logoId);
                           if (!logo) return null;
                           
-                          // Use element's individual garment color or fall back to project color
-                          const garmentColor = element.garmentColor || project?.garmentColor || '#d7da14';
-                          
-                          // Convert center-based coordinates to top-left for CSS positioning
                           const templateWidth = template?.width || 297;
                           const templateHeight = template?.height || 420;
                           const centerX = templateWidth / 2;
                           const centerY = templateHeight / 2;
                           
-                          // Convert element center position to top-left corner
                           const elementCenterX = centerX + element.x;
                           const elementCenterY = centerY + element.y;
                           const leftPos = elementCenterX - element.width / 2;
                           const topPos = elementCenterY - element.height / 2;
                           
-                          // Use proper URL construction for all logo types
                           let imageUrl = getImageUrl(logo);
                           if (shouldRecolorForInk) {
                             const sep = imageUrl.includes('?') ? '&' : '?';
@@ -592,8 +585,6 @@ export default function PDFPreviewModal({
                                 transform: `rotate(${element.rotation || 0}deg)`,
                                 transformOrigin: 'center',
                                 opacity: element.opacity || 1,
-                                backgroundColor: garmentColor,
-                                border: '1px solid rgba(0,0,0,0.1)'
                               }}
                             >
                               <img
