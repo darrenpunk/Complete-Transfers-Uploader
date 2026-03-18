@@ -677,14 +677,72 @@ const CanvasWorkspace = forwardRef(function CanvasWorkspace({
   const captureCanvasAsImage = useCallback(async (): Promise<string | null> => {
     if (!canvasRef.current) return null;
     try {
+      const targetEl = canvasRef.current;
+      const svgEls = targetEl.querySelectorAll('svg');
+      const svgDataUrls: Map<HTMLImageElement, string> = new Map();
+
+      for (const svg of Array.from(svgEls)) {
+        try {
+          const svgClone = svg.cloneNode(true) as SVGElement;
+          svgClone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+          const serializer = new XMLSerializer();
+          const svgStr = serializer.serializeToString(svgClone);
+          const svgBlob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
+          const url = URL.createObjectURL(svgBlob);
+
+          const img = document.createElement('img');
+          img.style.cssText = window.getComputedStyle(svg).cssText;
+          img.style.width = svg.getAttribute('width') || `${svg.getBoundingClientRect().width}px`;
+          img.style.height = svg.getAttribute('height') || `${svg.getBoundingClientRect().height}px`;
+
+          await new Promise<void>((resolve, reject) => {
+            img.onload = () => resolve();
+            img.onerror = () => reject(new Error('SVG to img failed'));
+            img.src = url;
+          });
+
+          svg.parentNode?.insertBefore(img, svg);
+          (svg as any).__captureHidden = svg.style.display;
+          svg.style.display = 'none';
+          svgDataUrls.set(img, url);
+        } catch {
+          // Skip SVGs that can't be converted
+        }
+      }
+
       const { default: html2canvas } = await import('html2canvas');
-      const canvas = await html2canvas(canvasRef.current, {
+      const canvas = await html2canvas(targetEl, {
         backgroundColor: null,
         scale: 2,
         useCORS: true,
         allowTaint: true,
         logging: false,
       });
+
+      for (const [img, url] of svgDataUrls) {
+        URL.revokeObjectURL(url);
+        img.remove();
+      }
+      for (const svg of Array.from(svgEls)) {
+        if ((svg as any).__captureHidden !== undefined) {
+          svg.style.display = (svg as any).__captureHidden;
+          delete (svg as any).__captureHidden;
+        }
+      }
+
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        let hasContent = false;
+        for (let i = 3; i < imageData.data.length; i += 4) {
+          if (imageData.data[i] > 0) { hasContent = true; break; }
+        }
+        if (!hasContent) {
+          console.warn('⚠️ Canvas capture produced blank image, skipping');
+          return null;
+        }
+      }
+
       return canvas.toDataURL('image/png');
     } catch (err) {
       console.error('Failed to capture canvas:', err);
@@ -787,8 +845,8 @@ const CanvasWorkspace = forwardRef(function CanvasWorkspace({
   }, [captureCanvasArtworkOnly]);
 
   useImperativeHandle(ref, () => ({
-    captureCanvasAsImage: captureCanvasArtworkOnly,
-  }), [captureCanvasArtworkOnly]);
+    captureCanvasAsImage,
+  }), [captureCanvasAsImage]);
 
   // Automatic cleanup of orphaned canvas elements
   useCleanupOrphanedElements({
