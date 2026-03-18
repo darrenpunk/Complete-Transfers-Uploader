@@ -840,6 +840,42 @@ export async function registerRoutes(app: express.Application) {
     }
   }
 
+  async function appendCanvasPreviewFromPage1(pdfBytes: Buffer | Uint8Array): Promise<Buffer> {
+    try {
+      const { PDFDocument, rgb } = await import('pdf-lib');
+      const srcDoc = await PDFDocument.load(pdfBytes);
+      if (srcDoc.getPageCount() < 1) {
+        return Buffer.isBuffer(pdfBytes) ? pdfBytes : Buffer.from(pdfBytes);
+      }
+      const [copiedPage] = await srcDoc.copyPages(srcDoc, [0]);
+      srcDoc.addPage(copiedPage);
+      const pageWidth = copiedPage.getWidth();
+      const pageHeight = copiedPage.getHeight();
+      
+      const labelH = 24;
+      copiedPage.drawRectangle({
+        x: 0,
+        y: pageHeight - labelH,
+        width: pageWidth,
+        height: labelH,
+        color: rgb(0.15, 0.15, 0.15),
+      });
+      copiedPage.drawText('Canvas Preview', {
+        x: 12,
+        y: pageHeight - labelH + 7,
+        size: 11,
+        color: rgb(0.85, 0.85, 0.85),
+      });
+      
+      const resultBytes = await srcDoc.save();
+      console.log(`📸 Canvas preview page appended (copy of page 1)`);
+      return Buffer.from(resultBytes);
+    } catch (err: any) {
+      console.error('⚠️ Failed to append canvas preview page:', err.message);
+      return Buffer.isBuffer(pdfBytes) ? pdfBytes : Buffer.from(pdfBytes);
+    }
+  }
+
   async function appendCanvasScreenshotPage(pdfBytes: Buffer | Uint8Array, projectId: string, canvasElements?: any[], logos?: any[], templateSize?: any, garmentColor?: string | null): Promise<Buffer> {
     let screenshotData: Buffer | null = null;
     const screenshotPath = path.join(process.cwd(), 'uploads', `canvas_screenshot_${projectId}.png`);
@@ -1058,7 +1094,7 @@ export async function registerRoutes(app: express.Application) {
               try { fs.unlinkSync(tmpIn); } catch {}
               try { fs.unlinkSync(tmpOut); } catch {}
             }
-            const dtfWithScreenshot = finalBuf;
+            const dtfWithScreenshot = await appendCanvasPreviewFromPage1(finalBuf);
             res.setHeader('Content-Type', 'application/pdf');
             res.setHeader('Content-Disposition', `attachment; filename="${buildPdfFilename(project.name || 'DTF', project.quantity || 1)}"`);
             return res.send(dtfWithScreenshot);
@@ -1112,7 +1148,7 @@ export async function registerRoutes(app: express.Application) {
               
               console.log(`✅ Applique Badges PDF with form page: ${appliquePdfBytes.length} bytes`);
               
-              const appliqueWithScreenshot = appliquePdfBytes;
+              const appliqueWithScreenshot = await appendCanvasPreviewFromPage1(appliquePdfBytes);
               res.setHeader('Content-Type', 'application/pdf');
               res.setHeader('Content-Disposition', `attachment; filename="${buildPdfFilename(project.name, project.quantity || 1, templateSize.productCode, 'applique')}"`);
               res.send(appliqueWithScreenshot);
@@ -1123,7 +1159,7 @@ export async function registerRoutes(app: express.Application) {
             }
           }
           
-          const robustWithScreenshot = pdfBuffer;
+          const robustWithScreenshot = await appendCanvasPreviewFromPage1(pdfBuffer);
           res.setHeader('Content-Type', 'application/pdf');
           res.setHeader('Content-Disposition', `attachment; filename="${buildPdfFilename(project.name, project.quantity || 1, templateSize.productCode)}"`);
           res.send(robustWithScreenshot);
@@ -2065,7 +2101,7 @@ export async function registerRoutes(app: express.Application) {
             
             console.log(`✅ Applique Badges PDF with form page: ${appliquePdfBytes.length} bytes`);
             
-            const fallbackAppliqueWithScreenshot = appliquePdfBytes;
+            const fallbackAppliqueWithScreenshot = await appendCanvasPreviewFromPage1(appliquePdfBytes);
             res.setHeader('Content-Type', 'application/pdf');
             res.setHeader('Content-Disposition', `attachment; filename="${buildPdfFilename(project.name, project.quantity || 1, templateSize?.productCode, 'applique')}"`);
             res.send(fallbackAppliqueWithScreenshot);
@@ -2125,7 +2161,7 @@ export async function registerRoutes(app: express.Application) {
             fs.unlinkSync(tempRgbPath);
             fs.unlinkSync(tempCmykPath);
             
-            const cmykWithScreenshot = cmykPdfBytes;
+            const cmykWithScreenshot = await appendCanvasPreviewFromPage1(cmykPdfBytes);
             res.setHeader('Content-Type', 'application/pdf');
             res.setHeader('Content-Disposition', `attachment; filename="${buildPdfFilename(project.name, project.quantity || 1, templateSize?.productCode)}"`);
             res.send(cmykWithScreenshot);
@@ -2139,7 +2175,7 @@ export async function registerRoutes(app: express.Application) {
           console.log('Returning RGB PDF as fallback');
         }
         
-        const fallbackWithScreenshot = Buffer.from(pdfBytes);
+        const fallbackWithScreenshot = await appendCanvasPreviewFromPage1(Buffer.from(pdfBytes));
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename="${buildPdfFilename(project.name, project.quantity || 1, templateSize?.productCode)}"`);
         res.send(fallbackWithScreenshot);
