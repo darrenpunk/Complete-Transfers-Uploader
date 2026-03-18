@@ -760,18 +760,21 @@ export async function registerRoutes(app: express.Application) {
       const { PDFDocument, rgb: pdfRgb } = await import('pdf-lib');
       const templateW = templateSize.width;
       const templateH = templateSize.height;
-      const scale = 2;
-      const canvasW = Math.round(templateW * scale);
-      const canvasH = Math.round(templateH * scale);
+      const ptPerMm = 2.83465;
+      const pageW = Math.round(templateW * ptPerMm);
+      const pageH = Math.round(templateH * ptPerMm);
 
       const compositeDoc = await PDFDocument.create();
-      const page = compositeDoc.addPage([canvasW, canvasH]);
+      const page = compositeDoc.addPage([pageW, pageH]);
 
-      const bgHex = garmentColor || '#171816';
-      const r = parseInt(bgHex.slice(1, 3), 16) / 255;
-      const g = parseInt(bgHex.slice(3, 5), 16) / 255;
-      const b = parseInt(bgHex.slice(5, 7), 16) / 255;
-      page.drawRectangle({ x: 0, y: 0, width: canvasW, height: canvasH, color: pdfRgb(r, g, b) });
+      const bgHex = garmentColor || '#CDCECC';
+      const bgR = parseInt(bgHex.slice(1, 3), 16) / 255;
+      const bgG = parseInt(bgHex.slice(3, 5), 16) / 255;
+      const bgB = parseInt(bgHex.slice(5, 7), 16) / 255;
+      page.drawRectangle({ x: 0, y: 0, width: pageW, height: pageH, color: pdfRgb(bgR, bgG, bgB) });
+
+      const centerXmm = templateW / 2;
+      const centerYmm = templateH / 2;
 
       for (const element of canvasElements) {
         const logo = logos.find((l: any) => l.id === element.logoId);
@@ -786,18 +789,17 @@ export async function registerRoutes(app: express.Application) {
         } else if (fs.existsSync(svgPath) && logo.filename.endsWith('.svg')) {
           const tmpPng = `/tmp/canvas_preview_${Date.now()}_${Math.random().toString(36).slice(2)}.png`;
           try {
-            const elWPx = Math.round((element.width || 100) * scale);
-            const elHPx = Math.round((element.height || 100) * scale);
+            const renderW = Math.round((element.width || 100) * ptPerMm * 2);
+            const renderH = Math.round((element.height || 100) * ptPerMm * 2);
             await new Promise<void>((resolve, reject) => {
               exec(
-                `rsvg-convert -w ${elWPx} -h ${elHPx} -o "${tmpPng}" "${svgPath}"`,
+                `rsvg-convert -w ${renderW} -h ${renderH} -o "${tmpPng}" "${svgPath}"`,
                 { timeout: 10000 },
                 (err) => { if (err) reject(err); else resolve(); }
               );
             });
             if (fs.existsSync(tmpPng)) imgPath = tmpPng;
           } catch {
-            // skip this element
           }
         }
 
@@ -806,14 +808,23 @@ export async function registerRoutes(app: express.Application) {
         try {
           const imgData = fs.readFileSync(imgPath);
           const pngImg = await compositeDoc.embedPng(imgData);
-          const elX = (element.x || 0) * scale;
-          const elY = (element.y || 0) * scale;
-          const elW = (element.width || 100) * scale;
-          const elH = (element.height || 100) * scale;
-          const pdfY = canvasH - elY - elH;
-          page.drawImage(pngImg, { x: elX, y: pdfY, width: elW, height: elH });
-        } catch {
-          // skip elements that can't be embedded
+
+          const elWmm = element.width || 100;
+          const elHmm = element.height || 100;
+          const elementCenterXmm = centerXmm + (element.x || 0);
+          const elementCenterYmm = centerYmm + (element.y || 0);
+          const leftMm = elementCenterXmm - elWmm / 2;
+          const topMm = elementCenterYmm - elHmm / 2;
+
+          const drawX = leftMm * ptPerMm;
+          const drawY = pageH - (topMm * ptPerMm) - (elHmm * ptPerMm);
+          const drawW = elWmm * ptPerMm;
+          const drawH = elHmm * ptPerMm;
+
+          page.drawImage(pngImg, { x: drawX, y: drawY, width: drawW, height: drawH });
+          console.log(`📸 Preview element: ${logo.filename} at (${leftMm.toFixed(1)}, ${topMm.toFixed(1)})mm size ${elWmm.toFixed(1)}x${elHmm.toFixed(1)}mm`);
+        } catch (err: any) {
+          console.error(`⚠️ Failed to embed element:`, err.message);
         }
 
         if (imgPath?.startsWith('/tmp/')) {
@@ -1047,7 +1058,7 @@ export async function registerRoutes(app: express.Application) {
               try { fs.unlinkSync(tmpIn); } catch {}
               try { fs.unlinkSync(tmpOut); } catch {}
             }
-            const dtfWithScreenshot = await appendCanvasScreenshotPage(finalBuf, projectId, canvasElements, logos, templateSize, project.garmentColor);
+            const dtfWithScreenshot = finalBuf;
             res.setHeader('Content-Type', 'application/pdf');
             res.setHeader('Content-Disposition', `attachment; filename="${buildPdfFilename(project.name || 'DTF', project.quantity || 1)}"`);
             return res.send(dtfWithScreenshot);
@@ -1101,7 +1112,7 @@ export async function registerRoutes(app: express.Application) {
               
               console.log(`✅ Applique Badges PDF with form page: ${appliquePdfBytes.length} bytes`);
               
-              const appliqueWithScreenshot = await appendCanvasScreenshotPage(appliquePdfBytes, projectId, canvasElements, logos, templateSize, project.garmentColor);
+              const appliqueWithScreenshot = appliquePdfBytes;
               res.setHeader('Content-Type', 'application/pdf');
               res.setHeader('Content-Disposition', `attachment; filename="${buildPdfFilename(project.name, project.quantity || 1, templateSize.productCode, 'applique')}"`);
               res.send(appliqueWithScreenshot);
@@ -1112,7 +1123,7 @@ export async function registerRoutes(app: express.Application) {
             }
           }
           
-          const robustWithScreenshot = await appendCanvasScreenshotPage(pdfBuffer, projectId, canvasElements, logos, templateSize, project.garmentColor);
+          const robustWithScreenshot = pdfBuffer;
           res.setHeader('Content-Type', 'application/pdf');
           res.setHeader('Content-Disposition', `attachment; filename="${buildPdfFilename(project.name, project.quantity || 1, templateSize.productCode)}"`);
           res.send(robustWithScreenshot);
@@ -2054,7 +2065,7 @@ export async function registerRoutes(app: express.Application) {
             
             console.log(`✅ Applique Badges PDF with form page: ${appliquePdfBytes.length} bytes`);
             
-            const fallbackAppliqueWithScreenshot = await appendCanvasScreenshotPage(appliquePdfBytes, projectId, canvasElements, logos, templateSize, project.garmentColor);
+            const fallbackAppliqueWithScreenshot = appliquePdfBytes;
             res.setHeader('Content-Type', 'application/pdf');
             res.setHeader('Content-Disposition', `attachment; filename="${buildPdfFilename(project.name, project.quantity || 1, templateSize?.productCode, 'applique')}"`);
             res.send(fallbackAppliqueWithScreenshot);
@@ -2114,7 +2125,7 @@ export async function registerRoutes(app: express.Application) {
             fs.unlinkSync(tempRgbPath);
             fs.unlinkSync(tempCmykPath);
             
-            const cmykWithScreenshot = await appendCanvasScreenshotPage(cmykPdfBytes, projectId, canvasElements, logos, templateSize, project.garmentColor);
+            const cmykWithScreenshot = cmykPdfBytes;
             res.setHeader('Content-Type', 'application/pdf');
             res.setHeader('Content-Disposition', `attachment; filename="${buildPdfFilename(project.name, project.quantity || 1, templateSize?.productCode)}"`);
             res.send(cmykWithScreenshot);
@@ -2128,7 +2139,7 @@ export async function registerRoutes(app: express.Application) {
           console.log('Returning RGB PDF as fallback');
         }
         
-        const fallbackWithScreenshot = await appendCanvasScreenshotPage(Buffer.from(pdfBytes), projectId, canvasElements, logos, templateSize, project.garmentColor);
+        const fallbackWithScreenshot = Buffer.from(pdfBytes);
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename="${buildPdfFilename(project.name, project.quantity || 1, templateSize?.productCode)}"`);
         res.send(fallbackWithScreenshot);
