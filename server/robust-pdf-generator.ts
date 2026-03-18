@@ -1232,16 +1232,34 @@ grestore`;
               }
             }
             // ELEMENT-LARGER-THAN-CONTENT CHECK: If the canvas element is significantly wider
-            // than the Ghostscript content bounds, it means the element was sized from the full
-            // SVG/page (including white elements GS can't detect). Using content bounds would
-            // cause stretching/distortion. Use original PDF to preserve correct proportions.
+            // than the Ghostscript content bounds, it may mean the element was sized from the full
+            // SVG/page (including white elements GS can't detect). But we must check whether the
+            // element's aspect ratio matches the content bounds or the page — if it matches content,
+            // the user sized to content and we should crop (scaling up is fine).
             if (!logoPdfPath) {
               const elementWPts = element.width * MM_TO_PTS_CHECK;
+              const elementHPts = element.height * MM_TO_PTS_CHECK;
               const contentToElementRatio = contentWidthPts / elementWPts;
               if (contentToElementRatio < 0.5) {
+                const contentAspect = contentWidthPts / contentHeightPts;
+                const elementAspect = elementWPts / elementHPts;
+                const pageAspect = origPageSize.width / origPageSize.height;
+                const contentAspectMatch = Math.abs(contentAspect - elementAspect) / Math.max(contentAspect, elementAspect);
+                const pageAspectMatch = Math.abs(pageAspect - elementAspect) / Math.max(pageAspect, elementAspect);
+                
                 console.log(`📄 ELEMENT MUCH WIDER THAN GS CONTENT: Element ${element.width.toFixed(1)}mm vs GS content ${(contentWidthPts/MM_TO_PTS_CHECK).toFixed(1)}mm (ratio ${(contentToElementRatio * 100).toFixed(1)}%)`);
-                console.log(`📄 GS bbox likely missed white elements - using original PDF to prevent distortion`);
-                logoPdfPath = originalPdfPath;
+                console.log(`📐 Aspect check: content=${contentAspect.toFixed(3)}, element=${elementAspect.toFixed(3)}, page=${pageAspect.toFixed(3)}`);
+                console.log(`📐 Match: content-element=${(contentAspectMatch * 100).toFixed(1)}%, page-element=${(pageAspectMatch * 100).toFixed(1)}%`);
+                
+                if (contentAspectMatch < 0.05) {
+                  console.log(`📄 Element aspect matches CONTENT bounds - user scaled up content, will crop to content bounds`);
+                } else if (pageAspectMatch < 0.05) {
+                  console.log(`📄 Element aspect matches PAGE - GS bbox likely missed white elements, using original PDF`);
+                  logoPdfPath = originalPdfPath;
+                } else {
+                  console.log(`📄 Element aspect matches neither content nor page - using original PDF to be safe`);
+                  logoPdfPath = originalPdfPath;
+                }
               }
             }
             // Check if bounds are too small (Ghostscript bbox failed or returned minimal bounds)
@@ -1570,6 +1588,29 @@ grestore`;
       // The cropped/processed PDF from earlier is already correct.
       console.log(`✅ EXACT ELEMENT SIZE: Using ${contentWidthPts.toFixed(1)}×${contentHeightPts.toFixed(1)}pts from element dimensions`);
       
+      // ASPECT RATIO PRESERVATION: When PDF page aspect ratio differs from element,
+      // scale to fit within element bounds while preserving proportions (prevent squashing)
+      let adjustedContentWidthPts = contentWidthPts;
+      let adjustedContentHeightPts = contentHeightPts;
+      let aspectXOffset = 0;
+      let aspectYOffset = 0;
+      
+      const embeddedPdfAspect = actualPdfWidth / actualPdfHeight;
+      const elementDrawAspect = contentWidthPts / contentHeightPts;
+      const drawAspectDiff = Math.abs(embeddedPdfAspect - elementDrawAspect) / Math.max(embeddedPdfAspect, elementDrawAspect);
+      
+      if (!isFullPagePdf && drawAspectDiff > 0.02) {
+        console.log(`⚠️ PDF→Element aspect mismatch: PDF=${embeddedPdfAspect.toFixed(3)} (${actualPdfWidth.toFixed(1)}×${actualPdfHeight.toFixed(1)}pts), element=${elementDrawAspect.toFixed(3)} (${(drawAspectDiff * 100).toFixed(1)}% diff)`);
+        if (embeddedPdfAspect > elementDrawAspect) {
+          adjustedContentHeightPts = contentWidthPts / embeddedPdfAspect;
+        } else {
+          adjustedContentWidthPts = contentHeightPts * embeddedPdfAspect;
+        }
+        aspectXOffset = (contentWidthPts - adjustedContentWidthPts) / 2;
+        aspectYOffset = (contentHeightPts - adjustedContentHeightPts) / 2;
+        console.log(`📐 Adjusted to preserve ratio: ${adjustedContentWidthPts.toFixed(1)}×${adjustedContentHeightPts.toFixed(1)}pts (centering offset: x=${aspectXOffset.toFixed(1)}, y=${aspectYOffset.toFixed(1)})`);
+      }
+      
       // CORRECT ROTATION HANDLING:
       // pdf-lib rotates around the drawing position (x, y) which is the bottom-left corner
       // For centered placement with rotation, we need to calculate where to place the
@@ -1596,23 +1637,18 @@ grestore`;
         drawY = 0;
         console.log(`📄 Full-page PDF: Placing at origin (0, 0) to cover full page${isLandscapePdf ? ' (LANDSCAPE)' : ''}`);
       } else if (element.rotation === 90) {
-        // 90° CCW rotation: content rotates so width becomes height
-        // After rotation, visual size is height×width
-        // Drawing position for pdf-lib to center visually:
-        drawX = targetCenterX + contentHeightPts / 2;
-        drawY = targetCenterY - contentWidthPts / 2;
+        drawX = targetCenterX + adjustedContentHeightPts / 2;
+        drawY = targetCenterY - adjustedContentWidthPts / 2;
       } else if (element.rotation === 180) {
-        // 180° rotation: content is upside down
-        drawX = targetCenterX + contentWidthPts / 2;
-        drawY = targetCenterY + contentHeightPts / 2;
+        drawX = targetCenterX + adjustedContentWidthPts / 2;
+        drawY = targetCenterY + adjustedContentHeightPts / 2;
       } else if (element.rotation === 270) {
-        // 270° CCW (or 90° CW): content rotates other direction
-        drawX = targetCenterX - contentHeightPts / 2;
-        drawY = targetCenterY + contentWidthPts / 2;
+        drawX = targetCenterX - adjustedContentHeightPts / 2;
+        drawY = targetCenterY + adjustedContentWidthPts / 2;
       } else {
         // No rotation - standard bottom-left positioning
-        drawX = targetCenterX - contentWidthPts / 2;
-        drawY = targetCenterY - contentHeightPts / 2;
+        drawX = targetCenterX - adjustedContentWidthPts / 2;
+        drawY = targetCenterY - adjustedContentHeightPts / 2;
       }
       
       console.log(`🎯 ROTATION CENTERING: target center=(${targetCenterX.toFixed(1)}, ${targetCenterY.toFixed(1)}), rotation=${element.rotation || 0}°`);
@@ -1622,15 +1658,15 @@ grestore`;
       const drawOptions = {
         x: drawX,
         y: drawY,
-        width: contentWidthPts,
-        height: contentHeightPts,
+        width: adjustedContentWidthPts,
+        height: adjustedContentHeightPts,
         rotate: (element.rotation && !shouldSkipRotation) ? degrees(element.rotation) : undefined,
       };
       
       if (shouldSkipRotation && element.rotation) {
         console.log(`📄 LANDSCAPE FULL-PAGE: Skipping element rotation (${element.rotation}°) - output page already matches PDF orientation`);
       }
-      console.log(`📐 FINAL EMBEDDING: Position=(${drawX.toFixed(1)}, ${drawY.toFixed(1)}) Size=${contentWidthPts.toFixed(1)}×${contentHeightPts.toFixed(1)}pts, Rotation=${shouldSkipRotation ? 0 : (element.rotation || 0)}°`);
+      console.log(`📐 FINAL EMBEDDING: Position=(${drawX.toFixed(1)}, ${drawY.toFixed(1)}) Size=${adjustedContentWidthPts.toFixed(1)}×${adjustedContentHeightPts.toFixed(1)}pts, Rotation=${shouldSkipRotation ? 0 : (element.rotation || 0)}°`);
       
       if (page1) {
         page1.drawPage(logoPage, drawOptions);
