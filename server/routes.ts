@@ -1233,6 +1233,8 @@ export async function registerRoutes(app: express.Application) {
             let vectorBytes: Buffer;
             let isRasterImage = false; // Track if we're dealing with a raster image
             let rasterImageBytes: Buffer | null = null;
+            let rsvgWidthPts = widthPts;
+            let rsvgHeightPts = heightPts;
             
             // Check if logo is a PNG/JPEG raster image (not a vector)
             const logoMimeType = (logo as any).mimeType || (logo as any).originalMimeType;
@@ -1373,23 +1375,58 @@ export async function registerRoutes(app: express.Application) {
               
               fs.writeFileSync(tempSvg, svgContent);
               
+              // CRITICAL: Extract SVG native aspect ratio from viewBox to prevent squashing
+              // When user manually resizes an element to non-matching aspect ratio,
+              // rsvg-convert would stretch the content. We must preserve the original ratio.
+              let svgNativeAspect: number | null = null;
+              const viewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
+              if (viewBoxMatch) {
+                const vbParts = viewBoxMatch[1].split(/[\s,]+/).map(Number);
+                if (vbParts.length === 4 && vbParts[2] > 0 && vbParts[3] > 0) {
+                  svgNativeAspect = vbParts[2] / vbParts[3];
+                  console.log(`📐 SVG viewBox: ${vbParts[2].toFixed(1)}×${vbParts[3].toFixed(1)} (aspect: ${svgNativeAspect.toFixed(3)})`);
+                }
+              }
+              if (!svgNativeAspect) {
+                const svgWidthMatch = svgContent.match(/\bwidth="([0-9.]+)/);
+                const svgHeightMatch = svgContent.match(/\bheight="([0-9.]+)/);
+                if (svgWidthMatch && svgHeightMatch) {
+                  const sw = parseFloat(svgWidthMatch[1]);
+                  const sh = parseFloat(svgHeightMatch[1]);
+                  if (sw > 0 && sh > 0) svgNativeAspect = sw / sh;
+                }
+              }
+              
+              let rsvgWidthPts = widthPts;
+              let rsvgHeightPts = heightPts;
+              
+              if (svgNativeAspect) {
+                const elementAspect = widthPts / heightPts;
+                const aspectDiff = Math.abs(svgNativeAspect - elementAspect) / Math.max(svgNativeAspect, elementAspect);
+                if (aspectDiff > 0.02) {
+                  console.log(`⚠️ Aspect ratio mismatch: SVG=${svgNativeAspect.toFixed(3)}, element=${elementAspect.toFixed(3)} (${(aspectDiff * 100).toFixed(1)}% diff)`);
+                  if (svgNativeAspect > elementAspect) {
+                    rsvgHeightPts = widthPts / svgNativeAspect;
+                  } else {
+                    rsvgWidthPts = heightPts * svgNativeAspect;
+                  }
+                  console.log(`📐 Adjusted rsvg dimensions to preserve ratio: ${rsvgWidthPts.toFixed(1)}×${rsvgHeightPts.toFixed(1)}pts (was ${widthPts.toFixed(1)}×${heightPts.toFixed(1)}pts)`);
+                }
+              }
+              
               if (hasEmbeddedImages) {
                 console.log(`🖼️ EMBEDDED IMAGES: Using high-DPI conversion for Illustrator`);
-                // CRITICAL: Use 300 DPI for print-quality embedded images
-                // Calculate pixel dimensions at 300 DPI instead of 72 DPI
                 const dpi = 300;
-                const widthPx = Math.round(widthPts * dpi / 72);
-                const heightPx = Math.round(heightPts * dpi / 72);
+                const widthPx = Math.round(rsvgWidthPts * dpi / 72);
+                const heightPx = Math.round(rsvgHeightPts * dpi / 72);
                 
-                // rsvg-convert with high DPI for embedded images
                 const rsvgCmd = `rsvg-convert -f pdf -d ${dpi} -p ${dpi} -w ${widthPx} -h ${heightPx} -o "${tempPdf}" "${tempSvg}"`;
                 execSync(rsvgCmd);
-                console.log(`✅ High-DPI SVG → PDF (${dpi} DPI): ${widthPts.toFixed(0)}×${heightPts.toFixed(0)}pts @ ${widthPx}×${heightPx}px`);
+                console.log(`✅ High-DPI SVG → PDF (${dpi} DPI): ${rsvgWidthPts.toFixed(0)}×${rsvgHeightPts.toFixed(0)}pts @ ${widthPx}×${heightPx}px`);
               } else {
-                // Convert SVG → PDF with transparency preserved (no background)
-                const rsvgCmd = `rsvg-convert -f pdf -b transparent -w ${widthPts.toFixed(0)} -h ${heightPts.toFixed(0)} -o "${tempPdf}" "${tempSvg}"`;
+                const rsvgCmd = `rsvg-convert -f pdf -b transparent -w ${rsvgWidthPts.toFixed(0)} -h ${rsvgHeightPts.toFixed(0)} -o "${tempPdf}" "${tempSvg}"`;
                 execSync(rsvgCmd);
-                console.log(`✅ SVG → PDF with transparency: ${widthPts.toFixed(0)}×${heightPts.toFixed(0)}pts`);
+                console.log(`✅ SVG → PDF with transparency: ${rsvgWidthPts.toFixed(0)}×${rsvgHeightPts.toFixed(0)}pts`);
               }
               
               vectorBytes = fs.readFileSync(tempPdf);
@@ -1444,6 +1481,25 @@ export async function registerRoutes(app: express.Application) {
               // Load and embed PDF artwork
               const vectorDoc = await PDFDocument.load(vectorBytes!);
               [embeddedPage] = await pdfDoc.embedPdf(vectorDoc);
+              
+              // Preserve aspect ratio for embedded PDF pages too
+              const srcPage = vectorDoc.getPages()[0];
+              if (srcPage) {
+                const srcW = srcPage.getWidth();
+                const srcH = srcPage.getHeight();
+                const pdfAspect = srcW / srcH;
+                const elemAspect = widthPts / heightPts;
+                const pdfAspectDiff = Math.abs(pdfAspect - elemAspect) / Math.max(pdfAspect, elemAspect);
+                if (pdfAspectDiff > 0.02) {
+                  console.log(`⚠️ PDF page aspect mismatch: PDF=${pdfAspect.toFixed(3)} (${srcW.toFixed(1)}×${srcH.toFixed(1)}pts), element=${elemAspect.toFixed(3)} (${(pdfAspectDiff * 100).toFixed(1)}% diff)`);
+                  if (pdfAspect > elemAspect) {
+                    rsvgHeightPts = widthPts / pdfAspect;
+                  } else {
+                    rsvgWidthPts = heightPts * pdfAspect;
+                  }
+                  console.log(`📐 Adjusted PDF embed dimensions to preserve ratio: ${rsvgWidthPts.toFixed(1)}×${rsvgHeightPts.toFixed(1)}pts`);
+                }
+              }
             }
             
             // The PDF is now cropped to content bounds, so when we scale it to canvas dimensions
@@ -1474,26 +1530,45 @@ export async function registerRoutes(app: express.Application) {
             
             // Helper function to draw either embedded page or embedded image
             // For raster images, use adjusted dimensions to preserve aspect ratio
-            const adjustedWidthPts = (element as any).adjustedWidthPts || widthPts;
-            const adjustedHeightPts = (element as any).adjustedHeightPts || heightPts;
+            const adjustedWidthPts = (element as any).adjustedWidthPts || rsvgWidthPts || widthPts;
+            const adjustedHeightPts = (element as any).adjustedHeightPts || rsvgHeightPts || heightPts;
             
-            // Calculate offset to center the aspect-corrected image within the element bounds
+            // Calculate offset to center the aspect-corrected content within the element bounds
             const xOffset = (widthPts - adjustedWidthPts) / 2;
             const yOffset = (heightPts - adjustedHeightPts) / 2;
             
-            const drawArtwork = (targetPage: any, options: { x: number; y: number; width: number; height: number; rotate?: any }) => {
+            if (Math.abs(xOffset) > 0.5 || Math.abs(yOffset) > 0.5) {
+              console.log(`📐 Centering offset: x=${xOffset.toFixed(1)}, y=${yOffset.toFixed(1)}pts`);
+            }
+            
+            const drawArtwork = (targetPage: any, options: { x: number; y: number; width: number; height: number; rotate?: any }, rotationDeg: number = 0) => {
+              // Transform centering offsets based on rotation
+              // pdf-lib rotates around bottom-left, so offsets need to be rotated accordingly
+              let adjX = xOffset;
+              let adjY = yOffset;
+              if (rotationDeg === 90) {
+                adjX = -yOffset;  // Y offset becomes negative X in rotated space
+                adjY = xOffset;   // X offset becomes Y in rotated space
+              } else if (rotationDeg === 180) {
+                adjX = -xOffset;
+                adjY = -yOffset;
+              } else if (rotationDeg === 270) {
+                adjX = yOffset;
+                adjY = -xOffset;
+              }
+              
+              const drawOpts = {
+                ...options,
+                x: options.x + adjX,
+                y: options.y + adjY,
+                width: adjustedWidthPts,
+                height: adjustedHeightPts
+              };
+              
               if (embeddedImage) {
-                // Use adjusted dimensions for raster images to preserve aspect ratio
-                // Also apply offset to center within original bounds
-                targetPage.drawImage(embeddedImage, {
-                  ...options,
-                  x: options.x + xOffset,
-                  y: options.y + yOffset,
-                  width: adjustedWidthPts,
-                  height: adjustedHeightPts
-                });
+                targetPage.drawImage(embeddedImage, drawOpts);
               } else if (embeddedPage) {
-                targetPage.drawPage(embeddedPage, options);
+                targetPage.drawPage(embeddedPage, drawOpts);
               }
             };
             
@@ -1524,7 +1599,7 @@ export async function registerRoutes(app: express.Application) {
                 width: widthPts,
                 height: heightPts,
                 rotate: degrees(90)
-              });
+              }, 90);
               console.log(`✅ Page 1: Artwork embedded with 90° rotation`);
               
               // Embed with 90° rotation on all garment color pages
@@ -1535,7 +1610,7 @@ export async function registerRoutes(app: express.Application) {
                   width: widthPts,
                   height: heightPts,
                   rotate: degrees(90)
-                });
+                }, 90);
               }
               console.log(`✅ All garment color pages: Artwork embedded with 90° rotation`);
             } else if (rotation === 180) {
@@ -1562,7 +1637,7 @@ export async function registerRoutes(app: express.Application) {
                 width: widthPts,
                 height: heightPts,
                 rotate: degrees(180)
-              });
+              }, 180);
               console.log(`✅ Page 1: Artwork embedded with 180° rotation`);
               
               // Embed with 180° rotation on all garment color pages
@@ -1573,7 +1648,7 @@ export async function registerRoutes(app: express.Application) {
                   width: widthPts,
                   height: heightPts,
                   rotate: degrees(180)
-                });
+                }, 180);
               }
               console.log(`✅ All garment color pages: Artwork embedded with 180° rotation`);
             } else if (rotation === 270) {
@@ -1600,7 +1675,7 @@ export async function registerRoutes(app: express.Application) {
                 width: widthPts,
                 height: heightPts,
                 rotate: degrees(270)
-              });
+              }, 270);
               console.log(`✅ Page 1: Artwork embedded with 270° rotation`);
               
               // Embed with 270° rotation on all garment color pages
@@ -1611,7 +1686,7 @@ export async function registerRoutes(app: express.Application) {
                   width: widthPts,
                   height: heightPts,
                   rotate: degrees(270)
-                });
+                }, 270);
               }
               console.log(`✅ All garment color pages: Artwork embedded with 270° rotation`);
             } else {
