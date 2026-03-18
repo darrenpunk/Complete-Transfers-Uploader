@@ -20,7 +20,6 @@ import {
   AlignEndVertical
 } from "lucide-react";
 
-import CMYKColorModal from "./cmyk-color-modal";
 import GarmentColorModal from "./garment-color-modal";
 import ImpositionModal from "./imposition-modal";
 import TemplateSelectorModal from "./template-selector-modal";
@@ -141,7 +140,6 @@ export default function PropertiesPanel({
   const [localMaintainAspectRatio, setLocalMaintainAspectRatio] = useState(true);
   const maintainAspectRatio = propMaintainAspectRatio;
   const setMaintainAspectRatio = onMaintainAspectRatioChange || setLocalMaintainAspectRatio;
-  const [showCMYKModal, setShowCMYKModal] = useState(false);
   const [showImpositionModal, setShowImpositionModal] = useState(false);
   const [showTemplateSelectorModal, setShowTemplateSelectorModal] = useState(false);
   
@@ -1436,16 +1434,6 @@ export default function PropertiesPanel({
 
 
 
-      {/* CMYK Color Modal */}
-      <CMYKColorModal
-        initialColor={currentElement?.garmentColor || "#FFFFFF"}
-        onChange={(color: string) => {
-          handlePropertyChange('garmentColor', color);
-          setShowCMYKModal(false);
-        }}
-        label="Select Garment Color"
-        currentColor={currentElement?.garmentColor || "#FFFFFF"}
-      />
 
       {/* Imposition Modal */}
       {currentElement && (
