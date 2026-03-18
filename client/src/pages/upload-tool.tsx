@@ -5,7 +5,7 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { Project, Logo, CanvasElement, TemplateSize, GarmentColorItem } from "@shared/schema";
 import ToolsSidebar from "@/components/tools-sidebar";
-import CanvasWorkspace from "@/components/canvas-workspace";
+import CanvasWorkspace, { type CanvasWorkspaceHandle } from "@/components/canvas-workspace";
 import PropertiesPanel from "@/components/properties-panel";
 import TemplateSelectorModal from "@/components/template-selector-modal";
 import ProductLauncherModal from "@/components/product-launcher-modal";
@@ -41,6 +41,7 @@ export default function UploadTool() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const canvasWorkspaceRef = useRef<CanvasWorkspaceHandle>(null);
   
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
   const [selectedElements, setSelectedElements] = useState<CanvasElement[]>([]);
@@ -428,7 +429,24 @@ export default function UploadTool() {
         throw new Error('Please provide a project name before generating PDF');
       }
       
-      // Open PDF in new window - bypasses iframe download restrictions
+      if (canvasWorkspaceRef.current && currentProject?.id) {
+        try {
+          console.log('📸 Capturing canvas screenshot for PDF...');
+          const screenshotDataUrl = await canvasWorkspaceRef.current.captureCanvasAsImage();
+          if (screenshotDataUrl) {
+            const base64Data = screenshotDataUrl.split(',')[1];
+            await fetch(`/api/projects/${currentProject.id}/canvas-screenshot`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ screenshot: base64Data }),
+            });
+            console.log('✅ Canvas screenshot uploaded for PDF inclusion');
+          }
+        } catch (err) {
+          console.warn('⚠️ Canvas screenshot capture failed, PDF will generate without it:', err);
+        }
+      }
+      
       const url = `/api/projects/${currentProject?.id}/generate-pdf?colorSpace=cmyk`;
       const filename = `${name}_qty${quantity}_cmyk.pdf`;
       
@@ -466,9 +484,23 @@ export default function UploadTool() {
       
       console.log('🛒 Adding to Odoo cart via backend proxy:', url);
       
-      // Generate PDF and convert to base64
-      // Skip PDF generation if canvas is empty (e.g. repeat zip-only applique orders)
       const hasCanvasContent = canvasElements.length > 0;
+      if (hasCanvasContent && canvasWorkspaceRef.current) {
+        try {
+          const screenshotDataUrl = await canvasWorkspaceRef.current.captureCanvasAsImage();
+          if (screenshotDataUrl) {
+            const base64Data = screenshotDataUrl.split(',')[1];
+            await fetch(`/api/projects/${currentProject.id}/canvas-screenshot`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ screenshot: base64Data }),
+            });
+          }
+        } catch (err) {
+          console.warn('⚠️ Canvas screenshot capture failed:', err);
+        }
+      }
+      
       let pdfBase64: string | undefined;
       if (!hasCanvasContent) {
         console.log('ℹ️ No canvas elements - skipping PDF generation (zip-only repeat order)');
@@ -2461,6 +2493,7 @@ export default function UploadTool() {
             </div>
           )}
           <CanvasWorkspace
+            ref={canvasWorkspaceRef}
             project={currentProject}
             template={currentTemplate}
             logos={logos}

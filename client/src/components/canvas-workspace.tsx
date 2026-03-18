@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, useCallback } from "react";
+import { useRef, useEffect, useState, useCallback, forwardRef, useImperativeHandle } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { Project, Logo, CanvasElement, TemplateSize, ContentBounds } from "@shared/schema";
@@ -152,7 +152,11 @@ function hasValidContentBounds(logo: Logo): logo is Logo & { contentBounds: Cont
          typeof logo.contentBounds.yMax === 'number';
 }
 
-export default function CanvasWorkspace({
+export interface CanvasWorkspaceHandle {
+  captureCanvasAsImage: () => Promise<string | null>;
+}
+
+const CanvasWorkspace = forwardRef(function CanvasWorkspace({
   project,
   template,
   logos,
@@ -176,7 +180,7 @@ export default function CanvasWorkspace({
   selectedElementIndices,
   onSvgElementClick,
   onSetupEmbroidery
-}: CanvasWorkspaceProps) {
+}: CanvasWorkspaceProps, ref: any) {
   // Helper to get first selected element (for backwards compatibility with single-select operations)
   const selectedElement = selectedElements.length > 0 ? selectedElements[0] : null;
   
@@ -781,6 +785,10 @@ export default function CanvasWorkspace({
   const captureCanvasTransparent = useCallback(async (): Promise<string | null> => {
     return captureCanvasArtworkOnly();
   }, [captureCanvasArtworkOnly]);
+
+  useImperativeHandle(ref, () => ({
+    captureCanvasAsImage: captureCanvasArtworkOnly,
+  }), [captureCanvasArtworkOnly]);
 
   // Automatic cleanup of orphaned canvas elements
   useCleanupOrphanedElements({
@@ -3418,4 +3426,6 @@ export default function CanvasWorkspace({
     </div>
     </TooltipProvider>
   );
-}
+});
+
+export default CanvasWorkspace;
