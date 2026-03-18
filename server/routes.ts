@@ -3835,7 +3835,7 @@ export async function registerRoutes(app: express.Application) {
                     
                     console.log(`📊 GS bbox coverage: ${(widthRatio * 100).toFixed(0)}%W × ${(heightRatio * 100).toFixed(0)}%H = ${(areaCoverage * 100).toFixed(0)}% area`);
                     
-                    if (areaCoverage < 0.85) {
+                    if (areaCoverage < 0.92) {
                       console.log(`⚠️ GS bbox covers ${(areaCoverage * 100).toFixed(0)}% of page - verifying with Inkscape for white content`);
                       
                       let inkscapeVerifyBounds: typeof gsBounds | null = null;
@@ -3897,16 +3897,19 @@ export async function registerRoutes(app: express.Application) {
                         const inkArea = inkscapeVerifyBounds.width * inkscapeVerifyBounds.height;
                         
                         const inkPageCoverage = inkArea / pageArea;
-                        if (inkArea > gsArea * 1.15) {
-                          const inkWidthBigger = inkscapeVerifyBounds.width > gsBounds.width * 1.1;
-                          const inkHeightBigger = inkscapeVerifyBounds.height > gsBounds.height * 1.1;
+                        if (inkArea > gsArea * 1.05) {
+                          const inkWidthBigger = inkscapeVerifyBounds.width > gsBounds.width * 1.05;
+                          const inkHeightBigger = inkscapeVerifyBounds.height > gsBounds.height * 1.05;
                           
-                          // If Inkscape reports nearly full-page bounds (>90% coverage) AND GS already
+                          // If Inkscape reports nearly full-page bounds (>97% coverage) AND GS already
                           // covers a large portion of the page (>60%), Inkscape is likely just
                           // picking up a background rectangle — trust GS in that case.
                           // BUT if GS coverage is low (<60%), it means GS missed real content
                           // (e.g. white ink, clipped paths, CorelDRAW transparency) — trust Inkscape.
-                          const inkscapeIsFullPage = inkPageCoverage > 0.90;
+                          // NOTE: Threshold raised from 90% to 97% because CorelDRAW files with
+                          // white elements on dark backgrounds legitimately have 90-95% coverage
+                          // in Inkscape while GS only detects the dark (visible) portions.
+                          const inkscapeIsFullPage = inkPageCoverage > 0.97;
                           const gsBboxPageCoverage = gsArea / pageArea;
                           const shouldTrustGSOverInkscape = inkscapeIsFullPage && gsBboxPageCoverage > 0.60;
                           
@@ -4201,7 +4204,7 @@ export async function registerRoutes(app: express.Application) {
                             // And NEVER override when Inkscape just returns full-page bounds (= background rect)
                             const TOLERANCE = 1.0; // 1pt tolerance
                             const inkPageCoverage2 = pdfPageDimensions ? (inkscapeWidth * inkscapeHeight) / (pdfPageDimensions.widthPts * pdfPageDimensions.heightPts) : 0;
-                            const inkscapeIsFullPage2 = inkPageCoverage2 > 0.90;
+                            const inkscapeIsFullPage2 = inkPageCoverage2 > 0.97;
                             if (!boundsSourceIsArtBox && !inkscapeIsFullPage2 && (inkscapeWidth > contentWidthPts + TOLERANCE || inkscapeHeight > contentHeightPts + TOLERANCE)) {
                               {
                               console.log(`⚠️ Inkscape reports LARGER bounds than Ghostscript!`);
