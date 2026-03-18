@@ -769,7 +769,7 @@ grestore`;
     let passThroughSucceeded = false;
 
     const hasMultipleCanvasElements = data.canvasElements.length > 1;
-    if (!hasExplicitGarmentColors && !hasMultipleCanvasElements) {
+    if (usePassThrough && !hasExplicitGarmentColors && !hasMultipleCanvasElements) {
       const pdfLogoCandidate = data.logos.find((logo: any) =>
         logo.originalFilename &&
         logo.originalMimeType === 'application/pdf'
