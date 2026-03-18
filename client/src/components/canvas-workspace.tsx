@@ -677,70 +677,14 @@ const CanvasWorkspace = forwardRef(function CanvasWorkspace({
   const captureCanvasAsImage = useCallback(async (): Promise<string | null> => {
     if (!canvasRef.current) return null;
     try {
-      const targetEl = canvasRef.current;
-      const clonedEl = targetEl.cloneNode(true) as HTMLElement;
-      clonedEl.style.position = 'absolute';
-      clonedEl.style.left = '-99999px';
-      clonedEl.style.top = '0';
-      clonedEl.style.width = `${targetEl.offsetWidth}px`;
-      clonedEl.style.height = `${targetEl.offsetHeight}px`;
-      document.body.appendChild(clonedEl);
-
-      const handleSelectors = [
-        '.cursor-nw-resize', '.cursor-n-resize', '.cursor-ne-resize', '.cursor-e-resize',
-        '.cursor-se-resize', '.cursor-s-resize', '.cursor-sw-resize', '.cursor-w-resize',
-        '.bg-red-600', '[class*="border-dashed"]', '[class*="border-primary"]',
-        'button', '[data-rotation-handle]'
-      ];
-      handleSelectors.forEach(sel => {
-        clonedEl.querySelectorAll(sel).forEach(el => (el as HTMLElement).style.display = 'none');
-      });
-      clonedEl.querySelectorAll('[style*="outline"]').forEach(el => {
-        (el as HTMLElement).style.outline = 'none';
-      });
-
-      const svgEls = clonedEl.querySelectorAll('svg');
-      const blobUrls: string[] = [];
-      for (const svg of Array.from(svgEls)) {
-        try {
-          const svgClone = svg.cloneNode(true) as SVGElement;
-          svgClone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-          const serializer = new XMLSerializer();
-          const svgStr = serializer.serializeToString(svgClone);
-          const svgBlob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
-          const url = URL.createObjectURL(svgBlob);
-          blobUrls.push(url);
-
-          const img = document.createElement('img');
-          img.style.cssText = window.getComputedStyle(svg).cssText;
-          img.style.width = svg.getAttribute('width') || `${svg.getBoundingClientRect().width}px`;
-          img.style.height = svg.getAttribute('height') || `${svg.getBoundingClientRect().height}px`;
-
-          await new Promise<void>((resolve, reject) => {
-            img.onload = () => resolve();
-            img.onerror = () => reject(new Error('SVG to img failed'));
-            img.src = url;
-          });
-
-          svg.parentNode?.insertBefore(img, svg);
-          svg.style.display = 'none';
-        } catch {
-        }
-      }
-
       const { default: html2canvas } = await import('html2canvas');
-      const canvas = await html2canvas(clonedEl, {
+      const canvas = await html2canvas(canvasRef.current, {
         backgroundColor: null,
         scale: 2,
         useCORS: true,
         allowTaint: true,
         logging: false,
       });
-
-      for (const url of blobUrls) {
-        URL.revokeObjectURL(url);
-      }
-      clonedEl.remove();
 
       const ctx = canvas.getContext('2d');
       if (ctx) {
