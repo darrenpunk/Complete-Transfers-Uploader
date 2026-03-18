@@ -678,9 +678,29 @@ const CanvasWorkspace = forwardRef(function CanvasWorkspace({
     if (!canvasRef.current) return null;
     try {
       const targetEl = canvasRef.current;
-      const svgEls = targetEl.querySelectorAll('svg');
-      const svgDataUrls: Map<HTMLImageElement, string> = new Map();
+      const clonedEl = targetEl.cloneNode(true) as HTMLElement;
+      clonedEl.style.position = 'absolute';
+      clonedEl.style.left = '-99999px';
+      clonedEl.style.top = '0';
+      clonedEl.style.width = `${targetEl.offsetWidth}px`;
+      clonedEl.style.height = `${targetEl.offsetHeight}px`;
+      document.body.appendChild(clonedEl);
 
+      const handleSelectors = [
+        '.cursor-nw-resize', '.cursor-n-resize', '.cursor-ne-resize', '.cursor-e-resize',
+        '.cursor-se-resize', '.cursor-s-resize', '.cursor-sw-resize', '.cursor-w-resize',
+        '.bg-red-600', '[class*="border-dashed"]', '[class*="border-primary"]',
+        'button', '[data-rotation-handle]'
+      ];
+      handleSelectors.forEach(sel => {
+        clonedEl.querySelectorAll(sel).forEach(el => (el as HTMLElement).style.display = 'none');
+      });
+      clonedEl.querySelectorAll('[style*="outline"]').forEach(el => {
+        (el as HTMLElement).style.outline = 'none';
+      });
+
+      const svgEls = clonedEl.querySelectorAll('svg');
+      const blobUrls: string[] = [];
       for (const svg of Array.from(svgEls)) {
         try {
           const svgClone = svg.cloneNode(true) as SVGElement;
@@ -689,6 +709,7 @@ const CanvasWorkspace = forwardRef(function CanvasWorkspace({
           const svgStr = serializer.serializeToString(svgClone);
           const svgBlob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
           const url = URL.createObjectURL(svgBlob);
+          blobUrls.push(url);
 
           const img = document.createElement('img');
           img.style.cssText = window.getComputedStyle(svg).cssText;
@@ -702,16 +723,13 @@ const CanvasWorkspace = forwardRef(function CanvasWorkspace({
           });
 
           svg.parentNode?.insertBefore(img, svg);
-          (svg as any).__captureHidden = svg.style.display;
           svg.style.display = 'none';
-          svgDataUrls.set(img, url);
         } catch {
-          // Skip SVGs that can't be converted
         }
       }
 
       const { default: html2canvas } = await import('html2canvas');
-      const canvas = await html2canvas(targetEl, {
+      const canvas = await html2canvas(clonedEl, {
         backgroundColor: null,
         scale: 2,
         useCORS: true,
@@ -719,16 +737,10 @@ const CanvasWorkspace = forwardRef(function CanvasWorkspace({
         logging: false,
       });
 
-      for (const [img, url] of svgDataUrls) {
+      for (const url of blobUrls) {
         URL.revokeObjectURL(url);
-        img.remove();
       }
-      for (const svg of Array.from(svgEls)) {
-        if ((svg as any).__captureHidden !== undefined) {
-          svg.style.display = (svg as any).__captureHidden;
-          delete (svg as any).__captureHidden;
-        }
-      }
+      clonedEl.remove();
 
       const ctx = canvas.getContext('2d');
       if (ctx) {
