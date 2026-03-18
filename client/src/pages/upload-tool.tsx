@@ -410,7 +410,33 @@ export default function UploadTool() {
     },
   });
 
-  // Generate CMYK PDF with vector preservation
+  const uploadCanvasScreenshot = async (projectId: string): Promise<boolean> => {
+    try {
+      const dataUrl = await canvasWorkspaceRef.current?.captureCanvasAsImage();
+      if (!dataUrl) {
+        console.warn('⚠️ Canvas screenshot capture returned null');
+        return false;
+      }
+      const response = await fetch(dataUrl);
+      const blob = await response.blob();
+      const formData = new FormData();
+      formData.append('screenshot', blob, 'canvas_screenshot.png');
+      const uploadRes = await fetch(`/api/projects/${projectId}/canvas-screenshot`, {
+        method: 'POST',
+        body: formData,
+      });
+      if (uploadRes.ok) {
+        console.log('📸 Canvas screenshot uploaded for PDF');
+        return true;
+      }
+      console.warn('⚠️ Screenshot upload failed:', uploadRes.status);
+      return false;
+    } catch (err) {
+      console.error('⚠️ Screenshot capture/upload error:', err);
+      return false;
+    }
+  };
+
   const generatePDFMutation = useMutation({
     mutationFn: async (projectData?: string | { name: string; quantity: number }) => {
       let name: string;
@@ -427,6 +453,10 @@ export default function UploadTool() {
       
       if (!name || name.trim() === '' || name === 'Untitled Project') {
         throw new Error('Please provide a project name before generating PDF');
+      }
+      
+      if (currentProject?.id) {
+        await uploadCanvasScreenshot(currentProject.id);
       }
       
       const url = `/api/projects/${currentProject?.id}/generate-pdf?colorSpace=cmyk`;
@@ -473,6 +503,7 @@ export default function UploadTool() {
         console.log('ℹ️ No canvas elements - skipping PDF generation (zip-only repeat order)');
       } else {
         console.log('📄 Generating PDF for Odoo attachment...');
+        await uploadCanvasScreenshot(currentProject.id);
         try {
           const pdfUrl = `/api/projects/${currentProject.id}/generate-pdf?colorSpace=cmyk`;
           const pdfResponse = await fetch(pdfUrl);

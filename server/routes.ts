@@ -755,180 +755,147 @@ export async function registerRoutes(app: express.Application) {
     }
   });
 
-  async function generateServerCanvasPreview(projectId: string, canvasElements: any[], logos: any[], templateSize: any, garmentColor?: string | null): Promise<Buffer | null> {
+  async function generateCanvasPreviewPng(canvasElements: any[], logos: any[], templateSize: any): Promise<Buffer | null> {
     try {
-      const { PDFDocument, rgb: pdfRgb } = await import('pdf-lib');
       const templateW = templateSize.width;
       const templateH = templateSize.height;
-      const ptPerMm = 2.83465;
-      const pageW = Math.round(templateW * ptPerMm);
-      const pageH = Math.round(templateH * ptPerMm);
-
-      const compositeDoc = await PDFDocument.create();
-      const page = compositeDoc.addPage([pageW, pageH]);
-
-      const bgHex = garmentColor || '#CDCECC';
-      const bgR = parseInt(bgHex.slice(1, 3), 16) / 255;
-      const bgG = parseInt(bgHex.slice(3, 5), 16) / 255;
-      const bgB = parseInt(bgHex.slice(5, 7), 16) / 255;
-      page.drawRectangle({ x: 0, y: 0, width: pageW, height: pageH, color: pdfRgb(bgR, bgG, bgB) });
-
+      const pxPerMm = 4;
+      const imgW = Math.round(templateW * pxPerMm);
+      const imgH = Math.round(templateH * pxPerMm);
       const centerXmm = templateW / 2;
       const centerYmm = templateH / 2;
+
+      const elementSvgs: string[] = [];
 
       for (const element of canvasElements) {
         const logo = logos.find((l: any) => l.id === element.logoId);
         if (!logo) continue;
 
-        let imgPath: string | null = null;
         const svgPath = path.join(process.cwd(), 'uploads', logo.filename);
-        const pngFallback = path.join(process.cwd(), 'uploads', logo.filename.replace('.svg', '_preview.png'));
+        if (!fs.existsSync(svgPath)) continue;
 
-        if (fs.existsSync(pngFallback)) {
-          imgPath = pngFallback;
-        } else if (fs.existsSync(svgPath) && logo.filename.endsWith('.svg')) {
-          const tmpPng = `/tmp/canvas_preview_${Date.now()}_${Math.random().toString(36).slice(2)}.png`;
-          try {
-            const renderW = Math.round((element.width || 100) * ptPerMm * 2);
-            const renderH = Math.round((element.height || 100) * ptPerMm * 2);
-            await new Promise<void>((resolve, reject) => {
-              exec(
-                `rsvg-convert -w ${renderW} -h ${renderH} -o "${tmpPng}" "${svgPath}"`,
-                { timeout: 10000 },
-                (err) => { if (err) reject(err); else resolve(); }
-              );
-            });
-            if (fs.existsSync(tmpPng)) imgPath = tmpPng;
-          } catch {
-          }
-        }
+        const elWmm = element.width || 100;
+        const elHmm = element.height || 100;
+        const elCenterXmm = centerXmm + (element.x || 0);
+        const elCenterYmm = centerYmm + (element.y || 0);
+        const leftMm = elCenterXmm - elWmm / 2;
+        const topMm = elCenterYmm - elHmm / 2;
 
-        if (!imgPath || !fs.existsSync(imgPath)) continue;
+        const leftPx = leftMm * pxPerMm;
+        const topPx = topMm * pxPerMm;
+        const wPx = elWmm * pxPerMm;
+        const hPx = elHmm * pxPerMm;
 
+        const tmpPng = `/tmp/canvas_el_${Date.now()}_${Math.random().toString(36).slice(2)}.png`;
         try {
-          const imgData = fs.readFileSync(imgPath);
-          const pngImg = await compositeDoc.embedPng(imgData);
+          await new Promise<void>((resolve, reject) => {
+            exec(
+              `rsvg-convert -w ${Math.round(wPx * 2)} -h ${Math.round(hPx * 2)} --keep-aspect-ratio -o "${tmpPng}" "${svgPath}"`,
+              { timeout: 15000 },
+              (err) => { if (err) reject(err); else resolve(); }
+            );
+          });
 
-          const elWmm = element.width || 100;
-          const elHmm = element.height || 100;
-          const elementCenterXmm = centerXmm + (element.x || 0);
-          const elementCenterYmm = centerYmm + (element.y || 0);
-          const leftMm = elementCenterXmm - elWmm / 2;
-          const topMm = elementCenterYmm - elHmm / 2;
+          if (!fs.existsSync(tmpPng)) continue;
 
-          const drawX = leftMm * ptPerMm;
-          const drawY = pageH - (topMm * ptPerMm) - (elHmm * ptPerMm);
-          const drawW = elWmm * ptPerMm;
-          const drawH = elHmm * ptPerMm;
+          const pngData = fs.readFileSync(tmpPng);
+          const pngBase64 = pngData.toString('base64');
+          try { fs.unlinkSync(tmpPng); } catch {}
 
-          page.drawImage(pngImg, { x: drawX, y: drawY, width: drawW, height: drawH });
-          console.log(`📸 Preview element: ${logo.filename} at (${leftMm.toFixed(1)}, ${topMm.toFixed(1)})mm size ${elWmm.toFixed(1)}x${elHmm.toFixed(1)}mm`);
+          const rotation = element.rotation || 0;
+          const centerPx_X = leftPx + wPx / 2;
+          const centerPx_Y = topPx + hPx / 2;
+
+          const opacity = element.opacity !== undefined ? element.opacity : 1;
+
+          elementSvgs.push(
+            `<g transform="translate(${centerPx_X}, ${centerPx_Y}) rotate(${rotation}) translate(${-wPx / 2}, ${-hPx / 2})" opacity="${opacity}">` +
+            `<image href="data:image/png;base64,${pngBase64}" x="0" y="0" width="${wPx}" height="${hPx}" preserveAspectRatio="xMidYMid meet"/>` +
+            `</g>`
+          );
+
+          console.log(`📸 Preview: ${logo.filename} at (${leftMm.toFixed(1)},${topMm.toFixed(1)})mm ${elWmm.toFixed(0)}x${elHmm.toFixed(0)}mm rot=${rotation}°`);
         } catch (err: any) {
-          console.error(`⚠️ Failed to embed element:`, err.message);
-        }
-
-        if (imgPath?.startsWith('/tmp/')) {
-          try { fs.unlinkSync(imgPath); } catch {}
+          try { fs.unlinkSync(tmpPng); } catch {}
+          console.error(`⚠️ Preview element failed:`, err.message);
         }
       }
 
-      const previewBytes = await compositeDoc.save();
-      return Buffer.from(previewBytes);
+      if (elementSvgs.length === 0) return null;
+
+      const compositeSvg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+     width="${imgW}" height="${imgH}" viewBox="0 0 ${imgW} ${imgH}">
+  <rect width="${imgW}" height="${imgH}" fill="#CDCECC"/>
+  ${elementSvgs.join('\n  ')}
+  <text x="${imgW - 8}" y="${imgH - 8}" text-anchor="end" font-size="14" fill="#666" font-family="Arial, sans-serif">${templateSize.name || 'Template'} (${templateW}×${templateH}mm)</text>
+</svg>`;
+
+      const tmpSvg = `/tmp/canvas_composite_${Date.now()}.svg`;
+      const tmpPng = `/tmp/canvas_composite_${Date.now()}.png`;
+      fs.writeFileSync(tmpSvg, compositeSvg);
+
+      await new Promise<void>((resolve, reject) => {
+        exec(
+          `rsvg-convert -w ${imgW} -h ${imgH} -o "${tmpPng}" "${tmpSvg}"`,
+          { timeout: 20000 },
+          (err) => { if (err) reject(err); else resolve(); }
+        );
+      });
+
+      try { fs.unlinkSync(tmpSvg); } catch {}
+
+      if (!fs.existsSync(tmpPng)) return null;
+      const result = fs.readFileSync(tmpPng);
+      try { fs.unlinkSync(tmpPng); } catch {}
+      console.log(`📸 Canvas preview PNG generated: ${result.length} bytes (${imgW}x${imgH}px)`);
+      return result;
     } catch (err: any) {
-      console.error('⚠️ Server-side canvas preview generation failed:', err.message);
+      console.error('⚠️ Canvas preview generation failed:', err.message);
       return null;
     }
   }
 
-  async function appendCanvasPreviewFromPage1(pdfBytes: Buffer | Uint8Array): Promise<Buffer> {
+  async function appendCanvasPreviewFromPage1(pdfBytes: Buffer | Uint8Array, canvasElements?: any[], logos?: any[], templateSize?: any): Promise<Buffer> {
+    if (!canvasElements || !logos || !templateSize || canvasElements.length === 0) {
+      return Buffer.isBuffer(pdfBytes) ? pdfBytes : Buffer.from(pdfBytes);
+    }
+    
     try {
-      const { PDFDocument, rgb } = await import('pdf-lib');
-      const srcDoc = await PDFDocument.load(pdfBytes);
-      if (srcDoc.getPageCount() < 1) {
+      const previewPng = await generateCanvasPreviewPng(canvasElements, logos, templateSize);
+      if (!previewPng) {
+        console.log('⚠️ Canvas preview generation returned null, skipping preview page');
         return Buffer.isBuffer(pdfBytes) ? pdfBytes : Buffer.from(pdfBytes);
       }
-      const [copiedPage] = await srcDoc.copyPages(srcDoc, [0]);
-      srcDoc.addPage(copiedPage);
-      const pageWidth = copiedPage.getWidth();
-      const pageHeight = copiedPage.getHeight();
+
+      const { PDFDocument, rgb } = await import('pdf-lib');
+      const pdfDoc = await PDFDocument.load(pdfBytes);
+      const pngImage = await pdfDoc.embedPng(previewPng);
+      const imgAspect = pngImage.width / pngImage.height;
       
-      const labelH = 24;
-      copiedPage.drawRectangle({
+      const existingPage = pdfDoc.getPage(0);
+      const pageWidth = existingPage.getWidth();
+      const pageHeight = existingPage.getHeight();
+      const page = pdfDoc.addPage([pageWidth, pageHeight]);
+
+      const labelH = 28;
+      page.drawRectangle({
         x: 0,
         y: pageHeight - labelH,
         width: pageWidth,
         height: labelH,
         color: rgb(0.15, 0.15, 0.15),
       });
-      copiedPage.drawText('Canvas Preview', {
+      page.drawText('Canvas Preview', {
         x: 12,
-        y: pageHeight - labelH + 7,
-        size: 11,
+        y: pageHeight - labelH + 8,
+        size: 12,
         color: rgb(0.85, 0.85, 0.85),
       });
-      
-      const resultBytes = await srcDoc.save();
-      console.log(`📸 Canvas preview page appended (copy of page 1)`);
-      return Buffer.from(resultBytes);
-    } catch (err: any) {
-      console.error('⚠️ Failed to append canvas preview page:', err.message);
-      return Buffer.isBuffer(pdfBytes) ? pdfBytes : Buffer.from(pdfBytes);
-    }
-  }
 
-  async function appendCanvasScreenshotPage(pdfBytes: Buffer | Uint8Array, projectId: string, canvasElements?: any[], logos?: any[], templateSize?: any, garmentColor?: string | null): Promise<Buffer> {
-    let screenshotData: Buffer | null = null;
-    const screenshotPath = path.join(process.cwd(), 'uploads', `canvas_screenshot_${projectId}.png`);
-
-    if (fs.existsSync(screenshotPath)) {
-      const raw = fs.readFileSync(screenshotPath);
-      const minNonBlank = 5000;
-      if (raw.length > minNonBlank) {
-        screenshotData = raw;
-        console.log(`📸 Using client-uploaded screenshot (${raw.length} bytes)`);
-      } else {
-        console.log(`⚠️ Client screenshot too small (${raw.length} bytes), likely blank`);
-      }
-      try { fs.unlinkSync(screenshotPath); } catch {}
-    }
-
-    if (!screenshotData && canvasElements && logos && templateSize) {
-      console.log('📸 Generating server-side canvas preview...');
-      const serverPreview = await generateServerCanvasPreview(projectId, canvasElements, logos, templateSize, garmentColor);
-      if (serverPreview) {
-        try {
-          const tmpPdfPath = `/tmp/server_preview_${Date.now()}.pdf`;
-          const tmpPngPath = `/tmp/server_preview_${Date.now()}.png`;
-          fs.writeFileSync(tmpPdfPath, serverPreview);
-          try {
-            execSync(`gs -dBATCH -dNOPAUSE -q -sDEVICE=png16m -r150 -dFirstPage=1 -dLastPage=1 -sOutputFile="${tmpPngPath}" "${tmpPdfPath}"`, { timeout: 15000 });
-            if (fs.existsSync(tmpPngPath)) {
-              screenshotData = fs.readFileSync(tmpPngPath);
-              console.log(`📸 Server-side preview rendered: ${screenshotData.length} bytes`);
-            }
-          } catch {}
-          try { fs.unlinkSync(tmpPdfPath); } catch {}
-          try { fs.unlinkSync(tmpPngPath); } catch {}
-        } catch {}
-      }
-    }
-
-    if (!screenshotData) {
-      return Buffer.isBuffer(pdfBytes) ? pdfBytes : Buffer.from(pdfBytes);
-    }
-
-    try {
-      const { PDFDocument } = await import('pdf-lib');
-      const pdfDoc = await PDFDocument.load(pdfBytes);
-      const pngImage = await pdfDoc.embedPng(screenshotData);
-      const imgAspect = pngImage.width / pngImage.height;
-      const existingPage = pdfDoc.getPage(0);
-      const pageWidth = existingPage.getWidth();
-      const pageHeight = existingPage.getHeight();
-      const page = pdfDoc.addPage([pageWidth, pageHeight]);
-      const margin = 36;
+      const margin = 24;
       const availW = pageWidth - margin * 2;
-      const availH = pageHeight - margin * 2 - 40;
+      const availH = pageHeight - margin * 2 - labelH;
       let drawW: number, drawH: number;
       if (imgAspect > availW / availH) {
         drawW = availW;
@@ -938,15 +905,86 @@ export async function registerRoutes(app: express.Application) {
         drawW = availH * imgAspect;
       }
       const x = (pageWidth - drawW) / 2;
-      const y = (pageHeight - drawH) / 2 + 20;
+      const y = (pageHeight - labelH - drawH) / 2;
       page.drawImage(pngImage, { x, y, width: drawW, height: drawH });
-      const { rgb } = await import('pdf-lib');
-      page.drawText('Canvas Preview', {
-        x: margin,
-        y: pageHeight - margin + 5,
-        size: 14,
-        color: rgb(0.3, 0.3, 0.3),
+
+      const resultBytes = await pdfDoc.save();
+      console.log(`📸 Canvas preview page appended (server-rendered)`);
+      return Buffer.from(resultBytes);
+    } catch (err: any) {
+      console.error('⚠️ Failed to append canvas preview page:', err.message);
+      return Buffer.isBuffer(pdfBytes) ? pdfBytes : Buffer.from(pdfBytes);
+    }
+  }
+
+  async function appendCanvasScreenshotPage(pdfBytes: Buffer | Uint8Array, projectId: string, canvasElements?: any[], logos?: any[], templateSize?: any): Promise<Buffer> {
+    let screenshotData: Buffer | null = null;
+    const screenshotPath = path.join(process.cwd(), 'uploads', `canvas_screenshot_${projectId}.png`);
+
+    if (fs.existsSync(screenshotPath)) {
+      const raw = fs.readFileSync(screenshotPath);
+      const minNonBlank = 5000;
+      if (raw.length > minNonBlank) {
+        screenshotData = raw;
+        console.log(`📸 Using client-uploaded canvas screenshot (${raw.length} bytes)`);
+      } else {
+        console.log(`⚠️ Client screenshot too small (${raw.length} bytes), likely blank — trying server fallback`);
+      }
+      try { fs.unlinkSync(screenshotPath); } catch {}
+    }
+
+    if (!screenshotData && canvasElements && logos && templateSize) {
+      console.log('📸 No client screenshot — generating server-side canvas preview as fallback...');
+      screenshotData = await generateCanvasPreviewPng(canvasElements, logos, templateSize);
+      if (screenshotData) {
+        console.log(`📸 Server fallback preview: ${screenshotData.length} bytes`);
+      }
+    }
+
+    if (!screenshotData) {
+      return Buffer.isBuffer(pdfBytes) ? pdfBytes : Buffer.from(pdfBytes);
+    }
+
+    try {
+      const { PDFDocument, rgb } = await import('pdf-lib');
+      const pdfDoc = await PDFDocument.load(pdfBytes);
+      const pngImage = await pdfDoc.embedPng(screenshotData);
+      const imgAspect = pngImage.width / pngImage.height;
+      const existingPage = pdfDoc.getPage(0);
+      const pageWidth = existingPage.getWidth();
+      const pageHeight = existingPage.getHeight();
+      const page = pdfDoc.addPage([pageWidth, pageHeight]);
+
+      const labelH = 28;
+      page.drawRectangle({
+        x: 0,
+        y: pageHeight - labelH,
+        width: pageWidth,
+        height: labelH,
+        color: rgb(0.15, 0.15, 0.15),
       });
+      page.drawText('Canvas Screenshot', {
+        x: 12,
+        y: pageHeight - labelH + 8,
+        size: 12,
+        color: rgb(0.85, 0.85, 0.85),
+      });
+
+      const margin = 24;
+      const availW = pageWidth - margin * 2;
+      const availH = pageHeight - margin * 2 - labelH;
+      let drawW: number, drawH: number;
+      if (imgAspect > availW / availH) {
+        drawW = availW;
+        drawH = availW / imgAspect;
+      } else {
+        drawH = availH;
+        drawW = availH * imgAspect;
+      }
+      const x = (pageWidth - drawW) / 2;
+      const y = (pageHeight - labelH - drawH) / 2;
+      page.drawImage(pngImage, { x, y, width: drawW, height: drawH });
+
       const resultBytes = await pdfDoc.save();
       console.log(`📸 Canvas screenshot appended as final page for project ${projectId}`);
       return Buffer.from(resultBytes);
@@ -1094,7 +1132,7 @@ export async function registerRoutes(app: express.Application) {
               try { fs.unlinkSync(tmpIn); } catch {}
               try { fs.unlinkSync(tmpOut); } catch {}
             }
-            const dtfWithScreenshot = await appendCanvasPreviewFromPage1(finalBuf);
+            const dtfWithScreenshot = await appendCanvasScreenshotPage(finalBuf, projectId, canvasElements, logos, templateSize);
             res.setHeader('Content-Type', 'application/pdf');
             res.setHeader('Content-Disposition', `attachment; filename="${buildPdfFilename(project.name || 'DTF', project.quantity || 1)}"`);
             return res.send(dtfWithScreenshot);
@@ -1148,7 +1186,7 @@ export async function registerRoutes(app: express.Application) {
               
               console.log(`✅ Applique Badges PDF with form page: ${appliquePdfBytes.length} bytes`);
               
-              const appliqueWithScreenshot = await appendCanvasPreviewFromPage1(appliquePdfBytes);
+              const appliqueWithScreenshot = await appendCanvasScreenshotPage(appliquePdfBytes, projectId, canvasElements, logos, templateSize);
               res.setHeader('Content-Type', 'application/pdf');
               res.setHeader('Content-Disposition', `attachment; filename="${buildPdfFilename(project.name, project.quantity || 1, templateSize.productCode, 'applique')}"`);
               res.send(appliqueWithScreenshot);
@@ -1159,7 +1197,7 @@ export async function registerRoutes(app: express.Application) {
             }
           }
           
-          const robustWithScreenshot = await appendCanvasPreviewFromPage1(pdfBuffer);
+          const robustWithScreenshot = await appendCanvasScreenshotPage(pdfBuffer, projectId, canvasElements, logos, templateSize);
           res.setHeader('Content-Type', 'application/pdf');
           res.setHeader('Content-Disposition', `attachment; filename="${buildPdfFilename(project.name, project.quantity || 1, templateSize.productCode)}"`);
           res.send(robustWithScreenshot);
@@ -2101,7 +2139,7 @@ export async function registerRoutes(app: express.Application) {
             
             console.log(`✅ Applique Badges PDF with form page: ${appliquePdfBytes.length} bytes`);
             
-            const fallbackAppliqueWithScreenshot = await appendCanvasPreviewFromPage1(appliquePdfBytes);
+            const fallbackAppliqueWithScreenshot = await appendCanvasScreenshotPage(appliquePdfBytes, projectId, canvasElements, logos, templateSize);
             res.setHeader('Content-Type', 'application/pdf');
             res.setHeader('Content-Disposition', `attachment; filename="${buildPdfFilename(project.name, project.quantity || 1, templateSize?.productCode, 'applique')}"`);
             res.send(fallbackAppliqueWithScreenshot);
@@ -2161,7 +2199,7 @@ export async function registerRoutes(app: express.Application) {
             fs.unlinkSync(tempRgbPath);
             fs.unlinkSync(tempCmykPath);
             
-            const cmykWithScreenshot = await appendCanvasPreviewFromPage1(cmykPdfBytes);
+            const cmykWithScreenshot = await appendCanvasScreenshotPage(cmykPdfBytes, projectId, canvasElements, logos, templateSize);
             res.setHeader('Content-Type', 'application/pdf');
             res.setHeader('Content-Disposition', `attachment; filename="${buildPdfFilename(project.name, project.quantity || 1, templateSize?.productCode)}"`);
             res.send(cmykWithScreenshot);
@@ -2175,7 +2213,7 @@ export async function registerRoutes(app: express.Application) {
           console.log('Returning RGB PDF as fallback');
         }
         
-        const fallbackWithScreenshot = await appendCanvasPreviewFromPage1(Buffer.from(pdfBytes));
+        const fallbackWithScreenshot = await appendCanvasScreenshotPage(Buffer.from(pdfBytes), projectId, canvasElements, logos, templateSize);
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename="${buildPdfFilename(project.name, project.quantity || 1, templateSize?.productCode)}"`);
         res.send(fallbackWithScreenshot);
