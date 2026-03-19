@@ -94,9 +94,13 @@ export default function ImpositionModal({
       return;
     }
 
-    // Check if imposition will fit on canvas only if NOT centering
-    const totalWidth = (columns * selectedElement.width) + ((columns - 1) * horizontalSpacing);
-    const totalHeight = (rows * selectedElement.height) + ((rows - 1) * verticalSpacing);
+    // Use visual dimensions (accounting for rotation)
+    const rot = ((selectedElement.rotation || 0) % 360 + 360) % 360;
+    const isRotated = rot === 90 || rot === 270;
+    const vw = isRotated ? selectedElement.height : selectedElement.width;
+    const vh = isRotated ? selectedElement.width : selectedElement.height;
+    const totalWidth = (columns * vw) + ((columns - 1) * horizontalSpacing);
+    const totalHeight = (rows * vh) + ((rows - 1) * verticalSpacing);
     
     if (!centerOnCanvas && (selectedElement.x + totalWidth > template.width || selectedElement.y + totalHeight > template.height)) {
       toast({
@@ -128,8 +132,12 @@ export default function ImpositionModal({
   };
 
   const totalCopies = rows * columns;
-  const totalWidth = (columns * selectedElement.width) + ((columns - 1) * horizontalSpacing);
-  const totalHeight = (rows * selectedElement.height) + ((rows - 1) * verticalSpacing);
+  const displayRot = ((selectedElement.rotation || 0) % 360 + 360) % 360;
+  const displayRotated = displayRot === 90 || displayRot === 270;
+  const displayVW = displayRotated ? selectedElement.height : selectedElement.width;
+  const displayVH = displayRotated ? selectedElement.width : selectedElement.height;
+  const totalWidth = (columns * displayVW) + ((columns - 1) * horizontalSpacing);
+  const totalHeight = (rows * displayVH) + ((rows - 1) * verticalSpacing);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -216,7 +224,7 @@ export default function ImpositionModal({
             <div className="text-sm text-gray-600 space-y-1">
               <div>Total copies: {totalCopies}</div>
               <div>Grid size: {Math.round(totalWidth)}×{Math.round(totalHeight)}mm</div>
-              <div>Logo size: {Math.round(selectedElement.width)}×{Math.round(selectedElement.height)}mm</div>
+              <div>Logo size: {Math.round(displayVW)}×{Math.round(displayVH)}mm (visual)</div>
             </div>
             
             {!centerOnCanvas && (selectedElement.x + totalWidth > template.width || selectedElement.y + totalHeight > template.height) && (

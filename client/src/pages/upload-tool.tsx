@@ -97,6 +97,7 @@ export default function UploadTool() {
   const [showOrientationMismatch, setShowOrientationMismatch] = useState(false);
   const [orientationMismatchInfo, setOrientationMismatchInfo] = useState<{ logoId: string; logoName: string; logoOrientation: string; templateOrientation: string; elementId?: string } | null>(null);
   const [pendingOrientationCheckLogoIds, setPendingOrientationCheckLogoIds] = useState<string[]>([]);
+  const [pendingAutoSelectLogoIds, setPendingAutoSelectLogoIds] = useState<string[]>([]);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const autoFullscreen = false;
   const [isInIframe, setIsInIframe] = useState(false);
@@ -356,6 +357,18 @@ export default function UploadTool() {
     
     setPendingOrientationCheckLogoIds([]);
   }, [canvasElements, pendingOrientationCheckLogoIds, currentProject?.templateSize]);
+
+  // Auto-select newly uploaded logos after their canvas elements appear
+  useEffect(() => {
+    if (pendingAutoSelectLogoIds.length === 0 || canvasElements.length === 0) return;
+    const newElements = canvasElements.filter(el => 
+      pendingAutoSelectLogoIds.includes(el.logoId?.toString() || '')
+    );
+    if (newElements.length > 0) {
+      setSelectedElements(newElements);
+      setPendingAutoSelectLogoIds([]);
+    }
+  }, [canvasElements, pendingAutoSelectLogoIds]);
 
   // Keep selectedElements synced with latest canvasElements data (e.g., after rotation updates)
   useEffect(() => {
@@ -1971,6 +1984,9 @@ export default function UploadTool() {
           
           // Invalidate canvas elements to fetch new ones
           queryClient.invalidateQueries({ queryKey: ["/api/projects", currentProject.id, "canvas-elements"] });
+          
+          // Auto-select newly uploaded logos once canvas elements load
+          setPendingAutoSelectLogoIds(newLogos.map((l: any) => l.id));
           
           // Check if any uploaded logo is a PDF with raster only content OR a regular raster image OR extracted PNG from PDF
           const pdfWithRasterOnly = newLogos.find((logo: any) => logo.isPdfWithRasterOnly === true);
