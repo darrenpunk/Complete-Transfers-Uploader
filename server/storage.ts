@@ -869,6 +869,7 @@ export class DatabaseStorage implements IStorage {
       canvasFallbackFilename: insertLogo.canvasFallbackFilename || null,
       isComplexFilePngFallback: insertLogo.isComplexFilePngFallback || false,
       detectedGarmentColors: insertLogo.detectedGarmentColors || null,
+      preflightData: insertLogo.preflightData || null,
     }).returning();
     return logo;
   }

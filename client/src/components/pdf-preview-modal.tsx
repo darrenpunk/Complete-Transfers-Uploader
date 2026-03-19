@@ -1,7 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Eye, Layers, Palette, Type, FileText, ChevronLeft, ChevronRight, Download } from "lucide-react";
+import { Eye, Layers, Palette, Type, FileText, ChevronLeft, ChevronRight, Download, ImageIcon } from "lucide-react";
 import { CompleteTransferLogo } from "./complete-transfer-logo";
 import { useState, useMemo, useCallback } from "react";
 
@@ -272,6 +272,23 @@ export default function PDFPreviewModal({
     return false;
   });
 
+  const embeddedImageInfo = useMemo(() => {
+    let totalImages = 0;
+    let lowResCount = 0;
+    let lowestDpi = Infinity;
+    for (const logo of logos) {
+      const embData = (logo as any).preflightData?.embeddedImageData;
+      if (embData?.images?.length > 0) {
+        totalImages += embData.images.length;
+        lowResCount += embData.images.filter((img: any) => img.isLowRes).length;
+        if (embData.lowestDpi != null && embData.lowestDpi < lowestDpi) {
+          lowestDpi = embData.lowestDpi;
+        }
+      }
+    }
+    return { totalImages, lowResCount, lowestDpi: lowestDpi === Infinity ? 0 : lowestDpi };
+  }, [logos]);
+
   const preflightItems = [
     {
       icon: Layers,
@@ -285,6 +302,14 @@ export default function PDFPreviewModal({
       value: hasLowResLogos ? "Low resolution detected" : "Vector graphics",
       status: hasLowResLogos ? "warning" : "success"
     },
+    ...(embeddedImageInfo.totalImages > 0 ? [{
+      icon: ImageIcon,
+      label: "Embedded Images",
+      value: embeddedImageInfo.lowResCount > 0
+        ? `${embeddedImageInfo.lowResCount} low-res image${embeddedImageInfo.lowResCount > 1 ? 's' : ''} (${embeddedImageInfo.lowestDpi} DPI — need 300+)`
+        : `${embeddedImageInfo.totalImages} image${embeddedImageInfo.totalImages > 1 ? 's' : ''} (${embeddedImageInfo.lowestDpi}+ DPI)`,
+      status: embeddedImageInfo.lowResCount > 0 ? "warning" : "success"
+    }] : []),
     {
       icon: Type,
       label: "Typography",

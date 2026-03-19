@@ -975,6 +975,26 @@ export default function ToolsSidebar({
               status: isVector ? "pass" : "warning",
               value: isVector ? "Vector" : "Raster"
             });
+
+            // Embedded Images DPI Check
+            const embData = (logo as any).preflightData?.embeddedImageData;
+            if (embData?.images?.length > 0) {
+              const lowResCount = embData.images.filter((img: any) => img.isLowRes).length;
+              const lowestDpi = embData.lowestDpi || 0;
+              if (lowResCount > 0) {
+                checks.push({
+                  name: "Embedded Images",
+                  status: "warning",
+                  value: `${lowResCount} low-res image${lowResCount > 1 ? 's' : ''} (${lowestDpi} DPI — need 300+)`
+                });
+              } else {
+                checks.push({
+                  name: "Embedded Images",
+                  status: "pass",
+                  value: `${embData.images.length} image${embData.images.length > 1 ? 's' : ''} (${lowestDpi}+ DPI)`
+                });
+              }
+            }
             
             // Color Mode Check - Enhanced for different file types
             // Try both logo.svgColors and logo.svgColors.colors (different data structures)
