@@ -115,6 +115,12 @@ app.get('/uploads/:filename', async (req, res, next) => {
     return next();
   }
   
+  // Validate inkColor to prevent command injection (must be hex color or named CSS color)
+  const inkColorStr = String(inkColor);
+  if (!/^#?[0-9a-fA-F]{3,8}$/.test(inkColorStr) && !/^[a-zA-Z]{1,30}$/.test(inkColorStr)) {
+    return res.status(400).json({ error: 'Invalid ink color format' });
+  }
+  
   const filePath = path.join('./uploads', filename);
   
   if (!fs.existsSync(filePath)) {
@@ -138,7 +144,35 @@ app.get('/uploads/:filename', async (req, res, next) => {
       if (isJpeg) {
         execSync(`convert "${filePath}" -grayscale Rec709Luminance -fill "${inkColor}" -colorize 100 "${tmpOutput}"`, { timeout: 30000 });
       } else {
-        execSync(`convert "${filePath}" -alpha extract -background "${inkColor}" -alpha shape "${tmpOutput}"`, { timeout: 30000 });
+        // Check if the PNG has meaningful transparency
+        let hasAlpha = false;
+        try {
+          const alphaCheck = execSync(`identify -format "%A" "${filePath}" 2>/dev/null || echo "False"`, { timeout: 10000 }).toString().trim();
+          hasAlpha = alphaCheck === 'True' || alphaCheck === 'Blend';
+          
+          if (hasAlpha) {
+            // Check if the alpha channel is actually used (not all opaque)
+            const meanAlpha = execSync(`convert "${filePath}" -alpha extract -format "%[fx:mean]" info: 2>/dev/null || echo "1"`, { timeout: 10000 }).toString().trim();
+            const alphaVal = parseFloat(meanAlpha);
+            if (!isNaN(alphaVal) && alphaVal > 0.99) {
+              hasAlpha = false; // Alpha exists but is all opaque - treat as no alpha
+            }
+          }
+        } catch (e) {
+          // If check fails, assume no alpha
+        }
+        
+        if (hasAlpha) {
+          // PNG with transparency: extract alpha, fill with ink color, reapply alpha
+          execSync(`convert "${filePath}" -alpha extract -background "${inkColor}" -alpha shape "${tmpOutput}"`, { timeout: 30000 });
+        } else {
+          // Opaque PNG: luminance-based — create grayscale mask, apply as alpha on solid ink color
+          const tmpGray = tmpOutput.replace('.png', '_gray.png');
+          execSync(`convert "${filePath}" -grayscale Rec709Luminance "${tmpGray}"`, { timeout: 30000 });
+          const dims = execSync(`identify -format "%wx%h" "${filePath}" 2>/dev/null`, { timeout: 10000 }).toString().trim();
+          execSync(`convert -size ${dims} xc:"${inkColor}" "${tmpGray}" -alpha off -compose CopyOpacity -composite "${tmpOutput}"`, { timeout: 30000 });
+          try { fs.unlinkSync(tmpGray); } catch(e) {}
+        }
       }
       
       if (fs.existsSync(tmpOutput)) {

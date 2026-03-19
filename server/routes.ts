@@ -5362,17 +5362,30 @@ export async function registerRoutes(app: express.Application) {
         const usableWidth = templateWidth - (safetyMargin * 2);
         const usableHeight = templateHeight - (safetyMargin * 2);
 
-        // DISABLED AUTO-SCALE: Per user requirement, artwork must retain exact original dimensions
-        // Content that exceeds template bounds will extend beyond but retain true size
+        // For PDF-sourced content, preserve exact original dimensions (from MediaBox)
+        // For direct raster uploads (PNG/JPEG), auto-scale to fit if they exceed the template
         let finalDisplayWidth = displayWidth;
         let finalDisplayHeight = displayHeight;
         let wasAutoScaled = false;
         
-        // Log if content exceeds bounds (but do NOT scale)
+        const isDirectRasterFile = (finalMimeType === 'image/png' || finalMimeType === 'image/jpeg') && 
+                                    file.mimetype !== 'application/pdf' && !(file as any).isPdfWithRasterOnly;
+        
         if (displayWidth > usableWidth || displayHeight > usableHeight) {
-          console.log(`📐 ORIGINAL SIZE PRESERVED: Content ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm exceeds usable area ${usableWidth.toFixed(1)}×${usableHeight.toFixed(1)}mm`);
-          console.log(`   ⚠️ Content will extend beyond template bounds - this is expected behavior`);
-          console.log(`   ℹ️ User can manually scale via "Fit to Bounds" if needed`);
+          if (isDirectRasterFile) {
+            // Auto-scale direct raster uploads to fit within usable area
+            const scaleX = usableWidth / displayWidth;
+            const scaleY = usableHeight / displayHeight;
+            const scale = Math.min(scaleX, scaleY);
+            finalDisplayWidth = displayWidth * scale;
+            finalDisplayHeight = displayHeight * scale;
+            wasAutoScaled = true;
+            console.log(`📐 AUTO-SCALED RASTER: ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm → ${finalDisplayWidth.toFixed(1)}×${finalDisplayHeight.toFixed(1)}mm (scale: ${(scale * 100).toFixed(1)}%)`);
+          } else {
+            console.log(`📐 ORIGINAL SIZE PRESERVED: Content ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm exceeds usable area ${usableWidth.toFixed(1)}×${usableHeight.toFixed(1)}mm`);
+            console.log(`   ⚠️ Content will extend beyond template bounds - this is expected behavior`);
+            console.log(`   ℹ️ User can manually scale via "Fit to Bounds" if needed`);
+          }
         }
 
         // Use center-based coordinate system

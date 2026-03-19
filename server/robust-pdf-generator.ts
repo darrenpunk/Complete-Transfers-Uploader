@@ -1736,23 +1736,46 @@ grestore`;
         recoloredImagePath = path.join(process.cwd(), 'uploads', `recolored_${timestamp}.png`);
         const inkColor = colorOverrides.inkColor;
         
-        // Use ImageMagick to recolor: preserve alpha channel, replace all visible pixels with ink color
+        // Validate ink color format to prevent command injection
+        if (!/^#?[0-9a-fA-F]{3,8}$/.test(inkColor) && !/^[a-zA-Z]{1,30}$/.test(inkColor)) {
+          throw new Error(`Invalid ink color format: ${inkColor}`);
+        }
         // Recolor all visible/opaque pixels to the ink color while preserving transparency
-        // For images with alpha: extract alpha channel, fill with ink color, re-apply alpha mask
-        // For images without alpha (JPEG): just fill the whole image with ink color preserving luminance
         const isJpeg = imagePath.toLowerCase().endsWith('.jpg') || imagePath.toLowerCase().endsWith('.jpeg');
         if (isJpeg) {
-          // JPEG has no alpha, use grayscale conversion to preserve luminance then colorize
           execSync(
             `convert "${imagePath}" -grayscale Rec709Luminance -fill "${inkColor}" -colorize 100 "${recoloredImagePath}"`,
             { timeout: 30000 }
           );
         } else {
-          // PNG/other formats with alpha support: extract alpha, replace color, reapply alpha
-          execSync(
-            `convert "${imagePath}" -alpha extract -background "${inkColor}" -alpha shape "${recoloredImagePath}"`,
-            { timeout: 30000 }
-          );
+          // Check if PNG has meaningful alpha (transparency)
+          let hasAlpha = false;
+          try {
+            const alphaCheck = execSync(`identify -format "%A" "${imagePath}" 2>/dev/null || echo "False"`, { timeout: 10000 }).toString().trim();
+            hasAlpha = alphaCheck === 'True' || alphaCheck === 'Blend';
+            if (hasAlpha) {
+              const meanAlpha = execSync(`convert "${imagePath}" -alpha extract -format "%[fx:mean]" info: 2>/dev/null || echo "1"`, { timeout: 10000 }).toString().trim();
+              const alphaVal = parseFloat(meanAlpha);
+              if (!isNaN(alphaVal) && alphaVal > 0.99) {
+                hasAlpha = false;
+              }
+            }
+          } catch (e) { /* assume no alpha */ }
+          
+          if (hasAlpha) {
+            // PNG with transparency: fill with ink color, preserve alpha
+            execSync(
+              `convert "${imagePath}" -alpha extract -background "${inkColor}" -alpha shape "${recoloredImagePath}"`,
+              { timeout: 30000 }
+            );
+          } else {
+            // Opaque PNG: luminance-based — create grayscale mask, apply as alpha on solid ink color
+            const tmpGray = recoloredImagePath.replace('.png', '_gray.png');
+            execSync(`convert "${imagePath}" -grayscale Rec709Luminance "${tmpGray}"`, { timeout: 30000 });
+            const dims = execSync(`identify -format "%wx%h" "${imagePath}" 2>/dev/null`, { timeout: 10000 }).toString().trim();
+            execSync(`convert -size ${dims} xc:"${inkColor}" "${tmpGray}" -alpha off -compose CopyOpacity -composite "${recoloredImagePath}"`, { timeout: 30000 });
+            try { fs.unlinkSync(tmpGray); } catch(e) {}
+          }
         }
         
         if (fs.existsSync(recoloredImagePath)) {
