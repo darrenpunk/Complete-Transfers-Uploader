@@ -132,12 +132,14 @@ export default function ImpositionModal({
   };
 
   const totalCopies = rows * columns;
-  const displayRot = ((selectedElement.rotation || 0) % 360 + 360) % 360;
+  const displayRot = ((selectedElement?.rotation || 0) % 360 + 360) % 360;
   const displayRotated = displayRot === 90 || displayRot === 270;
-  const displayVW = displayRotated ? selectedElement.height : selectedElement.width;
-  const displayVH = displayRotated ? selectedElement.width : selectedElement.height;
+  const displayVW = displayRotated ? (selectedElement?.height || 0) : (selectedElement?.width || 0);
+  const displayVH = displayRotated ? (selectedElement?.width || 0) : (selectedElement?.height || 0);
   const totalWidth = (columns * displayVW) + ((columns - 1) * horizontalSpacing);
   const totalHeight = (rows * displayVH) + ((rows - 1) * verticalSpacing);
+
+  if (!selectedElement) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
