@@ -8580,22 +8580,36 @@ ${svgClose}`;
         if (serviceType === 'vectorization-with-product' && req.body.transferProduct) {
           console.log(`  2. ${req.body.transferProduct} - Quantity: ${req.body.quantity}`);
           
-          const placeholderMap: Record<string, string> = {
-            'A3': 'A3 Placeholder.pdf',
-            'A4': 'A4 Placeholder.pdf',
-            'A5': 'A5 Placeholder.pdf',
-            'A6': 'A6 Placeholder.pdf',
+          const sizePlaceholderMap: Record<string, string> = {
+            '297x420': 'A3 Placeholder.pdf',
+            '210x297': 'A4 Placeholder.pdf',
+            '148x210': 'A5 Placeholder.pdf',
+            '148x105': 'A6 Placeholder.pdf',
             '295x100': '295x100 Placeholder.pdf',
             '295x300': '295X300 Placeholder.pdf',
             '60x60': '60X60 Placeholder.pdf',
-            '70x100': '70x100 Placeholder.pdf',
             '100x70': '70x100 Placeholder.pdf',
+            '70x100': '70x100 Placeholder.pdf',
             '95x95': '95x95 Placeholder.pdf',
           };
           
-          const findPlaceholder = (templateId: string): string | null => {
+          const findPlaceholder = async (templateId: string): Promise<string | null> => {
+            const templateSizes = await storage.getTemplateSizes();
+            const tmpl = templateSizes.find(t => t.id === templateId);
+            if (tmpl) {
+              const sizeKey = `${tmpl.width}x${tmpl.height}`;
+              const file = sizePlaceholderMap[sizeKey];
+              if (file) {
+                const filePath = path.join(process.cwd(), 'server', 'placeholders', file);
+                console.log(`🔍 Placeholder lookup: ${templateId} → ${sizeKey} → ${file}`);
+                return filePath;
+              }
+              console.log(`⚠️ No placeholder for size ${sizeKey} (template: ${templateId})`);
+            } else {
+              console.log(`⚠️ Template not found: ${templateId}`);
+            }
             const tid = templateId.toLowerCase();
-            for (const [key, file] of Object.entries(placeholderMap)) {
+            for (const [key, file] of Object.entries(sizePlaceholderMap)) {
               if (tid.includes(key.toLowerCase())) {
                 return path.join(process.cwd(), 'server', 'placeholders', file);
               }
@@ -8604,7 +8618,7 @@ ${svgClose}`;
           };
           
           let pdfBase64 = '';
-          const selectedPlaceholder = findPlaceholder(req.body.transferProduct);
+          const selectedPlaceholder = await findPlaceholder(req.body.transferProduct);
           const garmentColorHex = req.body.garmentColor || '';
           
           try {
