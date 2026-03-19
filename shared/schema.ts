@@ -67,6 +67,7 @@ export const logos = pgTable("logos", {
   pageCount: integer("page_count").default(1), // Number of pages in PDF (for multi-page pass-through detection)
   hasGarmentPages: boolean("has_garment_pages").default(false), // True if PDF already has garment color pages (pages 2+)
   detectedGarmentColors: jsonb("detected_garment_colors"), // Detected garment colors and quantities from reorder PDF footer
+  preflightData: jsonb("preflight_data"), // Preflight analysis results including embedded image DPI data
 });
 
 export const canvasElements = pgTable("canvas_elements", {
