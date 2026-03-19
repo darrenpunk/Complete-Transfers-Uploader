@@ -8452,6 +8452,29 @@ ${svgClose}`;
         inkColor: req.body.inkColor || 'none'
       });
 
+      // Color name lookup for human-readable comments
+      const GARMENT_COLOR_NAMES: Record<string, string> = {
+        "#FFFFFF": "White", "#171816": "Black", "#D9D2AB": "Natural Cotton",
+        "#F3F590": "Pastel Yellow", "#F0F42A": "Yellow", "#d7da14": "Hi Viz",
+        "#D98F17": "Hi Viz Orange", "#388032": "HiViz Green", "#BF0072": "HIViz Pink",
+        "#767878": "Sports Grey", "#919393": "Light Grey Marl", "#A6A9A2": "Ash Grey",
+        "#BCBFBB": "Light Grey", "#353330": "Charcoal Grey", "#B9DBEA": "Pastel Blue",
+        "#5998D4": "Sky Blue", "#201C3A": "Navy", "#221866": "Royal Blue",
+        "#B5D55E": "Pastel Green", "#90BF33": "Lime Green", "#3C8A35": "Kelly Green",
+        "#E7BBD0": "Pastel Pink", "#D287A2": "Light Pink", "#C42469": "Fuchsia Pink",
+        "#C02300": "Red", "#762009": "Burgundy", "#4C0A6A": "Purple",
+      };
+      const colorNameLookup: Record<string, string> = {};
+      for (const [k, v] of Object.entries(GARMENT_COLOR_NAMES)) {
+        colorNameLookup[k.toUpperCase()] = v;
+      }
+      const getColorName = (hex: string | undefined | null): string => {
+        if (!hex) return '';
+        return colorNameLookup[hex.toUpperCase()] || hex;
+      };
+      const garmentColorName = getColorName(req.body.garmentColor);
+      const inkColorName = getColorName(req.body.inkColor);
+
       // Add items to Odoo cart
       const cartResults = {
         vectorizationAdded: false,
@@ -8506,7 +8529,7 @@ ${svgClose}`;
             partnerEmail: partnerEmail,
             pdfBase64: customerFileBase64,
             artworkFilename: customerFileName,
-            comments: `Vectorization Request #${vectorizationRequest.id}\nFile: ${customerFileName}\nPrint Size: ${req.body.printSize}${req.body.garmentColor ? `\nGarment Colour: ${req.body.garmentColor}` : ''}\nRequirements: ${req.body.comments}`,
+            comments: `Vectorization Request #${vectorizationRequest.id}\nFile: ${customerFileName}\nPrint Size: ${req.body.printSize}${req.body.garmentColor ? `\nGarment Colour: ${garmentColorName} (${req.body.garmentColor})` : ''}${req.body.inkColor ? `\nInk Colour: ${inkColorName} (${req.body.inkColor})` : ''}\nRequirements: ${req.body.comments}`,
             printSize: req.body.printSize || '',
           }),
         });
@@ -8634,7 +8657,7 @@ ${svgClose}`;
               quantity: parseInt(req.body.quantity) || 1,
               garmentColor: req.body.garmentColor || '',
               inkColor: req.body.inkColor || '',
-              comments: `Vectorization Request #${vectorizationRequest.id}\nOriginal File: ${vectorizationRequest.originalName}\nPrint Size: ${req.body.printSize}${req.body.garmentColor ? `\nGarment Colour: ${req.body.garmentColor}` : ''}\nRequirements: ${req.body.comments}`,
+              comments: `Vectorization Request #${vectorizationRequest.id}\nOriginal File: ${vectorizationRequest.originalName}\nPrint Size: ${req.body.printSize}${req.body.garmentColor ? `\nGarment Colour: ${garmentColorName} (${req.body.garmentColor})` : ''}${req.body.inkColor ? `\nInk Colour: ${inkColorName} (${req.body.inkColor})` : ''}\nRequirements: ${req.body.comments}\nTemplate: ${req.body.transferProduct || 'N/A'}`,
               source: 'completetransfers',
               website_id: parseInt(ctWebsiteId, 10),
               pdfBase64: pdfBase64,  // Placeholder PDF for transfer line
