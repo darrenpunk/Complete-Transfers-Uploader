@@ -5384,11 +5384,10 @@ export async function registerRoutes(app: express.Application) {
         console.log(`📐 Center-based positioning: content at (${centerX}, ${centerY}) - template center`);
         console.log(`📐 Template: ${templateWidth}×${templateHeight}mm, Content: ${finalDisplayWidth.toFixed(1)}×${finalDisplayHeight.toFixed(1)}mm${wasAutoScaled ? ' (auto-scaled)' : ''}`);
 
-        // Set color overrides for single colour templates with ink color
+        // Set color overrides for single colour templates with ink color (works for both vector and raster)
         let colorOverrides = null;
-        if (isSingleColourTemplate && project.inkColor && finalMimeType === 'image/svg+xml') {
-          // Create color overrides to apply ink color to all non-white colors
-          console.log(`🎨 Setting colorOverrides for single colour template with ink: ${project.inkColor}`);
+        if (isSingleColourTemplate && project.inkColor) {
+          console.log(`🎨 Setting colorOverrides for single colour template with ink: ${project.inkColor} (type: ${finalMimeType})`);
           colorOverrides = {
             inkColor: project.inkColor,
             appliedAt: new Date().toISOString()

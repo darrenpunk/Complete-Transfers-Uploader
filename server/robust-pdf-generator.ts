@@ -1725,6 +1725,51 @@ grestore`;
     
     console.log(`🖼️ Embedding raster image: ${path.basename(imagePath)}`);
     
+    // Check for ink color recoloring (single colour templates)
+    const colorOverrides = element.colorOverrides as any;
+    let recoloredImagePath: string | null = null;
+    
+    if (colorOverrides && colorOverrides.inkColor) {
+      console.log(`🎨 Ink color override detected for raster image: ${colorOverrides.inkColor}`);
+      try {
+        const timestamp = Date.now();
+        recoloredImagePath = path.join(process.cwd(), 'uploads', `recolored_${timestamp}.png`);
+        const inkColor = colorOverrides.inkColor;
+        
+        // Use ImageMagick to recolor: preserve alpha channel, replace all visible pixels with ink color
+        const { execSync } = require('child_process');
+        
+        // Recolor all visible/opaque pixels to the ink color while preserving transparency
+        // For images with alpha: extract alpha channel, fill with ink color, re-apply alpha mask
+        // For images without alpha (JPEG): just fill the whole image with ink color preserving luminance
+        const isJpeg = imagePath.toLowerCase().endsWith('.jpg') || imagePath.toLowerCase().endsWith('.jpeg');
+        if (isJpeg) {
+          // JPEG has no alpha, use grayscale conversion to preserve luminance then colorize
+          execSync(
+            `convert "${imagePath}" -grayscale Rec709Luminance -fill "${inkColor}" -colorize 100 "${recoloredImagePath}"`,
+            { timeout: 30000 }
+          );
+        } else {
+          // PNG/other formats with alpha support: extract alpha, replace color, reapply alpha
+          execSync(
+            `convert "${imagePath}" -alpha extract -background "${inkColor}" -alpha shape "${recoloredImagePath}"`,
+            { timeout: 30000 }
+          );
+        }
+        
+        if (fs.existsSync(recoloredImagePath)) {
+          console.log(`✅ Raster image recolored to ${inkColor}`);
+          imagePath = recoloredImagePath;
+        } else {
+          console.warn(`⚠️ Recolored image not created, using original`);
+          recoloredImagePath = null;
+        }
+      } catch (recolorError) {
+        console.error(`❌ Failed to recolor raster image:`, recolorError);
+        recoloredImagePath = null;
+      }
+    }
+    
     // Read image bytes
     const imageBytes = fs.readFileSync(imagePath);
     
@@ -1734,7 +1779,11 @@ grestore`;
     let embeddedImage: any;
     
     try {
-      if (filename.endsWith('.jpg') || filename.endsWith('.jpeg') || mimeType.includes('jpeg') || mimeType.includes('jpg')) {
+      if (recoloredImagePath) {
+        // Recolored images are always PNG
+        embeddedImage = await pdfDoc.embedPng(imageBytes);
+        console.log(`📸 Embedded recolored PNG image: ${embeddedImage.width}×${embeddedImage.height}px`);
+      } else if (filename.endsWith('.jpg') || filename.endsWith('.jpeg') || mimeType.includes('jpeg') || mimeType.includes('jpg')) {
         embeddedImage = await pdfDoc.embedJpg(imageBytes);
         console.log(`📸 Embedded JPEG image: ${embeddedImage.width}×${embeddedImage.height}px`);
       } else {
@@ -1743,6 +1792,10 @@ grestore`;
       }
     } catch (embedError) {
       console.error(`❌ Failed to embed image:`, embedError);
+      // Clean up temp recolored file
+      if (recoloredImagePath && fs.existsSync(recoloredImagePath)) {
+        try { fs.unlinkSync(recoloredImagePath); } catch (e) {}
+      }
       return;
     }
     
@@ -1794,6 +1847,11 @@ grestore`;
     if (page2) {
       page2.drawImage(embeddedImage, drawOptions);
       console.log(`✅ Raster image drawn on page 2`);
+    }
+    
+    // Clean up temporary recolored file
+    if (recoloredImagePath && fs.existsSync(recoloredImagePath)) {
+      try { fs.unlinkSync(recoloredImagePath); } catch (e) {}
     }
     
     console.log(`✅ Raster image embedded successfully`);
