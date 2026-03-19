@@ -4291,7 +4291,12 @@ export async function registerRoutes(app: express.Application) {
                             // CRITICAL: Ensure we don't pick up full-page background rectangles if GS already found the logo.
                             // RELAXED: Use a 99% threshold to be even safer for near-full-page content
                             // AND only switch if Inkscape is at least 5% larger than GS (prevents jitter)
-                            if (inkPageCoverage < 0.99 && (inkArea > gsArea * 1.05 || gsBboxPageCoverage < 0.05)) {
+                            // EXCEPTION: When GS coverage is very low (<50%) and Inkscape found much more (>2x),
+                            // trust Inkscape even at full-page coverage — GS likely missed white/light content
+                            const gsVeryLow = gsBboxPageCoverage < 0.50;
+                            const inkMuchLarger = inkArea > gsArea * 2.0;
+                            if ((inkPageCoverage < 0.99 && (inkArea > gsArea * 1.05 || gsBboxPageCoverage < 0.05)) ||
+                                (gsVeryLow && inkMuchLarger)) {
                               gsBounds = inkscapeVerifyBounds;
                               (gsBounds as any).__fromSvgCoords = true;
                               console.log(`✅ Using Inkscape bounds (white/clipped content): ${gsBounds.width.toFixed(1)}×${gsBounds.height.toFixed(1)}pts`);
