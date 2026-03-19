@@ -18,6 +18,22 @@ import TemplateSelectorModal from "@/components/template-selector-modal";
 import GarmentColorModal from "@/components/garment-color-modal";
 import InkColorModal from "@/components/ink-color-modal";
 
+const COLOR_NAMES: Record<string, string> = {
+  "#FFFFFF": "White", "#171816": "Black", "#D9D2AB": "Natural Cotton",
+  "#F3F590": "Pastel Yellow", "#F0F42A": "Yellow", "#D7DA14": "Hi Viz",
+  "#D98F17": "Hi Viz Orange", "#388032": "HiViz Green", "#BF0072": "HIViz Pink",
+  "#767878": "Sports Grey", "#919393": "Light Grey Marl", "#A6A9A2": "Ash Grey",
+  "#BCBFBB": "Light Grey", "#353330": "Charcoal Grey", "#B9DBEA": "Pastel Blue",
+  "#5998D4": "Sky Blue", "#201C3A": "Navy", "#221866": "Royal Blue",
+  "#B5D55E": "Pastel Green", "#90BF33": "Lime Green", "#3C8A35": "Kelly Green",
+  "#E7BBD0": "Pastel Pink", "#D287A2": "Light Pink", "#C42469": "Fuchsia Pink",
+  "#C02300": "Red", "#762009": "Burgundy", "#4C0A6A": "Purple",
+};
+function getColorDisplayName(hex: string | null): string {
+  if (!hex) return '';
+  return COLOR_NAMES[hex.toUpperCase()] || hex;
+}
+
 const vectorizationFormSchema = z.object({
   file: z.any().refine((file) => file instanceof File, "Please select a file to upload"),
   comments: z.string().min(1, "Please provide details about your requirements"),
@@ -623,7 +639,7 @@ export function VectorizationServiceForm({ open, onOpenChange, partnerEmail }: V
                                     style={{ backgroundColor: garmentColor }}
                                   />
                                   <div>
-                                    <p className="font-medium text-sm">Selected Color</p>
+                                    <p className="font-medium text-sm">{getColorDisplayName(garmentColor)}</p>
                                     <p className="text-xs text-muted-foreground">{garmentColor}</p>
                                   </div>
                                 </div>
@@ -689,7 +705,7 @@ export function VectorizationServiceForm({ open, onOpenChange, partnerEmail }: V
                                     style={{ backgroundColor: inkColor }}
                                   />
                                   <div>
-                                    <p className="font-medium text-sm">Selected Ink Color</p>
+                                    <p className="font-medium text-sm">{getColorDisplayName(inkColor)}</p>
                                     <p className="text-xs text-muted-foreground">{inkColor}</p>
                                   </div>
                                 </div>
