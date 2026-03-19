@@ -17,6 +17,7 @@ import ProductLauncherModal from "@/components/product-launcher-modal";
 import TemplateSelectorModal from "@/components/template-selector-modal";
 import GarmentColorModal from "@/components/garment-color-modal";
 import InkColorModal from "@/components/ink-color-modal";
+import { getColorName as getInkColorName } from "@/components/ink-color-modal";
 
 const COLOR_NAMES: Record<string, string> = {
   "#FFFFFF": "White", "#171816": "Black", "#D9D2AB": "Natural Cotton",
@@ -705,7 +706,7 @@ export function VectorizationServiceForm({ open, onOpenChange, partnerEmail }: V
                                     style={{ backgroundColor: inkColor }}
                                   />
                                   <div>
-                                    <p className="font-medium text-sm">{getColorDisplayName(inkColor)}</p>
+                                    <p className="font-medium text-sm">{inkColor ? getInkColorName(inkColor) : ''}</p>
                                     <p className="text-xs text-muted-foreground">{inkColor}</p>
                                   </div>
                                 </div>

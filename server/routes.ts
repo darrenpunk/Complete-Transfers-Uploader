@@ -8455,7 +8455,7 @@ ${svgClose}`;
       // Color name lookup for human-readable comments
       const GARMENT_COLOR_NAMES: Record<string, string> = {
         "#FFFFFF": "White", "#171816": "Black", "#D9D2AB": "Natural Cotton",
-        "#F3F590": "Pastel Yellow", "#F0F42A": "Yellow", "#d7da14": "Hi Viz",
+        "#F3F590": "Pastel Yellow", "#F0F42A": "Yellow", "#D7DA14": "Hi Viz",
         "#D98F17": "Hi Viz Orange", "#388032": "HiViz Green", "#BF0072": "HIViz Pink",
         "#767878": "Sports Grey", "#919393": "Light Grey Marl", "#A6A9A2": "Ash Grey",
         "#BCBFBB": "Light Grey", "#353330": "Charcoal Grey", "#B9DBEA": "Pastel Blue",
@@ -8464,16 +8464,41 @@ ${svgClose}`;
         "#E7BBD0": "Pastel Pink", "#D287A2": "Light Pink", "#C42469": "Fuchsia Pink",
         "#C02300": "Red", "#762009": "Burgundy", "#4C0A6A": "Purple",
       };
-      const colorNameLookup: Record<string, string> = {};
-      for (const [k, v] of Object.entries(GARMENT_COLOR_NAMES)) {
-        colorNameLookup[k.toUpperCase()] = v;
-      }
-      const getColorName = (hex: string | undefined | null): string => {
-        if (!hex) return '';
-        return colorNameLookup[hex.toUpperCase()] || hex;
+      const INK_COLOR_NAMES: Record<string, string> = {
+        "#FFFFFF": "OT 91 White", "#201F1E": "OT 100 Black",
+        "#C0C4C6": "OT 155 Pantone 428 C", "#515859": "OT 156 Pantone 445 C",
+        "#5F58AD": "OT 10 Pantone 2102 C", "#294487": "OT 20 Pantone 7687 C",
+        "#217B87": "OT 22 Pantone 7461 C", "#1F66A0": "OT 24 Pantone 4151 C",
+        "#00A1DD": "OT 26 Pantone 2202 C", "#0099B6": "OT 27 Pantone 2229 C",
+        "#132A3F": "OT 96 Pantone 2965 C", "#406044": "OT 30 Pantone 7734 C",
+        "#4E926E": "OT 31 Pantone 7724 C", "#83A756": "OT 32 Pantone 7489 C",
+        "#3E9B54": "OT 33 Pantone 7482 C", "#93BA1E": "OT 34 Pantone 376 C",
+        "#F3DF41": "OT 40 Pantone 107 C", "#F3D83E": "OT 41 Pantone 115 C",
+        "#F3C53F": "OT 42 Pantone 123 C", "#E66828": "OT 50 Pantone 165 C",
+        "#DF4E10": "OT 51 Pantone 1655 C", "#C53F33": "OT 56 Pantone 179 C",
+        "#B3363C": "OT 60 Pantone 1797 C", "#D02E39": "OT 61 Pantone 1788 C",
+        "#B25796": "OT 70 Pantone 674 C", "#5B3637": "OT 80 Pantone 1817 C",
+        "#A2832D": "OT 81 Pantone 1255 C", "#83754E": "OT 120 Pantone 871 C Gold",
+        "#8C8E91": "OT 110 Pantone 877 C Silver",
       };
-      const garmentColorName = getColorName(req.body.garmentColor);
-      const inkColorName = getColorName(req.body.inkColor);
+      const garmentLookup: Record<string, string> = {};
+      for (const [k, v] of Object.entries(GARMENT_COLOR_NAMES)) {
+        garmentLookup[k.toUpperCase()] = v;
+      }
+      const inkLookup: Record<string, string> = {};
+      for (const [k, v] of Object.entries(INK_COLOR_NAMES)) {
+        inkLookup[k.toUpperCase()] = v;
+      }
+      const getGarmentColorName = (hex: string | undefined | null): string => {
+        if (!hex) return '';
+        return garmentLookup[hex.toUpperCase()] || hex;
+      };
+      const getInkColorName = (hex: string | undefined | null): string => {
+        if (!hex) return '';
+        return inkLookup[hex.toUpperCase()] || hex;
+      };
+      const garmentColorName = getGarmentColorName(req.body.garmentColor);
+      const inkColorName = getInkColorName(req.body.inkColor);
 
       // Add items to Odoo cart
       const cartResults = {
