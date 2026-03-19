@@ -10,6 +10,15 @@ import { promisify } from 'util';
 
 const execAsync = promisify(exec);
 
+export interface EmbeddedImageInfo {
+  width: number;
+  height: number;
+  xDpi: number;
+  yDpi: number;
+  format: string;
+  isLowRes: boolean;
+}
+
 export interface ContentAnalysis {
   hasRasterContent: boolean;
   hasVectorContent: boolean;
@@ -18,6 +27,9 @@ export interface ContentAnalysis {
     count: number;
     formats: string[];
   };
+  embeddedImages?: EmbeddedImageInfo[];
+  hasLowResImages?: boolean;
+  lowestDpi?: number;
   vectorElements: {
     count: number;
     types: string[];
@@ -75,15 +87,39 @@ export class MixedContentDetector {
           analysis.hasRasterContent = true;
           analysis.rasterImages.count = imageLines.length;
           
-          // Extract image formats
           const formats = new Set<string>();
+          const embeddedImages: EmbeddedImageInfo[] = [];
           imageLines.forEach(line => {
-            const parts = line.split(/\s+/);
-            if (parts.length > 4) {
-              formats.add(parts[2]); // Image type column
+            const parts = line.trim().split(/\s+/);
+            if (parts.length >= 14) {
+              const imgType = parts[2];
+              formats.add(imgType);
+              const width = parseInt(parts[3], 10) || 0;
+              const height = parseInt(parts[4], 10) || 0;
+              const xDpi = parseInt(parts[12], 10) || 0;
+              const yDpi = parseInt(parts[13], 10) || 0;
+              const minDpi = Math.min(xDpi || 9999, yDpi || 9999);
+              if (imgType !== 'smask' && width > 0 && height > 0) {
+                embeddedImages.push({
+                  width, height, xDpi, yDpi,
+                  format: imgType,
+                  isLowRes: minDpi > 0 && minDpi < 150,
+                });
+              }
+            } else if (parts.length > 4) {
+              formats.add(parts[2]);
             }
           });
           analysis.rasterImages.formats = Array.from(formats);
+          if (embeddedImages.length > 0) {
+            analysis.embeddedImages = embeddedImages;
+            const lowRes = embeddedImages.filter(img => img.isLowRes);
+            analysis.hasLowResImages = lowRes.length > 0;
+            analysis.lowestDpi = Math.min(...embeddedImages.map(img => Math.min(img.xDpi || 9999, img.yDpi || 9999)));
+            if (analysis.hasLowResImages) {
+              console.log(`⚠️ Low-res images detected: ${lowRes.length} of ${embeddedImages.length} image(s) below 150 DPI (lowest: ${analysis.lowestDpi} DPI)`);
+            }
+          }
         }
       } catch (error) {
         console.log('pdfimages not available, trying alternative method');

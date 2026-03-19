@@ -3297,8 +3297,18 @@ export async function registerRoutes(app: express.Application) {
             isMixed: contentAnalysis.isMixedContent,
             rasterCount: contentAnalysis.rasterImages.count,
             vectorTypes: contentAnalysis.vectorElements.types,
-            recommendation: contentAnalysis.recommendation
+            recommendation: contentAnalysis.recommendation,
+            hasLowResImages: contentAnalysis.hasLowResImages || false,
+            lowestDpi: contentAnalysis.lowestDpi || null,
+            embeddedImageCount: contentAnalysis.embeddedImages?.length || 0
           });
+          if (contentAnalysis.embeddedImages && contentAnalysis.embeddedImages.length > 0) {
+            (file as any).embeddedImageData = {
+              images: contentAnalysis.embeddedImages,
+              hasLowResImages: contentAnalysis.hasLowResImages || false,
+              lowestDpi: contentAnalysis.lowestDpi || null,
+            };
+          }
           
           // DEBUG: Log which condition will be taken
           if (contentAnalysis.hasRasterContent && !contentAnalysis.hasVectorContent) {
@@ -3737,7 +3747,8 @@ export async function registerRoutes(app: express.Application) {
             colorsDetected: preflightResult.colorsDetected,
             requiresVectorization: preflightResult.requiresVectorization,
             warnings: preflightResult.warnings,
-            originalColorsPreserved: true // CRITICAL: Always true unless explicitly changed
+            originalColorsPreserved: true,
+            embeddedImageData: (file as any).embeddedImageData || null
           }
         };
         

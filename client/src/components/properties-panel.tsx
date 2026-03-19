@@ -635,6 +635,26 @@ export default function PropertiesPanel({
         value: isVector ? "Vector" : "Raster"
       });
       
+      const preflightData = (logo as any).preflightData;
+      const embData = preflightData?.embeddedImageData;
+      if (embData && embData.images && embData.images.length > 0) {
+        const lowResCount = embData.images.filter((img: any) => img.isLowRes).length;
+        const lowestDpi = embData.lowestDpi || 0;
+        if (lowResCount > 0) {
+          checks.push({
+            name: "Embedded Images",
+            status: "warning",
+            value: `${lowResCount} low-res image${lowResCount > 1 ? 's' : ''} (${lowestDpi} DPI)`
+          });
+        } else {
+          checks.push({
+            name: "Embedded Images",
+            status: "pass",
+            value: `${embData.images.length} image${embData.images.length > 1 ? 's' : ''} (${lowestDpi}+ DPI)`
+          });
+        }
+      }
+      
       // Color Mode Check
       const svgAnalysis = logo.svgColors as any;
       let colorStatus = "warning";
