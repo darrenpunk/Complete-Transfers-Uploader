@@ -18,7 +18,7 @@ import AddToCartModal from "@/components/add-to-cart-modal";
 import ProgressSteps from "@/components/progress-steps";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Download, RotateCcw, RotateCw, HelpCircle, Palette, GraduationCap, FileText, AlertCircle, AlertTriangle, Upload, ShoppingCart, Maximize2, Minimize2, PanelLeft, PanelRight, X, Scissors, ClipboardList, RefreshCw, CheckCircle2, Loader2, Video } from "lucide-react";
+import { Download, RotateCcw, HelpCircle, Palette, GraduationCap, FileText, AlertCircle, Upload, ShoppingCart, Maximize2, Minimize2, PanelLeft, PanelRight, X, Scissors, ClipboardList, RefreshCw, CheckCircle2, Loader2, Video } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import completeTransfersLogoPath from "@assets/artboard_logo.png";
 import { HelpModal } from "@/components/help-modal";
@@ -94,8 +94,6 @@ export default function UploadTool() {
   const [pendingPassThroughLogo, setPendingPassThroughLogo] = useState<{ logoId: string; pageCount: number; fileName: string } | null>(null);
   const [detectedReorderColors, setDetectedReorderColors] = useState<Array<{color: string; colorName: string; quantity: number}>>([]);
   const [reorderLineId, setReorderLineId] = useState<number | null>(null);
-  const [showOrientationMismatch, setShowOrientationMismatch] = useState(false);
-  const [orientationMismatchInfo, setOrientationMismatchInfo] = useState<{ logoId: string; logoName: string; logoOrientation: string; templateOrientation: string; elementId?: string } | null>(null);
   const [pendingOrientationCheckLogoIds, setPendingOrientationCheckLogoIds] = useState<string[]>([]);
   const [pendingAutoSelectLogoIds, setPendingAutoSelectLogoIds] = useState<string[]>([]);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -308,9 +306,9 @@ export default function UploadTool() {
     enabled: !!currentProject?.id,
   });
 
-  // Orientation mismatch detection: runs after canvas elements load for newly uploaded logos
+  // Orientation mismatch detection: automatically switches to landscape/portrait variant
   useEffect(() => {
-    if (pendingOrientationCheckLogoIds.length === 0 || canvasElements.length === 0 || !currentProject?.templateSize) return;
+    if (pendingOrientationCheckLogoIds.length === 0 || canvasElements.length === 0 || !currentProject?.templateSize || !currentProject?.id) return;
     
     const template = templateSizes.find(t => t.id === currentProject.templateSize);
     if (!template) return;
@@ -322,13 +320,13 @@ export default function UploadTool() {
       return;
     }
     
-    // Find canvas elements matching the newly uploaded logos
+    let needsSwitch = false;
     for (const logoId of pendingOrientationCheckLogoIds) {
       const element = canvasElements.find(el => el.logoId?.toString() === logoId.toString());
       if (element && element.width && element.height) {
         const elW = element.width;
         const elH = element.height;
-        if (Math.abs(elW - elH) < 5) continue; // Skip roughly square logos
+        if (Math.abs(elW - elH) < 5) continue;
         
         const logoIsLandscape = elW > elH;
         if (logoIsLandscape !== templateIsLandscape) {
@@ -339,24 +337,34 @@ export default function UploadTool() {
 
           const logoOrientation = logoIsLandscape ? 'landscape' : 'portrait';
           const templateOrientation = templateIsLandscape ? 'landscape' : 'portrait';
-          console.log(`⚠️ Orientation mismatch: logo ${logoId} is ${logoOrientation} (${elW.toFixed(0)}×${elH.toFixed(0)}mm), template is ${templateOrientation} (${template.width}×${template.height}mm)`);
-          
-          const logo = logos?.find(l => l.id?.toString() === logoId.toString());
-          setOrientationMismatchInfo({
-            logoId: logoId.toString(),
-            logoName: logo?.originalName || 'Uploaded artwork',
-            logoOrientation,
-            templateOrientation,
-            elementId: element.id?.toString(),
-          });
-          setTimeout(() => setShowOrientationMismatch(true), 600);
-          break; // Only show for first mismatched logo
+          console.log(`📐 Auto-switching orientation: logo is ${logoOrientation} (${elW.toFixed(0)}×${elH.toFixed(0)}mm), template is ${templateOrientation} (${template.width}×${template.height}mm)`);
+          needsSwitch = true;
+          break;
         }
       }
     }
     
     setPendingOrientationCheckLogoIds([]);
-  }, [canvasElements, pendingOrientationCheckLogoIds, currentProject?.templateSize]);
+    
+    if (needsSwitch) {
+      const currentTemplateId = currentProject.templateSize;
+      const landscapeTemplateId = currentTemplateId.endsWith('-landscape')
+        ? currentTemplateId.replace('-landscape', '')
+        : `${currentTemplateId}-landscape`;
+      
+      (async () => {
+        try {
+          await apiRequest("PATCH", `/api/projects/${currentProject.id}`, { templateSize: landscapeTemplateId });
+          queryClient.invalidateQueries({ queryKey: ["/api/projects", currentProject.id] });
+          queryClient.invalidateQueries({ queryKey: ["/api/projects", currentProject.id, "canvas-elements"] });
+          const newOrientation = currentTemplateId.endsWith('-landscape') ? 'portrait' : 'landscape';
+          toast({ title: `Switched to ${newOrientation.charAt(0).toUpperCase() + newOrientation.slice(1)}`, description: `Canvas automatically adjusted to match your artwork orientation.` });
+        } catch (err) {
+          console.error('Failed to auto-switch template orientation:', err);
+        }
+      })();
+    }
+  }, [canvasElements, pendingOrientationCheckLogoIds, currentProject?.templateSize, currentProject?.id]);
 
   // Auto-select newly uploaded logos after their canvas elements appear
   useEffect(() => {
@@ -1324,27 +1332,6 @@ export default function UploadTool() {
 
 
 
-  const handleOrientationSwitchLandscape = async () => {
-    if (!orientationMismatchInfo || !currentProject) return;
-    const currentTemplateId = currentProject.templateSize;
-    if (!currentTemplateId) return;
-
-    const landscapeTemplateId = currentTemplateId.endsWith('-landscape')
-      ? currentTemplateId
-      : `${currentTemplateId}-landscape`;
-
-    try {
-      await apiRequest("PATCH", `/api/projects/${currentProject.id}`, { templateSize: landscapeTemplateId });
-      queryClient.invalidateQueries({ queryKey: ["/api/projects", currentProject.id] });
-      queryClient.invalidateQueries({ queryKey: ["/api/projects", currentProject.id, "canvas-elements"] });
-      toast({ title: "Switched to Landscape", description: "Canvas switched to landscape orientation to match your artwork." });
-    } catch (err) {
-      console.error('Failed to switch to landscape template:', err);
-      toast({ title: "Error", description: "Failed to switch template orientation.", variant: "destructive" });
-    }
-    setShowOrientationMismatch(false);
-    setOrientationMismatchInfo(null);
-  };
 
   // Helper to get visual bounding box dimensions for a rotated element
   const getVisualBounds = (element: CanvasElement): { visualWidth: number; visualHeight: number } => {
@@ -2846,54 +2833,6 @@ export default function UploadTool() {
         }}
       />
 
-      {/* Orientation Mismatch Detection Modal */}
-      {orientationMismatchInfo && (
-        <Dialog open={showOrientationMismatch} onOpenChange={(open) => {
-          if (!open) {
-            setShowOrientationMismatch(false);
-            setOrientationMismatchInfo(null);
-          }
-        }}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-amber-500" />
-                Orientation Mismatch Detected
-              </DialogTitle>
-              <DialogDescription>
-                Your artwork appears to be in <strong>{orientationMismatchInfo.logoOrientation}</strong> orientation, 
-                but the selected template is <strong>{orientationMismatchInfo.templateOrientation}</strong>.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-3 py-2">
-              <p className="text-sm text-muted-foreground">
-                Would you like to switch the canvas to landscape orientation to match your artwork?
-              </p>
-              <p className="text-xs text-muted-foreground">
-                This will change the template to a landscape layout so your artwork fits naturally without rotation.
-              </p>
-            </div>
-            <div className="flex gap-2 justify-end">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setShowOrientationMismatch(false);
-                  setOrientationMismatchInfo(null);
-                }}
-              >
-                Keep Portrait
-              </Button>
-              <Button
-                onClick={handleOrientationSwitchLandscape}
-                className="bg-amber-600 hover:bg-amber-700 text-white"
-              >
-                <RotateCw className="w-4 h-4 mr-2" />
-                Switch to Landscape
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
 
       {/* Pass-Through Mode Modal for Multi-Page PDFs */}
       {pendingPassThroughLogo && (
