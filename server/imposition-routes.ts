@@ -20,18 +20,27 @@ export function setupImpositionRoutes(app: Express, storage: IStorage) {
       }
 
       const createdElements = [];
+
+      const rotation = originalElement.rotation || 0;
+      const normalizedRotation = ((rotation % 360) + 360) % 360;
+      const isRotated90or270 = normalizedRotation === 90 || normalizedRotation === 270;
+      const visualWidth = isRotated90or270 ? originalElement.height : originalElement.width;
+      const visualHeight = isRotated90or270 ? originalElement.width : originalElement.height;
       
       console.log('Original element:', { 
         id: originalElement.id, 
         x: originalElement.x, 
         y: originalElement.y, 
         width: originalElement.width, 
-        height: originalElement.height 
+        height: originalElement.height,
+        rotation,
+        visualWidth,
+        visualHeight
       });
       
-      // Calculate grid dimensions
-      const totalGridWidth = (columns * originalElement.width) + ((columns - 1) * (horizontalSpacing || 0));
-      const totalGridHeight = (rows * originalElement.height) + ((rows - 1) * (verticalSpacing || 0));
+      // Calculate grid dimensions using visual bounds (accounts for rotation)
+      const totalGridWidth = (columns * visualWidth) + ((columns - 1) * (horizontalSpacing || 0));
+      const totalGridHeight = (rows * visualHeight) + ((rows - 1) * (verticalSpacing || 0));
       
       console.log('Grid calculations:', {
         rows, columns, horizontalSpacing, verticalSpacing,
@@ -55,8 +64,8 @@ export function setupImpositionRoutes(app: Express, storage: IStorage) {
           // Grid top-left element center should be at:
           // x: -totalGridWidth/2 + elementWidth/2
           // y: -totalGridHeight/2 + elementHeight/2
-          startX = -totalGridWidth / 2 + originalElement.width / 2;
-          startY = -totalGridHeight / 2 + originalElement.height / 2;
+          startX = -totalGridWidth / 2 + visualWidth / 2;
+          startY = -totalGridHeight / 2 + visualHeight / 2;
           
           console.log('Center-based grid centering (element centers):', {
             templateSize: { width: templateSize.width, height: templateSize.height },
@@ -88,9 +97,9 @@ export function setupImpositionRoutes(app: Express, storage: IStorage) {
           // Skip the original position (0,0)
           if (row === 0 && col === 0) continue;
           
-          // Calculate position for this grid cell
-          const xOffset = col * (originalElement.width + (horizontalSpacing || 0));
-          const yOffset = row * (originalElement.height + (verticalSpacing || 0));
+          // Calculate position using visual bounds (accounts for rotation)
+          const xOffset = col * (visualWidth + (horizontalSpacing || 0));
+          const yOffset = row * (visualHeight + (verticalSpacing || 0));
           
           console.log(`Creating element at grid position [${row}, ${col}]:`, {
             startX, startY, xOffset, yOffset,
