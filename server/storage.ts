@@ -198,6 +198,25 @@ export class MemStorage implements IStorage {
     standardSizes.forEach(size => {
       this.templateSizes.set(size.id, size);
     });
+
+    const landscapeVariants: typeof standardSizes = [];
+    for (const size of standardSizes) {
+      if (size.width < size.height) {
+        landscapeVariants.push({
+          ...size,
+          id: `${size.id}-landscape`,
+          name: `${size.name}_landscape`,
+          label: `${size.label} Landscape`,
+          width: size.height,
+          height: size.width,
+          pixelWidth: size.pixelHeight,
+          pixelHeight: size.pixelWidth,
+        });
+      }
+    }
+    landscapeVariants.forEach(size => {
+      this.templateSizes.set(size.id, size);
+    });
   }
 
   // User methods
@@ -714,6 +733,26 @@ export class DatabaseStorage implements IStorage {
         productCode: size.productCode ?? null,
       } as TemplateSize);
     });
+
+    for (const size of standardSizes) {
+      if (size.width < size.height) {
+        const ls = {
+          ...size,
+          id: `${size.id}-landscape`,
+          name: `${size.name}_landscape`,
+          label: `${size.label} Landscape`,
+          width: size.height,
+          height: size.width,
+          pixelWidth: size.pixelHeight,
+          pixelHeight: size.pixelWidth,
+          description: size.description ?? null,
+          placeholderImage: size.placeholderImage ?? null,
+          bleedMargin: size.bleedMargin ?? null,
+          productCode: size.productCode ?? null,
+        } as TemplateSize;
+        this.templateSizesMap.set(ls.id, ls);
+      }
+    }
   }
 
   private async dbRetry<T>(fn: () => Promise<T>, fallback: T, label: string): Promise<T> {

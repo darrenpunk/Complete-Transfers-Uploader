@@ -261,14 +261,14 @@ export default function UploadTool() {
   // Fetch template sizes - with direct fetch fallback for production reliability
   const { data: queryTemplateSizes } = useQuery<TemplateSize[]>({
     queryKey: ["/api/template-sizes", partnerEmail],
-    queryFn: () => fetch(`/api/template-sizes${partnerEmail ? `?customerCode=${encodeURIComponent(partnerEmail)}` : ''}`).then(r => r.json()),
+    queryFn: () => fetch(`/api/template-sizes?includeLandscape=true${partnerEmail ? `&customerCode=${encodeURIComponent(partnerEmail)}` : ''}`).then(r => r.json()),
   });
   const [fallbackTemplateSizes, setFallbackTemplateSizes] = useState<TemplateSize[]>([]);
   
   useEffect(() => {
     const doFetch = () => {
       console.log('⏰ Fetching template sizes directly...');
-      fetch(`/api/template-sizes${partnerEmail ? `?customerCode=${encodeURIComponent(partnerEmail)}` : ''}`)
+      fetch(`/api/template-sizes?includeLandscape=true${partnerEmail ? `&customerCode=${encodeURIComponent(partnerEmail)}` : ''}`)
         .then(res => res.json())
         .then(data => {
           if (Array.isArray(data) && data.length > 0) {
@@ -1311,16 +1311,23 @@ export default function UploadTool() {
 
 
 
-  const handleOrientationRotate = async () => {
+  const handleOrientationSwitchLandscape = async () => {
     if (!orientationMismatchInfo || !currentProject) return;
-    const element = orientationMismatchInfo.elementId
-      ? canvasElements.find(el => el.id?.toString() === orientationMismatchInfo.elementId)
-      : canvasElements.find(el => el.logoId?.toString() === orientationMismatchInfo.logoId);
-    if (element) {
-      const newRotation = ((element.rotation || 0) + 90) % 360;
-      await apiRequest("PATCH", `/api/canvas-elements/${element.id}`, { rotation: newRotation });
+    const currentTemplateId = currentProject.templateSize;
+    if (!currentTemplateId) return;
+
+    const landscapeTemplateId = currentTemplateId.endsWith('-landscape')
+      ? currentTemplateId
+      : `${currentTemplateId}-landscape`;
+
+    try {
+      await apiRequest("PATCH", `/api/projects/${currentProject.id}`, { templateSize: landscapeTemplateId });
+      queryClient.invalidateQueries({ queryKey: ["/api/projects", currentProject.id] });
       queryClient.invalidateQueries({ queryKey: ["/api/projects", currentProject.id, "canvas-elements"] });
-      toast({ title: "Rotated", description: "Artwork rotated 90° to match template orientation." });
+      toast({ title: "Switched to Landscape", description: "Canvas switched to landscape orientation to match your artwork." });
+    } catch (err) {
+      console.error('Failed to switch to landscape template:', err);
+      toast({ title: "Error", description: "Failed to switch template orientation.", variant: "destructive" });
     }
     setShowOrientationMismatch(false);
     setOrientationMismatchInfo(null);
@@ -2223,6 +2230,7 @@ export default function UploadTool() {
         <TemplateSelectorModal
           open={showTemplateSelector}
           templates={templateSizes.filter(t => {
+            if (t.id.endsWith('-landscape')) return false;
             if (!selectedProductGroup) return true;
             
             const productTemplates: { [key: string]: string[] } = {
@@ -2595,6 +2603,7 @@ export default function UploadTool() {
       <TemplateSelectorModal
         open={showTemplateSelector}
         templates={templateSizes.filter(t => {
+          if (t.id.endsWith('-landscape')) return false;
           if (!selectedProductGroup) return true;
           
           // Define exact template IDs for each product type matching actual storage data
@@ -2842,10 +2851,10 @@ export default function UploadTool() {
             </DialogHeader>
             <div className="space-y-3 py-2">
               <p className="text-sm text-muted-foreground">
-                Would you like to rotate the artwork 90° to better fit the template?
+                Would you like to switch the canvas to landscape orientation to match your artwork?
               </p>
               <p className="text-xs text-muted-foreground">
-                You can always rotate manually later using the Rotate 90° button in the properties panel.
+                This will change the template to a landscape layout so your artwork fits naturally without rotation.
               </p>
             </div>
             <div className="flex gap-2 justify-end">
@@ -2856,14 +2865,14 @@ export default function UploadTool() {
                   setOrientationMismatchInfo(null);
                 }}
               >
-                Keep As-Is
+                Keep Portrait
               </Button>
               <Button
-                onClick={handleOrientationRotate}
+                onClick={handleOrientationSwitchLandscape}
                 className="bg-amber-600 hover:bg-amber-700 text-white"
               >
                 <RotateCw className="w-4 h-4 mr-2" />
-                Rotate 90°
+                Switch to Landscape
               </Button>
             </div>
           </DialogContent>

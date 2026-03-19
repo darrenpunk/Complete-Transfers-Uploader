@@ -5822,7 +5822,9 @@ export async function registerRoutes(app: express.Application) {
         }
       }
 
+      const includeLandscape = req.query.includeLandscape === 'true';
       const filtered = templateSizes.filter(t => {
+        if (!includeLandscape && t.id.endsWith('-landscape')) return false;
         if (!restrictedTemplateIds.has(t.id)) return true;
         if (customerCode && customerAllowedIds.has(t.id)) return true;
         return false;
