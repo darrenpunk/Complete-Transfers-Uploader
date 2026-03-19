@@ -199,14 +199,15 @@ export class MemStorage implements IStorage {
       this.templateSizes.set(size.id, size);
     });
 
-    const landscapeVariants: typeof standardSizes = [];
+    const orientationVariants: typeof standardSizes = [];
     for (const size of standardSizes) {
-      if (size.width < size.height) {
-        landscapeVariants.push({
+      if (size.width !== size.height) {
+        const isPortrait = size.width < size.height;
+        orientationVariants.push({
           ...size,
           id: `${size.id}-landscape`,
           name: `${size.name}_landscape`,
-          label: `${size.label} Landscape`,
+          label: isPortrait ? `${size.label} Landscape` : `${size.label} Portrait`,
           width: size.height,
           height: size.width,
           pixelWidth: size.pixelHeight,
@@ -214,7 +215,7 @@ export class MemStorage implements IStorage {
         });
       }
     }
-    landscapeVariants.forEach(size => {
+    orientationVariants.forEach(size => {
       this.templateSizes.set(size.id, size);
     });
   }
@@ -735,12 +736,13 @@ export class DatabaseStorage implements IStorage {
     });
 
     for (const size of standardSizes) {
-      if (size.width < size.height) {
+      if (size.width !== size.height) {
+        const isPortrait = size.width < size.height;
         const ls = {
           ...size,
           id: `${size.id}-landscape`,
           name: `${size.name}_landscape`,
-          label: `${size.label} Landscape`,
+          label: isPortrait ? `${size.label} Landscape` : `${size.label} Portrait`,
           width: size.height,
           height: size.width,
           pixelWidth: size.pixelHeight,

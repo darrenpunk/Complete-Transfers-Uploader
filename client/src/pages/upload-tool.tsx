@@ -348,21 +348,32 @@ export default function UploadTool() {
     
     if (needsSwitch) {
       const currentTemplateId = currentProject.templateSize;
-      const landscapeTemplateId = currentTemplateId.endsWith('-landscape')
-        ? currentTemplateId.replace('-landscape', '')
-        : `${currentTemplateId}-landscape`;
+      let targetTemplateId: string;
+      let newOrientationLabel: string;
       
-      (async () => {
-        try {
-          await apiRequest("PATCH", `/api/projects/${currentProject.id}`, { templateSize: landscapeTemplateId });
-          queryClient.invalidateQueries({ queryKey: ["/api/projects", currentProject.id] });
-          queryClient.invalidateQueries({ queryKey: ["/api/projects", currentProject.id, "canvas-elements"] });
-          const newOrientation = currentTemplateId.endsWith('-landscape') ? 'portrait' : 'landscape';
-          toast({ title: `Switched to ${newOrientation.charAt(0).toUpperCase() + newOrientation.slice(1)}`, description: `Canvas automatically adjusted to match your artwork orientation.` });
-        } catch (err) {
-          console.error('Failed to auto-switch template orientation:', err);
-        }
-      })();
+      if (currentTemplateId.endsWith('-landscape')) {
+        targetTemplateId = currentTemplateId.replace('-landscape', '');
+        newOrientationLabel = 'Portrait';
+      } else {
+        targetTemplateId = `${currentTemplateId}-landscape`;
+        newOrientationLabel = 'Landscape';
+      }
+      
+      const targetTemplate = templateSizes.find(t => t.id === targetTemplateId);
+      if (!targetTemplate) {
+        console.log(`📐 Orientation variant "${targetTemplateId}" not found — skipping auto-switch`);
+      } else {
+        (async () => {
+          try {
+            await apiRequest("PATCH", `/api/projects/${currentProject.id}`, { templateSize: targetTemplateId });
+            queryClient.invalidateQueries({ queryKey: ["/api/projects", currentProject.id] });
+            queryClient.invalidateQueries({ queryKey: ["/api/projects", currentProject.id, "canvas-elements"] });
+            toast({ title: `Switched to ${newOrientationLabel}`, description: `Canvas automatically adjusted to match your artwork orientation.` });
+          } catch (err) {
+            console.error('Failed to auto-switch template orientation:', err);
+          }
+        })();
+      }
     }
   }, [canvasElements, pendingOrientationCheckLogoIds, currentProject?.templateSize, currentProject?.id]);
 
