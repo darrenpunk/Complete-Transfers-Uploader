@@ -103,7 +103,7 @@ export class MixedContentDetector {
                 embeddedImages.push({
                   width, height, xDpi, yDpi,
                   format: imgType,
-                  isLowRes: minDpi > 0 && minDpi < 150,
+                  isLowRes: minDpi > 0 && minDpi < 300,
                 });
               }
             } else if (parts.length > 4) {
@@ -117,7 +117,7 @@ export class MixedContentDetector {
             analysis.hasLowResImages = lowRes.length > 0;
             analysis.lowestDpi = Math.min(...embeddedImages.map(img => Math.min(img.xDpi || 9999, img.yDpi || 9999)));
             if (analysis.hasLowResImages) {
-              console.log(`⚠️ Low-res images detected: ${lowRes.length} of ${embeddedImages.length} image(s) below 150 DPI (lowest: ${analysis.lowestDpi} DPI)`);
+              console.log(`⚠️ Low-res images detected: ${lowRes.length} of ${embeddedImages.length} image(s) below 300 DPI (lowest: ${analysis.lowestDpi} DPI)`);
             }
           }
         }

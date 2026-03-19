@@ -644,7 +644,7 @@ export default function PropertiesPanel({
           checks.push({
             name: "Embedded Images",
             status: "warning",
-            value: `${lowResCount} low-res image${lowResCount > 1 ? 's' : ''} (${lowestDpi} DPI)`
+            value: `${lowResCount} low-res image${lowResCount > 1 ? 's' : ''} (${lowestDpi} DPI — need 300+)`
           });
         } else {
           checks.push({
