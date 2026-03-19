@@ -74,6 +74,8 @@ export default function ImpositionModal({
     }
   });
 
+  if (!selectedElement || !template) return null;
+
   const handleCreateImposition = () => {
     // Validate inputs
     if (rows < 1 || rows > 20) {
@@ -138,8 +140,6 @@ export default function ImpositionModal({
   const displayVH = displayRotated ? (selectedElement?.width || 0) : (selectedElement?.height || 0);
   const totalWidth = (columns * displayVW) + ((columns - 1) * horizontalSpacing);
   const totalHeight = (rows * displayVH) + ((rows - 1) * verticalSpacing);
-
-  if (!selectedElement) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
