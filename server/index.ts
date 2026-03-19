@@ -111,25 +111,50 @@ app.get('/uploads/:filename', async (req, res, next) => {
   const { filename } = req.params;
   const { inkColor, recolor } = req.query;
   
-  if (!filename.endsWith('.svg') || !recolor || !inkColor) {
+  if (!recolor || !inkColor) {
+    return next();
+  }
+  
+  const filePath = path.join('./uploads', filename);
+  
+  if (!fs.existsSync(filePath)) {
     return next();
   }
   
   try {
-    const filePath = path.join('./uploads', filename);
+    const lowerFilename = filename.toLowerCase();
     
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).send('File not found');
+    if (lowerFilename.endsWith('.svg')) {
+      const svgContent = fs.readFileSync(filePath, 'utf8');
+      const { recolorSVG } = await import('./svg-recolor');
+      const recoloredContent = recolorSVG(svgContent, inkColor as string);
+      res.setHeader('Content-Type', 'image/svg+xml');
+      res.send(recoloredContent);
+    } else if (lowerFilename.endsWith('.png') || lowerFilename.endsWith('.jpg') || lowerFilename.endsWith('.jpeg')) {
+      const { execSync } = (await import('child_process'));
+      const tmpOutput = path.join('/tmp', `recolored_${Date.now()}_${filename.replace(/\.[^.]+$/, '.png')}`);
+      const isJpeg = lowerFilename.endsWith('.jpg') || lowerFilename.endsWith('.jpeg');
+      
+      if (isJpeg) {
+        execSync(`convert "${filePath}" -grayscale Rec709Luminance -fill "${inkColor}" -colorize 100 "${tmpOutput}"`, { timeout: 30000 });
+      } else {
+        execSync(`convert "${filePath}" -alpha extract -background "${inkColor}" -alpha shape "${tmpOutput}"`, { timeout: 30000 });
+      }
+      
+      if (fs.existsSync(tmpOutput)) {
+        res.setHeader('Content-Type', 'image/png');
+        res.setHeader('Cache-Control', 'no-cache');
+        const data = fs.readFileSync(tmpOutput);
+        res.send(data);
+        try { fs.unlinkSync(tmpOutput); } catch(e) {}
+      } else {
+        next();
+      }
+    } else {
+      next();
     }
-    
-    const svgContent = fs.readFileSync(filePath, 'utf8');
-    const { recolorSVG } = await import('./svg-recolor');
-    const recoloredContent = recolorSVG(svgContent, inkColor as string);
-    
-    res.setHeader('Content-Type', 'image/svg+xml');
-    res.send(recoloredContent);
   } catch (error) {
-    console.error('Error recoloring SVG:', error);
+    console.error('Error recoloring file:', error);
     next();
   }
 });

@@ -2946,6 +2946,10 @@ const CanvasWorkspace = forwardRef(function CanvasWorkspace({
                         // For non-SVG files (PNG, JPEG), use regular img element
                         <img
                           src={(() => {
+                            const colorOverrides = element.colorOverrides as any;
+                            if (colorOverrides && colorOverrides.inkColor) {
+                              return `/uploads/${logo.filename}?inkColor=${encodeURIComponent(colorOverrides.inkColor)}&recolor=true&t=${Date.now()}`;
+                            }
                             if (shouldRecolorForInk && project.inkColor) {
                               return `/uploads/${logo.filename}?inkColor=${encodeURIComponent(project.inkColor)}&recolor=true&t=${Date.now()}`;
                             }

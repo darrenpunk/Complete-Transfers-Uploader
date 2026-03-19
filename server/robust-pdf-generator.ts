@@ -11,7 +11,7 @@
 import fs from 'fs';
 import path from 'path';
 import { promisify } from 'util';
-import { exec } from 'child_process';
+import { exec, execSync } from 'child_process';
 import { manufacturerColors } from '@shared/garment-colors';
 
 const execAsync = promisify(exec);
@@ -1737,8 +1737,6 @@ grestore`;
         const inkColor = colorOverrides.inkColor;
         
         // Use ImageMagick to recolor: preserve alpha channel, replace all visible pixels with ink color
-        const { execSync } = require('child_process');
-        
         // Recolor all visible/opaque pixels to the ink color while preserving transparency
         // For images with alpha: extract alpha channel, fill with ink color, re-apply alpha mask
         // For images without alpha (JPEG): just fill the whole image with ink color preserving luminance
