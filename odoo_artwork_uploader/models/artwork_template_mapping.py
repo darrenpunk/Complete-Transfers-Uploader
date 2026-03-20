@@ -50,11 +50,19 @@ class ArtworkTemplateMapping(models.Model):
     
     @api.model
     def get_product_for_template(self, template_id):
-        """Get the mapped product for a given template ID"""
+        """Get the mapped product for a given template ID.
+        Landscape variants (e.g. template-A4-landscape) share the same product
+        as their base template (template-A4), so strip the suffix before lookup."""
         mapping = self.search([
             ('template_id', '=', template_id), 
             ('active', '=', True)
         ], limit=1)
+        if not mapping and template_id and template_id.endswith('-landscape'):
+            base_id = template_id.replace('-landscape', '')
+            mapping = self.search([
+                ('template_id', '=', base_id),
+                ('active', '=', True)
+            ], limit=1)
         if mapping:
             return mapping.product_id
         return False
@@ -66,6 +74,12 @@ class ArtworkTemplateMapping(models.Model):
             ('template_id', '=', template_id), 
             ('active', '=', True)
         ], limit=1)
+        if not mapping and template_id and template_id.endswith('-landscape'):
+            base_id = template_id.replace('-landscape', '')
+            mapping = self.search([
+                ('template_id', '=', base_id),
+                ('active', '=', True)
+            ], limit=1)
         if mapping:
             return mapping.min_quantity
         return 10  # Default minimum
