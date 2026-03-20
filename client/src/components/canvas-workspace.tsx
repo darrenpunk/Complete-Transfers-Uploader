@@ -1737,30 +1737,31 @@ const CanvasWorkspace = forwardRef(function CanvasWorkspace({
 
   // Calculate optimal zoom level to fit template within workspace
   const calculateOptimalZoom = (template: TemplateSize) => {
-    // Use window dimensions as fallback
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
     
-    // Calculate available workspace area
-    // Account for sidebars (320px each), header (64px), toolbar (80px), bottom bar (80px)
-    const sidebarWidth = 320 * 2; // Left and right sidebars
+    const sidebarWidth = 320 * 2;
     const headerHeight = 64;
     const toolbarHeight = 80;
     const bottomBarHeight = 80;
-    const padding = 80; // Extra padding for comfortable viewing
+    const padding = 80;
     
     const maxWorkspaceWidth = viewportWidth - sidebarWidth - padding;
     const maxWorkspaceHeight = viewportHeight - headerHeight - toolbarHeight - bottomBarHeight - padding;
     
-    // Ensure minimum workspace size
     const workspaceWidth = Math.max(maxWorkspaceWidth, 400);
     const workspaceHeight = Math.max(maxWorkspaceHeight, 300);
     
-    // Calculate scale factors for width and height
+    const isLargeDtfPortrait = (template.id === 'dtf-large-landscape' || template.name === 'large_dtf') && template.height > template.width;
+    
+    if (isLargeDtfPortrait) {
+      console.log(`Template ${template.name}: Large DTF in portrait mode (${template.width}×${template.height}mm) — using fixed 30% zoom to fit in window`);
+      return 30;
+    }
+    
     const scaleX = workspaceWidth / template.pixelWidth;
     const scaleY = workspaceHeight / template.pixelHeight;
     
-    // Use the smaller scale factor to ensure template fits within bounds
     const optimalScale = Math.min(scaleX, scaleY);
     
     const fillFactor = 0.85;
