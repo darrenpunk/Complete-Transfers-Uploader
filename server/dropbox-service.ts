@@ -54,7 +54,8 @@ async function getAccessToken(): Promise<string> {
     throw new Error('Dropbox not connected. Please reconnect Dropbox in the Integrations panel.');
   }
 
-  console.log(`[Dropbox] Got token (prefix=${accessToken.substring(0, 10)}...)`);
+  const expiresAt = connection.settings?.expires_at;
+  console.log(`[Dropbox] Got token (prefix=${accessToken.substring(0, 15)}..., expires=${expiresAt || 'never'}, connId=${connection.id || 'unknown'})`);
   cachedToken = { token: accessToken, fetchedAt: Date.now() };
   return accessToken;
 }
@@ -101,7 +102,7 @@ export async function createFileRequest(
     } catch (error: any) {
       if (attempt === 0 && error?.status === 401) {
         console.warn('[Dropbox] Token expired, clearing cache and retrying...');
-        connectionSettings = null;
+        cachedToken = null;
         continue;
       }
       throw error;
