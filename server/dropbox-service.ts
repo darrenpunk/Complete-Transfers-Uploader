@@ -1,35 +1,22 @@
 import { Dropbox } from 'dropbox';
 
-// Dropbox integration - connection:conn_dropbox_01KH6AWHCZH0RGXZBFRTP0KV11
-// Token is cached and refreshed automatically based on expires_at — do not cache the client itself.
-
-let connectionSettings: any;
+let cachedToken: { token: string; fetchedAt: number } | null = null;
 
 async function getAccessToken(): Promise<string> {
-  // If a permanent token is configured as a secret, use it (never expires)
   if (process.env.DROPBOX_ACCESS_TOKEN) {
     return process.env.DROPBOX_ACCESS_TOKEN;
   }
 
-  // Otherwise use the Replit OAuth connector (expires every 4 hours)
-  // Use cached token if it hasn't expired yet
-  if (
-    connectionSettings &&
-    connectionSettings.settings?.expires_at &&
-    new Date(connectionSettings.settings.expires_at).getTime() > (Date.now() + 120000) // Buffer of 2 minutes
-  ) {
-    return connectionSettings.settings.access_token;
+  if (cachedToken && (Date.now() - cachedToken.fetchedAt) < 3 * 60 * 1000) {
+    return cachedToken.token;
   }
 
   const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME;
-  const tokenType = process.env.REPL_IDENTITY ? 'repl' : process.env.WEB_REPL_RENEWAL ? 'depl' : null;
   const xReplitToken = process.env.REPL_IDENTITY
     ? 'repl ' + process.env.REPL_IDENTITY
     : process.env.WEB_REPL_RENEWAL
     ? 'depl ' + process.env.WEB_REPL_RENEWAL
     : null;
-
-  console.log(`[Dropbox] Fetching fresh access token (type=${tokenType}, hostname=${hostname ? 'SET' : 'MISSING'})...`);
 
   if (!xReplitToken) {
     throw new Error('X-Replit-Token not found for repl/depl');
@@ -38,6 +25,8 @@ async function getAccessToken(): Promise<string> {
   if (!hostname) {
     throw new Error('REPLIT_CONNECTORS_HOSTNAME not set');
   }
+
+  console.log(`[Dropbox] Fetching fresh access token...`);
 
   const connectorUrl = 'https://' + hostname + '/api/v2/connection?include_secrets=true&connector_names=dropbox';
   const connectorRes = await fetch(connectorUrl, {
@@ -54,35 +43,32 @@ async function getAccessToken(): Promise<string> {
   }
 
   const connectorData = await connectorRes.json();
-  connectionSettings = connectorData.items?.[0];
+  const connection = connectorData.items?.[0];
 
   const accessToken =
-    connectionSettings?.settings?.access_token ||
-    connectionSettings?.settings?.oauth?.credentials?.access_token;
+    connection?.settings?.access_token ||
+    connection?.settings?.oauth?.credentials?.access_token;
 
-  if (!connectionSettings || !accessToken) {
-    console.error('[Dropbox] No connection found. Connector response:', JSON.stringify(connectorData).substring(0, 300));
+  if (!connection || !accessToken) {
+    console.error('[Dropbox] No connection found. Response:', JSON.stringify(connectorData).substring(0, 300));
     throw new Error('Dropbox not connected. Please reconnect Dropbox in the Integrations panel.');
   }
 
-  const expiresAt = connectionSettings.settings?.expires_at;
-  console.log(`[Dropbox] Got token (prefix=${accessToken.substring(0, 10)}..., expires=${expiresAt || 'never'})`);
-
+  console.log(`[Dropbox] Got token (prefix=${accessToken.substring(0, 10)}...)`);
+  cachedToken = { token: accessToken, fetchedAt: Date.now() };
   return accessToken;
 }
 
 export function clearDropboxCache() {
-  connectionSettings = null;
+  cachedToken = null;
 }
 
-// WARNING: Never cache this client — always call fresh. Tokens expire.
 async function getUncachableDropboxClient(): Promise<Dropbox> {
   try {
     const accessToken = await getAccessToken();
     return new Dropbox({ accessToken });
   } catch (error) {
-    // If fetching fails, clear cache to force fresh fetch on next call
-    connectionSettings = null;
+    cachedToken = null;
     throw error;
   }
 }
