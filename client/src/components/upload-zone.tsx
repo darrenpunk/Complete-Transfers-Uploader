@@ -7,11 +7,15 @@ import { Upload, FileImage, X, AlertCircle } from "lucide-react";
 import { RasterWarningModal } from "./raster-warning-modal";
 import { VectorizerModal } from "./vectorizer-modal";
 
+const MAX_FILE_SIZE_MB = 100;
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+
 interface UploadZoneProps {
   onFilesSelected: (files: File[]) => void;
   onVectorizationPlaceholder: (fileName: string) => void;
   isUploading: boolean;
   uploadProgress?: number;
+  onFileTooLarge?: (fileName: string, fileSizeMB: number) => void;
 }
 
 export interface UploadZoneRef {
@@ -23,7 +27,7 @@ interface PendingRasterFile {
   fileName: string;
 }
 
-const UploadZone = forwardRef<UploadZoneRef, UploadZoneProps>(({ onFilesSelected, onVectorizationPlaceholder, isUploading, uploadProgress = 0 }, ref) => {
+const UploadZone = forwardRef<UploadZoneRef, UploadZoneProps>(({ onFilesSelected, onVectorizationPlaceholder, isUploading, uploadProgress = 0, onFileTooLarge }, ref) => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [pendingRasterFile, setPendingRasterFile] = useState<PendingRasterFile | null>(null);
   const [showRasterWarning, setShowRasterWarning] = useState(false);
@@ -38,9 +42,22 @@ const UploadZone = forwardRef<UploadZoneRef, UploadZoneProps>(({ onFilesSelected
       console.warn("Some files were rejected:", rejectedFiles);
     }
     
+    const oversizedFiles = acceptedFiles.filter(f => f.size > MAX_FILE_SIZE_BYTES);
+    const validFiles = acceptedFiles.filter(f => f.size <= MAX_FILE_SIZE_BYTES);
+    
+    if (oversizedFiles.length > 0) {
+      const f = oversizedFiles[0];
+      const sizeMB = Math.round(f.size / (1024 * 1024));
+      console.warn(`⚠️ File too large: ${f.name} (${sizeMB}MB) — redirecting to Dropbox upload`);
+      if (onFileTooLarge) {
+        onFileTooLarge(f.name, sizeMB);
+      }
+      if (validFiles.length === 0) return;
+    }
+    
     // Check for raster files and handle them separately
-    const rasterFiles = acceptedFiles.filter(isRasterFile);
-    const vectorFiles = acceptedFiles.filter(file => !isRasterFile(file));
+    const rasterFiles = validFiles.filter(isRasterFile);
+    const vectorFiles = validFiles.filter(file => !isRasterFile(file));
     
     // Add vector files immediately
     if (vectorFiles.length > 0) {
@@ -69,7 +86,7 @@ const UploadZone = forwardRef<UploadZoneRef, UploadZoneProps>(({ onFilesSelected
       'application/postscript': ['.ai', '.eps'],
     },
     multiple: true,
-    maxSize: 200 * 1024 * 1024, // 200MB for large artwork files
+    maxSize: MAX_FILE_SIZE_BYTES,
     noDragEventsBubbling: true, // Prevent drag events from bubbling - fixes slider triggering upload modal
     onDropRejected: (rejectedFiles) => {
       console.log('Files rejected:', rejectedFiles.map(f => ({ 

@@ -1924,6 +1924,25 @@ export default function UploadTool() {
     console.log('handleFilesUpload called with files:', files.map(f => ({ name: f.name, type: f.type, size: f.size })));
     if (!currentProject) return;
 
+    const MAX_SIZE = 100 * 1024 * 1024;
+    const oversized = files.filter(f => f.size > MAX_SIZE);
+    const validFiles = files.filter(f => f.size <= MAX_SIZE);
+    
+    if (oversized.length > 0) {
+      const f = oversized[0];
+      const sizeMB = Math.round(f.size / (1024 * 1024));
+      toast({
+        title: "File too large",
+        description: `"${f.name}" is ${sizeMB}MB which exceeds the 100MB limit. Please use the Dropbox upload link for large files.`,
+        variant: "destructive",
+        duration: 8000,
+      });
+      setShowDropboxUploadModal(true);
+      if (validFiles.length === 0) return;
+    }
+    
+    files = validFiles;
+
     // For applique, if we're uploading a new logo, we trigger the form automatically
     // to capture instructions, especially if they aren't using the dual-canvas.
     if (currentProject.templateSize?.startsWith('applique-')) {
@@ -2429,6 +2448,7 @@ export default function UploadTool() {
             onAlignElement={handleAlignElement}
             onCenterAllElements={handleCenterAllElements}
             onOpenVectorizationForm={() => setShowVectorizationForm(true)}
+            onFileTooLarge={() => setShowDropboxUploadModal(true)}
           />
         </div>
 
@@ -2458,6 +2478,7 @@ export default function UploadTool() {
                 onAlignElement={handleAlignElement}
                 onCenterAllElements={handleCenterAllElements}
                 onOpenVectorizationForm={() => setShowVectorizationForm(true)}
+                onFileTooLarge={() => setShowDropboxUploadModal(true)}
               />
             </div>
           </div>

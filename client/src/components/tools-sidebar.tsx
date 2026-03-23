@@ -41,6 +41,7 @@ interface ToolsSidebarProps {
   onAlignElement: (elementId: string, alignment: 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom') => void;
   onCenterAllElements: () => void;
   onOpenVectorizationForm?: () => void;
+  onFileTooLarge?: () => void;
 }
 
 // Professional color palette with complete specifications
@@ -110,7 +111,8 @@ export default function ToolsSidebar({
   onInkColorChange,
   onAlignElement,
   onCenterAllElements,
-  onOpenVectorizationForm
+  onOpenVectorizationForm,
+  onFileTooLarge
 }: ToolsSidebarProps) {
   const { toast } = useToast();
   const [logosCollapsed, setLogosCollapsed] = useState(false);
@@ -145,6 +147,24 @@ export default function ToolsSidebar({
   // Handle raster file uploads
   const handleFilesSelected = (files: File[]) => {
     console.log('handleFilesSelected called with files:', files);
+    const MAX_SIZE = 100 * 1024 * 1024;
+    const oversized = files.filter(f => f.size > MAX_SIZE);
+    const validFiles = files.filter(f => f.size <= MAX_SIZE);
+    
+    if (oversized.length > 0) {
+      const f = oversized[0];
+      const sizeMB = Math.round(f.size / (1024 * 1024));
+      toast({
+        title: "File too large",
+        description: `"${f.name}" is ${sizeMB}MB which exceeds the 100MB limit. Please use the Dropbox upload link for large files.`,
+        variant: "destructive",
+        duration: 8000,
+      });
+      if (onFileTooLarge) onFileTooLarge();
+      if (validFiles.length === 0) return;
+    }
+    
+    files = validFiles;
     const rasterFiles = files.filter(isRasterFile);
     const vectorFiles = files.filter(file => !isRasterFile(file));
     
