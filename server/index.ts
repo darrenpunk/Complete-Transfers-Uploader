@@ -87,8 +87,8 @@ app.get('/health', async (_req, res) => {
   });
 });
 
-app.use(express.json({ limit: '200mb' }));
-app.use(express.urlencoded({ extended: false, limit: '200mb' }));
+app.use(express.json({ limit: '100mb' }));
+app.use(express.urlencoded({ extended: false, limit: '100mb' }));
 
 // Transparent Dropbox restore: if a file in /uploads is missing locally (e.g. after a
 // redeploy wiped the container filesystem), try to pull it back from Dropbox before
