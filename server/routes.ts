@@ -1,6 +1,5 @@
 import express from 'express';
 import multer from 'multer';
-import { backupToDropbox } from './dropbox-backup';
 import path from 'path';
 import os from 'os';
 import fs from 'fs';
@@ -1390,17 +1389,8 @@ export async function registerRoutes(app: express.Application) {
           const originalPdfPath = path.join(process.cwd(), 'uploads', (logo as any).originalFilename || '');
           const svgPath = path.join(process.cwd(), 'uploads', (logo as any).filename);
 
-          // Helper: ensure file exists on disk, attempting Dropbox restore if missing
           const ensureFileOnDisk = async (filePath: string): Promise<boolean> => {
-            if (fs.existsSync(filePath)) return true;
-            try {
-              const { restoreFromDropbox } = await import('./dropbox-backup');
-              const restored = await restoreFromDropbox(path.basename(filePath));
-              if (restored) console.log(`✅ Restored from Dropbox: ${path.basename(filePath)}`);
-              return restored;
-            } catch {
-              return false;
-            }
+            return fs.existsSync(filePath);
           };
 
           // Helper: draw a visible "file missing" error on all pages instead of blank
@@ -3844,7 +3834,6 @@ export async function registerRoutes(app: express.Application) {
         if (logoData.originalFilename && logoData.originalFilename !== file.filename) filesToBackup.add(logoData.originalFilename);
         if ((logoData as any).canvasFallbackFilename) filesToBackup.add((logoData as any).canvasFallbackFilename);
         if ((file as any).extractedRasterPath) filesToBackup.add(path.basename((file as any).extractedRasterPath));
-        for (const fn of filesToBackup) backupToDropbox(fn);
 
         // Auto-recolor for single colour templates with ink color
         if (isSingleColourTemplate && project.inkColor && (finalMimeType === 'image/svg+xml' || finalMimeType === 'application/pdf')) {
@@ -7274,13 +7263,6 @@ export async function registerRoutes(app: express.Application) {
               // manufacturing task is created later.
               zipBase64 = zipBuffer.toString('base64');
               console.log(`📎 ZIP ready for inline add-to-cart (${zipSizeMB}MB → ${(zipBase64.length / 1024 / 1024).toFixed(1)}MB base64): ${zipFileName}`);
-              // Also archive to Dropbox in the background as a backup copy
-              import('./dropbox-service').then(({ uploadFileToDropbox }) => {
-                const dropboxDest = `/repeat-orders/${zipFileName}`;
-                uploadFileToDropbox(zipBuffer, dropboxDest)
-                  .then(r => console.log(`☁️ ZIP archived to Dropbox: ${r.pathDisplay}`))
-                  .catch(e => console.warn(`⚠️ Dropbox ZIP archive failed (non-critical):`, e.message));
-              });
             } else {
               console.warn(`⚠️ Attached ZIP not found on disk: ${zipFilePath}`);
             }
@@ -9104,8 +9086,6 @@ ${svgClose}`;
         attachedZipName: file.originalname,
       });
 
-      // Back up the ZIP to Dropbox so it survives redeployment
-      backupToDropbox(file.filename);
 
       console.log(`📋 Created repeat applique project: ${project.id} (${projectName}) with zip: ${file.originalname}`);
 
