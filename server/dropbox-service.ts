@@ -95,21 +95,33 @@ export async function createFileRequest(
   const title = `${projectId}_${fileName}`;
   const destination = `/file_requests/${projectId}`;
 
-  const dbx = await getUncachableDropboxClient();
-  const result = await dbx.fileRequestsCreate({
-    title,
-    destination,
-    open: true,
-    description: description || `Upload for project ${projectId}`,
-  });
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const dbx = await getUncachableDropboxClient();
+      const result = await dbx.fileRequestsCreate({
+        title,
+        destination,
+        open: true,
+        description: description || `Upload for project ${projectId}`,
+      });
 
-  console.log('[Dropbox] File request created successfully:', result.result.url);
-  return {
-    id: result.result.id,
-    url: result.result.url,
-    title: result.result.title,
-    folder: destination,
-  };
+      console.log('[Dropbox] File request created successfully:', result.result.url);
+      return {
+        id: result.result.id,
+        url: result.result.url,
+        title: result.result.title,
+        folder: destination,
+      };
+    } catch (error: any) {
+      if (attempt === 0 && error?.status === 401) {
+        console.warn('[Dropbox] Token expired, clearing cache and retrying...');
+        connectionSettings = null;
+        continue;
+      }
+      throw error;
+    }
+  }
+  throw new Error('Dropbox file request failed after retry');
 }
 
 export async function getFileRequestFiles(fileRequestId: string): Promise<any[]> {
