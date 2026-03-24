@@ -166,7 +166,7 @@ export function HelpModal({ open, onOpenChange }: HelpModalProps) {
                     <h3 className="font-semibold mb-2">File Upload Methods</h3>
                     <ul className="list-disc list-inside space-y-2 text-sm">
                       <li><strong>Upload Logos Button:</strong> Click the "Upload Logos" button in the toolbar to select files from your computer</li>
-                      <li><strong>Dropbox File Request:</strong> For complex or large files, use our Dropbox integration</li>
+                      <li><strong>Drag & Drop:</strong> Drag files directly onto the canvas area to upload</li>
                     </ul>
                   </div>
 
@@ -626,17 +626,21 @@ export function HelpModal({ open, onOpenChange }: HelpModalProps) {
 
                       <div>
                         <h4 className="font-medium">Large file upload fails (413 error)</h4>
-                        <p className="text-sm text-muted-foreground">
-                          Maximum file size is 100MB. For larger files, please reduce the file size 
-                          or simplify the artwork before uploading.
+                        <p className="text-sm text-muted-foreground mb-2">
+                          Maximum file size is 100MB. Try these tips to reduce your file:
                         </p>
+                        <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1 ml-2">
+                          <li><strong>PDF/AI files:</strong> Use "Save As" with downsampled images, or "Reduce File Size" in Acrobat</li>
+                          <li><strong>Images (PNG/JPG):</strong> Resize to 300 DPI at actual print dimensions</li>
+                          <li><strong>General:</strong> Remove unused layers, flatten effects, convert text to outlines</li>
+                        </ul>
                       </div>
 
                       <div>
                         <h4 className="font-medium">Complex file detected</h4>
                         <p className="text-sm text-muted-foreground">
                           Files with many paths or complex effects may need manual processing. 
-                          Use the Dropbox File Request option and we'll process it for you.
+                          Please contact support and we'll process it for you.
                         </p>
                       </div>
 

@@ -154,13 +154,25 @@ export default function ToolsSidebar({
     if (oversized.length > 0) {
       const f = oversized[0];
       const sizeMB = Math.round(f.size / (1024 * 1024));
+      const fileExt = f.name.split('.').pop()?.toLowerCase() || '';
+      const isPdf = fileExt === 'pdf' || fileExt === 'ai';
+      const isRaster = ['png', 'jpg', 'jpeg', 'tif', 'tiff', 'bmp'].includes(fileExt);
+      
+      let tips = '';
+      if (isPdf) {
+        tips = '\n\nTips to reduce PDF size:\n• Open in Illustrator/CorelDRAW and "Save As" with downsampled images\n• Use "Reduce File Size" in Acrobat\n• Remove unused embedded fonts or flatten transparency';
+      } else if (isRaster) {
+        tips = '\n\nTips to reduce image size:\n• Resize to 300 DPI at the actual print dimensions\n• Save as JPEG instead of PNG if no transparency needed\n• Use image compression (TinyPNG, Photoshop "Save for Web")';
+      } else {
+        tips = '\n\nTips to reduce file size:\n• Simplify artwork by removing unused layers\n• Convert text to outlines and flatten effects\n• Reduce embedded image resolution to 300 DPI';
+      }
+      
       toast({
-        title: "File too large",
-        description: `"${f.name}" is ${sizeMB}MB which exceeds the 100MB upload limit. Please reduce the file size or simplify the artwork before uploading.`,
+        title: `File too large (${sizeMB}MB)`,
+        description: `"${f.name}" exceeds the 100MB upload limit.${tips}`,
         variant: "destructive",
-        duration: 8000,
+        duration: 15000,
       });
-      if (onFileTooLarge) onFileTooLarge();
       if (validFiles.length === 0) return;
     }
     
