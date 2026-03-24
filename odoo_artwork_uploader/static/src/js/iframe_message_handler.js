@@ -65,6 +65,7 @@
         if (window.odoo && odoo.session_info) {
             userEmail = odoo.session_info.partner_email || 
                         odoo.session_info.email || 
+                        odoo.session_info.username ||
                         '';
         }
         

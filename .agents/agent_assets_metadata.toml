@@ -6,3 +6,9 @@ id = "eHgz3rPr459hCaqJJT8_6"
 uri = "file://ODOO_CART_BUG_REPORT.md"
 type = "text"
 title = "Odoo Cart Bug Report & Fix"
+
+[[outputs]]
+id = "RMSU3eYFJazABvJXGzlK1"
+uri = "file://ODOO_AUTH_FIX.md"
+type = "text"
+title = "Fix: Login Required for Logged-In Users"

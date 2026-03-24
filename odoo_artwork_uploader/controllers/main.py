@@ -1247,7 +1247,8 @@ class ArtworkUploaderController(http.Controller):
             
             if user and user.id != request.env.ref('base.public_user').id:
                 # Not public user - get their info
-                email = partner.email if partner else (user.email or user.login)
+                # Use partner email first, fall back to user login (always the email for portal users)
+                email = (partner.email if partner else '') or user.email or user.login or ''
                 name = partner.name if partner else user.name
                 _logger.info(f"📧 Current user API: {name} ({email})")
             else:
