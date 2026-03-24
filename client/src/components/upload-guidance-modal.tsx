@@ -266,10 +266,7 @@ export function UploadGuidanceModal({ open, onOpenChange, onViewArtworkRequireme
               <AccordionContent>
                 <div className="bg-blue-50 dark:bg-blue-950 rounded-lg p-4">
                   <p className="text-sm text-muted-foreground">
-                    Maximum file size: <strong>100MB</strong> per file
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    For larger files, try optimizing the PDF or reducing image resolution
+                    Maximum file size: <strong>500MB</strong> per file. Files over 100MB are uploaded in chunks automatically.
                   </p>
                 </div>
               </AccordionContent>

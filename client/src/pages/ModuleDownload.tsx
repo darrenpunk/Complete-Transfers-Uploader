@@ -145,7 +145,7 @@ export default function ModuleDownload() {
                 <div>
                   <h4 className="font-semibold text-slate-900 dark:text-slate-100 mb-2">File Support</h4>
                   <ul className="text-sm text-slate-600 dark:text-slate-400 space-y-1">
-                    <li>• PNG, JPEG (up to 100MB)</li>
+                    <li>• PNG, JPEG (up to 500MB)</li>
                     <li>• SVG, PDF, AI, EPS</li>
                     <li>• CMYK preservation</li>
                   </ul>

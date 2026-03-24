@@ -176,7 +176,7 @@ export function HelpModal({ open, onOpenChange }: HelpModalProps) {
                       <li>Upload multiple files at once</li>
                       <li>Vector files (PDF, AI, SVG) provide the best print quality</li>
                       <li>Files are automatically converted to CMYK for print</li>
-                      <li>Maximum file size: 100MB per file</li>
+                      <li>Maximum file size: 500MB per file (large files upload in chunks automatically)</li>
                     </ul>
                   </div>
 
@@ -627,13 +627,12 @@ export function HelpModal({ open, onOpenChange }: HelpModalProps) {
                       <div>
                         <h4 className="font-medium">Large file upload fails (413 error)</h4>
                         <p className="text-sm text-muted-foreground mb-2">
-                          Maximum file size is 100MB. Try these tips to reduce your file:
+                          Maximum file size is 500MB. Try these tips to reduce your file:
                         </p>
                         <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1 ml-2">
                           <li><strong>PDF/AI files:</strong> Use "Save As" with downsampled images, or "Reduce File Size" in Acrobat</li>
                           <li><strong>Images (PNG/JPG):</strong> Resize to 300 DPI at actual print dimensions</li>
                           <li><strong>General:</strong> Remove unused layers, flatten effects, convert text to outlines</li>
-                          <li><strong>Can't reduce it?</strong> Email your file to <a href="mailto:transferhelp@serigraf.com" className="text-primary hover:underline">transferhelp@serigraf.com</a> and we'll process your order manually</li>
                         </ul>
                       </div>
 

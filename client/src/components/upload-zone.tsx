@@ -7,7 +7,7 @@ import { Upload, FileImage, X, AlertCircle } from "lucide-react";
 import { RasterWarningModal } from "./raster-warning-modal";
 import { VectorizerModal } from "./vectorizer-modal";
 
-const MAX_FILE_SIZE_MB = 100;
+const MAX_FILE_SIZE_MB = 500;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 
 interface UploadZoneProps {
@@ -48,7 +48,7 @@ const UploadZone = forwardRef<UploadZoneRef, UploadZoneProps>(({ onFilesSelected
     if (oversizedFiles.length > 0) {
       const f = oversizedFiles[0];
       const sizeMB = Math.round(f.size / (1024 * 1024));
-      console.warn(`⚠️ File too large: ${f.name} (${sizeMB}MB) — exceeds 100MB limit`);
+      console.warn(`⚠️ File too large: ${f.name} (${sizeMB}MB) — exceeds 500MB limit`);
       if (onFileTooLarge) {
         onFileTooLarge(f.name, sizeMB);
       }

@@ -1881,43 +1881,129 @@ export default function UploadTool() {
 
 
 
+  const handleChunkedUpload = async (file: File) => {
+    if (!currentProject) return;
+    
+    const sizeMB = Math.round(file.size / (1024 * 1024));
+    console.log(`📦 Starting chunked upload for large file: "${file.name}" (${sizeMB}MB)`);
+    
+    setUploadFileName(file.name);
+    setIsUploading(true);
+    setUploadProgress(0);
+    setIsUploadProcessing(false);
+    
+    try {
+      const { uploadLargeFile } = await import('@/lib/chunked-upload');
+      
+      const result = await uploadLargeFile({
+        file,
+        projectId: currentProject.id,
+        onProgress: (percent) => {
+          setUploadProgress(percent);
+          if (percent >= 90) setIsUploadProcessing(true);
+        },
+      });
+      
+      toast({
+        title: "Large file uploaded",
+        description: `"${file.name}" (${sizeMB}MB) uploaded successfully. Processing...`,
+        duration: 5000,
+      });
+      
+      const processRes = await fetch(`/api/projects/${currentProject.id}/logos/from-chunked`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          filename: result.filename,
+          originalName: result.originalName,
+          mimetype: result.mimetype,
+          size: result.size,
+        }),
+      });
+      
+      if (!processRes.ok) {
+        const err = await processRes.json().catch(() => ({ error: 'Processing failed' }));
+        throw new Error(err.error || 'Failed to process uploaded file');
+      }
+      
+      const newLogos = await processRes.json();
+      console.log('Chunked upload processed, logos:', newLogos);
+      
+      try { trackEvent('upload', { fileCount: 1, fileNames: file.name, project: currentProject?.name, chunked: true, sizeMB }); } catch {}
+      
+      if (currentProject && (currentProject.name === 'Untitled Project' || currentProject.name === '')) {
+        const nameWithoutExt = file.name.includes('.') ? file.name.substring(0, file.name.lastIndexOf('.')) : file.name;
+        const cleanName = nameWithoutExt.replace(/[_-]+/g, ' ').trim();
+        if (cleanName) {
+          updateProjectMutation.mutate({ name: cleanName });
+        }
+      }
+      
+      queryClient.setQueryData(
+        ["/api/projects", currentProject.id, "logos"],
+        (oldLogos: any[] = []) => [...oldLogos, ...newLogos]
+      );
+      queryClient.invalidateQueries({ queryKey: ["/api/projects", currentProject.id, "canvas-elements"] });
+      setPendingAutoSelectLogoIds(newLogos.map((l: any) => l.id));
+      
+      const pdfWithRasterOnly = newLogos.find((logo: any) => logo.isPdfWithRasterOnly === true);
+      const regularRasterFile = newLogos.find((logo: any) => 
+        !logo.isPdfWithRasterOnly && 
+        (logo.mimeType === 'image/png' || logo.mimeType === 'image/jpeg')
+      );
+      if (pdfWithRasterOnly || regularRasterFile) {
+        const rasterLogo = pdfWithRasterOnly || regularRasterFile;
+        setRasterUploadedLogo(rasterLogo);
+        setShowVectorizationModal(true);
+      }
+      
+    } catch (error: any) {
+      console.error('Chunked upload failed:', error);
+      toast({
+        title: "Upload failed",
+        description: error.message || `Failed to upload "${file.name}". Please try again.`,
+        variant: "destructive",
+        duration: 8000,
+      });
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(0);
+      setIsUploadProcessing(false);
+    }
+  };
+
   // Upload logos handler for canvas toolbar with progress tracking
   const handleFilesUpload = (files: File[]) => {
     console.log('handleFilesUpload called with files:', files.map(f => ({ name: f.name, type: f.type, size: f.size })));
     if (!currentProject) return;
 
-    const MAX_SIZE = 100 * 1024 * 1024;
-    const oversized = files.filter(f => f.size > MAX_SIZE);
-    const validFiles = files.filter(f => f.size <= MAX_SIZE);
+    const MAX_REGULAR_SIZE = 100 * 1024 * 1024;
+    const MAX_CHUNKED_SIZE = 500 * 1024 * 1024;
     
-    if (oversized.length > 0) {
-      const f = oversized[0];
+    const tooLarge = files.filter(f => f.size > MAX_CHUNKED_SIZE);
+    const largeFiles = files.filter(f => f.size > MAX_REGULAR_SIZE && f.size <= MAX_CHUNKED_SIZE);
+    const regularFiles = files.filter(f => f.size <= MAX_REGULAR_SIZE);
+    
+    if (tooLarge.length > 0) {
+      const f = tooLarge[0];
       const sizeMB = Math.round(f.size / (1024 * 1024));
-      const fileExt = f.name.split('.').pop()?.toLowerCase() || '';
-      const isPdf = fileExt === 'pdf' || fileExt === 'ai';
-      const isRaster = ['png', 'jpg', 'jpeg', 'tif', 'tiff', 'bmp'].includes(fileExt);
-      
-      let tips = '';
-      if (isPdf) {
-        tips = '\n\nTips to reduce PDF size:\n• Open in Illustrator/CorelDRAW and "Save As" with downsampled images\n• Use "Reduce File Size" in Acrobat\n• Remove unused embedded fonts or flatten transparency';
-      } else if (isRaster) {
-        tips = '\n\nTips to reduce image size:\n• Resize to 300 DPI at the actual print dimensions\n• Save as JPEG instead of PNG if no transparency needed\n• Use image compression (TinyPNG, Photoshop "Save for Web")';
-      } else {
-        tips = '\n\nTips to reduce file size:\n• Simplify artwork by removing unused layers\n• Convert text to outlines and flatten effects\n• Reduce embedded image resolution to 300 DPI';
-      }
-      
-      tips += '\n\nCan\'t reduce the file? Email it to transferhelp@serigraf.com and we\'ll process your order manually.';
-      
       toast({
         title: `File too large (${sizeMB}MB)`,
-        description: `"${f.name}" exceeds the 100MB upload limit.${tips}`,
+        description: `"${f.name}" exceeds the 500MB maximum. Please reduce the file size before uploading.`,
         variant: "destructive",
-        duration: 15000,
+        duration: 10000,
       });
-      if (validFiles.length === 0) return;
+      if (regularFiles.length === 0 && largeFiles.length === 0) return;
     }
     
-    files = validFiles;
+    if (largeFiles.length > 0) {
+      for (const file of largeFiles) {
+        handleChunkedUpload(file);
+      }
+    }
+    
+    if (regularFiles.length === 0) return;
+    files = regularFiles;
 
     // For applique, if we're uploading a new logo, we trigger the form automatically
     // to capture instructions, especially if they aren't using the dual-canvas.
@@ -2157,7 +2243,7 @@ export default function UploadTool() {
           // If parsing fails, this is likely a reverse proxy 413 (Payload Too Large)
           toast({
             title: "File Too Large", 
-            description: "Your file exceeds the 100MB upload limit. Please reduce the file size or simplify the artwork before uploading.",
+            description: "Your file exceeds the upload limit. Please reduce the file size or simplify the artwork before uploading.",
             variant: "destructive",
             duration: 8000,
           });

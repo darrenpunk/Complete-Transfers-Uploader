@@ -664,7 +664,7 @@ if (!fs.existsSync(uploadDir)) {
 const upload = multer({
   dest: uploadDir,
   limits: {
-    fileSize: 100 * 1024 * 1024, // 100MB limit
+    fileSize: 500 * 1024 * 1024, // 500MB limit (large files use chunked upload on frontend)
   },
   fileFilter: (req, file, cb) => {
     const allowedMimes = [
@@ -679,9 +679,176 @@ const upload = multer({
   }
 });
 
+const chunkedUploadDir = path.resolve('./uploads/chunks');
+if (!fs.existsSync(chunkedUploadDir)) {
+  fs.mkdirSync(chunkedUploadDir, { recursive: true });
+}
+
+const chunkUpload = multer({
+  dest: chunkedUploadDir,
+  limits: {
+    fileSize: 15 * 1024 * 1024, // 15MB per chunk
+  },
+});
+
+interface ChunkedUploadSession {
+  uploadId: string;
+  fileName: string;
+  fileSize: number;
+  mimeType: string;
+  totalChunks: number;
+  receivedChunks: Set<number>;
+  projectId: string;
+  createdAt: number;
+}
+
+const chunkedUploads = new Map<string, ChunkedUploadSession>();
+
+setInterval(() => {
+  const now = Date.now();
+  for (const [id, session] of chunkedUploads.entries()) {
+    if (now - session.createdAt > 30 * 60 * 1000) {
+      for (let i = 0; i < session.totalChunks; i++) {
+        const chunkPath = path.join(chunkedUploadDir, `${id}_chunk_${i}`);
+        if (fs.existsSync(chunkPath)) fs.unlinkSync(chunkPath);
+      }
+      chunkedUploads.delete(id);
+      console.log(`🗑️ Cleaned up expired chunked upload: ${id}`);
+    }
+  }
+}, 5 * 60 * 1000);
+
 export async function registerRoutes(app: express.Application) {
   const { storage } = await import('./storage');
   const { setupImpositionRoutes } = await import('./imposition-routes');
+
+  app.post('/api/chunked-upload/init', (req, res) => {
+    try {
+      const { fileName, fileSize, mimeType, totalChunks, projectId } = req.body;
+      
+      if (!fileName || !fileSize || !totalChunks || !projectId) {
+        return res.status(400).json({ error: 'Missing required fields' });
+      }
+      
+      const maxSize = 500 * 1024 * 1024;
+      if (fileSize > maxSize) {
+        return res.status(400).json({ error: `File size ${Math.round(fileSize / (1024 * 1024))}MB exceeds the 500MB maximum` });
+      }
+      
+      const allowedMimes = [
+        'image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml', 'application/pdf',
+        'application/postscript', 'application/illustrator', 'application/x-illustrator',
+        'image/tiff', 'image/bmp'
+      ];
+      if (mimeType && !allowedMimes.includes(mimeType)) {
+        return res.status(400).json({ error: 'Invalid file type' });
+      }
+      
+      const uploadId = crypto.randomBytes(16).toString('hex');
+      
+      chunkedUploads.set(uploadId, {
+        uploadId,
+        fileName,
+        fileSize,
+        mimeType: mimeType || 'application/octet-stream',
+        totalChunks,
+        receivedChunks: new Set(),
+        projectId,
+        createdAt: Date.now(),
+      });
+      
+      console.log(`📦 Chunked upload initialized: ${uploadId} for "${fileName}" (${Math.round(fileSize / (1024 * 1024))}MB, ${totalChunks} chunks)`);
+      res.json({ uploadId });
+    } catch (error) {
+      console.error('Chunked upload init error:', error);
+      res.status(500).json({ error: 'Failed to initialize upload' });
+    }
+  });
+
+  app.post('/api/chunked-upload/chunk', chunkUpload.single('chunk'), (req: any, res) => {
+    try {
+      const { uploadId, chunkIndex, totalChunks } = req.body;
+      const file = req.file;
+      
+      if (!uploadId || chunkIndex === undefined || !file) {
+        return res.status(400).json({ error: 'Missing required fields' });
+      }
+      
+      const session = chunkedUploads.get(uploadId);
+      if (!session) {
+        return res.status(404).json({ error: 'Upload session not found or expired' });
+      }
+      
+      const idx = parseInt(chunkIndex, 10);
+      if (isNaN(idx) || idx < 0 || idx >= session.totalChunks) {
+        fs.unlinkSync(file.path);
+        return res.status(400).json({ error: `Invalid chunk index: ${chunkIndex}` });
+      }
+      
+      const chunkDest = path.join(chunkedUploadDir, `${uploadId}_chunk_${idx}`);
+      fs.renameSync(file.path, chunkDest);
+      
+      session.receivedChunks.add(idx);
+      
+      console.log(`📦 Chunk ${idx + 1}/${session.totalChunks} received for upload ${uploadId}`);
+      res.json({ received: idx, total: session.totalChunks });
+    } catch (error) {
+      console.error('Chunk upload error:', error);
+      res.status(500).json({ error: 'Failed to upload chunk' });
+    }
+  });
+
+  app.post('/api/chunked-upload/complete', async (req, res) => {
+    try {
+      const { uploadId, projectId } = req.body;
+      
+      const session = chunkedUploads.get(uploadId);
+      if (!session) {
+        return res.status(404).json({ error: 'Upload session not found or expired' });
+      }
+      
+      if (session.receivedChunks.size !== session.totalChunks) {
+        return res.status(400).json({ 
+          error: `Missing chunks: received ${session.receivedChunks.size}/${session.totalChunks}` 
+        });
+      }
+      
+      const ext = path.extname(session.fileName) || '';
+      const assembledFilename = crypto.randomBytes(16).toString('hex') + ext;
+      const assembledPath = path.join(uploadDir, assembledFilename);
+      
+      const writeStream = fs.createWriteStream(assembledPath);
+      for (let i = 0; i < session.totalChunks; i++) {
+        const chunkPath = path.join(chunkedUploadDir, `${uploadId}_chunk_${i}`);
+        const chunkData = fs.readFileSync(chunkPath);
+        writeStream.write(chunkData);
+        fs.unlinkSync(chunkPath);
+      }
+      
+      await new Promise<void>((resolve, reject) => {
+        writeStream.on('finish', resolve);
+        writeStream.on('error', reject);
+        writeStream.end();
+      });
+      
+      chunkedUploads.delete(uploadId);
+      
+      const fileSizeMB = (fs.statSync(assembledPath).size / (1024 * 1024)).toFixed(1);
+      console.log(`✅ Chunked upload assembled: "${session.fileName}" → ${assembledFilename} (${fileSizeMB}MB)`);
+      
+      res.json({
+        uploadId,
+        filename: assembledFilename,
+        originalName: session.fileName,
+        size: session.fileSize,
+        mimetype: session.mimeType,
+        path: assembledPath,
+      });
+    } catch (error) {
+      console.error('Chunked upload complete error:', error);
+      res.status(500).json({ error: 'Failed to assemble file' });
+    }
+  });
 
   app.get('/api/version', (_req, res) => {
     res.set({
@@ -2932,13 +3099,12 @@ export async function registerRoutes(app: express.Application) {
                           details: complexityCheck.reason,
                           originalFileSizeMB: fileSizeMB,
                           originalFileName: file.filename,
-                          suggestion: 'Please upload via Dropbox for files this complex'
+                          suggestion: 'This file is too complex to process automatically. Please simplify the artwork and try again.'
                         });
                         return;
                       }
                     } else {
-                      // For complex files OVER 50MB: Reject and suggest Dropbox
-                      console.log(`🚫 File too complex AND over 50MB (${fileSizeMB.toFixed(1)}MB) - requires Dropbox upload`);
+                      console.log(`🚫 File too complex AND over 50MB (${fileSizeMB.toFixed(1)}MB) - requires simplification`);
                       res.status(413).json({ 
                         error: 'file_too_complex',
                         message: 'This file is too complex for automated processing',
@@ -2948,7 +3114,7 @@ export async function registerRoutes(app: express.Application) {
                         originalFileSizeMB: fileSizeMB,
                         convertedFileSizeMB: complexityCheck.convertedFileSizeMB,
                         originalFileName: file.filename,
-                        suggestion: 'Please upload via Dropbox for files over 50MB'
+                        suggestion: 'This file is too complex and too large to process automatically. Please simplify the artwork and try again.'
                       });
                       return;
                     }
@@ -3143,13 +3309,12 @@ export async function registerRoutes(app: express.Application) {
                         details: complexityCheck.reason,
                         originalFileSizeMB: fileSizeMB,
                         originalFileName: file.filename,
-                        suggestion: 'Please upload via Dropbox for files this complex'
+                        suggestion: 'This file is too complex to process automatically. Please simplify the artwork and try again.'
                       });
                       return;
                     }
                   } else {
-                    // For complex files OVER 50MB: Reject and suggest Dropbox
-                    console.log(`🚫 RGB file too complex AND over 50MB (${fileSizeMB.toFixed(1)}MB) - requires Dropbox upload`);
+                    console.log(`🚫 RGB file too complex AND over 50MB (${fileSizeMB.toFixed(1)}MB) - requires simplification`);
                     res.status(413).json({ 
                       error: 'file_too_complex',
                       message: 'This file is too complex for automated processing',
@@ -3159,7 +3324,7 @@ export async function registerRoutes(app: express.Application) {
                       originalFileSizeMB: fileSizeMB,
                       convertedFileSizeMB: complexityCheck.convertedFileSizeMB,
                       originalFileName: file.filename,
-                      suggestion: 'Please upload via Dropbox for files over 50MB'
+                      suggestion: 'This file is too complex and too large to process automatically. Please simplify the artwork and try again.'
                     });
                     return;
                   }
@@ -5537,9 +5702,68 @@ export async function registerRoutes(app: express.Application) {
     }
   });
 
+  app.post('/api/projects/:projectId/logos/from-chunked', async (req, res) => {
+    try {
+      const projectId = req.params.projectId;
+      const { filename, originalName, mimetype, size } = req.body;
+      
+      if (!filename || !originalName) {
+        return res.status(400).json({ error: 'Missing required fields' });
+      }
+      
+      const safeFilename = path.basename(filename);
+      if (safeFilename !== filename || filename.includes('..')) {
+        return res.status(400).json({ error: 'Invalid filename' });
+      }
+      
+      const filePath = path.join(uploadDir, safeFilename);
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ error: 'Assembled file not found' });
+      }
+      
+      const project = await storage.getProject(projectId);
+      if (!project) {
+        return res.status(404).json({ error: 'Project not found' });
+      }
+      
+      const allowedMimes = [
+        'image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml', 'application/pdf',
+        'application/postscript', 'application/illustrator', 'application/x-illustrator'
+      ];
+      const safeMimetype = allowedMimes.includes(mimetype) ? mimetype : 'application/pdf';
+      
+      console.log(`📦 Processing chunked upload: "${originalName}" → ${safeFilename} (${safeMimetype})`);
+      
+      const FormData = (await import('form-data')).default;
+      const formData = new FormData();
+      formData.append('files', fs.createReadStream(filePath), {
+        filename: originalName,
+        contentType: safeMimetype,
+      });
+      
+      const internalRes = await fetch(`http://localhost:${process.env.PORT || 5000}/api/projects/${projectId}/logos`, {
+        method: 'POST',
+        body: formData as any,
+        headers: formData.getHeaders(),
+      });
+      
+      if (!internalRes.ok) {
+        const errorText = await internalRes.text();
+        console.error('Internal logo processing failed:', errorText);
+        return res.status(internalRes.status).json({ error: 'Failed to process file', details: errorText });
+      }
+      
+      const result = await internalRes.json();
+      return res.json(result);
+    } catch (error) {
+      console.error('Chunked upload processing error:', error);
+      res.status(500).json({ error: 'Failed to process uploaded file' });
+    }
+  });
+
   // Dropbox upload endpoint (disabled - Dropbox integration removed)
   app.post('/api/projects/:projectId/logos/dropbox-upload', async (_req, res) => {
-    res.status(410).json({ error: 'Dropbox upload is no longer available. Maximum upload size is 100MB.' });
+    res.status(410).json({ error: 'Dropbox upload is no longer available. Please upload files directly (up to 500MB).' });
   });
 
   // Other essential routes

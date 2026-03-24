@@ -501,7 +501,7 @@ export function VectorizationServiceForm({ open, onOpenChange, partnerEmail }: V
                                   <Upload className="h-12 w-12 mx-auto text-muted-foreground" />
                                   <p className="font-medium">Click to upload file</p>
                                   <p className="text-sm text-muted-foreground">
-                                    Supports: JPG, PNG, PDF, AI, EPS (max 100MB)
+                                    Supports: JPG, PNG, PDF, AI, EPS (max 500MB)
                                   </p>
                                 </div>
                               )}
