@@ -167,6 +167,8 @@ export default function ToolsSidebar({
         tips = '\n\nTips to reduce file size:\n• Simplify artwork by removing unused layers\n• Convert text to outlines and flatten effects\n• Reduce embedded image resolution to 300 DPI';
       }
       
+      tips += '\n\nCan\'t reduce the file? Email it to transferhelp@serigraf.com and we\'ll process your order manually.';
+      
       toast({
         title: `File too large (${sizeMB}MB)`,
         description: `"${f.name}" exceeds the 100MB upload limit.${tips}`,

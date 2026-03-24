@@ -633,6 +633,7 @@ export function HelpModal({ open, onOpenChange }: HelpModalProps) {
                           <li><strong>PDF/AI files:</strong> Use "Save As" with downsampled images, or "Reduce File Size" in Acrobat</li>
                           <li><strong>Images (PNG/JPG):</strong> Resize to 300 DPI at actual print dimensions</li>
                           <li><strong>General:</strong> Remove unused layers, flatten effects, convert text to outlines</li>
+                          <li><strong>Can't reduce it?</strong> Email your file to <a href="mailto:transferhelp@serigraf.com" className="text-primary hover:underline">transferhelp@serigraf.com</a> and we'll process your order manually</li>
                         </ul>
                       </div>
 
