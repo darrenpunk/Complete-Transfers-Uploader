@@ -7,7 +7,8 @@
 
 import fs from 'fs';
 import path from 'path';
-import { execSync } from 'child_process';
+import os from 'os';
+import { execSync, execFileSync } from 'child_process';
 
 export interface BoundingBox {
   xMin: number;
@@ -624,18 +625,13 @@ export class PDFBoundsExtractor {
   private async getPDFPageInfo(pdfPath: string, pageNumber: number): Promise<{ bbox: BoundingBox }> {
     try {
       // Try to get MediaBox using Ghostscript for more accurate results
-      const gsInfoCommand = [
-        'gs',
-        '-dNOPAUSE',
-        '-dBATCH',
-        '-dQUIET',
-        '-dNODISPLAY',
-        `-c`,
-        `"(${pdfPath}) (r) file runpdfbegin ${pageNumber} pdfgetpage /MediaBox get {=print ( ) print} forall quit"`
-      ].join(' ');
+      const escapedPsPath = pdfPath.replace(/\\/g, '\\\\').replace(/[()]/g, '\\$&');
+      const tempPsFile = path.join(os.tmpdir(), `bounds_mediabox_${Date.now()}.ps`);
+      const psCode = `(${escapedPsPath}) (r) file runpdfbegin ${pageNumber} pdfgetpage /MediaBox get {=print ( ) print} forall quit`;
+      fs.writeFileSync(tempPsFile, psCode);
       
       try {
-        const gsOutput = execSync(gsInfoCommand, { encoding: 'utf8', stdio: 'pipe' }).trim();
+        const gsOutput = execFileSync('gs', ['-dNOPAUSE', '-dBATCH', '-dQUIET', '-dNODISPLAY', '-f', tempPsFile], { encoding: 'utf8', stdio: 'pipe', timeout: 15000 }).trim();
         const mediaBoxValues = gsOutput.split(' ').filter(v => v).map(Number);
         
         if (mediaBoxValues.length === 4 && !mediaBoxValues.some(isNaN)) {
@@ -659,11 +655,13 @@ export class PDFBoundsExtractor {
         }
       } catch (gsError) {
         // Silently fall back to ImageMagick
+      } finally {
+        try { fs.unlinkSync(tempPsFile); } catch {}
       }
       
       // Fallback to ImageMagick
       const identifyCommand = `identify -format "%[fx:page.width],%[fx:page.height]" "${pdfPath}[${pageNumber - 1}]"`;
-      const output = execSync(identifyCommand, { encoding: 'utf8' }).trim();
+      const output = execSync(identifyCommand, { encoding: 'utf8', timeout: 15000 }).trim();
       const [width, height] = output.split(',').map(Number);
 
       if (!isNaN(width) && !isNaN(height) && width > 0 && height > 0) {

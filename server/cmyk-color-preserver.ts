@@ -1,10 +1,12 @@
 import { PDFDocument, PDFName, PDFDict, PDFArray, PDFNumber, rgb } from 'pdf-lib';
 import fs from 'fs';
 import path from 'path';
-import { exec } from 'child_process';
+import os from 'os';
+import { exec, execFile } from 'child_process';
 import { promisify } from 'util';
 
 const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
 
 export interface CMYKColor {
   c: number; // 0-100
@@ -139,10 +141,17 @@ export class CMYKColorPreserver {
   static async verifyCMYKPreservation(pdfPath: string): Promise<boolean> {
     try {
       // Use Ghostscript to check color spaces
-      const command = `gs -dNOPAUSE -dBATCH -dNODISPLAY -q -c "(${pdfPath}) (r) file runpdfbegin 1 1 pdfpagecount { pdfgetpage dup /Resources get /ColorSpace known { (Has ColorSpace resources) = } if } for" 2>&1`;
+      const escapedPsPath = pdfPath.replace(/\\/g, '\\\\').replace(/[()]/g, '\\$&');
+      const tempPsFile = path.join(os.tmpdir(), `cmyk_verify_${Date.now()}.ps`);
+      const psCode = `(${escapedPsPath}) (r) file runpdfbegin 1 1 pdfpagecount { pdfgetpage dup /Resources get /ColorSpace known { (Has ColorSpace resources) = } if } for`;
+      fs.writeFileSync(tempPsFile, psCode);
       
-      const { stdout } = await execAsync(command);
-      console.log('CMYK Verification result:', stdout);
+      try {
+        const { stdout } = await execFileAsync('gs', ['-dNOPAUSE', '-dBATCH', '-dNODISPLAY', '-q', '-f', tempPsFile], { timeout: 30000 });
+        console.log('CMYK Verification result:', stdout);
+      } finally {
+        try { fs.unlinkSync(tempPsFile); } catch {}
+      }
       
       return true;
     } catch (error) {

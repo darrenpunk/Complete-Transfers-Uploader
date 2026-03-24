@@ -5,10 +5,13 @@
  */
 
 import fs from 'fs';
-import { exec } from 'child_process';
+import path from 'path';
+import os from 'os';
+import { exec, execFile } from 'child_process';
 import { promisify } from 'util';
 
 const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
 
 export interface EmbeddedImageInfo {
   width: number;
@@ -57,7 +60,7 @@ export class MixedContentDetector {
       // These multi-page PDFs contain garment color pages with footer text like "Project:", "Garment Color:", "Quantity:"
       // They should always be treated as vector content to avoid false raster detection
       try {
-        const { stdout: fullText } = await execAsync(`pdftotext -q "${pdfPath}" - 2>/dev/null || true`);
+        const { stdout: fullText } = await execAsync(`pdftotext -q "${pdfPath}" - 2>/dev/null || true`, { timeout: 15000 });
         const hasProjectFooter = /Project:/i.test(fullText);
         const hasGarmentFooter = /Garment\s*Colou?r:/i.test(fullText);
         const hasQuantityFooter = /Quantity:\s*\d+/i.test(fullText);
@@ -77,7 +80,7 @@ export class MixedContentDetector {
 
       // Method 1: Use pdfimages to detect raster images
       try {
-        const { stdout } = await execAsync(`pdfimages -f 1 -l 1 -list "${pdfPath}" 2>/dev/null || true`);
+        const { stdout } = await execAsync(`pdfimages -f 1 -l 1 -list "${pdfPath}" 2>/dev/null || true`, { timeout: 15000 });
         const lines = stdout.split('\n');
         
         // Skip header lines
@@ -125,11 +128,14 @@ export class MixedContentDetector {
         console.log('pdfimages not available, trying alternative method');
       }
 
-      // Method 2: Use Ghostscript to analyze PDF content
-      const gsCommand = `gs -dNODISPLAY -q -dNOSAFER -c "${pdfPath}" (r) file runpdfbegin 1 1 1 {pdfgetpage /Page exch def Page /Resources get /XObject .knownget {dup {exch pop dup /Subtype get /Image eq {(IMAGE) print} {pop} ifelse} forall} if} for quit 2>/dev/null || true`;
+      // Method 2: Use Ghostscript to analyze PDF content via temp PostScript file
+      const escapedPsPath = pdfPath.replace(/\\/g, '\\\\').replace(/[()]/g, '\\$&');
+      const gsTempPs = path.join(os.tmpdir(), `mixed_check_${Date.now()}.ps`);
+      const gsPsCode = `(${escapedPsPath}) (r) file runpdfbegin 1 1 1 {pdfgetpage /Page exch def Page /Resources get /XObject .knownget {dup {exch pop dup /Subtype get /Image eq {(IMAGE) print} {pop} ifelse} forall} if} for quit`;
+      fs.writeFileSync(gsTempPs, gsPsCode);
       
       try {
-        const { stdout: gsOutput } = await execAsync(gsCommand);
+        const { stdout: gsOutput } = await execFileAsync('gs', ['-dNODISPLAY', '-q', '-dNOSAFER', '-f', gsTempPs], { timeout: 30000 });
         if (gsOutput.includes('IMAGE')) {
           analysis.hasRasterContent = true;
           if (analysis.rasterImages.count === 0) {
@@ -138,11 +144,13 @@ export class MixedContentDetector {
         }
       } catch (error) {
         console.log('Ghostscript analysis failed:', error);
+      } finally {
+        try { fs.unlinkSync(gsTempPs); } catch {}
       }
 
       // Method 3: Convert PDF to text to check for vector content
       try {
-        const { stdout: textOutput } = await execAsync(`pdftotext -q -f 1 -l 1 "${pdfPath}" - 2>/dev/null || true`);
+        const { stdout: textOutput } = await execAsync(`pdftotext -q -f 1 -l 1 "${pdfPath}" - 2>/dev/null || true`, { timeout: 15000 });
         if (textOutput.trim().length > 0) {
           analysis.hasVectorContent = true;
           analysis.vectorElements.types.push('text');
@@ -156,7 +164,7 @@ export class MixedContentDetector {
         const tempSvg = `/tmp/temp_${Date.now()}.svg`;
         const pdf2svgCommand = `pdf2svg "${pdfPath}" "${tempSvg}" 1`;
         console.log('🔍 Running pdf2svg command:', pdf2svgCommand);
-        await execAsync(`${pdf2svgCommand} 2>/dev/null || true`);
+        await execAsync(`${pdf2svgCommand} 2>/dev/null || true`, { timeout: 30000 });
         
         if (fs.existsSync(tempSvg)) {
           const svgContent = fs.readFileSync(tempSvg, 'utf8');

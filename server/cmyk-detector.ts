@@ -4,11 +4,14 @@
  * This is critical for preserving original CMYK values
  */
 
-import { exec } from 'child_process';
+import { exec, execFile } from 'child_process';
 import { promisify } from 'util';
 import fs from 'fs';
+import path from 'path';
+import os from 'os';
 
 const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
 
 export class CMYKDetector {
   /**
@@ -16,17 +19,22 @@ export class CMYKDetector {
    */
   static async hasCMYKColors(pdfPath: string): Promise<boolean> {
     try {
-      // Method 1: Use Ghostscript to check color spaces
-      const gsCommand = `gs -dNODISPLAY -q -dNOSAFER -c "(${pdfPath}) (r) file runpdfbegin 1 1 pdfpagecount {pdfgetpage dup /Resources get /ColorSpace .knownget {dup {exch pop dup /DeviceCMYK eq {(CMYK) print quit} if pop} forall} if pop} for quit" 2>/dev/null || true`;
+      // Method 1: Use Ghostscript to check color spaces via temp PostScript file
+      const escapedPsPath = pdfPath.replace(/\\/g, '\\\\').replace(/[()]/g, '\\$&');
+      const tempPsFile = path.join(os.tmpdir(), `cmyk_check_${Date.now()}.ps`);
+      const psCode = `(${escapedPsPath}) (r) file runpdfbegin 1 1 pdfpagecount {pdfgetpage dup /Resources get /ColorSpace .knownget {dup {exch pop dup /DeviceCMYK eq {(CMYK) print quit} if pop} forall} if pop} for quit`;
+      fs.writeFileSync(tempPsFile, psCode);
       
       try {
-        const { stdout } = await execAsync(gsCommand);
+        const { stdout } = await execFileAsync('gs', ['-dNODISPLAY', '-q', '-dNOSAFER', '-f', tempPsFile], { timeout: 30000 });
         if (stdout.includes('CMYK')) {
           console.log('CMYK Detector: Found CMYK color space in PDF');
           return true;
         }
       } catch (error) {
         console.log('CMYK Detector: Ghostscript check failed, trying alternative method');
+      } finally {
+        try { fs.unlinkSync(tempPsFile); } catch {}
       }
 
       // Method 2: Use pdfinfo if available
@@ -168,11 +176,8 @@ export class CMYKDetector {
       
       fs.writeFileSync(tempPs, psCode);
       
-      // Run Ghostscript to process the PDF
-      const gsCommand = `gs -dNODISPLAY -dNOSAFER -dBATCH -q -sDEVICE=nullpage "${tempPs}" "${pdfPath}" 2>&1 || true`;
-      
       try {
-        const { stdout } = await execAsync(gsCommand);
+        const { stdout } = await execFileAsync('gs', ['-dNODISPLAY', '-dNOSAFER', '-dBATCH', '-q', '-sDEVICE=nullpage', tempPs, pdfPath], { timeout: 30000 });
         // Parse any CMYK values from output
         const cmykPattern = /(\d+\.?\d*)\s+(\d+\.?\d*)\s+(\d+\.?\d*)\s+(\d+\.?\d*)\s+cmyk/gi;
         let match;

@@ -202,7 +202,7 @@ export function OnboardingTutorial({ open, onOpenChange }: OnboardingTutorialPro
                   <span className="text-sm"><strong>Raster Images:</strong> PNG, JPEG</span>
                 </div>
                 <div className="text-xs text-muted-foreground ml-6">
-                  Up to 200MB per file
+                  Up to 100MB per file
                 </div>
               </div>
             </div>

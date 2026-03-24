@@ -176,7 +176,7 @@ export function HelpModal({ open, onOpenChange }: HelpModalProps) {
                       <li>Upload multiple files at once</li>
                       <li>Vector files (PDF, AI, SVG) provide the best print quality</li>
                       <li>Files are automatically converted to CMYK for print</li>
-                      <li>Maximum file size: 200MB per file</li>
+                      <li>Maximum file size: 100MB per file</li>
                     </ul>
                   </div>
 
@@ -627,8 +627,8 @@ export function HelpModal({ open, onOpenChange }: HelpModalProps) {
                       <div>
                         <h4 className="font-medium">Large file upload fails (413 error)</h4>
                         <p className="text-sm text-muted-foreground">
-                          Maximum file size is 200MB. For larger files, use our Dropbox File Request 
-                          option, or optimize the PDF/reduce image resolution before uploading.
+                          Maximum file size is 100MB. For larger files, please reduce the file size 
+                          or simplify the artwork before uploading.
                         </p>
                       </div>
 

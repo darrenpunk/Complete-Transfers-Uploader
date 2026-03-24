@@ -1,9 +1,11 @@
-import { exec } from "child_process";
+import { exec, execFile } from "child_process";
 import { promisify } from "util";
 import fs from "fs";
 import path from "path";
+import os from "os";
 
 const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
 
 export class CMYKPDFFinalizer {
   /**
@@ -114,8 +116,17 @@ export class CMYKPDFFinalizer {
 
       // Verify ICC profile was embedded
       try {
-        const verifyCommand = `gs -dNOPAUSE -dBATCH -dNODISPLAY -q -c "(${outputPath}) (r) file runpdfbegin /OutputIntents pdfgetobject {(ICC Profile embedded) print} {(No ICC profile found) print} ifelse" 2>&1`;
-        const { stdout: verifyOutput } = await execAsync(verifyCommand);
+        const escapedPsPath = outputPath.replace(/\\/g, '\\\\').replace(/[()]/g, '\\$&');
+        const verifyTempPs = path.join(os.tmpdir(), `icc_verify_${Date.now()}.ps`);
+        const verifyPsCode = `(${escapedPsPath}) (r) file runpdfbegin /OutputIntents pdfgetobject {(ICC Profile embedded) print} {(No ICC profile found) print} ifelse`;
+        fs.writeFileSync(verifyTempPs, verifyPsCode);
+        let verifyOutput = '';
+        try {
+          const result = await execFileAsync('gs', ['-dNOPAUSE', '-dBATCH', '-dNODISPLAY', '-q', '-f', verifyTempPs], { timeout: 15000 });
+          verifyOutput = result.stdout;
+        } finally {
+          try { fs.unlinkSync(verifyTempPs); } catch {}
+        }
         console.log('CMYK Finalizer: ICC verification:', verifyOutput.trim());
       } catch (verifyError) {
         console.log('CMYK Finalizer: Could not verify ICC profile');
