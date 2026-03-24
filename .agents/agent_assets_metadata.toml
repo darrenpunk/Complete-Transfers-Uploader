@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "eHgz3rPr459hCaqJJT8_6"
+uri = "file://ODOO_CART_BUG_REPORT.md"
+type = "text"
+title = "Odoo Cart Bug Report & Fix"
