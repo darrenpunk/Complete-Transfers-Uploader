@@ -48,7 +48,7 @@ const UploadZone = forwardRef<UploadZoneRef, UploadZoneProps>(({ onFilesSelected
     if (oversizedFiles.length > 0) {
       const f = oversizedFiles[0];
       const sizeMB = Math.round(f.size / (1024 * 1024));
-      console.warn(`⚠️ File too large: ${f.name} (${sizeMB}MB) — redirecting to Dropbox upload`);
+      console.warn(`⚠️ File too large: ${f.name} (${sizeMB}MB) — exceeds 100MB limit`);
       if (onFileTooLarge) {
         onFileTooLarge(f.name, sizeMB);
       }

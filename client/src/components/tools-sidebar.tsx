@@ -156,7 +156,7 @@ export default function ToolsSidebar({
       const sizeMB = Math.round(f.size / (1024 * 1024));
       toast({
         title: "File too large",
-        description: `"${f.name}" is ${sizeMB}MB which exceeds the 100MB limit. Please use the Dropbox upload link for large files.`,
+        description: `"${f.name}" is ${sizeMB}MB which exceeds the 100MB upload limit. Please reduce the file size or simplify the artwork before uploading.`,
         variant: "destructive",
         duration: 8000,
       });

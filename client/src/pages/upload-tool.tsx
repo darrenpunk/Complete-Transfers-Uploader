@@ -27,7 +27,6 @@ import { OnboardingTutorial } from "@/components/onboarding-tutorial";
 import { ArtworkRequirementsModal } from "@/components/artwork-requirements-modal";
 import { RasterWarningModal } from "@/components/raster-warning-modal";
 import { ExternalFileLinkModal } from "@/components/external-file-link-modal";
-import { DropboxUploadModal } from "@/components/dropbox-upload-modal";
 import { DtfQuickUploadModal } from "@/components/dtf-quick-upload-modal";
 import { UploadGuidanceModal } from "@/components/upload-guidance-modal";
 import { EmbroideryElementSelector } from "@/components/embroidery-element-selector";
@@ -63,7 +62,6 @@ export default function UploadTool() {
   const [showOnboardingTutorial, setShowOnboardingTutorial] = useState(false);
   const [showArtworkRequirementsModal, setShowArtworkRequirementsModal] = useState(false);
   const [showExternalFileLinkModal, setShowExternalFileLinkModal] = useState(false);
-  const [showDropboxUploadModal, setShowDropboxUploadModal] = useState(false);
   const [showDtfQuickUpload, setShowDtfQuickUpload] = useState(false);
   const dtfSubmittedRef = useRef(false);
   const [showUploadGuidanceModal, setShowUploadGuidanceModal] = useState(false);
@@ -1842,42 +1840,6 @@ export default function UploadTool() {
     }
   };
 
-  const handleDropboxUpload = async (data: { fileName: string; description?: string }): Promise<{ uploadUrl: string } | void> => {
-    if (!currentProject) {
-      toast({
-        title: "Error",
-        description: "Please select a template first before using Dropbox upload",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      console.log('[Dropbox] Creating file request for project:', currentProject.id);
-      const response = await apiRequest('POST', `/api/projects/${currentProject.id}/logos/dropbox-upload`, data);
-      const result = await response.json();
-      
-      console.log('[Dropbox] File request created:', result);
-      
-      // Invalidate queries to refresh the canvas
-      await queryClient.invalidateQueries({ queryKey: ['/api/projects', currentProject.id, 'logos'] });
-      await queryClient.invalidateQueries({ queryKey: ['/api/projects', currentProject.id, 'canvas-elements'] });
-      
-      toast({
-        title: "Dropbox Upload Link Created",
-        description: `Placeholder added for ${data.fileName}. Click the upload link to add your file.`,
-      });
-      
-      return { uploadUrl: result.uploadUrl };
-    } catch (error: any) {
-      console.error('[Dropbox] Error creating file request:', error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to create Dropbox upload link",
-        variant: "destructive",
-      });
-    }
-  };
 
   const handleCloseRasterWarning = () => {
     setPendingRasterFile(null);
@@ -1933,11 +1895,10 @@ export default function UploadTool() {
       const sizeMB = Math.round(f.size / (1024 * 1024));
       toast({
         title: "File too large",
-        description: `"${f.name}" is ${sizeMB}MB which exceeds the 100MB limit. Please use the Dropbox upload link for large files.`,
+        description: `"${f.name}" is ${sizeMB}MB which exceeds the 100MB upload limit. Please reduce the file size or simplify the artwork before uploading.`,
         variant: "destructive",
         duration: 8000,
       });
-      setShowDropboxUploadModal(true);
       if (validFiles.length === 0) return;
     }
     
@@ -2181,12 +2142,11 @@ export default function UploadTool() {
           // If parsing fails, this is likely a reverse proxy 413 (Payload Too Large)
           toast({
             title: "File Too Large", 
-            description: "Your file exceeds the upload size limit. For large files, please use the 'Upload via Dropbox' option instead.",
+            description: "Your file exceeds the 100MB upload limit. Please reduce the file size or simplify the artwork before uploading.",
             variant: "destructive",
-            duration: 8000, // Show longer for important message
+            duration: 8000,
           });
           console.error('413 Payload Too Large - File exceeds server upload limit');
-          console.error('Suggest using Dropbox File Request for large files');
         }
       } else {
         setIsUploading(false);
@@ -2448,7 +2408,6 @@ export default function UploadTool() {
             onAlignElement={handleAlignElement}
             onCenterAllElements={handleCenterAllElements}
             onOpenVectorizationForm={() => setShowVectorizationForm(true)}
-            onFileTooLarge={() => setShowDropboxUploadModal(true)}
           />
         </div>
 
@@ -2478,7 +2437,6 @@ export default function UploadTool() {
                 onAlignElement={handleAlignElement}
                 onCenterAllElements={handleCenterAllElements}
                 onOpenVectorizationForm={() => setShowVectorizationForm(true)}
-                onFileTooLarge={() => setShowDropboxUploadModal(true)}
               />
             </div>
           </div>
@@ -2757,13 +2715,6 @@ export default function UploadTool() {
         onSubmit={handleExternalFileLink}
       />
 
-      {/* Dropbox Upload Modal */}
-      <DropboxUploadModal
-        open={showDropboxUploadModal}
-        onOpenChange={setShowDropboxUploadModal}
-        onSubmit={handleDropboxUpload}
-      />
-
       {/* Embroidery Element Selector Modal */}
       {isAppliqueTemplate && (
         <EmbroideryElementSelector
@@ -3000,7 +2951,6 @@ export default function UploadTool() {
               <div className="space-y-2">
                 <h4 className="font-semibold text-sm">What you can do:</h4>
                 <ul className="text-sm text-muted-foreground space-y-2 list-disc list-inside">
-                  <li>Upload via Dropbox - we'll generate a secure upload link (recommended)</li>
                   <li>Simplify your artwork in your design software (reduce paths, flatten layers)</li>
                   <li>Export as a high-resolution PNG (300 DPI) instead</li>
                 </ul>
@@ -3014,16 +2964,6 @@ export default function UploadTool() {
                 data-testid="button-dismiss-complexity-error"
               >
                 Got It
-              </Button>
-              <Button
-                onClick={() => {
-                  setComplexityError(null);
-                  setShowDropboxUploadModal(true);
-                }}
-                data-testid="button-upload-via-dropbox"
-              >
-                <Upload className="w-4 h-4 mr-2" />
-                Upload via Dropbox
               </Button>
             </div>
           </DialogContent>
