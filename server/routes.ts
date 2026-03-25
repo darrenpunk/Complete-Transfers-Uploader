@@ -4716,102 +4716,125 @@ export async function registerRoutes(app: express.Application) {
                     // Crop SVG viewBox to content bounds AND translate content to zero-origin
                     if (fs.existsSync(svgPath)) {
                       try {
-                        // CRITICAL FIX: Query actual SVG content bounds AFTER Inkscape conversion
-                        // Inkscape rebases coordinates and may report LARGER dimensions than Ghostscript
-                        // (Ghostscript can miss masked strokes/effects that the renderer sees)
                         let svgBoundsX = 0, svgBoundsY = 0;
                         let svgBoundsWidth = contentWidthPts, svgBoundsHeight = contentHeightPts;
                         
                         try {
                           const { execSync } = await import('child_process');
-                          const queryResult = execSync(`inkscape --query-all "${svgPath}" 2>/dev/null | head -1`, { encoding: 'utf8', timeout: 10000 });
-                          // Format: element_id,x,y,width,height
-                          const parts = queryResult.trim().split(',');
-                          if (parts.length >= 5) {
-                            svgBoundsX = parseFloat(parts[1]) || 0;
-                            svgBoundsY = parseFloat(parts[2]) || 0;
-                            let inkscapeWidth = parseFloat(parts[3]) || 0;
-                            let inkscapeHeight = parseFloat(parts[4]) || 0;
-                            // Clamp to PDF MediaBox — bleed elements outside the page must not inflate bounds
+                          const queryResult = execSync(`inkscape --query-all "${svgPath}" 2>/dev/null`, { encoding: 'utf8', timeout: 15000 });
+                          const allLines = queryResult.trim().split('\n');
+                          
+                          const rootParts = allLines[0]?.split(',');
+                          if (rootParts && rootParts.length >= 5) {
+                            svgBoundsX = parseFloat(rootParts[1]) || 0;
+                            svgBoundsY = parseFloat(rootParts[2]) || 0;
                             if (pdfPageDimensions) {
-                              const clampedXMax = Math.min(svgBoundsX + inkscapeWidth, pdfPageDimensions.widthPts);
-                              const clampedYMax = Math.min(svgBoundsY + inkscapeHeight, pdfPageDimensions.heightPts);
                               svgBoundsX = Math.max(svgBoundsX, 0);
                               svgBoundsY = Math.max(svgBoundsY, 0);
-                              inkscapeWidth = clampedXMax - svgBoundsX;
-                              inkscapeHeight = clampedYMax - svgBoundsY;
                             }
-                            console.log(`🔍 Inkscape query-all: SVG at (${svgBoundsX.toFixed(2)}, ${svgBoundsY.toFixed(2)}) size ${inkscapeWidth.toFixed(2)}×${inkscapeHeight.toFixed(2)}pts`);
+                          }
+                          
+                          let unionXMin = Infinity, unionYMin = Infinity, unionXMax = -Infinity, unionYMax = -Infinity;
+                          const pageW = pdfPageDimensions?.widthPts ?? Infinity;
+                          const pageH = pdfPageDimensions?.heightPts ?? Infinity;
+                          for (let lineIdx = 0; lineIdx < allLines.length; lineIdx++) {
+                            const line = allLines[lineIdx];
+                            const parts = line.split(',');
+                            if (parts.length >= 5) {
+                              const elId = parts[0] || '';
+                              if (lineIdx === 0 || elId === 'svg1' || elId === 'svg' || elId.startsWith('svg:svg')) {
+                                continue;
+                              }
+                              const elX = parseFloat(parts[1]) || 0;
+                              const elY = parseFloat(parts[2]) || 0;
+                              const elW = parseFloat(parts[3]) || 0;
+                              const elH = parseFloat(parts[4]) || 0;
+                              if (elW > 0.5 && elH > 0.5) {
+                                const cx = Math.max(elX, 0);
+                                const cy = Math.max(elY, 0);
+                                const cxMax = Math.min(elX + elW, pageW);
+                                const cyMax = Math.min(elY + elH, pageH);
+                                if (cxMax > cx && cyMax > cy) {
+                                  unionXMin = Math.min(unionXMin, cx);
+                                  unionYMin = Math.min(unionYMin, cy);
+                                  unionXMax = Math.max(unionXMax, cxMax);
+                                  unionYMax = Math.max(unionYMax, cyMax);
+                                }
+                              }
+                            }
+                          }
+                          
+                          if (unionXMin < Infinity) {
+                            const inkscapeWidth = unionXMax - unionXMin;
+                            const inkscapeHeight = unionYMax - unionYMin;
+                            console.log(`🔍 Inkscape all-elements union: (${unionXMin.toFixed(2)}, ${unionYMin.toFixed(2)}) to (${unionXMax.toFixed(2)}, ${unionYMax.toFixed(2)}) = ${inkscapeWidth.toFixed(2)}×${inkscapeHeight.toFixed(2)}pts`);
+                            console.log(`🔍 Root element position: (${svgBoundsX.toFixed(2)}, ${svgBoundsY.toFixed(2)})`);
                             
-                            // CRITICAL: Use Inkscape dimensions if they're larger than Ghostscript
-                            // But ONLY if Inkscape isn't just reporting background/invisible elements
-                            // And NEVER override ArtBox bounds — ArtBox is the designer's explicit artboard definition
-                            // And NEVER override when Inkscape just returns full-page bounds (= background rect)
-                            const TOLERANCE = 1.0; // 1pt tolerance
+                            const TOLERANCE = 1.0;
                             const inkPageCoverage2 = pdfPageDimensions ? (inkscapeWidth * inkscapeHeight) / (pdfPageDimensions.widthPts * pdfPageDimensions.heightPts) : 0;
-                            const inkscapeIsFullPage2 = inkPageCoverage2 > 0.97;
-                            if (!boundsSourceIsArtBox && !inkscapeIsFullPage2 && (inkscapeWidth > contentWidthPts + TOLERANCE || inkscapeHeight > contentHeightPts + TOLERANCE)) {
-                              {
+                            const gsPageCoverage = pdfPageDimensions ? (contentWidthPts * contentHeightPts) / (pdfPageDimensions.widthPts * pdfPageDimensions.heightPts) : 0;
+                            const isBackgroundRect = inkPageCoverage2 > 0.97 && gsPageCoverage < 0.50;
+                            
+                            console.log(`📊 Coverage: GS=${(gsPageCoverage * 100).toFixed(0)}%, Inkscape=${(inkPageCoverage2 * 100).toFixed(0)}%, isBackgroundRect=${isBackgroundRect}`);
+                            
+                            if (!boundsSourceIsArtBox && !isBackgroundRect && (inkscapeWidth > contentWidthPts + TOLERANCE || inkscapeHeight > contentHeightPts + TOLERANCE)) {
                               console.log(`⚠️ Inkscape reports LARGER bounds than Ghostscript!`);
                               console.log(`   Ghostscript: ${contentWidthPts.toFixed(2)}×${contentHeightPts.toFixed(2)}pts`);
                               console.log(`   Inkscape: ${inkscapeWidth.toFixed(2)}×${inkscapeHeight.toFixed(2)}pts`);
                               console.log(`🔧 Using Inkscape dimensions to prevent clipping`);
                               
-                              // Use the larger of the two for each dimension
-                              svgBoundsWidth = Math.max(contentWidthPts, inkscapeWidth);
-                              svgBoundsHeight = Math.max(contentHeightPts, inkscapeHeight);
-                              contentWidthPts = svgBoundsWidth;
-                              contentHeightPts = svgBoundsHeight;
+                              const finalWidth = Math.max(contentWidthPts, inkscapeWidth);
+                              const finalHeight = Math.max(contentHeightPts, inkscapeHeight);
+                              svgBoundsWidth = finalWidth;
+                              svgBoundsHeight = finalHeight;
+                              contentWidthPts = finalWidth;
+                              contentHeightPts = finalHeight;
                               
-                              // Update display dimensions
+                              svgBoundsX = unionXMin;
+                              svgBoundsY = unionYMin;
+                              
                               const pxToMm = 1 / 2.834645669;
                               displayWidth = contentWidthPts * pxToMm;
                               displayHeight = contentHeightPts * pxToMm;
                               console.log(`✅ Updated dimensions: ${contentWidthPts.toFixed(2)}×${contentHeightPts.toFixed(2)}pts (${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm)`);
                               
-                              // CRITICAL FIX: Update originalPdfBounds with Inkscape-detected bounds
-                              // Inkscape detects ALL content including white elements that Ghostscript misses
-                              // This ensures PDF cropping uses the correct full content location
-                              // IMPORTANT: Inkscape uses top-down Y coords (Y=0 at top), PDF uses bottom-up Y coords (Y=0 at bottom)
-                              if (svgBoundsX !== undefined && svgBoundsY !== undefined && pdfPageDimensions) {
+                              if (pdfPageDimensions) {
                                 const pageHeight = pdfPageDimensions.heightPts;
-                                const pdfYMin = pageHeight - svgBoundsY - inkscapeHeight;
+                                const pdfYMin = pageHeight - svgBoundsY - finalHeight;
                                 const pdfYMax = pageHeight - svgBoundsY;
-                                
-                                console.log(`🔧 Updating PDF bounds with Inkscape content detection:`);
-                                console.log(`   Inkscape: y=${svgBoundsY.toFixed(2)}, height=${inkscapeHeight.toFixed(2)} (top-down)`);
-                                console.log(`   Page height: ${pageHeight.toFixed(2)}pts`);
-                                console.log(`   PDF coords: yMin=${pdfYMin.toFixed(2)}, yMax=${pdfYMax.toFixed(2)} (bottom-up)`);
                                 
                                 originalPdfBounds = {
                                   xMin: svgBoundsX,
                                   yMin: pdfYMin,
-                                  xMax: svgBoundsX + inkscapeWidth,
+                                  xMax: svgBoundsX + finalWidth,
                                   yMax: pdfYMax,
-                                  width: inkscapeWidth,
-                                  height: inkscapeHeight,
+                                  width: finalWidth,
+                                  height: finalHeight,
                                   units: 'pt'
                                 };
-                                console.log(`📋 Updated PDF bounds for cropping: (${originalPdfBounds.xMin.toFixed(1)}, ${originalPdfBounds.yMin.toFixed(1)}) to (${originalPdfBounds.xMax.toFixed(1)}, ${originalPdfBounds.yMax.toFixed(1)})`);
+                                console.log(`📋 Updated PDF bounds: (${originalPdfBounds.xMin.toFixed(1)}, ${originalPdfBounds.yMin.toFixed(1)}) to (${originalPdfBounds.xMax.toFixed(1)}, ${originalPdfBounds.yMax.toFixed(1)})`);
                                 
-                                // Also update the stored contentBounds to match the larger Inkscape bounds
                                 boundsResult = {
                                   success: true,
                                   method: 'inkscape-corrected',
                                   contentBounds: {
                                     xMin: 0,
                                     yMin: 0,
-                                    xMax: inkscapeWidth,
-                                    yMax: inkscapeHeight,
-                                    width: inkscapeWidth,
-                                    height: inkscapeHeight,
+                                    xMax: finalWidth,
+                                    yMax: finalHeight,
+                                    width: finalWidth,
+                                    height: finalHeight,
                                     units: 'pt'
                                   }
                                 };
-                                console.log(`📋 Updated contentBounds to Inkscape dimensions: ${inkscapeWidth.toFixed(1)}×${inkscapeHeight.toFixed(1)}pts`);
                               }
+                            } else if (boundsSourceIsArtBox) {
+                              console.log(`✅ ArtBox bounds preserved (designer's explicit artboard)`);
+                            } else if (isBackgroundRect) {
+                              console.log(`✅ Inkscape full-page bounds suppressed (GS coverage ${(gsPageCoverage * 100).toFixed(0)}% suggests background rect)`);
+                            } else {
+                              console.log(`✅ Inkscape confirms GS bounds (no significant difference)`);
                             }
-                          } // end else (inkPageCoverage2 <= 0.8)
                           }
                         } catch (queryError) {
                           console.log(`⚠️ Inkscape query failed, using Ghostscript bounds:`, queryError);
@@ -4822,7 +4845,7 @@ export async function registerRoutes(app: express.Application) {
                         let svgContent = fs.readFileSync(svgPath, 'utf8');
                         
                         // Determine correct SVG-space translation for the content
-                        // svgBoundsX/Y come from Inkscape --query-all head -1 which is the ROOT element (often 0,0)
+                        // svgBoundsX/Y come from Inkscape all-elements analysis (root position or content union origin)
                         // For small logos on large pages, we need the CONTENT position, not root position
                         let normTranslateX = svgBoundsX;
                         let normTranslateY = svgBoundsY;
