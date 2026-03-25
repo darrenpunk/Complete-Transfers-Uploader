@@ -4352,6 +4352,7 @@ export async function registerRoutes(app: express.Application) {
                   // Use Ghostscript bounds if available, otherwise fall back to SVG geometry
                   let contentBoundsForNormalization: { xMin: number; yMin: number; xMax: number; yMax: number; width: number; height: number };
                   let boundsSourceIsArtBox = false; // True when ArtBox was the authoritative source — prevents secondary Inkscape check from overriding
+                  let inkscapeVerified = false; // True when Inkscape verification ran (confirms or corrects GS bounds)
                   
                   // CRITICAL FIX: Ghostscript bbox misses white content on its default white background
                   // This causes partial bounds for files with mixed colored + white artwork
@@ -4475,6 +4476,7 @@ export async function registerRoutes(app: express.Application) {
                           console.log(`✅ Inkscape confirms GS bounds are accurate (similar area)`);
                         }
                       }
+                      inkscapeVerified = true;
                     } else {
                       console.log(`✅ GS BBOX TRUSTED: Content covers ${(areaCoverage * 100).toFixed(0)}% of page`);
                     }
@@ -4505,8 +4507,8 @@ export async function registerRoutes(app: express.Application) {
                     // incorrectly expanded to full page dimensions.
                     let usedMediaBoxFallback = false;
                     const gsCoverageRatio = (gsBounds.width * gsBounds.height) / (pageWidth * pageHeight);
-                    if (!boundsSourceIsArtBox && gsCoverageRatio < 0.15 && pdfPageDimensions) {
-                      console.log(`⚠️ GS coverage is only ${(gsCoverageRatio * 100).toFixed(0)}% — using full PDF page (MediaBox) to avoid cropping white artwork`);
+                    if (!boundsSourceIsArtBox && !inkscapeVerified && gsCoverageRatio < 0.15 && pdfPageDimensions) {
+                      console.log(`⚠️ GS coverage is only ${(gsCoverageRatio * 100).toFixed(0)}% and Inkscape verification unavailable — using full PDF page (MediaBox) to avoid cropping white artwork`);
                       gsBounds = {
                         xMin: 0,
                         yMin: 0,
