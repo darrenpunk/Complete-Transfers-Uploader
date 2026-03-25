@@ -4821,10 +4821,35 @@ export async function registerRoutes(app: express.Application) {
                         
                         let svgContent = fs.readFileSync(svgPath, 'utf8');
                         
+                        // Determine correct SVG-space translation for the content
+                        // svgBoundsX/Y come from Inkscape --query-all head -1 which is the ROOT element (often 0,0)
+                        // For small logos on large pages, we need the CONTENT position, not root position
+                        let normTranslateX = svgBoundsX;
+                        let normTranslateY = svgBoundsY;
+                        
+                        // If root element is at (0,0) covering the full page but content is smaller,
+                        // we need to use GS/PDF bounds converted to SVG coordinates for the translation
+                        const rootIsFullPage = pdfPageDimensions && 
+                          Math.abs(svgBoundsX) < 1 && Math.abs(svgBoundsY) < 1 &&
+                          contentWidthPts < pdfPageDimensions.widthPts * 0.8 &&
+                          contentHeightPts < pdfPageDimensions.heightPts * 0.8;
+                        
+                        if (rootIsFullPage && contentBoundsForNormalization) {
+                          if ((contentBoundsForNormalization as any).__fromSvgCoords) {
+                            normTranslateX = contentBoundsForNormalization.xMin;
+                            normTranslateY = contentBoundsForNormalization.yMin;
+                          } else {
+                            normTranslateX = contentBoundsForNormalization.xMin;
+                            normTranslateY = pdfPageDimensions!.heightPts - contentBoundsForNormalization.yMax;
+                          }
+                          console.log(`📐 Root element is full page but content is small — using PDF bounds for SVG translation`);
+                          console.log(`   PDF bounds: (${contentBoundsForNormalization.xMin.toFixed(1)}, ${contentBoundsForNormalization.yMin.toFixed(1)}) → SVG translate: (${normTranslateX.toFixed(1)}, ${normTranslateY.toFixed(1)})`);
+                        }
+                        
                         console.log(`🎯 NORMALIZING SVG to zero-origin:`);
-                        console.log(`   SVG content starts at: (${svgBoundsX.toFixed(2)}, ${svgBoundsY.toFixed(2)})`);
+                        console.log(`   SVG content starts at: (${normTranslateX.toFixed(2)}, ${normTranslateY.toFixed(2)})`);
                         console.log(`   Size: ${contentWidthPts.toFixed(2)}×${contentHeightPts.toFixed(2)}pts`);
-                        console.log(`   Translation needed: (-${svgBoundsX.toFixed(2)}, -${svgBoundsY.toFixed(2)})`);
+                        console.log(`   Translation needed: (-${normTranslateX.toFixed(2)}, -${normTranslateY.toFixed(2)})`);
                         
                         // CRITICAL: Set viewBox to ZERO-ORIGIN (0 0 width height)
                         // This matches the normalized contentBounds the frontend expects
@@ -4836,10 +4861,8 @@ export async function registerRoutes(app: express.Application) {
                         svgContent = svgContent.replace(/width="[^"]*"/, `width="${contentWidthPts.toFixed(2)}"`);
                         svgContent = svgContent.replace(/height="[^"]*"/, `height="${contentHeightPts.toFixed(2)}"`);
                         
-                        // CRITICAL: Use ACTUAL SVG content bounds for translation, not PDF bounds
-                        // This is the key fix - Inkscape rebases coordinates during conversion
-                        const translateX = -svgBoundsX;
-                        const translateY = -svgBoundsY;
+                        const translateX = -normTranslateX;
+                        const translateY = -normTranslateY;
                         
                         // Find the opening <svg> tag and wrap all content after it
                         svgContent = svgContent.replace(
