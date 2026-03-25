@@ -304,11 +304,6 @@ export default function SvgInlineRenderer({
         <div 
           className="w-full h-full"
           style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 0,
-            margin: 0,
             overflow: 'visible'
           }}
         >
@@ -316,10 +311,11 @@ export default function SvgInlineRenderer({
             src={pngUrl} 
             alt={logo.originalName}
             data-testid="complex-vector-png-fallback"
+            draggable={false}
             style={{
-              maxWidth: '100%',
-              maxHeight: '100%',
-              objectFit: 'contain'
+              width: '100%',
+              height: '100%',
+              objectFit: 'fill'
             }}
           />
         </div>
