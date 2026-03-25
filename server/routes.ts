@@ -4877,6 +4877,27 @@ export async function registerRoutes(app: express.Application) {
                         
                         fs.writeFileSync(svgPath, svgContent);
                         console.log(`✅ SVG normalized to zero-origin with content translation - centered correctly`);
+                        
+                        // CRITICAL: Regenerate PNG fallback AFTER normalization if one was created earlier
+                        // The original PNG was generated from the full-page SVG before cropping
+                        if ((file as any).canvasFallbackFilename) {
+                          try {
+                            const pngFilename = (file as any).canvasFallbackFilename;
+                            const pngPath = path.join(uploadDir, pngFilename);
+                            const { execSync: execSyncPng } = await import('child_process');
+                            const pngScale = 4;
+                            const pngW = Math.round(contentWidthPts * pngScale);
+                            const pngH = Math.round(contentHeightPts * pngScale);
+                            console.log(`🔄 REGENERATING PNG fallback after SVG normalization: ${contentWidthPts.toFixed(1)}×${contentHeightPts.toFixed(1)}pts → ${pngW}×${pngH}px`);
+                            execSyncPng(`rsvg-convert "${svgPath}" -o "${pngPath}" -w ${pngW} -h ${pngH}`, { 
+                              stdio: 'pipe',
+                              timeout: 30000 
+                            });
+                            console.log(`✅ PNG fallback regenerated from normalized SVG: ${pngFilename}`);
+                          } catch (pngRegenError) {
+                            console.log(`⚠️ PNG fallback regeneration failed:`, pngRegenError);
+                          }
+                        }
                       } catch (svgCropError) {
                         console.error('⚠️ Failed to normalize SVG:', svgCropError);
                       }
