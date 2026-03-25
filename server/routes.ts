@@ -3751,7 +3751,16 @@ export async function registerRoutes(app: express.Application) {
                 
                 const { execSync } = await import('child_process');
                 try {
-                  execSync(`rsvg-convert "${svgPath}" -o "${pngPath}" -d 300 -p 300`, { 
+                  const svgContentForSize = fs.readFileSync(svgPath, 'utf-8');
+                  const svgWidthMatch = svgContentForSize.match(/width="([^"]+)"/);
+                  const svgHeightMatch = svgContentForSize.match(/height="([^"]+)"/);
+                  const svgW = svgWidthMatch ? parseFloat(svgWidthMatch[1]) : 200;
+                  const svgH = svgHeightMatch ? parseFloat(svgHeightMatch[1]) : 200;
+                  const pngScale = 4;
+                  const pngW = Math.round(svgW * pngScale);
+                  const pngH = Math.round(svgH * pngScale);
+                  console.log(`📐 PNG fallback: SVG ${svgW}×${svgH}px → PNG ${pngW}×${pngH}px (${pngScale}x scale)`);
+                  execSync(`rsvg-convert "${svgPath}" -o "${pngPath}" -w ${pngW} -h ${pngH}`, { 
                     stdio: 'pipe',
                     timeout: 30000 
                   });
@@ -5956,7 +5965,15 @@ export async function registerRoutes(app: express.Application) {
       }
       
       try {
-        execSync(`rsvg-convert "${svgToConvert}" -o "${pngPath}" -d 300 -p 300`, { 
+        const safariSvgContent = fs.readFileSync(svgToConvert, 'utf-8');
+        const safariWMatch = safariSvgContent.match(/width="([^"]+)"/);
+        const safariHMatch = safariSvgContent.match(/height="([^"]+)"/);
+        const safariW = safariWMatch ? parseFloat(safariWMatch[1]) : 200;
+        const safariH = safariHMatch ? parseFloat(safariHMatch[1]) : 200;
+        const safariScale = 4;
+        const safariPngW = Math.round(safariW * safariScale);
+        const safariPngH = Math.round(safariH * safariScale);
+        execSync(`rsvg-convert "${svgToConvert}" -o "${pngPath}" -w ${safariPngW} -h ${safariPngH}`, { 
           stdio: 'pipe', timeout: 30000 
         });
       } catch {

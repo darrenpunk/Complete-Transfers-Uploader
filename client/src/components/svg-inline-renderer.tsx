@@ -132,11 +132,18 @@ export default function SvgInlineRenderer({
         return;
       }
       
-      if (hasComplexVectorFallback) {
+      const COMPLEX_PATH_THRESHOLD = 15000;
+      const isGenuinelyComplex = metrics && (metrics.pathCount > COMPLEX_PATH_THRESHOLD || metrics.elementCount > COMPLEX_PATH_THRESHOLD);
+      
+      if (hasComplexVectorFallback && isGenuinelyComplex) {
         console.log(`🎨 COMPLEX VECTOR: Using PNG fallback for canvas (paths: ${metrics?.pathCount || 'unknown'}, elements: ${metrics?.elementCount || 'unknown'})`);
         setUseFallbackImg(true);
         setIsLoading(false);
         return;
+      }
+      
+      if (hasComplexVectorFallback && !isGenuinelyComplex) {
+        console.log(`✅ Non-Safari browser can render SVG directly (paths: ${metrics?.pathCount || 'unknown'}, Safari-only features flagged)`);
       }
       
       if (isLargeSvg) {
