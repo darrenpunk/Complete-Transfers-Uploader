@@ -192,27 +192,64 @@ export class MixedContentDetector {
           // Check for clipping paths which are structural, not vector graphics
           const hasClipPath = svgContent.includes('clip-path=') || svgContent.includes('<clipPath');
           
-          // Count actual vector elements vs structural elements
           const pathCount = (svgContent.match(/<path/g) || []).length;
-          const clipPathCount = (svgContent.match(/clip-rule=/g) || []).length;
+          const clipPathDefCount = (svgContent.match(/<clipPath[\s>]/g) || []).length;
           
-          // If we only have clipping paths (rectangular boundaries), it's likely raster
-          const onlyClippingPaths = hasPath && pathCount <= clipPathCount + 1 && hasClipPath;
+          const defsEndIdx = svgContent.indexOf('</defs>');
+          let artworkPathsOutsideDefs = 0;
+          let hasLargePathData = false;
+          if (defsEndIdx > 0) {
+            const afterDefs = svgContent.substring(defsEndIdx);
+            const pathsOutside = afterDefs.match(/<path[^>]*>/g) || [];
+            artworkPathsOutsideDefs = pathsOutside.length;
+            for (const p of pathsOutside) {
+              const dMatch = p.match(/\bd="([^"]*)"/);
+              if (dMatch && dMatch[1].length > 200) {
+                hasLargePathData = true;
+                break;
+              }
+            }
+          } else {
+            artworkPathsOutsideDefs = pathCount;
+            const allPaths = svgContent.match(/<path[^>]*>/g) || [];
+            for (const p of allPaths) {
+              const dMatch = p.match(/\bd="([^"]*)"/);
+              if (dMatch && dMatch[1].length > 200) {
+                hasLargePathData = true;
+                break;
+              }
+            }
+          }
           
-          // Check if this is just embedded raster content
-          const isEmbeddedRaster = (hasImage || hasUse) && hasDefs && onlyClippingPaths;
+          const gClipContent = svgContent.match(/<g\s+clip-path=[^>]*>([\s\S]*?)<\/g>/g) || [];
+          let artworkInsideClipGroups = 0;
+          for (const g of gClipContent) {
+            const innerPaths = g.match(/<path[^>]*>/g) || [];
+            for (const p of innerPaths) {
+              if (!p.includes('clip-rule=')) {
+                artworkInsideClipGroups++;
+                const dMatch = p.match(/\bd="([^"]*)"/);
+                if (dMatch && dMatch[1].length > 200) {
+                  hasLargePathData = true;
+                }
+              }
+            }
+          }
           
-          // Additional check: if SVG has an embedded <image> and the only vector elements
-          // are <rect> tags (PDF page boundary structure) with no actual artwork paths/shapes,
-          // it's a raster-in-PDF regardless of the structural rects.
-          const hasActualArtworkVectors = (hasPath && !onlyClippingPaths) || hasCircle || hasPolygon || hasLine || hasEllipse;
+          const totalArtworkPaths = Math.max(artworkPathsOutsideDefs, artworkInsideClipGroups);
+          const onlyClippingPaths = hasPath && totalArtworkPaths === 0 && !hasLargePathData && hasClipPath;
+          
+          const isEmbeddedRaster = hasImage && hasDefs && onlyClippingPaths;
+          
+          const hasUsedDefPaths = hasUse && hasDefs && hasPath;
+          const hasActualArtworkVectors = (hasPath && !onlyClippingPaths) || hasCircle || hasPolygon || hasLine || hasEllipse || hasUsedDefPaths;
           const isRasterWithPageBoundary = hasImage && !hasActualArtworkVectors;
 
           console.log('🔍 SVG element analysis:', {
             hasPath, hasRect, hasCircle, hasPolygon, hasLine, hasEllipse, hasText, 
             hasImage, hasUse, hasDefs, hasClipPath, onlyClippingPaths, isEmbeddedRaster,
             hasActualArtworkVectors, isRasterWithPageBoundary,
-            pathCount, clipPathCount
+            pathCount, clipPathDefCount, artworkPathsOutsideDefs, artworkInsideClipGroups, hasLargePathData
           });
           
           if (isEmbeddedRaster || isRasterWithPageBoundary) {
