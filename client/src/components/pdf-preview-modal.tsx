@@ -344,7 +344,8 @@ export default function PDFPreviewModal({
             <h3 className="text-lg font-semibold mb-3">PDF Preview</h3>
             
             {/* Restore original preview method (NO IFRAMES) */}
-            <div className="gap-4 flex-1 flex">
+            <div className="gap-4 flex-1 flex flex-col overflow-y-auto">
+              <div className="flex gap-4 flex-1 min-h-0">
               {/* Page 1 Preview - Artwork Layout */}
               <div className="flex-1 flex flex-col">
                 <h4 className="text-sm font-medium text-muted-foreground mb-2">
@@ -565,7 +566,13 @@ export default function PDFPreviewModal({
                   </>
                 ) : (
                   <>
-                    <h4 className="text-sm font-medium text-muted-foreground mb-2">Page 2 - Garment Background</h4>
+                    <h4 className="text-sm font-medium text-muted-foreground mb-2">
+                      Page 2 - Garment Background
+                      {(() => {
+                        const gc = (project?.garmentColors as any[])?.[0];
+                        return gc ? ` — ${gc.name || 'Color'} (×${gc.quantity || 0})` : '';
+                      })()}
+                    </h4>
                     <div className="border rounded-lg bg-gray-100 dark:bg-gray-800 p-3 flex-1 flex items-center justify-center relative overflow-hidden">
                       <div 
                         className="relative border border-dashed border-gray-300 shadow-sm overflow-hidden"
@@ -637,6 +644,83 @@ export default function PDFPreviewModal({
                   </>
                 )}
               </div>)}
+
+              </div>
+              {/* Extra Garment Color Pages Preview */}
+              {(() => {
+                const isApplique = template?.id?.includes('applique') || template?.name?.includes('applique');
+                if (isDTFTemplate || isApplique || passThroughInfo) return null;
+                const garmentColors = project?.garmentColors as any[] | undefined;
+                if (!garmentColors || garmentColors.length <= 1) return null;
+                const extraColors = garmentColors.slice(1);
+                const templateWidth = template?.width || 297;
+                const templateHeight = template?.height || 420;
+                return (
+                  <div className="mt-2">
+                    <h4 className="text-sm font-medium text-muted-foreground mb-2">
+                      Additional Garment Color Pages ({extraColors.length} more)
+                    </h4>
+                    <div className="flex gap-3 overflow-x-auto pb-2">
+                      {extraColors.map((gc: any, idx: number) => (
+                        <div key={idx} className="flex-shrink-0 flex flex-col items-center">
+                          <div
+                            className="relative border border-dashed border-gray-300 shadow-sm overflow-hidden"
+                            style={{
+                              backgroundColor: gc.color || '#cccccc',
+                              aspectRatio: `${templateWidth}/${templateHeight}`,
+                              width: '160px',
+                            }}
+                          >
+                            {canvasElements.map((element) => {
+                              const isShape = SHAPE_TYPES.includes(element.elementType || '');
+                              if (isShape) {
+                                return renderShapePreview(element, templateWidth, templateHeight);
+                              }
+                              const logo = logos.find(l => l.id === element.logoId);
+                              if (!logo) return null;
+                              const centerX = templateWidth / 2;
+                              const centerY = templateHeight / 2;
+                              const elementCenterX = centerX + element.x;
+                              const elementCenterY = centerY + element.y;
+                              const leftPos = elementCenterX - element.width / 2;
+                              const topPos = elementCenterY - element.height / 2;
+                              let imageUrl = getImageUrl(logo);
+                              if (shouldRecolorForInk) {
+                                const sep = imageUrl.includes('?') ? '&' : '?';
+                                imageUrl = `${imageUrl}${sep}inkColor=${encodeURIComponent(project.inkColor)}&recolor=true&t=${Date.now()}`;
+                              }
+                              return (
+                                <div
+                                  key={element.id}
+                                  className="absolute"
+                                  style={{
+                                    left: `${(leftPos / templateWidth) * 100}%`,
+                                    top: `${(topPos / templateHeight) * 100}%`,
+                                    width: `${(element.width / templateWidth) * 100}%`,
+                                    height: `${(element.height / templateHeight) * 100}%`,
+                                    transform: `rotate(${element.rotation || 0}deg)`,
+                                    transformOrigin: 'center',
+                                    opacity: element.opacity || 1,
+                                  }}
+                                >
+                                  <img
+                                    src={imageUrl}
+                                    alt={logo.originalName}
+                                    className="w-full h-full object-contain"
+                                  />
+                                </div>
+                              );
+                            })}
+                          </div>
+                          <span className="text-xs text-muted-foreground mt-1 text-center max-w-[160px] truncate">
+                            Page {idx + 3} — {gc.name || 'Color'} (×{gc.quantity || 0})
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           </div>
 
