@@ -569,8 +569,12 @@ export default function PDFPreviewModal({
                     <h4 className="text-sm font-medium text-muted-foreground mb-2">
                       Page 2 - Garment Background
                       {(() => {
-                        const gc = (project?.garmentColors as any[])?.[0];
-                        return gc ? ` — ${gc.name || 'Color'} (×${gc.quantity || 0})` : '';
+                        const garmentColorsArr = project?.garmentColors as any[] | undefined;
+                        if (garmentColorsArr && garmentColorsArr.length > 0) {
+                          const gc = garmentColorsArr[0];
+                          return ` — ${gc.colorName || 'Color'} (×${gc.quantity || 0})`;
+                        }
+                        return '';
                       })()}
                     </h4>
                     <div className="border rounded-lg bg-gray-100 dark:bg-gray-800 p-3 flex-1 flex items-center justify-center relative overflow-hidden">
@@ -586,6 +590,10 @@ export default function PDFPreviewModal({
                         }}
                       >
                         {canvasElements.map((element) => {
+                          const isShape = SHAPE_TYPES.includes(element.elementType || '');
+                          if (isShape) {
+                            return renderShapePreview(element, template?.width || 297, template?.height || 420);
+                          }
                           const logo = logos.find(l => l.id === element.logoId);
                           if (!logo) return null;
                           
@@ -604,7 +612,7 @@ export default function PDFPreviewModal({
                             const sep = imageUrl.includes('?') ? '&' : '?';
                             imageUrl = `${imageUrl}${sep}inkColor=${encodeURIComponent(project.inkColor)}&recolor=true&t=${Date.now()}`;
                           }
-                          
+
                           return (
                             <div
                               key={element.id}
@@ -646,27 +654,66 @@ export default function PDFPreviewModal({
               </div>)}
 
               </div>
-              {/* Extra Garment Color Pages Preview */}
+              {/* Extra Garment Color Pages Preview - from unique element garment colors or garmentColors array */}
               {(() => {
                 const isApplique = template?.id?.includes('applique') || template?.name?.includes('applique');
                 if (isDTFTemplate || isApplique || passThroughInfo) return null;
-                const garmentColors = project?.garmentColors as any[] | undefined;
-                if (!garmentColors || garmentColors.length <= 1) return null;
-                const extraColors = garmentColors.slice(1);
+
+                const GARMENT_COLOR_NAMES: Record<string, string> = {
+                  '#ffffff': 'White', '#171816': 'Black', '#1a1a1a': 'Black',
+                  '#d9d2ab': 'Natural Cotton', '#f3f590': 'Pastel Yellow',
+                  '#f0f42a': 'Yellow', '#d7da14': 'Hi Viz', '#d98f17': 'Hi Viz Orange',
+                  '#388032': 'HiViz Green', '#bf0072': 'HIViz Pink',
+                  '#767878': 'Sports Grey', '#919393': 'Light Grey Marl',
+                  '#a6a9a2': 'Ash Grey', '#bcbfbb': 'Light Grey',
+                  '#353330': 'Charcoal Grey', '#b9dbea': 'Pastel Blue',
+                  '#5998d4': 'Sky Blue', '#201c3a': 'Navy', '#221866': 'Royal Blue',
+                  '#b5d55e': 'Pastel Green', '#90bf33': 'Lime Green',
+                  '#3c8a35': 'Kelly Green', '#e7bbd0': 'Pastel Pink',
+                  '#d287a2': 'Light Pink', '#c42469': 'Fuchsia Pink',
+                  '#c02300': 'Red', '#762009': 'Burgundy', '#4c0a6a': 'Purple',
+                };
+                const getColorLabel = (hex: string) => GARMENT_COLOR_NAMES[hex.toLowerCase()] || hex;
+
+                const garmentColorsArr = project?.garmentColors as any[] | undefined;
+                const defaultColor = project?.garmentColor || '#171816';
                 const templateWidth = template?.width || 297;
                 const templateHeight = template?.height || 420;
+
+                let extraPages: { color: string; label: string }[] = [];
+
+                if (garmentColorsArr && garmentColorsArr.length > 1) {
+                  extraPages = garmentColorsArr.slice(1).map((gc: any) => ({
+                    color: gc.color || '#cccccc',
+                    label: `${gc.colorName || getColorLabel(gc.color)} (×${gc.quantity || 0})`,
+                  }));
+                } else {
+                  const uniqueColors = new Set<string>();
+                  canvasElements.forEach(el => {
+                    const c = el.garmentColor || defaultColor;
+                    uniqueColors.add(c);
+                  });
+                  const allColors = Array.from(uniqueColors);
+                  if (allColors.length > 1) {
+                    const extra = allColors.filter(c => c !== defaultColor);
+                    extraPages = extra.map(c => ({ color: c, label: getColorLabel(c) }));
+                  }
+                }
+
+                if (extraPages.length === 0) return null;
+
                 return (
                   <div className="mt-2">
                     <h4 className="text-sm font-medium text-muted-foreground mb-2">
-                      Additional Garment Color Pages ({extraColors.length} more)
+                      Additional Garment Color Pages ({extraPages.length} more)
                     </h4>
                     <div className="flex gap-3 overflow-x-auto pb-2">
-                      {extraColors.map((gc: any, idx: number) => (
+                      {extraPages.map((ep, idx) => (
                         <div key={idx} className="flex-shrink-0 flex flex-col items-center">
                           <div
                             className="relative border border-dashed border-gray-300 shadow-sm overflow-hidden"
                             style={{
-                              backgroundColor: gc.color || '#cccccc',
+                              backgroundColor: ep.color,
                               aspectRatio: `${templateWidth}/${templateHeight}`,
                               width: '160px',
                             }}
@@ -713,7 +760,7 @@ export default function PDFPreviewModal({
                             })}
                           </div>
                           <span className="text-xs text-muted-foreground mt-1 text-center max-w-[160px] truncate">
-                            Page {idx + 3} — {gc.name || 'Color'} (×{gc.quantity || 0})
+                            Page {idx + 3} — {ep.label}
                           </span>
                         </div>
                       ))}
