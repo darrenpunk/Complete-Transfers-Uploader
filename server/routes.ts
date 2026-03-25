@@ -4459,8 +4459,17 @@ export async function registerRoutes(app: express.Application) {
                             // trust Inkscape even at full-page coverage — GS likely missed white/light content
                             const gsVeryLow = gsBboxPageCoverage < 0.50;
                             const inkMuchLarger = inkArea > gsArea * 2.0;
-                            if ((inkPageCoverage < 0.99 && (inkArea > gsArea * 1.05 || gsBboxPageCoverage < 0.05)) ||
-                                (gsVeryLow && inkMuchLarger)) {
+                            
+                            const artBoxCheck = pdfPageDimensions && (pdfPageDimensions as any).artBoxPts;
+                            const artBoxConfirmsGS = artBoxCheck && 
+                              Math.abs(artBoxCheck.width - gsBounds.width) < gsBounds.width * 0.3 &&
+                              Math.abs(artBoxCheck.height - gsBounds.height) < gsBounds.height * 0.3;
+                            const inkscapeIsJustRootElement = inkPageCoverage > 0.98;
+                            
+                            if (inkscapeIsJustRootElement && artBoxConfirmsGS) {
+                              console.log(`✅ Inkscape reports full page (${(inkPageCoverage * 100).toFixed(0)}%) but ArtBox confirms GS bounds — trusting GS bbox: ${gsBounds.width.toFixed(1)}×${gsBounds.height.toFixed(1)}pts`);
+                            } else if ((inkPageCoverage < 0.99 && (inkArea > gsArea * 1.05 || gsBboxPageCoverage < 0.05)) ||
+                                (gsVeryLow && inkMuchLarger && !artBoxConfirmsGS)) {
                               gsBounds = inkscapeVerifyBounds;
                               (gsBounds as any).__fromSvgCoords = true;
                               console.log(`✅ Using Inkscape bounds (white/clipped content): ${gsBounds.width.toFixed(1)}×${gsBounds.height.toFixed(1)}pts`);
