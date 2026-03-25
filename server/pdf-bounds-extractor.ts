@@ -8,7 +8,7 @@
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
-import { execSync, execFileSync } from 'child_process';
+import { execSync, execFileSync, spawnSync } from 'child_process';
 
 export interface BoundingBox {
   xMin: number;
@@ -115,36 +115,20 @@ export class PDFBoundsExtractor {
       // First get the original PDF page bounds
       const pageInfo = await this.getPDFPageInfo(pdfPath, pageNumber);
       
-      // Use Ghostscript to get precise vector bounds
-      const tempDir = path.join(process.cwd(), 'temp');
-      if (!fs.existsSync(tempDir)) {
-        fs.mkdirSync(tempDir, { recursive: true });
-      }
-      
-      const timestamp = Date.now();
-      const bboxFile = path.join(tempDir, `bbox_${timestamp}.txt`);
-      
-      // Ghostscript command to extract bounding box
-      const gsCommand = [
-        'gs',
+      console.log(`🔍 Extracting bounds with Ghostscript: page ${pageNumber}`);
+      const gsResult = spawnSync('gs', [
         '-dNOPAUSE',
         '-dBATCH',
         '-dQUIET',
         '-sDEVICE=bbox',
         `-dFirstPage=${pageNumber}`,
         `-dLastPage=${pageNumber}`,
-        `"${pdfPath}"`,
-        `2>"${bboxFile}"`
-      ].join(' ');
+        pdfPath
+      ], { encoding: 'utf8', timeout: 30000 });
 
-      console.log(`🔍 Extracting bounds with Ghostscript: page ${pageNumber}`);
-      execSync(gsCommand, { stdio: 'pipe' });
+      const bboxOutput = gsResult.stderr || '';
 
-      // Parse the bounding box output
-      if (fs.existsSync(bboxFile)) {
-        const bboxOutput = fs.readFileSync(bboxFile, 'utf8');
-        fs.unlinkSync(bboxFile); // Cleanup
-        
+      if (bboxOutput.includes('BoundingBox')) {
         const bounds = await this.parseGhostscriptBounds(bboxOutput, pageInfo.bbox, pdfPath, pageNumber);
         
         if (bounds) {
@@ -193,11 +177,8 @@ export class PDFBoundsExtractor {
       const timestamp = Date.now();
       const svgPath = path.join(tempDir, `pdf2svg_${timestamp}.svg`);
       
-      // Convert PDF page to SVG using pdf2svg
-      const pdf2svgCommand = `pdf2svg "${pdfPath}" "${svgPath}" ${pageNumber}`;
-      
       console.log(`🔄 Converting PDF page ${pageNumber} to SVG for bounds analysis`);
-      execSync(pdf2svgCommand);
+      execFileSync('pdf2svg', [pdfPath, svgPath, String(pageNumber)]);
       
       if (fs.existsSync(svgPath)) {
         // Read and parse SVG content
@@ -358,112 +339,27 @@ export class PDFBoundsExtractor {
         const height = maxY - minY;
         
         console.log(`✅ Content bounds found: ${width.toFixed(1)}×${height.toFixed(1)}pts at (${minX.toFixed(1)},${minY.toFixed(1)})`);
+        console.log(`📐 Page viewBox: ${viewBox.width.toFixed(1)}×${viewBox.height.toFixed(1)}pts`);
         
-        // CRITICAL FIX: Check for oversized content that should be A4
-        const expectedA4Width = 590.1;  // 208.2mm in points
-        const expectedA4Height = 820.8; // 289.507mm in points
-        
-        // DEBUG: Log actual values for problematic file
-        console.log(`🔍 BOUNDS DEBUG: width=${width.toFixed(1)}, height=${height.toFixed(1)} vs expectedA4=${expectedA4Width.toFixed(1)}×${expectedA4Height.toFixed(1)}`);
-        console.log(`🔍 RATIO DEBUG: widthRatio=${(width/expectedA4Width).toFixed(2)}, heightRatio=${(height/expectedA4Height).toFixed(2)}`);
-        console.log(`🔍 OVERSIZED CHECK: isOversized=${(width > expectedA4Width * 1.3 && height > expectedA4Height * 1.5)}`);
-        
-        const isSignificantlyOversized = (width > expectedA4Width * 1.3 && height > expectedA4Height * 1.5);
-        const isSignificantlySmaller = (width < expectedA4Width * 0.9 && height < expectedA4Height * 0.8);
-        
-        // Special fix for files with dimensions around 788×1263 that should be 590×821 (A4)
-        if (isSignificantlyOversized) {
-          console.log(`🚨 OVERSIZED CONTENT DETECTED: Found ${width.toFixed(1)}×${height.toFixed(1)}pts but expecting A4 ~${expectedA4Width.toFixed(0)}×${expectedA4Height.toFixed(0)}pts`);
-          console.log(`📏 This may indicate the algorithm is detecting extra elements outside the actual content area`);
+        if (width > 0 && height > 0) {
+          const clampedMinX = Math.max(minX, viewBox.xMin);
+          const clampedMinY = Math.max(minY, viewBox.yMin);
+          const clampedMaxX = Math.min(maxX, viewBox.xMax);
+          const clampedMaxY = Math.min(maxY, viewBox.yMax);
+          const clampedWidth = clampedMaxX - clampedMinX;
+          const clampedHeight = clampedMaxY - clampedMinY;
           
-          // Check if the detected bounds are approximately 1.33x the expected A4 size
-          const widthRatio = width / expectedA4Width;
-          const heightRatio = height / expectedA4Height;
-          
-          if (widthRatio > 1.2 && widthRatio < 1.5 && heightRatio > 1.4 && heightRatio < 1.7) {
-            console.log(`🎯 PATTERN MATCH: Detected bounds are ${widthRatio.toFixed(2)}x${heightRatio.toFixed(2)} of expected A4 - applying correction`);
-            
-            const correctedWidth = expectedA4Width;
-            const correctedHeight = expectedA4Height;
-            
-            console.log(`✅ APPLYING A4 OVERSIZED FIX: Using ${correctedWidth.toFixed(0)}×${correctedHeight.toFixed(0)}pts (208.2×289.5mm)`);
-            
-            return {
-              xMin: 0,
-              yMin: 0,
-              xMax: correctedWidth,
-              yMax: correctedHeight,
-              width: correctedWidth,
-              height: correctedHeight,
-              units: 'pt'
-            };
-          }
-        }
-        
-        if (isSignificantlySmaller) {
-          console.log(`🚨 UNDERSIZED CONTENT DETECTED: Found ${width.toFixed(1)}×${height.toFixed(1)}pts but expected ~${expectedA4Width.toFixed(0)}×${expectedA4Height.toFixed(0)}pts`);
-          console.log(`📏 This may indicate missing content in bounds detection. Checking for full A4 content...`);
-          
-          // For files where content should be full A4 but appears smaller, use expected dimensions
-          const correctedWidth = expectedA4Width;
-          const correctedHeight = expectedA4Height;
-          
-          console.log(`✅ APPLYING A4 CONTENT FIX: Using ${correctedWidth.toFixed(0)}×${correctedHeight.toFixed(0)}pts (208.2×289.5mm)`);
-          
-          return {
-            xMin: 0,
-            yMin: 0,
-            xMax: correctedWidth,
-            yMax: correctedHeight,
-            width: correctedWidth,
-            height: correctedHeight,
-            units: 'pt'
-          };
-        }
-        
-        // CRITICAL FIX: Detect unreasonably large bounds for A4/A3 PDFs
-        const isUnreasonablyLarge = width > 2000 || height > 2000;
-        const aspectRatio = width / height;
-        
-        if (isUnreasonablyLarge) {
-          console.log(`⚠️ OVERSIZED BOUNDS DETECTED: ${width.toFixed(1)}×${height.toFixed(1)}pts - applying page-size correction`);
-          
-          // Determine target page size based on aspect ratio
-          let targetWidth: number, targetHeight: number;
-          
-          if (Math.abs(aspectRatio - (210/297)) < 0.1) {
-            // A4 aspect ratio (0.707)
-            targetWidth = 595;  // A4 width in points
-            targetHeight = 842; // A4 height in points
-            console.log(`🎯 A4 ASPECT RATIO DETECTED: Correcting to A4 size (595×842pts)`);
-          } else if (Math.abs(aspectRatio - (297/420)) < 0.1) {
-            // A3 aspect ratio (0.707) 
-            targetWidth = 842;  // A3 width in points
-            targetHeight = 1191; // A3 height in points
-            console.log(`🎯 A3 ASPECT RATIO DETECTED: Correcting to A3 size (842×1191pts)`);
-          } else {
-            // Default: scale down proportionally to reasonable size
-            const scaleFactor = Math.min(595 / width, 842 / height);
-            targetWidth = width * scaleFactor;
-            targetHeight = height * scaleFactor;
-            console.log(`🎯 CUSTOM ASPECT RATIO: Scaling down by ${(scaleFactor * 100).toFixed(0)}% to ${targetWidth.toFixed(0)}×${targetHeight.toFixed(0)}pts`);
+          if (clampedWidth !== width || clampedHeight !== height) {
+            console.log(`📏 Clamped to page bounds: ${clampedWidth.toFixed(1)}×${clampedHeight.toFixed(1)}pts (was ${width.toFixed(1)}×${height.toFixed(1)}pts)`);
           }
           
-          // Apply correction with proper centering
-          const correctedMinX = 0;
-          const correctedMinY = 0;
-          const correctedMaxX = targetWidth;
-          const correctedMaxY = targetHeight;
-          
-          console.log(`✅ BOUNDS CORRECTED: ${targetWidth.toFixed(0)}×${targetHeight.toFixed(0)}pts (was ${width.toFixed(0)}×${height.toFixed(0)}pts)`);
-          
           return {
-            xMin: correctedMinX,
-            yMin: correctedMinY,
-            xMax: correctedMaxX,
-            yMax: correctedMaxY,
-            width: targetWidth,
-            height: targetHeight,
+            xMin: clampedMinX,
+            yMin: clampedMinY,
+            xMax: clampedMaxX,
+            yMax: clampedMaxY,
+            width: clampedWidth,
+            height: clampedHeight,
             units: 'pt'
           };
         }
@@ -503,10 +399,10 @@ export class PDFBoundsExtractor {
       const timestamp = Date.now();
       const rasterPath = path.join(tempDir, `raster_${timestamp}.png`);
       
-      // Render at 150 DPI — sufficient for bounds detection and much faster than 300 DPI
       const dpi = 150;
-      const convertCommand = [
-        'gs',
+
+      console.log(`🖼️ Rendering page ${pageNumber} at ${dpi}DPI for bounds analysis`);
+      execFileSync('gs', [
         '-dNOPAUSE',
         '-dBATCH',
         '-dQUIET',
@@ -514,12 +410,9 @@ export class PDFBoundsExtractor {
         `-r${dpi}`,
         `-dFirstPage=${pageNumber}`,
         `-dLastPage=${pageNumber}`,
-        `-sOutputFile="${rasterPath}"`,
-        `"${pdfPath}"`
-      ].join(' ');
-
-      console.log(`🖼️ Rendering page ${pageNumber} at ${dpi}DPI for bounds analysis`);
-      execSync(convertCommand);
+        `-sOutputFile=${rasterPath}`,
+        pdfPath
+      ]);
 
       if (fs.existsSync(rasterPath)) {
         console.log(`🔍 Analyzing raster content with ImageMagick trim...`);
