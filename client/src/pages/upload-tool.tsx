@@ -2315,6 +2315,7 @@ export default function UploadTool() {
             navigate(email ? `/order-history?email=${encodeURIComponent(email)}` : "/order-history");
           }}
           partnerEmail={partnerEmail}
+          authStatus={authStatus}
           onQuickUploadDtf={() => {
             setShowProductLauncher(false);
             setShowDtfQuickUpload(true);

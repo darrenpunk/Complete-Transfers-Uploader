@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import CompleteTransferLogo from "./complete-transfer-logo";
 import { OnboardingTutorial } from "./onboarding-tutorial";
-import { Palette, ShoppingBag, GraduationCap, Upload } from "lucide-react";
+import { Palette, ShoppingBag, GraduationCap, Upload, LogIn } from "lucide-react";
 import type { TemplateSize } from "@shared/schema";
 
 // Import product icons
@@ -119,6 +119,7 @@ interface ProductLauncherModalProps {
   onViewOrders?: () => void;
   onQuickUploadDtf?: () => void;
   partnerEmail?: string | null;
+  authStatus?: 'checking' | 'authenticated' | 'not-authenticated';
   inline?: boolean;
 }
 
@@ -129,6 +130,7 @@ function ProductContent({
   onViewOrders,
   onQuickUploadDtf,
   partnerEmail,
+  authStatus,
   hideHeader = false,
 }: Omit<ProductLauncherModalProps, 'open' | 'inline'> & { hideHeader?: boolean }) {
   const [showTutorial, setShowTutorial] = useState(false);
@@ -152,6 +154,41 @@ function ProductContent({
       onSelectProduct(productId);
     }
   };
+
+  const effectiveAuth = authStatus || 'not-authenticated';
+
+  if (effectiveAuth === 'checking') {
+    return (
+      <div className="w-full max-w-7xl mx-auto">
+        <div className="text-center py-16">
+          <CompleteTransferLogo size="md" className="mb-6" />
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-gray-400">Verifying your account...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (effectiveAuth === 'not-authenticated') {
+    return (
+      <div className="w-full max-w-7xl mx-auto">
+        <div className="text-center py-12">
+          <CompleteTransferLogo size="md" className="mb-6" />
+          <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-8 max-w-lg mx-auto">
+            <LogIn className="w-16 h-16 text-primary mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-white mb-3">Login Required</h2>
+            <p className="text-gray-400 mb-6 leading-relaxed">
+              Please log in to your account to access our products and services. 
+              You can place orders, upload artwork, and manage your projects once logged in.
+            </p>
+            <p className="text-sm text-gray-500">
+              If you don't have an account, please contact us to get started.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -292,6 +329,7 @@ export default function ProductLauncherModal({
   onViewOrders,
   onQuickUploadDtf,
   partnerEmail,
+  authStatus,
   inline = false,
 }: ProductLauncherModalProps) {
   if (!open) return null;
@@ -306,6 +344,7 @@ export default function ProductLauncherModal({
           onViewOrders={onViewOrders}
           onQuickUploadDtf={onQuickUploadDtf}
           partnerEmail={partnerEmail}
+          authStatus={authStatus}
         />
       </div>
     );
@@ -330,6 +369,7 @@ export default function ProductLauncherModal({
           onViewOrders={onViewOrders}
           onQuickUploadDtf={onQuickUploadDtf}
           partnerEmail={partnerEmail}
+          authStatus={authStatus}
           hideHeader
         />
         <div className="flex justify-center pt-4 border-t border-gray-700">
