@@ -155,7 +155,8 @@ function ProductContent({
     }
   };
 
-  const effectiveAuth = authStatus || 'not-authenticated';
+  const isDev = import.meta.env.DEV;
+  const effectiveAuth = isDev ? 'authenticated' : (authStatus || 'not-authenticated');
 
   if (effectiveAuth === 'checking') {
     return (
@@ -368,8 +369,9 @@ export default function ProductLauncherModal({
     );
   }
 
-  const effectiveAuth = authStatus || 'not-authenticated';
-  const isNotAuthenticated = effectiveAuth === 'not-authenticated' || effectiveAuth === 'checking';
+  const modalIsDev = import.meta.env.DEV;
+  const modalEffectiveAuth = modalIsDev ? 'authenticated' : (authStatus || 'not-authenticated');
+  const isNotAuthenticated = modalEffectiveAuth === 'not-authenticated' || modalEffectiveAuth === 'checking';
 
   return (
     <Dialog open={open} onOpenChange={isNotAuthenticated ? undefined : onClose}>
