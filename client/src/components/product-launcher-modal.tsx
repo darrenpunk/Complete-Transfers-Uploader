@@ -170,6 +170,19 @@ function ProductContent({
   }
 
   if (effectiveAuth === 'not-authenticated') {
+    const handleGoToLogin = () => {
+      const loginUrl = 'https://www.completetransfers.com/web/login';
+      const isInIframe = window !== window.parent;
+      if (isInIframe) {
+        window.parent.postMessage({ type: 'redirect-to-login' }, '*');
+        setTimeout(() => {
+          window.open(loginUrl, '_top');
+        }, 300);
+      } else {
+        window.location.href = loginUrl;
+      }
+    };
+
     return (
       <div className="w-full max-w-7xl mx-auto">
         <div className="text-center py-12">
@@ -178,10 +191,15 @@ function ProductContent({
             <LogIn className="w-16 h-16 text-primary mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-white mb-3">Login Required</h2>
             <p className="text-gray-400 mb-6 leading-relaxed">
-              Please log in to your account to access our products and services. 
+              Please log in to your Complete Transfers account to access our products and services.
               You can place orders, upload artwork, and manage your projects once logged in.
             </p>
-            <p className="text-sm text-gray-500">
+            <div className="flex flex-col gap-3 pt-2">
+              <Button className="w-full" onClick={handleGoToLogin}>
+                Go to Login
+              </Button>
+            </div>
+            <p className="text-sm text-gray-500 mt-4">
               If you don't have an account, please contact us to get started.
             </p>
           </div>
@@ -350,9 +368,12 @@ export default function ProductLauncherModal({
     );
   }
 
+  const effectiveAuth = authStatus || 'not-authenticated';
+  const isNotAuthenticated = effectiveAuth === 'not-authenticated' || effectiveAuth === 'checking';
+
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
+    <Dialog open={open} onOpenChange={isNotAuthenticated ? undefined : onClose}>
+      <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto" onPointerDownOutside={isNotAuthenticated ? (e) => e.preventDefault() : undefined} onEscapeKeyDown={isNotAuthenticated ? (e) => e.preventDefault() : undefined} hideCloseButton={isNotAuthenticated}>
         <DialogHeader>
           <CompleteTransferLogo size="md" className="mb-4" />
           <DialogTitle className="text-2xl font-bold text-center mb-2">
@@ -372,11 +393,13 @@ export default function ProductLauncherModal({
           authStatus={authStatus}
           hideHeader
         />
-        <div className="flex justify-center pt-4 border-t border-gray-700">
-          <Button variant="outline" onClick={onClose} className="bg-transparent border-gray-600 text-gray-300 hover:bg-gray-800">
-            Cancel
-          </Button>
-        </div>
+        {!isNotAuthenticated && (
+          <div className="flex justify-center pt-4 border-t border-gray-700">
+            <Button variant="outline" onClick={onClose} className="bg-transparent border-gray-600 text-gray-300 hover:bg-gray-800">
+              Cancel
+            </Button>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

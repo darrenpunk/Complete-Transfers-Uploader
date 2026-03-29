@@ -154,14 +154,6 @@ export default function UploadTool() {
       setPartnerEmail(emailFromUrl);
       try { localStorage.setItem('partner_email', emailFromUrl); } catch {}
       try { sessionStorage.setItem('partner_email', emailFromUrl); } catch {}
-    } else {
-      try {
-        const storedEmail = localStorage.getItem('partner_email') || sessionStorage.getItem('partner_email');
-        if (storedEmail) {
-          console.log('✅ Partner email restored from storage:', storedEmail);
-          setPartnerEmail(storedEmail);
-        }
-      } catch {}
     }
     if (odooFromUrl) {
       console.log('✅ Odoo URL from URL params:', odooFromUrl);
@@ -200,7 +192,14 @@ export default function UploadTool() {
     // (parent sends user data ~500ms after iframe load — we must be listening by then)
     const handleMessage = (event: MessageEvent) => {
       if (event.data?.type === 'odoo-user-data') {
-        console.log('📨 Received odoo-user-data message:', { email: event.data.email, isPublic: event.data.isPublic });
+        const origin = event.origin || '';
+        const trustedOrigins = ['completetransfers.com', 'localhost'];
+        const isTrustedOrigin = trustedOrigins.some(domain => origin.includes(domain));
+        if (!isTrustedOrigin) {
+          console.warn('⚠️ Ignoring odoo-user-data from untrusted origin:', origin);
+          return;
+        }
+        console.log('📨 Received odoo-user-data message:', { email: event.data.email, isPublic: event.data.isPublic, origin });
         if (event.data.email) {
           resolveEmail(event.data.email, 'iframe postMessage');
         } else {
@@ -233,20 +232,17 @@ export default function UploadTool() {
         console.warn('ℹ️ Backend fetch did not return logged-in user:', e.message);
       });
 
-    // Fallback timeout: if nothing resolves within 4 seconds, try localStorage then give up
+    // Fallback timeout: if nothing resolves within 2 seconds, mark as not authenticated
+    // Do NOT trust localStorage/sessionStorage as auth proof — a stored email from a previous
+    // session does not mean the user is currently logged in to Odoo
     const fallbackTimeout = setTimeout(() => {
       if (resolved) return;
-      try {
-        const storedEmail = localStorage.getItem('partner_email') || sessionStorage.getItem('partner_email');
-        if (storedEmail) {
-          resolveEmail(storedEmail, 'localStorage fallback');
-          return;
-        }
-      } catch {}
-      console.log('❌ Could not identify user via any method - orders will be created as guest');
+      console.log('❌ Could not identify user via any method — user is not authenticated');
       resolved = true;
       setAuthStatus('not-authenticated');
-    }, 4000);
+      try { localStorage.removeItem('partner_email'); } catch {}
+      try { sessionStorage.removeItem('partner_email'); } catch {}
+    }, 2000);
     authTimeouts.push(fallbackTimeout);
 
     return () => {
