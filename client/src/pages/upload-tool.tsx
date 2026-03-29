@@ -179,13 +179,24 @@ export default function UploadTool() {
       try { sessionStorage.setItem('partner_email', email); } catch {}
     };
 
-    // Check for email in URL params first (for fullscreen/standalone mode from iframe)
+    // Check for email in URL params
     const urlParams = new URLSearchParams(window.location.search);
     const emailFromUrl = urlParams.get('email');
 
     if (emailFromUrl) {
-      resolveEmail(emailFromUrl, 'URL params');
-      return () => { authTimeouts.forEach(t => clearTimeout(t)); };
+      // In dev mode, trust URL email as auth proof for easy testing
+      // In production, URL email is only a hint — auth must come from
+      // postMessage (Odoo parent) or backend session
+      const isDev = import.meta.env.DEV;
+      if (isDev) {
+        resolveEmail(emailFromUrl, 'URL params (dev)');
+        return () => { authTimeouts.forEach(t => clearTimeout(t)); };
+      }
+      // Production: set email but don't authenticate yet — let postMessage or backend confirm
+      console.log('📧 Email from URL params (production — awaiting auth confirmation):', emailFromUrl);
+      setPartnerEmail(emailFromUrl);
+      try { localStorage.setItem('partner_email', emailFromUrl); } catch {}
+      try { sessionStorage.setItem('partner_email', emailFromUrl); } catch {}
     }
 
     // IMMEDIATELY set up iframe message listener so we catch the parent's auto-send
@@ -200,7 +211,16 @@ export default function UploadTool() {
           return;
         }
         console.log('📨 Received odoo-user-data message:', { email: event.data.email, isPublic: event.data.isPublic, origin });
-        if (event.data.email) {
+        if (event.data.isPublic) {
+          console.warn('⚠️ Parent says user is public (not logged in) — not authenticating');
+          if (!resolved) {
+            resolved = true;
+            authTimeouts.forEach(t => clearTimeout(t));
+            setAuthStatus('not-authenticated');
+            try { localStorage.removeItem('partner_email'); } catch {}
+            try { sessionStorage.removeItem('partner_email'); } catch {}
+          }
+        } else if (event.data.email) {
           resolveEmail(event.data.email, 'iframe postMessage');
         } else {
           console.warn('⚠️ Parent sent odoo-user-data but email is empty (user may be public on Odoo)');
