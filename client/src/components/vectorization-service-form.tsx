@@ -51,6 +51,7 @@ const vectorizationFormSchema = z.object({
 type VectorizationFormData = z.infer<typeof vectorizationFormSchema>;
 
 interface VectorizationServiceFormProps {
+  authStatus?: 'checking' | 'authenticated' | 'not-authenticated';
   open: boolean;
   onOpenChange: (open: boolean) => void;
   partnerEmail?: string | null;
@@ -69,7 +70,7 @@ interface TemplateSize {
   placeholderImage: string | null;
 }
 
-export function VectorizationServiceForm({ open, onOpenChange, partnerEmail }: VectorizationServiceFormProps) {
+export function VectorizationServiceForm({ open, onOpenChange, partnerEmail, authStatus }: VectorizationServiceFormProps) {
   console.log('VectorizationServiceForm render:', { open });
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -844,6 +845,8 @@ export function VectorizationServiceForm({ open, onOpenChange, partnerEmail }: V
         open={showProductLauncher}
         onClose={() => setShowProductLauncher(false)}
         onSelectProduct={handleProductLauncherSelect}
+        partnerEmail={partnerEmail}
+        authStatus={authStatus}
       />
 
       {/* Template Selector Modal */}
@@ -874,6 +877,8 @@ export function VectorizationServiceForm({ open, onOpenChange, partnerEmail }: V
         onClose={() => setShowTemplateSelector(false)}
         onBack={handleBackToProductLauncher}
         selectedGroup={selectedProductGroup}
+        partnerEmail={partnerEmail}
+        authStatus={authStatus}
       />
     </>
   );

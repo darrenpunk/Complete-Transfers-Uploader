@@ -2372,6 +2372,7 @@ export default function UploadTool() {
           open={showVectorizationForm}
           onOpenChange={setShowVectorizationForm}
           partnerEmail={partnerEmail}
+          authStatus={authStatus}
         />
 
         <DtfQuickUploadModal
@@ -2796,6 +2797,7 @@ export default function UploadTool() {
         open={showVectorizationForm}
         onOpenChange={setShowVectorizationForm}
         partnerEmail={partnerEmail}
+        authStatus={authStatus}
       />
 
       {/* Onboarding Tutorial */}
