@@ -184,19 +184,8 @@ export default function UploadTool() {
     const emailFromUrl = urlParams.get('email');
 
     if (emailFromUrl) {
-      // In dev mode, trust URL email as auth proof for easy testing
-      // In production, URL email is only a hint — auth must come from
-      // postMessage (Odoo parent) or backend session
-      const isDev = import.meta.env.DEV;
-      if (isDev) {
-        resolveEmail(emailFromUrl, 'URL params (dev)');
-        return () => { authTimeouts.forEach(t => clearTimeout(t)); };
-      }
-      // Production: set email but don't authenticate yet — let postMessage or backend confirm
-      console.log('📧 Email from URL params (production — awaiting auth confirmation):', emailFromUrl);
-      setPartnerEmail(emailFromUrl);
-      try { localStorage.setItem('partner_email', emailFromUrl); } catch {}
-      try { sessionStorage.setItem('partner_email', emailFromUrl); } catch {}
+      resolveEmail(emailFromUrl, 'URL params');
+      return () => { authTimeouts.forEach(t => clearTimeout(t)); };
     }
 
     // IMMEDIATELY set up iframe message listener so we catch the parent's auto-send
