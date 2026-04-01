@@ -542,13 +542,16 @@ export default function UploadTool() {
         await uploadCanvasScreenshot(currentProject.id);
         try {
           const pdfUrl = `/api/projects/${currentProject.id}/generate-pdf?colorSpace=cmyk`;
-          const pdfResponse = await fetch(pdfUrl);
+          const pdfAbort = new AbortController();
+          const pdfTimeout = setTimeout(() => pdfAbort.abort(), 45000);
+          const pdfResponse = await fetch(pdfUrl, { signal: pdfAbort.signal });
+          clearTimeout(pdfTimeout);
           if (pdfResponse.ok) {
             const pdfBlob = await pdfResponse.blob();
             const reader = new FileReader();
             pdfBase64 = await new Promise<string>((resolve, reject) => {
               reader.onloadend = () => {
-                const base64 = (reader.result as string).split(',')[1]; // Remove data:application/pdf;base64, prefix
+                const base64 = (reader.result as string).split(',')[1];
                 resolve(base64);
               };
               reader.onerror = reject;
@@ -556,11 +559,14 @@ export default function UploadTool() {
             });
             console.log('✅ PDF generated and converted to base64');
           } else {
-            console.warn('⚠️ PDF generation failed, continuing without PDF');
+            console.warn('⚠️ PDF generation failed, continuing without PDF — server will regenerate');
           }
-        } catch (error) {
-          console.error('❌ Failed to generate PDF:', error);
-          // Continue without PDF
+        } catch (error: any) {
+          if (error?.name === 'AbortError') {
+            console.warn('⏰ PDF generation timed out after 45s, continuing without PDF — server will regenerate');
+          } else {
+            console.error('❌ Failed to generate PDF:', error);
+          }
         }
       }
       

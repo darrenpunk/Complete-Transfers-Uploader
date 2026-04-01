@@ -1170,6 +1170,13 @@ export async function registerRoutes(app: express.Application) {
 
   // PDF Generation endpoint - Must be before other routes
   app.get('/api/projects/:projectId/generate-pdf', async (req, res) => {
+    const pdfGenSafetyTimer = setTimeout(() => {
+      if (!res.headersSent) {
+        console.error(`⏰ PDF generation safety timeout (90s) for project: ${req.params.projectId}`);
+        res.status(504).json({ error: 'PDF generation timed out' });
+      }
+    }, 90000);
+    res.on('close', () => clearTimeout(pdfGenSafetyTimer));
     try {
       console.log(`📄 PDF Generation requested for project: ${req.params.projectId}`);
       const projectId = req.params.projectId;
@@ -1307,6 +1314,8 @@ export async function registerRoutes(app: express.Application) {
               try { fs.unlinkSync(tmpOut); } catch {}
             }
             const dtfWithScreenshot = await appendCanvasScreenshotPage(finalBuf, projectId, canvasElements, logos, templateSize);
+            clearTimeout(pdfGenSafetyTimer);
+            console.log(`✅ DTF passthrough complete: ${(dtfWithScreenshot.length/1024/1024).toFixed(2)}MB, sending response`);
             res.setHeader('Content-Type', 'application/pdf');
             res.setHeader('Content-Disposition', `attachment; filename="${buildPdfFilename(project.name || 'DTF', project.quantity || 1)}"`);
             return res.send(dtfWithScreenshot);
@@ -1361,6 +1370,7 @@ export async function registerRoutes(app: express.Application) {
               console.log(`✅ Applique Badges PDF with form page: ${appliquePdfBytes.length} bytes`);
               
               const appliqueWithScreenshot = await appendCanvasScreenshotPage(appliquePdfBytes, projectId, canvasElements, logos, templateSize);
+              clearTimeout(pdfGenSafetyTimer);
               res.setHeader('Content-Type', 'application/pdf');
               res.setHeader('Content-Disposition', `attachment; filename="${buildPdfFilename(project.name, project.quantity || 1, templateSize.productCode, 'applique')}"`);
               res.send(appliqueWithScreenshot);
@@ -1372,6 +1382,7 @@ export async function registerRoutes(app: express.Application) {
           }
           
           const robustWithScreenshot = await appendCanvasScreenshotPage(pdfBuffer, projectId, canvasElements, logos, templateSize);
+          clearTimeout(pdfGenSafetyTimer);
           res.setHeader('Content-Type', 'application/pdf');
           res.setHeader('Content-Disposition', `attachment; filename="${buildPdfFilename(project.name, project.quantity || 1, templateSize.productCode)}"`);
           res.send(robustWithScreenshot);
@@ -2352,6 +2363,7 @@ export async function registerRoutes(app: express.Application) {
             console.log(`✅ Applique Badges PDF with form page: ${appliquePdfBytes.length} bytes`);
             
             const fallbackAppliqueWithScreenshot = await appendCanvasScreenshotPage(appliquePdfBytes, projectId, canvasElements, logos, templateSize);
+            clearTimeout(pdfGenSafetyTimer);
             res.setHeader('Content-Type', 'application/pdf');
             res.setHeader('Content-Disposition', `attachment; filename="${buildPdfFilename(project.name, project.quantity || 1, templateSize?.productCode, 'applique')}"`);
             res.send(fallbackAppliqueWithScreenshot);
@@ -2412,6 +2424,7 @@ export async function registerRoutes(app: express.Application) {
             fs.unlinkSync(tempCmykPath);
             
             const cmykWithScreenshot = await appendCanvasScreenshotPage(cmykPdfBytes, projectId, canvasElements, logos, templateSize);
+            clearTimeout(pdfGenSafetyTimer);
             res.setHeader('Content-Type', 'application/pdf');
             res.setHeader('Content-Disposition', `attachment; filename="${buildPdfFilename(project.name, project.quantity || 1, templateSize?.productCode)}"`);
             res.send(cmykWithScreenshot);
@@ -2426,6 +2439,7 @@ export async function registerRoutes(app: express.Application) {
         }
         
         const fallbackWithScreenshot = await appendCanvasScreenshotPage(Buffer.from(pdfBytes), projectId, canvasElements, logos, templateSize);
+        clearTimeout(pdfGenSafetyTimer);
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename="${buildPdfFilename(project.name, project.quantity || 1, templateSize?.productCode)}"`);
         res.send(fallbackWithScreenshot);
@@ -2441,9 +2455,12 @@ export async function registerRoutes(app: express.Application) {
       console.log('❌ Unexpected fallthrough - this should not happen');
       
     } catch (error) {
+      clearTimeout(pdfGenSafetyTimer);
       console.error('❌ PDF generation error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      res.status(500).json({ error: 'Failed to generate PDF: ' + errorMessage });
+      if (!res.headersSent) {
+        res.status(500).json({ error: 'Failed to generate PDF: ' + errorMessage });
+      }
     }
   });
   
@@ -7437,8 +7454,13 @@ export async function registerRoutes(app: express.Application) {
         return buf;
       };
 
-      const needsServerPdf = (projectData.pdfBase64 && projectData.pdfBase64.length > PDF_INLINE_MAX_CHARS)
-        || (!projectData.pdfBase64 && projectId && projectId !== 'vector-service');
+      const needsServerPdf = !isRepeatOrder
+        && ((projectData.pdfBase64 && projectData.pdfBase64.length > PDF_INLINE_MAX_CHARS)
+          || (!projectData.pdfBase64 && projectId && projectId !== 'vector-service'));
+
+      if (isRepeatOrder && !projectData.pdfBase64) {
+        console.log(`📦 Repeat order with ZIP — skipping server-side PDF generation`);
+      }
 
       if (needsServerPdf) {
         const reason = projectData.pdfBase64
@@ -7447,9 +7469,13 @@ export async function registerRoutes(app: express.Application) {
         console.log(`📦 ${reason} — generating server-side`);
         try {
           const selfBase = `http://localhost:${process.env.PORT || 5000}`;
+          const pdfGenController = new AbortController();
+          const pdfGenTimeout = setTimeout(() => pdfGenController.abort(), 60000);
           const genRes = await fetch(`${selfBase}/api/projects/${projectId}/generate-pdf`, {
             headers: { cookie: req.headers.cookie || '' },
+            signal: pdfGenController.signal,
           });
+          clearTimeout(pdfGenTimeout);
           if (genRes.ok) {
             let pdfBuf = Buffer.from(await genRes.arrayBuffer());
             const rawSizeMB = (pdfBuf.length / 1024 / 1024).toFixed(1);
