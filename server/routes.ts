@@ -1579,13 +1579,19 @@ export async function registerRoutes(app: express.Application) {
           let usePath = svgPath;
           let useOriginalPdf = false;
           
-          // CRITICAL: Prefer tight-content SVG over original PDF to avoid scaling issues
-          // The tight-content SVG already has the exact content bounds we detected
+          // CRITICAL: When original PDF exists, ALWAYS prefer it for output to preserve fonts/text
+          // pdf2svg can lose text when fonts aren't embedded; the original PDF has exact content
+          // The tight-content SVG is for canvas display only
           const isTightContent = (logo as any).filename && (logo as any).filename.includes('_tight-content');
           
-          if (isTightContent) {
-            console.log(`🎯 USING TIGHT-CONTENT SVG: ${(logo as any).filename} (exact content bounds)`);
-            // Attempt restore if missing
+          let cropToContentBounds = false;
+          if (isTightContent && (logo as any).originalFilename && await ensureFileOnDisk(originalPdfPath)) {
+            console.log(`🎯 TIGHT-CONTENT SVG exists but USING ORIGINAL PDF to preserve fonts/text: ${(logo as any).originalFilename}`);
+            usePath = originalPdfPath;
+            useOriginalPdf = true;
+            cropToContentBounds = true;
+          } else if (isTightContent) {
+            console.log(`🎯 USING TIGHT-CONTENT SVG (no original PDF available): ${(logo as any).filename}`);
             await ensureFileOnDisk(svgPath);
             usePath = svgPath;
             useOriginalPdf = false;
@@ -1681,12 +1687,53 @@ export async function registerRoutes(app: express.Application) {
                                  ((logo as any).filename && ((logo as any).filename.endsWith('.png') || (logo as any).filename.endsWith('.jpg') || (logo as any).filename.endsWith('.jpeg'))));
             
             if (useOriginalPdf) {
-              // CRITICAL FIX: Use original PDF at full page dimensions - NO cropping to painted pixels
-              // Cropping to content bounds removes white elements which is unacceptable
-              console.log(`🎯 USING ORIGINAL PDF AT FULL PAGE DIMENSIONS - NO cropping to painted pixels`);
-              console.log(`📄 This preserves white elements and uses the intended artwork size from the PDF`);
-              
               vectorBytes = fs.readFileSync(originalPdfPath);
+              
+              const pdfBounds = (logo as any).originalPdfBounds || (logo as any).contentBounds;
+              if (cropToContentBounds && pdfBounds) {
+                const cb = pdfBounds;
+                const boundsUnits = cb.units || 'pt';
+                console.log(`🎯 USING ORIGINAL PDF WITH CONTENT-BOUNDS CROP to preserve fonts/text`);
+                console.log(`📐 PDF bounds (${boundsUnits}): (${cb.xMin?.toFixed?.(1) || cb.xMin}, ${cb.yMin?.toFixed?.(1) || cb.yMin}) to (${cb.xMax?.toFixed?.(1) || cb.xMax}, ${cb.yMax?.toFixed?.(1) || cb.yMax})`);
+                
+                try {
+                  const cropDoc = await PDFDocument.load(vectorBytes);
+                  const cropPage = cropDoc.getPages()[0];
+                  if (cropPage) {
+                    let bxMin = cb.xMin ?? 0;
+                    let byMin = cb.yMin ?? 0;
+                    let bxMax = cb.xMax ?? cropPage.getWidth();
+                    let byMax = cb.yMax ?? cropPage.getHeight();
+                    
+                    if (boundsUnits === 'px') {
+                      const pxToPt = 72 / 96;
+                      bxMin *= pxToPt;
+                      byMin *= pxToPt;
+                      bxMax *= pxToPt;
+                      byMax *= pxToPt;
+                    } else if (boundsUnits === 'mm') {
+                      const mmToPt = 2.834645669;
+                      bxMin *= mmToPt;
+                      byMin *= mmToPt;
+                      bxMax *= mmToPt;
+                      byMax *= mmToPt;
+                    }
+                    
+                    const cropW = bxMax - bxMin;
+                    const cropH = byMax - byMin;
+                    
+                    cropPage.setCropBox(bxMin, byMin, cropW, cropH);
+                    console.log(`✂️ CropBox set: (${bxMin.toFixed(1)}, ${byMin.toFixed(1)}) size ${cropW.toFixed(1)}×${cropH.toFixed(1)}pts`);
+                    
+                    vectorBytes = Buffer.from(await cropDoc.save());
+                  }
+                } catch (cropErr: any) {
+                  console.log(`⚠️ CropBox failed, using full page: ${cropErr.message}`);
+                }
+              } else {
+                console.log(`🎯 USING ORIGINAL PDF AT FULL PAGE DIMENSIONS`);
+                console.log(`📄 This preserves white elements and uses the intended artwork size from the PDF`);
+              }
             } else if (isRasterFile) {
               console.log(`🖼️ RASTER IMAGE DETECTED: ${(logo as any).filename} - using embedPng/embedJpg`);
               isRasterImage = true;
