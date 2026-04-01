@@ -1790,9 +1790,11 @@ export default function UploadTool() {
   // Raster warning modal handlers
   const handlePhotographicApprove = async () => {
     if (pendingRasterFile && pendingRasterFile.logoId) {
+      const logoId = pendingRasterFile.logoId;
+      const fileName = pendingRasterFile.fileName;
       // Mark the uploaded PDF as photographic
       try {
-        await fetch(`/api/logos/${pendingRasterFile.logoId}/photographic`, {
+        await fetch(`/api/logos/${logoId}/photographic`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ isPhotographic: true })
@@ -1800,6 +1802,30 @@ export default function UploadTool() {
         
         // Refresh logos to get updated data
         queryClient.invalidateQueries({ queryKey: ["/api/projects", currentProject?.id, "logos"] });
+        
+        // Check if this PDF has garment colour pages (multi-page pass-through)
+        // Fetch fresh logo data from the project's logo list
+        try {
+          const logosRes = await fetch(`/api/projects/${currentProject?.id}/logos`);
+          if (logosRes.ok) {
+            const allLogos = await logosRes.json();
+            const thisLogo = allLogos.find((l: any) => l.id === logoId);
+            if (thisLogo && thisLogo.hasGarmentPages && thisLogo.pageCount > 1 && currentProject && !(currentProject as any).useOriginalGarmentPages) {
+              console.log('Multi-page PDF with garment pages detected after raster approval:', fileName, thisLogo.pageCount, 'pages');
+              setPendingPassThroughLogo({
+                logoId: logoId,
+                pageCount: thisLogo.pageCount,
+                fileName: fileName
+              });
+              setPendingRasterFile(null);
+              setShowRasterWarning(false);
+              setShowPassThroughModal(true);
+              return;
+            }
+          }
+        } catch (e) {
+          console.error('Failed to check logo for garment pages:', e);
+        }
         
         toast({
           title: "Success",
