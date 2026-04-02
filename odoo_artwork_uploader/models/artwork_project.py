@@ -60,22 +60,14 @@ class ArtworkProject(models.Model):
     price_total = fields.Float('Total Price', compute='_compute_price', store=True)
     
     def write(self, vals):
-        """Override write to update sale order line comments when project is modified"""
-        result = super().write(vals)
+        """Override write — does NOT propagate changes to existing order lines.
         
-        # Update sale order line comments if relevant fields changed
-        comment_fields = ['project_comments', 'garment_color', 'garment_color_name', 
-                         'garment_colors_json', 'ink_color', 'ink_color_name', 'template_size']
-        
-        if any(field in vals for field in comment_fields):
-            for project in self:
-                sale_lines = self.env['sale.order.line'].sudo().search([
-                    ('artwork_project_id', '=', project.id)
-                ])
-                for line in sale_lines:
-                    line._update_artwork_comments()
-        
-        return result
+        Each sale.order.line's artwork_comment is set once when the line is
+        created (in add-to-cart via _update_artwork_comments).  Later orders
+        that reuse the same artwork.project UUID must not overwrite comments,
+        garment metadata, or any other per-order data on previous lines.
+        """
+        return super().write(vals)
     
     @api.depends('template_size')
     def _compute_template_dimensions(self):
