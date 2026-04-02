@@ -374,8 +374,8 @@ export default function ProductLauncherModal({
   const isNotAuthenticated = modalEffectiveAuth === 'not-authenticated' || modalEffectiveAuth === 'checking';
 
   return (
-    <Dialog open={open} onOpenChange={isNotAuthenticated ? undefined : onClose}>
-      <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto" onPointerDownOutside={isNotAuthenticated ? (e) => e.preventDefault() : undefined} onEscapeKeyDown={isNotAuthenticated ? (e) => e.preventDefault() : undefined} hideCloseButton={isNotAuthenticated}>
+    <Dialog open={open} onOpenChange={() => {}}>
+      <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto" onPointerDownOutside={(e) => e.preventDefault()} onEscapeKeyDown={(e) => e.preventDefault()} hideCloseButton={isNotAuthenticated}>
         <DialogHeader>
           <CompleteTransferLogo size="md" className="mb-4" />
           <DialogTitle className="text-2xl font-bold text-center mb-2">
