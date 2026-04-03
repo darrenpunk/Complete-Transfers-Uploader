@@ -1278,9 +1278,12 @@ export async function registerRoutes(app: express.Application) {
         (templateSize.width ?? 0) >= 1000 || (templateSize.height ?? 0) >= 500;
       const isSingleElementLayout = canvasElements.length === 1;
       if (isDtfGeneratePdf && hasOriginalPDFs && isSingleElementLayout) {
-        const dtfLogo = Object.values(logosObject).find((logo: any) =>
-          logo.originalFilename && logo.originalMimeType === 'application/pdf'
-        ) as any;
+        const canvasLogoId = canvasElements[0]?.logoId;
+        const dtfLogo = canvasLogoId
+          ? (logosObject[canvasLogoId] && logosObject[canvasLogoId].originalFilename && logosObject[canvasLogoId].originalMimeType === 'application/pdf' ? logosObject[canvasLogoId] : null)
+          : Object.values(logosObject).find((logo: any) =>
+              logo.originalFilename && logo.originalMimeType === 'application/pdf'
+            ) as any;
         if (dtfLogo) {
           const origPath = path.join(process.cwd(), 'uploads', dtfLogo.originalFilename);
           if (fs.existsSync(origPath)) {
