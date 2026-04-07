@@ -1095,23 +1095,34 @@ export async function registerRoutes(app: express.Application) {
     let screenshotData: Buffer | null = null;
     const screenshotPath = path.join(process.cwd(), 'uploads', `canvas_screenshot_${projectId}.png`);
 
-    if (fs.existsSync(screenshotPath)) {
-      const raw = fs.readFileSync(screenshotPath);
-      const minNonBlank = 5000;
-      if (raw.length > minNonBlank) {
-        screenshotData = raw;
-        console.log(`📸 Using client-uploaded canvas screenshot (${raw.length} bytes)`);
-      } else {
-        console.log(`⚠️ Client screenshot too small (${raw.length} bytes), likely blank — trying server fallback`);
+    for (let attempt = 0; attempt < 3 && !screenshotData; attempt++) {
+      if (attempt > 0) await new Promise(r => setTimeout(r, 200));
+      if (fs.existsSync(screenshotPath)) {
+        const raw = fs.readFileSync(screenshotPath);
+        const minNonBlank = 5000;
+        if (raw.length > minNonBlank) {
+          screenshotData = raw;
+          console.log(`📸 Using client-uploaded canvas screenshot (${raw.length} bytes, attempt ${attempt + 1})`);
+        } else {
+          console.log(`⚠️ Client screenshot too small (${raw.length} bytes), likely blank — trying server fallback`);
+        }
+        try { fs.unlinkSync(screenshotPath); } catch {}
       }
-      try { fs.unlinkSync(screenshotPath); } catch {}
     }
 
     if (!screenshotData && canvasElements && logos && templateSize) {
       console.log('📸 No client screenshot — generating server-side canvas preview as fallback...');
-      screenshotData = await generateCanvasPreviewPng(canvasElements, logos, templateSize);
+      try {
+        const previewPromise = generateCanvasPreviewPng(canvasElements, logos, templateSize);
+        const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 15000));
+        screenshotData = await Promise.race([previewPromise, timeoutPromise]);
+      } catch (e: any) {
+        console.error(`⚠️ Server-side canvas preview failed: ${e.message}`);
+      }
       if (screenshotData) {
         console.log(`📸 Server fallback preview: ${screenshotData.length} bytes`);
+      } else {
+        console.log(`⚠️ Server fallback preview failed or timed out — skipping screenshot page`);
       }
     }
 
@@ -1176,7 +1187,6 @@ export async function registerRoutes(app: express.Application) {
         res.status(504).json({ error: 'PDF generation timed out' });
       }
     }, 90000);
-    res.on('close', () => clearTimeout(pdfGenSafetyTimer));
     try {
       console.log(`📄 PDF Generation requested for project: ${req.params.projectId}`);
       const projectId = req.params.projectId;
