@@ -1132,13 +1132,23 @@ grestore`;
       // Guard against this: only treat as raster if there is no original PDF to fall back to.
       const hasOriginalPdf = !!(logo.originalFilename && logo.originalMimeType === 'application/pdf' &&
                                 fs.existsSync(path.join(process.cwd(), 'uploads', logo.originalFilename)));
-      const isRasterImage = !hasOriginalPdf && (
-                            logoMimeType.startsWith('image/png') || logoMimeType.startsWith('image/jpeg') || 
-                            logoMimeType.startsWith('image/jpg') ||
-                            logoFilename.endsWith('.png') || logoFilename.endsWith('.jpg') || logoFilename.endsWith('.jpeg'));
+      const isActuallyRasterFile = logoFilename.endsWith('.png') || logoFilename.endsWith('.jpg') || logoFilename.endsWith('.jpeg') ||
+                                   logoMimeType.startsWith('image/png') || logoMimeType.startsWith('image/jpeg') || logoMimeType.startsWith('image/jpg');
+      const isRasterImage = !hasOriginalPdf && isActuallyRasterFile;
       
       if (isRasterImage) {
         console.log(`🖼️ RASTER IMAGE DETECTED: ${logoFilename} - using direct image embedding`);
+        await this.embedRasterImage(pdfDoc, page1, page2, logo, element, templateSize);
+        return;
+      }
+      
+      // RASTER-ONLY PDF WITH INK RECOLORING: When original PDF contains only raster content
+      // (logo file is a PNG extracted from it) and ink color override is set, we must use the
+      // raster embedding path with ImageMagick recoloring — NOT the SVG recoloring path.
+      // The SVG path would try to read a PNG as SVG text and produce an invalid file.
+      const colorOverridesCheck = element.colorOverrides as any;
+      if (hasOriginalPdf && isActuallyRasterFile && colorOverridesCheck && colorOverridesCheck.inkColor) {
+        console.log(`🖼️ RASTER-ONLY PDF WITH INK RECOLORING: ${logoFilename} - routing to raster embedding with ImageMagick recoloring`);
         await this.embedRasterImage(pdfDoc, page1, page2, logo, element, templateSize);
         return;
       }
