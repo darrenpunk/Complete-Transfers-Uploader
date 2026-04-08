@@ -23,12 +23,18 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 if (process.env.NODE_ENV === 'production') {
-  const MEMORY_CHECK_INTERVAL = 60_000;
-  const MEMORY_WARN_MB = 400;
+  const MEMORY_CHECK_INTERVAL = 30_000;
+  const MEMORY_WARN_MB = 300;
+  const MEMORY_GC_MB = 280;
   setInterval(() => {
     const mem = process.memoryUsage();
     const rssMB = Math.round(mem.rss / 1024 / 1024);
     const heapMB = Math.round(mem.heapUsed / 1024 / 1024);
+    if (rssMB > MEMORY_GC_MB && typeof global.gc === 'function') {
+      global.gc();
+      const after = Math.round(process.memoryUsage().rss / 1024 / 1024);
+      console.log(`[MEMORY] GC triggered at ${rssMB}MB RSS → ${after}MB RSS`);
+    }
     if (rssMB > MEMORY_WARN_MB) {
       console.warn(`[MEMORY WARNING] RSS: ${rssMB}MB, Heap: ${heapMB}MB — approaching container limit`);
     }
@@ -202,8 +208,12 @@ app.use('/uploads', express.static('./uploads', {
       res.setHeader('Content-Type', 'image/svg+xml');
     } else {
       try {
-        const content = fs.readFileSync(filePath, 'utf8');
-        if (content.includes('<svg') || content.includes('<?xml')) {
+        const fd = fs.openSync(filePath, 'r');
+        const buf = Buffer.alloc(256);
+        const bytesRead = fs.readSync(fd, buf, 0, 256, 0);
+        fs.closeSync(fd);
+        const header = buf.subarray(0, bytesRead).toString('utf8');
+        if (header.includes('<svg') || header.includes('<?xml')) {
           res.setHeader('Content-Type', 'image/svg+xml');
         }
       } catch (e) {

@@ -68,7 +68,7 @@ function createRelease(opId: number, label: string): () => void {
 export async function acquireHeavyOp(label: string): Promise<() => void> {
   cleanStaleOps();
 
-  if (isMemoryCritical(350)) {
+  if (isMemoryCritical(300)) {
     totalRejected++;
     const mem = getMemoryUsage();
     console.error(`[OP-GUARD] REJECTED "${label}" — memory critical (RSS: ${mem.rssMB}MB, Heap: ${mem.heapUsedMB}MB)`);
@@ -162,7 +162,7 @@ export function getOperationStats() {
 setInterval(cleanStaleOps, 30_000);
 
 setInterval(() => {
-  if (typeof global.gc === 'function' && isMemoryCritical(400)) {
+  if (typeof global.gc === 'function' && isMemoryCritical(250)) {
     console.log('[OP-GUARD] Memory pressure detected, triggering GC');
     global.gc();
   }
