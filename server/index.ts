@@ -6,6 +6,7 @@ import dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { getOperationStats } from "./operation-guard";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -79,11 +80,13 @@ app.get('/health', async (_req, res) => {
   checks.uptime = `${Math.floor(process.uptime())}s`;
   checks.memory = `${Math.round(process.memoryUsage().rss / 1024 / 1024)}MB`;
 
+  const ops = getOperationStats();
   const status = healthy ? 200 : 503;
   res.status(status).json({
     status: healthy ? 'ok' : 'degraded',
     timestamp: new Date().toISOString(),
     checks,
+    operations: ops,
   });
 });
 
@@ -308,6 +311,34 @@ async function main() {
       fetch(url).catch(() => {});
     }, KEEP_ALIVE_INTERVAL);
     console.log(`[SERVER] Keep-alive self-ping every ${KEEP_ALIVE_INTERVAL / 1000}s`);
+
+    const TEMP_CLEANUP_INTERVAL = 5 * 60 * 1000;
+    setInterval(() => {
+      try {
+        const tmpDir = '/tmp';
+        const now = Date.now();
+        const maxAge = 10 * 60 * 1000;
+        const prefixes = ['canvas_el_', 'gs_', 'magick-', 'inkscape_', 'rsvg_', 'pdf_gen_', 'recolored_'];
+        const entries = fs.readdirSync(tmpDir);
+        let cleaned = 0;
+        for (const entry of entries) {
+          if (prefixes.some(p => entry.startsWith(p)) || (entry.endsWith('.png') && entry.length > 30) || (entry.endsWith('.pdf') && entry.length > 30)) {
+            try {
+              const filePath = path.join(tmpDir, entry);
+              const stat = fs.statSync(filePath);
+              if (now - stat.mtimeMs > maxAge) {
+                fs.unlinkSync(filePath);
+                cleaned++;
+              }
+            } catch {}
+          }
+        }
+        if (cleaned > 0) {
+          console.log(`[CLEANUP] Removed ${cleaned} stale temp files`);
+        }
+      } catch {}
+    }, TEMP_CLEANUP_INTERVAL);
+    console.log(`[SERVER] Temp file cleanup every ${TEMP_CLEANUP_INTERVAL / 1000}s`);
   }
 }
 

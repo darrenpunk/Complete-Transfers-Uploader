@@ -9,6 +9,7 @@ import { exec, execSync, execFile } from 'child_process';
 import FormData from 'form-data';
 import fetch from 'node-fetch';
 import { IStorage } from './storage';
+import { guardRoute, getOperationStats, isMemoryCritical } from './operation-guard';
 import { 
   insertProjectSchema, 
   insertLogoSchema, 
@@ -1180,7 +1181,7 @@ export async function registerRoutes(app: express.Application) {
   }
 
   // PDF Generation endpoint - Must be before other routes
-  app.get('/api/projects/:projectId/generate-pdf', async (req, res) => {
+  app.get('/api/projects/:projectId/generate-pdf', guardRoute('pdf-gen'), async (req, res) => {
     const pdfGenSafetyTimer = setTimeout(() => {
       if (!res.headersSent) {
         console.error(`⏰ PDF generation safety timeout (90s) for project: ${req.params.projectId}`);
@@ -2480,7 +2481,7 @@ export async function registerRoutes(app: express.Application) {
   // Setup imposition routes
   setupImpositionRoutes(app as any, storage);
   // File upload endpoint
-  app.post('/api/projects/:projectId/logos', upload.array('files'), async (req, res) => {
+  app.post('/api/projects/:projectId/logos', upload.array('files'), guardRoute('upload'), async (req, res) => {
     try {
       const projectId = req.params.projectId;
       const files = req.files as Express.Multer.File[];
@@ -5772,7 +5773,7 @@ export async function registerRoutes(app: express.Application) {
     }
   });
 
-  app.post('/api/projects/:projectId/logos/from-chunked', async (req, res) => {
+  app.post('/api/projects/:projectId/logos/from-chunked', guardRoute('chunked-upload'), async (req, res) => {
     try {
       const projectId = req.params.projectId;
       const { filename, originalName, mimetype, size } = req.body;
@@ -6056,7 +6057,7 @@ export async function registerRoutes(app: express.Application) {
     }
   });
 
-  app.get('/api/logos/:logoId/safari-png', async (req, res) => {
+  app.get('/api/logos/:logoId/safari-png', guardRoute('safari-png'), async (req, res) => {
     try {
       const logoId = req.params.logoId;
       const logo = await storage.getLogo(logoId);
@@ -6381,7 +6382,7 @@ export async function registerRoutes(app: express.Application) {
   });
 
   // Extract selected SVG elements into a new SVG file for embroidery canvas
-  app.post('/api/logos/:logoId/extract-elements', async (req, res) => {
+  app.post('/api/logos/:logoId/extract-elements', guardRoute('extract-elements'), async (req, res) => {
     try {
       const logoId = req.params.logoId;
       const { selectedIndices, projectId, outlinesOnly, strokeWidth } = req.body;
@@ -6661,7 +6662,7 @@ export async function registerRoutes(app: express.Application) {
   });
 
   // Font outlining endpoint for SVG files
-  app.post('/api/logos/:logoId/outline-fonts', async (req, res) => {
+  app.post('/api/logos/:logoId/outline-fonts', guardRoute('outline-fonts'), async (req, res) => {
     try {
       const logoId = req.params.logoId;
       const logo = await storage.getLogo(logoId);
@@ -9356,7 +9357,7 @@ ${svgClose}`;
 
   // === DTF QUICK UPLOAD ===
   // Bypasses the canvas and adds a customer-supplied PDF directly to Odoo cart
-  app.post('/api/quick-upload-dtf', async (req, res) => {
+  app.post('/api/quick-upload-dtf', guardRoute('quick-dtf'), async (req, res) => {
     try {
       const { pdfBase64, quantity, partnerEmail, projectName } = req.body;
       if (!pdfBase64) return res.status(400).json({ error: 'PDF is required' });
