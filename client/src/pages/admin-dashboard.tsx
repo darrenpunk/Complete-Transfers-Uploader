@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Lock, Users, Activity, BarChart3, RefreshCw, Search, X, Upload, ShoppingCart, LayoutTemplate, Plus, Trash2, Zap, TrendingUp, FileText, Eye } from "lucide-react";
+import { Lock, Users, Activity, BarChart3, RefreshCw, Search, X, Upload, ShoppingCart, LayoutTemplate, Plus, Trash2, Zap, TrendingUp, FileText, Eye, HeartPulse, Cpu, HardDrive, Clock, AlertTriangle, CheckCircle } from "lucide-react";
 import { queryClient } from "@/lib/queryClient";
 import type { TemplateSize } from "@shared/schema";
 import {
@@ -825,8 +825,200 @@ function AnalyticsTab({
   );
 }
 
+function MemoryBar({ label, usedMB, totalMB, warnMB }: { label: string; usedMB: number; totalMB?: number; warnMB?: number }) {
+  const max = totalMB || Math.max(usedMB * 1.5, 512);
+  const pct = Math.min((usedMB / max) * 100, 100);
+  const isWarn = warnMB ? usedMB > warnMB : pct > 75;
+  const isCrit = warnMB ? usedMB > warnMB * 1.15 : pct > 90;
+  return (
+    <div className="space-y-1">
+      <div className="flex justify-between text-xs">
+        <span className="text-muted-foreground">{label}</span>
+        <span className={isCrit ? "text-red-500 font-medium" : isWarn ? "text-yellow-500" : "text-foreground"}>{usedMB}MB{totalMB ? ` / ${totalMB}MB` : ""}</span>
+      </div>
+      <div className="h-2 bg-muted rounded-full overflow-hidden">
+        <div className={`h-full rounded-full transition-all ${isCrit ? "bg-red-500" : isWarn ? "bg-yellow-500" : "bg-green-500"}`} style={{ width: `${pct}%` }} />
+      </div>
+    </div>
+  );
+}
+
+function ServerHealthTab() {
+  const { data: health, isLoading, refetch } = useQuery({
+    queryKey: ["admin-health"],
+    queryFn: () => fetch("/health").then(r => r.json()),
+    refetchInterval: 10000,
+  });
+
+  const [history, setHistory] = useState<Array<{ time: string; rss: number; heap: number; active: number; queued: number }>>([]);
+
+  useEffect(() => {
+    if (!health?.operations?.memory) return;
+    setHistory(prev => {
+      const entry = {
+        time: new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+        rss: health.operations.memory.rssMB,
+        heap: health.operations.memory.heapUsedMB,
+        active: health.operations.active,
+        queued: health.operations.queued,
+      };
+      const updated = [...prev, entry];
+      return updated.slice(-30);
+    });
+  }, [health]);
+
+  if (isLoading) {
+    return <div className="text-center py-12 text-muted-foreground">Loading health data...</div>;
+  }
+
+  const ops = health?.operations;
+  const mem = ops?.memory;
+  const checks = health?.checks;
+  const isHealthy = health?.status === "ok";
+  const uptimeSeconds = parseInt(checks?.uptime || "0");
+  const uptimeStr = uptimeSeconds >= 86400
+    ? `${Math.floor(uptimeSeconds / 86400)}d ${Math.floor((uptimeSeconds % 86400) / 3600)}h`
+    : uptimeSeconds >= 3600
+    ? `${Math.floor(uptimeSeconds / 3600)}h ${Math.floor((uptimeSeconds % 3600) / 60)}m`
+    : `${Math.floor(uptimeSeconds / 60)}m ${uptimeSeconds % 60}s`;
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <HeartPulse className="h-5 w-5 text-primary" />
+          <h2 className="text-lg font-semibold">Server Health</h2>
+          {isHealthy ? (
+            <Badge variant="outline" className="border-green-500 text-green-500"><CheckCircle className="h-3 w-3 mr-1" />Healthy</Badge>
+          ) : (
+            <Badge variant="destructive"><AlertTriangle className="h-3 w-3 mr-1" />Degraded</Badge>
+          )}
+        </div>
+        <Button variant="outline" size="sm" onClick={() => refetch()}>
+          <RefreshCw className="h-4 w-4 mr-2" />Refresh
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1"><Clock className="h-3.5 w-3.5" />Uptime</div>
+            <div className="text-xl font-bold">{uptimeStr}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1"><Cpu className="h-3.5 w-3.5" />Active Ops</div>
+            <div className="text-xl font-bold">{ops?.active || 0}<span className="text-sm text-muted-foreground font-normal"> / {ops?.maxConcurrent || 2}</span></div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1"><Clock className="h-3.5 w-3.5" />Queued</div>
+            <div className="text-xl font-bold">{ops?.queued || 0}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1"><HardDrive className="h-3.5 w-3.5" />Memory (RSS)</div>
+            <div className="text-xl font-bold">{mem?.rssMB || 0}<span className="text-sm text-muted-foreground font-normal">MB</span></div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card>
+          <CardHeader className="pb-3"><CardTitle className="text-sm">Memory Usage</CardTitle></CardHeader>
+          <CardContent className="space-y-3">
+            <MemoryBar label="RSS (Total Process)" usedMB={mem?.rssMB || 0} totalMB={512} warnMB={384} />
+            <MemoryBar label="Heap Used" usedMB={mem?.heapUsedMB || 0} totalMB={mem?.heapTotalMB || 384} warnMB={300} />
+            <MemoryBar label="External (Buffers)" usedMB={mem?.externalMB || 0} totalMB={128} />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3"><CardTitle className="text-sm">Operation Stats</CardTitle></CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-3 gap-4 text-center">
+              <div>
+                <div className="text-2xl font-bold text-green-500">{ops?.totalProcessed || 0}</div>
+                <div className="text-xs text-muted-foreground">Completed</div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-yellow-500">{ops?.totalQueued || 0}</div>
+                <div className="text-xs text-muted-foreground">Were Queued</div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-red-500">{ops?.totalRejected || 0}</div>
+                <div className="text-xs text-muted-foreground">Rejected</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {ops?.activeOps?.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3"><CardTitle className="text-sm">Active Operations</CardTitle></CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Operation</TableHead>
+                  <TableHead>Running</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {ops.activeOps.map((op: any, i: number) => (
+                  <TableRow key={i}>
+                    <TableCell className="font-mono text-sm">{op.label}</TableCell>
+                    <TableCell>{op.runningSeconds}s</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
+
+      {history.length > 3 && (
+        <Card>
+          <CardHeader className="pb-3"><CardTitle className="text-sm">Memory Over Time (last {history.length} samples, ~10s interval)</CardTitle></CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={history}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="time" tick={{ fontSize: 10 }} interval="preserveStartEnd" />
+                <YAxis tick={{ fontSize: 10 }} unit="MB" />
+                <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }} />
+                <Bar dataKey="rss" name="RSS" fill="hsl(var(--primary))" radius={[2, 2, 0, 0]} />
+                <Bar dataKey="heap" name="Heap" fill="hsl(var(--primary) / 0.5)" radius={[2, 2, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      )}
+
+      <Card>
+        <CardHeader className="pb-3"><CardTitle className="text-sm">System Checks</CardTitle></CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {checks && Object.entries(checks).filter(([k]) => k !== 'uptime' && k !== 'memory').map(([key, val]) => (
+              <div key={key} className="flex items-center gap-2">
+                {val === 'ok' ? <CheckCircle className="h-4 w-4 text-green-500" /> : <AlertTriangle className="h-4 w-4 text-red-500" />}
+                <span className="text-sm capitalize">{key.replace(/_/g, ' ')}</span>
+                <Badge variant={val === 'ok' ? 'outline' : 'destructive'} className="ml-auto text-xs">{String(val)}</Badge>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 function Dashboard() {
-  const [activeTab, setActiveTab] = useState<"analytics" | "customer-templates">("analytics");
+  const [activeTab, setActiveTab] = useState<"analytics" | "customer-templates" | "server-health">("analytics");
   const [userFilter, setUserFilter] = useState("");
   const [eventFilter, setEventFilter] = useState("all");
   const [timeFilter, setTimeFilter] = useState("all");
@@ -923,8 +1115,15 @@ function Dashboard() {
                 <LayoutTemplate className="h-4 w-4 inline mr-1.5" />
                 Customer Templates
               </button>
+              <button
+                onClick={() => setActiveTab("server-health")}
+                className={`px-3 py-1.5 text-sm font-medium transition-colors ${activeTab === "server-health" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"}`}
+              >
+                <HeartPulse className="h-4 w-4 inline mr-1.5" />
+                Server Health
+              </button>
             </div>
-            {activeTab === "analytics" && (
+            {(activeTab === "analytics" || activeTab === "server-health") && (
               <Button variant="outline" size="sm" onClick={handleRefresh}>
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Refresh
@@ -938,6 +1137,10 @@ function Dashboard() {
             <CustomerTemplatesManager />
             <CustomerFeaturesManager />
           </div>
+        )}
+
+        {activeTab === "server-health" && (
+          <ServerHealthTab />
         )}
 
         {activeTab === "analytics" && (
