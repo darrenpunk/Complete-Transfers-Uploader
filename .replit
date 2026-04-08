@@ -9,7 +9,7 @@ packages = ["imagemagick", "ghostscript", "poppler_utils", "pdf2svg", "librsvg",
 [deployment]
 deploymentTarget = "autoscale"
 build = ["npm", "run", "build"]
-run = ["npm", "run", "start"]
+run = ["sh", "-c", "NODE_ENV=production node --max-old-space-size=384 --expose-gc dist/index.js"]
 
 [env]
 PORT = "5000"

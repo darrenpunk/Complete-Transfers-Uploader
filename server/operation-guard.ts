@@ -68,6 +68,16 @@ function createRelease(opId: number, label: string): () => void {
 export async function acquireHeavyOp(label: string): Promise<() => void> {
   cleanStaleOps();
 
+  if (isMemoryCritical(350)) {
+    totalRejected++;
+    const mem = getMemoryUsage();
+    console.error(`[OP-GUARD] REJECTED "${label}" — memory critical (RSS: ${mem.rssMB}MB, Heap: ${mem.heapUsedMB}MB)`);
+    if (typeof global.gc === 'function') {
+      try { global.gc(); } catch {}
+    }
+    throw new Error('Server is under heavy load. Please wait a moment and try again.');
+  }
+
   if (activeOps.length < MAX_CONCURRENT_HEAVY) {
     const opId = nextId++;
     activeOps.push({ id: opId, label, startedAt: Date.now() });
