@@ -27,7 +27,16 @@ import { manufacturerColors, type ManufacturerColorGroup } from '@shared/garment
 import { PDFBoundsExtractor } from './pdf-bounds-extractor';
 import { SVGBoundsAnalyzer } from './svg-bounds-analyzer';
 
-const execAsync = promisify(exec);
+const execAsyncRaw = promisify(exec);
+const INKSCAPE_TIMEOUT = 15000;
+const EXTERNAL_TOOL_TIMEOUT = 30000;
+
+function execAsync(command: string, options?: any): Promise<{ stdout: string; stderr: string }> {
+  const isInkscape = command.includes('inkscape');
+  const defaultTimeout = isInkscape ? INKSCAPE_TIMEOUT : EXTERNAL_TOOL_TIMEOUT;
+  const opts = { timeout: defaultTimeout, maxBuffer: 10 * 1024 * 1024, killSignal: 'SIGKILL' as const, ...options };
+  return execAsyncRaw(command, opts);
+}
 
 function buildPdfFilename(projectName: string, quantity: number, productCode?: string | null, suffix?: string): string {
   const name = (projectName || 'artwork').replace(/_/g, ' ');
@@ -3845,9 +3854,10 @@ export async function registerRoutes(app: express.Application) {
                   console.log(`✅ PNG fallback generated using rsvg-convert: ${pngFilename}`);
                 } catch (rsvgError) {
                   console.log(`⚠️ rsvg-convert failed, trying Inkscape...`);
-                  execSync(`inkscape "${svgPath}" --export-filename="${pngPath}" --export-dpi=300`, {
+                  execSync(`inkscape "${svgPath}" --export-filename="${pngPath}" --export-dpi=150`, {
                     stdio: 'pipe',
-                    timeout: 30000
+                    timeout: 15000,
+                    killSignal: 'SIGKILL'
                   });
                   console.log(`✅ PNG fallback generated using Inkscape: ${pngFilename}`);
                 }
@@ -6133,8 +6143,8 @@ export async function registerRoutes(app: express.Application) {
           stdio: 'pipe', timeout: 30000 
         });
       } catch {
-        execSync(`inkscape "${svgToConvert}" --export-filename="${pngPath}" --export-dpi=300`, {
-          stdio: 'pipe', timeout: 30000
+        execSync(`inkscape "${svgToConvert}" --export-filename="${pngPath}" --export-dpi=150`, {
+          stdio: 'pipe', timeout: 15000, killSignal: 'SIGKILL'
         });
       }
       

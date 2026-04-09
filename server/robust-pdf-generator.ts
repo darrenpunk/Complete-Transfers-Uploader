@@ -14,7 +14,16 @@ import { promisify } from 'util';
 import { exec, execSync } from 'child_process';
 import { manufacturerColors } from '@shared/garment-colors';
 
-const execAsync = promisify(exec);
+const execAsyncRaw = promisify(exec);
+const INKSCAPE_TIMEOUT = 15000;
+const TOOL_TIMEOUT = 30000;
+
+function execAsync(command: string, options?: any): Promise<{ stdout: string; stderr: string }> {
+  const isInkscape = command.includes('inkscape');
+  const defaultTimeout = isInkscape ? INKSCAPE_TIMEOUT : TOOL_TIMEOUT;
+  const opts = { timeout: defaultTimeout, maxBuffer: 10 * 1024 * 1024, killSignal: 'SIGKILL' as const, ...options };
+  return execAsyncRaw(command, opts);
+}
 
 interface ProjectData {
   projectId?: string;

@@ -3,7 +3,11 @@ import path from 'path';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 
-const execAsync = promisify(exec);
+const execAsyncRaw = promisify(exec);
+function execAsync(command: string, options?: any) {
+  const timeout = command.includes('inkscape') ? 15000 : 30000;
+  return execAsyncRaw(command, { timeout, killSignal: 'SIGKILL', ...options });
+}
 
 export async function outlineFonts(svgPath: string): Promise<string> {
   try {
