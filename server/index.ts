@@ -23,9 +23,11 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 if (process.env.NODE_ENV === 'production') {
-  const MEMORY_CHECK_INTERVAL = 30_000;
+  const MEMORY_CHECK_INTERVAL = 15_000;
   const MEMORY_WARN_MB = 300;
-  const MEMORY_GC_MB = 280;
+  const MEMORY_GC_MB = 250;
+  const MEMORY_RESTART_MB = 450;
+  let restartScheduled = false;
   setInterval(() => {
     const mem = process.memoryUsage();
     const rssMB = Math.round(mem.rss / 1024 / 1024);
@@ -37,6 +39,14 @@ if (process.env.NODE_ENV === 'production') {
     }
     if (rssMB > MEMORY_WARN_MB) {
       console.warn(`[MEMORY WARNING] RSS: ${rssMB}MB, Heap: ${heapMB}MB — approaching container limit`);
+    }
+    if (rssMB > MEMORY_RESTART_MB && !restartScheduled) {
+      restartScheduled = true;
+      console.error(`[MEMORY CRITICAL] RSS: ${rssMB}MB — graceful restart in 3s to avoid OOM kill`);
+      setTimeout(() => {
+        console.error('[MEMORY CRITICAL] Exiting for graceful restart');
+        process.exit(1);
+      }, 3000);
     }
   }, MEMORY_CHECK_INTERVAL);
 }

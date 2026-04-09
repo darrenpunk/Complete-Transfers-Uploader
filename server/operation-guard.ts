@@ -1,6 +1,6 @@
 import type { Response } from 'express';
 
-const MAX_CONCURRENT_HEAVY = 2;
+const MAX_CONCURRENT_HEAVY = 1;
 const MAX_QUEUE_SIZE = 10;
 const QUEUE_TIMEOUT_MS = 60_000;
 const STALE_OP_TIMEOUT_MS = 180_000;
@@ -61,6 +61,9 @@ function createRelease(opId: number, label: string): () => void {
       activeOps.splice(idx, 1);
     }
     totalProcessed++;
+    if (typeof global.gc === 'function') {
+      try { global.gc(); } catch {}
+    }
     drainQueue();
   };
 }
