@@ -1840,6 +1840,14 @@ class ArtworkUploaderController(http.Controller):
                 ], limit=1)
                 _logger.info(f"📋 Order history lookup by email: {email} -> partner: {partner.id if partner else 'not found'}")
             
+            if not partner and email:
+                odoo_user = request.env['res.users'].sudo().search([
+                    ('login', '=ilike', email)
+                ], limit=1)
+                if odoo_user and odoo_user.partner_id:
+                    partner = odoo_user.partner_id
+                    _logger.info(f"📋 Order history lookup by user login: {email} -> partner: {partner.id}")
+            
             if not partner:
                 return request.make_response(json.dumps({
                     'success': False,
@@ -1894,21 +1902,19 @@ class ArtworkUploaderController(http.Controller):
             order_list = []
             seen_order_ids = set()
             transfer_keywords = ['transfer', 'colour', 'color', 'dtf', 'metallic', 'single colour', 'full colour', 'applique', 'badge', 'sublimation', 'reflective', 'uv dtf', 'zero']
+            _logger.info(f"📋 Processing {len(orders)} orders for partner_ids={partner_ids}")
             for order in orders:
                 if order.id in seen_order_ids:
-                    _logger.info(f"📋 Skipping duplicate order {order.name} (id={order.id})")
                     continue
                 seen_order_ids.add(order.id)
                 artwork_lines = []
-                _logger.info(f"📋 Processing order {order.name} with {len(order.order_line)} lines")
                 for line in order.order_line:
                     has_artwork_project = hasattr(line, 'artwork_project_id') and line.artwork_project_id
-                    has_artwork_file = hasattr(line, 'artwork_files_datas') and line.artwork_files_datas
+                    has_artwork_file = hasattr(line, 'artwork_file_name') and line.artwork_file_name
                     
                     product_name = (line.product_id.name or '').lower() if line.product_id else ''
                     line_name = (line.name or '').lower()
                     is_transfer_product = any(kw in product_name or kw in line_name for kw in transfer_keywords)
-                    _logger.info(f"  📦 Line: product='{product_name}', desc='{line_name[:80]}', artwork_project={has_artwork_project}, artwork_file={has_artwork_file}, is_transfer={is_transfer_product}")
                     
                     if has_artwork_project:
                         project = line.artwork_project_id
@@ -1950,7 +1956,7 @@ class ArtworkUploaderController(http.Controller):
                             'garmentColors': [],
                             'garmentColorName': '',
                             'inkColorName': '',
-                            'hasPdf': True,
+                            'hasPdf': bool(line.artwork_file_name),
                             'pdfFileName': line.artwork_file_name if hasattr(line, 'artwork_file_name') else '',
                             'state': order.state or 'draft',
                             'createdDate': order.date_order.isoformat() if order.date_order else '',
@@ -1978,7 +1984,6 @@ class ArtworkUploaderController(http.Controller):
                     carrier_name = ''
                     try:
                         pickings = order.sudo().picking_ids.filtered(lambda p: p.picking_type_code == 'outgoing')
-                        _logger.info(f"  🚚 {order.name}: {len(pickings)} outgoing pickings, states: {[p.state for p in pickings]}")
                         if pickings:
                             done_pickings = pickings.filtered(lambda p: p.state == 'done')
                             if done_pickings:
@@ -1999,8 +2004,6 @@ class ArtworkUploaderController(http.Controller):
                         _logger.warning(f"Could not get delivery status for {order.name}: {e}")
                         if order.state in ('sale', 'done', 'locked'):
                             delivery_status = 'processing'
-                    _logger.info(f"  🚚 {order.name}: deliveryStatus={delivery_status}")
-                    
                     order_list.append({
                         'orderId': order.id,
                         'orderName': order.name,

@@ -315,6 +315,9 @@ export default function OrderHistory() {
       const res = await fetch(`/api/order-history?${params.toString()}`, {
         credentials: "include",
       });
+      if (res.status === 504) {
+        return { success: false, error: "Loading took too long. Please try again.", orders: [], total: 0, page: 1, limit, totalPages: 0 };
+      }
       const text = await res.text();
       try {
         return JSON.parse(text);
@@ -322,7 +325,9 @@ export default function OrderHistory() {
         return { success: false, error: "Unable to load orders", orders: [], total: 0, page: 1, limit, totalPages: 0 };
       }
     },
-    retry: false,
+    retry: 1,
+    retryDelay: 2000,
+    staleTime: 60000,
     enabled: !!userEmail,
   });
 

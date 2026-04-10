@@ -7082,13 +7082,32 @@ export async function registerRoutes(app: express.Application) {
       const odooUrl = `${odooBaseUrl}/artwork/api/order-history?${params.toString()}`;
       console.log(`📋 Fetching order history from Odoo: ${odooUrl}`);
       
-      const response = await fetch(odooUrl, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'Cookie': clientCookies,
-        },
-      });
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 45000);
+      
+      let response;
+      try {
+        response = await fetch(odooUrl, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Cookie': clientCookies,
+          },
+          signal: controller.signal,
+        });
+      } catch (fetchErr: any) {
+        clearTimeout(timeoutId);
+        if (fetchErr.name === 'AbortError') {
+          console.error('⏱️ Order history request timed out after 45s');
+          return res.status(504).json({ 
+            success: false, 
+            error: 'Order history request timed out. Please try again.',
+            orders: [], total: 0, page: 1, limit: 20, totalPages: 0 
+          });
+        }
+        throw fetchErr;
+      }
+      clearTimeout(timeoutId);
       
       const text = await response.text();
       try {
