@@ -23,10 +23,10 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 if (process.env.NODE_ENV === 'production') {
-  const MEMORY_CHECK_INTERVAL = 15_000;
-  const MEMORY_WARN_MB = 300;
-  const MEMORY_GC_MB = 250;
-  const MEMORY_RESTART_MB = 450;
+  const MEMORY_CHECK_INTERVAL = 30_000;
+  const MEMORY_WARN_MB = 2048;
+  const MEMORY_GC_MB = 1024;
+  const MEMORY_RESTART_MB = 4096;
   let restartScheduled = false;
   setInterval(() => {
     const mem = process.memoryUsage();

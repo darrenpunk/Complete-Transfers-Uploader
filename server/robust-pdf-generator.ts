@@ -15,8 +15,8 @@ import { exec, execSync } from 'child_process';
 import { manufacturerColors } from '@shared/garment-colors';
 
 const execAsyncRaw = promisify(exec);
-const INKSCAPE_TIMEOUT = 15000;
-const TOOL_TIMEOUT = 30000;
+const INKSCAPE_TIMEOUT = 30000;
+const TOOL_TIMEOUT = 60000;
 
 function execAsync(command: string, options?: any): Promise<{ stdout: string; stderr: string }> {
   const isInkscape = command.includes('inkscape');

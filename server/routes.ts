@@ -28,8 +28,8 @@ import { PDFBoundsExtractor } from './pdf-bounds-extractor';
 import { SVGBoundsAnalyzer } from './svg-bounds-analyzer';
 
 const execAsyncRaw = promisify(exec);
-const INKSCAPE_TIMEOUT = 15000;
-const EXTERNAL_TOOL_TIMEOUT = 30000;
+const INKSCAPE_TIMEOUT = 30000;
+const EXTERNAL_TOOL_TIMEOUT = 60000;
 
 function execAsync(command: string, options?: any): Promise<{ stdout: string; stderr: string }> {
   const isInkscape = command.includes('inkscape');

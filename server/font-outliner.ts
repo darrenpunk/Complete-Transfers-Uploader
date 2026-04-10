@@ -5,7 +5,7 @@ import { promisify } from 'util';
 
 const execAsyncRaw = promisify(exec);
 function execAsync(command: string, options?: any) {
-  const timeout = command.includes('inkscape') ? 15000 : 30000;
+  const timeout = command.includes('inkscape') ? 30000 : 60000;
   return execAsyncRaw(command, { timeout, killSignal: 'SIGKILL', ...options });
 }
 

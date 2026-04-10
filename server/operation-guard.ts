@@ -1,6 +1,6 @@
 import type { Response } from 'express';
 
-const MAX_CONCURRENT_HEAVY = 1;
+const MAX_CONCURRENT_HEAVY = 3;
 const MAX_QUEUE_SIZE = 10;
 const QUEUE_TIMEOUT_MS = 60_000;
 const STALE_OP_TIMEOUT_MS = 180_000;
@@ -71,7 +71,7 @@ function createRelease(opId: number, label: string): () => void {
 export async function acquireHeavyOp(label: string): Promise<() => void> {
   cleanStaleOps();
 
-  if (isMemoryCritical(300)) {
+  if (isMemoryCritical(2048)) {
     totalRejected++;
     const mem = getMemoryUsage();
     console.error(`[OP-GUARD] REJECTED "${label}" — memory critical (RSS: ${mem.rssMB}MB, Heap: ${mem.heapUsedMB}MB)`);
@@ -165,7 +165,7 @@ export function getOperationStats() {
 setInterval(cleanStaleOps, 30_000);
 
 setInterval(() => {
-  if (typeof global.gc === 'function' && isMemoryCritical(250)) {
+  if (typeof global.gc === 'function' && isMemoryCritical(1024)) {
     console.log('[OP-GUARD] Memory pressure detected, triggering GC');
     global.gc();
   }
