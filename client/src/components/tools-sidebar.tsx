@@ -23,8 +23,8 @@ import { ColorModesModal } from "./color-modes-modal";
 import completeTransfersLogoPath from "@assets/artboard_logo.png";
 import gildanLogoPath from "@assets/GILDAN_LOGO_blue_1753539382856.png";
 import fruitOfTheLoomLogoPath from "@assets/Fruit_logo.svg_1753539605426.png";
-import dtfIconPath from "@assets/DTF_1753540006979.png";
-import fullColourIconPath from "@assets/fullcolour_tshirt_mock.png";
+import dtfIconPath from "@assets/DTF_icon.png";
+import fullColourIconPath from "@assets/fullcolour_tshirt_mock_icon.png";
 import uvdtfIconPath from "@assets/uvdtf_page2.png";
 import wovenBadgeIconPath from "@assets/woven_badge_icon.png";
 

@@ -11,12 +11,12 @@ import type { TemplateSize } from "@shared/schema";
 import { useState } from "react";
 
 // Import product icons
-import dtfIconPath from "@assets/DTF_1753540006979.png";
-import fullColourIconPath from "@assets/fullcolour_tshirt_mock.png";
+import dtfIconPath from "@assets/DTF_icon.png";
+import fullColourIconPath from "@assets/fullcolour_tshirt_mock_icon.png";
 import uvdtfIconPath from "@assets/uvdtf_page2.png";
 import wovenBadgeIconPath from "@assets/woven_badge_icon.png";
 import sublimationIconPath from "@assets/sublimate_1757431653278.png";
-import appliqueBadgeIconPath from "@assets/corrib_embroid.png";
+import appliqueBadgeIconPath from "@assets/corrib_embroid_icon.png";
 import singleColourIconPath from "@assets/single_1757431750112.png";
 import reflectiveIconPath from "@assets/reflect_1757431997071.png";
 import fullColourHDIconPath from "@assets/hd_1757431808013.png";
