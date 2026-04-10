@@ -4149,8 +4149,8 @@ export async function registerRoutes(app: express.Application) {
         }
 
         // Create canvas element with proper sizing
-        let displayWidth = 283.5; // User override: exact target dimensions
-        let displayHeight = 285.2; // User override: exact target dimensions
+        let displayWidth = 100; // Default fallback, will be overridden by bounds detection
+        let displayHeight = 100; // Default fallback, will be overridden by bounds detection
         
         // Store original PDF content bounds for cropping during PDF generation
         // These are the ORIGINAL coordinates BEFORE normalization - needed to crop original PDF
@@ -5023,19 +5023,32 @@ export async function registerRoutes(app: express.Application) {
               const { SVGBoundsAnalyzer } = await import('./svg-bounds-analyzer');
               const svgAnalyzer = new SVGBoundsAnalyzer();
               
-              // If PDF bounds extraction failed, use Inkscape for accurate bounds (handles images, text, transforms)
+              // If PDF bounds extraction failed, use Inkscape for accurate content bounds
               if (!boundsResult) {
                 try {
                   const { execSync: execSyncBounds } = await import('child_process');
+                  // Use --query-x/y/width/height to get exact drawing bounds
+                  const inkX = parseFloat(execSyncBounds(`inkscape --query-x "${svgPath}" 2>/dev/null`, { encoding: 'utf8', timeout: 30000 }).trim());
+                  const inkY = parseFloat(execSyncBounds(`inkscape --query-y "${svgPath}" 2>/dev/null`, { encoding: 'utf8', timeout: 30000 }).trim());
                   const inkW = parseFloat(execSyncBounds(`inkscape --query-width "${svgPath}" 2>/dev/null`, { encoding: 'utf8', timeout: 30000 }).trim());
                   const inkH = parseFloat(execSyncBounds(`inkscape --query-height "${svgPath}" 2>/dev/null`, { encoding: 'utf8', timeout: 30000 }).trim());
                   if (inkW > 0 && inkH > 0) {
-                    console.log(`✅ Inkscape SVG bounds: ${inkW.toFixed(2)}×${inkH.toFixed(2)}px`);
+                    // Determine the SVG's unit conversion: check if this is a PDF-converted SVG (72 DPI points)
+                    const isPdfConverted = svgContent.includes('CMYK_PDF_CONVERTED') || svgContent.includes('data-original-cmyk-pdf');
+                    const svgPxToMm = isPdfConverted ? (25.4 / 72) : (25.4 / 96);
+                    const inkWidthMm = inkW * svgPxToMm;
+                    const inkHeightMm = inkH * svgPxToMm;
+                    console.log(`✅ Inkscape SVG content bounds: x=${inkX.toFixed(2)} y=${inkY.toFixed(2)} ${inkW.toFixed(2)}×${inkH.toFixed(2)}px (${inkWidthMm.toFixed(1)}×${inkHeightMm.toFixed(1)}mm at ${isPdfConverted ? '72' : '96'} DPI)`);
+                    
+                    // Set display dimensions from Inkscape content bounds
+                    displayWidth = inkWidthMm;
+                    displayHeight = inkHeightMm;
+                    
                     boundsResult = {
                       success: true,
                       method: 'inkscape-query' as any,
                       hasContent: true,
-                      contentBounds: { xMin: 0, yMin: 0, xMax: inkW, yMax: inkH, width: inkW, height: inkH, units: 'px' as const }
+                      contentBounds: { xMin: inkX, yMin: inkY, xMax: inkX + inkW, yMax: inkY + inkH, width: inkW, height: inkH, units: 'px' as const }
                     };
                   }
                 } catch (inkErr) {
@@ -5224,13 +5237,14 @@ export async function registerRoutes(app: express.Application) {
                 // For standard sizes, use artboard dimensions (decorative elements are extending beyond)
                 const shouldUseArtboard = isStandardCutSize && originalWidthDiff < 100 && originalHeightDiff < 50;
                 
-                // CRITICAL FIX: When Ghostscript bbox or Inkscape query succeeds, use dimensions directly
-                // WITHOUT creating a tight-content SVG (these give accurate total dimensions)
+                // CRITICAL FIX: When Ghostscript bbox succeeds, use dimensions directly
+                // WITHOUT creating a tight-content SVG (GS coords are in PDF space, not SVG space)
                 const isGhostscriptSource = boundsResult.method === 'ghostscript-bbox';
                 const isInkscapeQuerySource = boundsResult.method === 'inkscape-query';
                 
-                // Enable tight crop ONLY for SVG analyzer sources where coords match SVG space
-                const needsTightCrop = !isGhostscriptSource && !isInkscapeQuerySource && !shouldUseArtboard && (originalWidthDiff > 5 || originalHeightDiff > 5);
+                // Enable tight crop for direct SVG uploads (inkscape-query) to remove empty margins
+                // Skip for Ghostscript (PDF-space coords) and standard artboard sizes
+                const needsTightCrop = !isGhostscriptSource && !shouldUseArtboard && (originalWidthDiff > 5 || originalHeightDiff > 5);
                 
                 if (hasNegativeCoords) {
                   console.log(`🚨 NEGATIVE COORDINATES DETECTED: Content extends before origin (${contentBounds.xMin.toFixed(1)}, ${contentBounds.yMin.toFixed(1)})`);
@@ -5242,9 +5256,6 @@ export async function registerRoutes(app: express.Application) {
                 if (isGhostscriptSource) {
                   console.log(`✅ GHOSTSCRIPT BBOX: Using exact dimensions ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm - NO tight-content SVG needed`);
                   console.log(`📐 Canvas element will use GS bbox dimensions, original SVG preserved`);
-                } else if (isInkscapeQuerySource) {
-                  console.log(`✅ INKSCAPE QUERY: Using exact dimensions ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm - NO tight-content SVG needed`);
-                  console.log(`📐 Canvas element will use Inkscape dimensions, original SVG preserved`);
                 } else if (needsTightCrop) {
                   console.log(`📐 TIGHT CONTENT NEEDED: ViewBox ${originalWidthMm.toFixed(1)}×${originalHeightMm.toFixed(1)}mm vs Content ${originalContentWidthMm.toFixed(1)}×${originalContentHeightMm.toFixed(1)}mm (diff: ${originalWidthDiff.toFixed(1)}×${originalHeightDiff.toFixed(1)}mm)`);
                 } else {
@@ -5380,21 +5391,21 @@ export async function registerRoutes(app: express.Application) {
                   console.log(`✅ CONTENT SIZE REASONABLE: Using original SVG bounds without tight crop`);
                 }
                 
-                // CRITICAL: Only update dimensions if NOT using Ghostscript bbox or Inkscape query
-                // These already set accurate displayWidth/displayHeight at extraction time
-                if (!isGhostscriptSource && !isInkscapeQuerySource) {
+                // CRITICAL: Only update dimensions if NOT using Ghostscript bbox
+                // Ghostscript already set accurate displayWidth/displayHeight at extraction time
+                if (!isGhostscriptSource) {
                   displayWidth = contentWidthMm;
                   displayHeight = contentHeightMm;
-                  console.log(`🎯 CANVAS DISPLAY: Using SVG analyzer bounds ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm`);
+                  console.log(`🎯 CANVAS DISPLAY: Using content bounds ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm`);
                 } else {
-                  console.log(`✅ ACCURATE SOURCE: Keeping dimensions ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm`);
+                  console.log(`✅ GHOSTSCRIPT SOURCE: Keeping dimensions ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm`);
                 }
               }
               
             } // End of if (needsTightCrop && !isGhostscriptSource) block
             
-            // CRITICAL: When Ghostscript bbox or Inkscape query succeeded, preserve those dimensions
-            if (boundsResult?.method === 'ghostscript-bbox' || boundsResult?.method === 'inkscape-query') {
+            // CRITICAL: When Ghostscript bbox succeeded, preserve those dimensions
+            if (boundsResult?.method === 'ghostscript-bbox') {
               console.log(`✅ BOUNDS FINAL: displayWidth=${displayWidth.toFixed(2)}mm, displayHeight=${displayHeight.toFixed(2)}mm preserved from ${boundsResult.method}`);
             }
             
