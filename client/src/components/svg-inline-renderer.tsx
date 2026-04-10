@@ -385,8 +385,26 @@ export default function SvgInlineRenderer({
     const boundsHeightMm = bounds.height * ptsToMm;
     
     // Check if SVG is already normalized (bounds start at 0,0)
-    // Normalized SVGs have content translated to origin and viewBox starting at 0,0
-    const isNormalized = bounds.xMin === 0 && bounds.yMin === 0;
+    // Also detect normalized SVGs where contentBounds in DB are stale (pre-normalization coords)
+    // but the actual SVG file has been tight-cropped with viewBox starting at 0,0
+    let isNormalized = bounds.xMin === 0 && bounds.yMin === 0;
+    
+    if (!isNormalized && svgContent) {
+      const viewBoxMatch = svgContent.match(/viewBox\s*=\s*["']([^"']+)["']/i);
+      if (viewBoxMatch) {
+        const vbParts = viewBoxMatch[1].split(/[\s,]+/).map(Number);
+        if (vbParts[0] === 0 && vbParts[1] === 0) {
+          const vbWidth = vbParts[2];
+          const vbHeight = vbParts[3];
+          const widthMatch = Math.abs(vbWidth - bounds.width) < 2;
+          const heightMatch = Math.abs(vbHeight - bounds.height) < 2;
+          if (widthMatch && heightMatch) {
+            console.log(`🔧 SVG viewBox (0 0 ${vbWidth} ${vbHeight}) matches content size but bounds have offset origin (${bounds.xMin.toFixed(1)}, ${bounds.yMin.toFixed(1)}) - treating as normalized`);
+            isNormalized = true;
+          }
+        }
+      }
+    }
     
     // For normalized SVGs (most PDF-converted files), simply render at full size
     // The SVG viewBox matches the element dimensions, so it should fill naturally
