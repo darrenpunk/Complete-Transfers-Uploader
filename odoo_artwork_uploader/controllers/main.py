@@ -1835,10 +1835,12 @@ class ArtworkUploaderController(http.Controller):
                 partner = user.partner_id
             
             if not partner and email:
-                partner = request.env['res.partner'].sudo().search([
+                all_partners = request.env['res.partner'].sudo().search([
                     ('email', '=ilike', email)
-                ], limit=1)
-                _logger.info(f"📋 Order history lookup by email: {email} -> partner: {partner.id if partner else 'not found'}")
+                ])
+                _logger.info(f"📋 Order history lookup by email: {email} -> found {len(all_partners)} partners: {[(p.id, p.name, p.type, p.parent_id.name if p.parent_id else 'NO_PARENT') for p in all_partners]}")
+                if all_partners:
+                    partner = all_partners[0]
             
             if not partner and email:
                 odoo_user = request.env['res.users'].sudo().search([
@@ -1846,7 +1848,7 @@ class ArtworkUploaderController(http.Controller):
                 ], limit=1)
                 if odoo_user and odoo_user.partner_id:
                     partner = odoo_user.partner_id
-                    _logger.info(f"📋 Order history lookup by user login: {email} -> partner: {partner.id}")
+                    _logger.info(f"📋 Order history lookup by user login: {email} -> partner: {partner.id} ({partner.name})")
             
             if not partner:
                 return request.make_response(json.dumps({
@@ -1854,14 +1856,22 @@ class ArtworkUploaderController(http.Controller):
                     'error': 'Login required to view order history'
                 }), headers=headers, status=401)
             
-            partner_ids = [partner.id]
-            if partner.child_ids:
-                partner_ids += partner.child_ids.ids
-            if partner.parent_id:
-                partner_ids.append(partner.parent_id.id)
-                partner_ids += partner.parent_id.child_ids.ids
-            partner_ids = list(set(partner_ids))
-            _logger.info(f"📋 Order history partner IDs (incl. parent/children): {partner_ids}")
+            partner_ids = set()
+            partners_to_expand = list(all_partners) if 'all_partners' in dir() and all_partners else [partner]
+            for p in partners_to_expand:
+                partner_ids.add(p.id)
+                if p.child_ids:
+                    partner_ids.update(p.child_ids.ids)
+                if p.parent_id:
+                    partner_ids.add(p.parent_id.id)
+                    partner_ids.update(p.parent_id.child_ids.ids)
+                commercial = p.commercial_partner_id
+                if commercial and commercial.id not in partner_ids:
+                    partner_ids.add(commercial.id)
+                    if commercial.child_ids:
+                        partner_ids.update(commercial.child_ids.ids)
+            partner_ids = list(partner_ids)
+            _logger.info(f"📋 Order history partner IDs (expanded): {partner_ids}")
             
             page = int(page)
             limit = int(limit)
