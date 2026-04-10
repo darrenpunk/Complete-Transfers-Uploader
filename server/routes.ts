@@ -5023,6 +5023,10 @@ export async function registerRoutes(app: express.Application) {
               const { SVGBoundsAnalyzer } = await import('./svg-bounds-analyzer');
               const svgAnalyzer = new SVGBoundsAnalyzer();
               
+              // SVG user units are points (1pt = 1/72 inch) — same for both native SVGs and PDF-converted ones
+              // Adobe Illustrator, Inkscape, and browser SVG all use 72 DPI for CSS units in SVG
+              const svgPxToMm = 25.4 / 72;
+              
               // If PDF bounds extraction failed, use Inkscape for accurate content bounds
               if (!boundsResult) {
                 try {
@@ -5033,12 +5037,9 @@ export async function registerRoutes(app: express.Application) {
                   const inkW = parseFloat(execSyncBounds(`inkscape --query-width "${svgPath}" 2>/dev/null`, { encoding: 'utf8', timeout: 30000 }).trim());
                   const inkH = parseFloat(execSyncBounds(`inkscape --query-height "${svgPath}" 2>/dev/null`, { encoding: 'utf8', timeout: 30000 }).trim());
                   if (inkW > 0 && inkH > 0) {
-                    // Determine the SVG's unit conversion: check if this is a PDF-converted SVG (72 DPI points)
-                    const isPdfConverted = svgContent.includes('CMYK_PDF_CONVERTED') || svgContent.includes('data-original-cmyk-pdf');
-                    const svgPxToMm = isPdfConverted ? (25.4 / 72) : (25.4 / 96);
                     const inkWidthMm = inkW * svgPxToMm;
                     const inkHeightMm = inkH * svgPxToMm;
-                    console.log(`✅ Inkscape SVG content bounds: x=${inkX.toFixed(2)} y=${inkY.toFixed(2)} ${inkW.toFixed(2)}×${inkH.toFixed(2)}px (${inkWidthMm.toFixed(1)}×${inkHeightMm.toFixed(1)}mm at ${isPdfConverted ? '72' : '96'} DPI)`);
+                    console.log(`✅ Inkscape SVG content bounds: x=${inkX.toFixed(2)} y=${inkY.toFixed(2)} ${inkW.toFixed(2)}×${inkH.toFixed(2)}px (${inkWidthMm.toFixed(1)}×${inkHeightMm.toFixed(1)}mm at 72 DPI)`);
                     
                     // Set display dimensions from Inkscape content bounds
                     displayWidth = inkWidthMm;
@@ -5061,11 +5062,14 @@ export async function registerRoutes(app: express.Application) {
                 boundsResult = await svgAnalyzer.extractSVGBounds(svgPath);
               }
               
+              // Track normalized content bounds (set during tight crop) for saving to DB
+              let normalizedBoundsForSave: { xMin: number; yMin: number; xMax: number; yMax: number; width: number; height: number; units: string } | null = null;
+              
               if (boundsResult.success && boundsResult.contentBounds) {
                 console.log(`✅ PRECISE BOUNDS DETECTED: ${boundsResult.contentBounds.width.toFixed(1)}×${boundsResult.contentBounds.height.toFixed(1)}px using ${boundsResult.method}`);
                 
-                // Convert to millimeters
-                const pxToMm = 1 / 2.834645669; // 72 DPI standard
+                // Convert to millimeters using correct DPI (96 for native SVG, 72 for PDF-converted)
+                const pxToMm = svgPxToMm;
                 let detectedWidthMm = boundsResult.contentBounds.width * pxToMm;
                 let detectedHeightMm = boundsResult.contentBounds.height * pxToMm;
                 
@@ -5378,6 +5382,9 @@ export async function registerRoutes(app: express.Application) {
                     // Replace the original bounds with normalized bounds for correct frontend rendering
                     contentBounds = normalizedContentBounds;
                     
+                    // Save normalized bounds for DB (hoisted variable accessible at save point)
+                    normalizedBoundsForSave = normalizedContentBounds;
+                    
                     // ARCHITECT FIX: Recalculate dimensions from NORMALIZED bounds, not original bounds
                     contentWidthMm = contentBounds.width * pxToMm;
                     contentHeightMm = contentBounds.height * pxToMm;
@@ -5561,15 +5568,16 @@ export async function registerRoutes(app: express.Application) {
         // Update the existing logo with the final filename after bounds extraction
         console.log(`💾 UPDATING LOGO: ${logo.id} with final filename=${finalFilename}, url=${finalUrl}`);
         
-        // CRITICAL: Always save content bounds - use extracted bounds or fallback to full element
+        // CRITICAL: Always save content bounds - use normalized bounds if tight crop was done, or extracted bounds
         let contentBoundsToSave = null;
         if (boundsResult?.success && boundsResult.contentBounds) {
-          contentBoundsToSave = boundsResult.contentBounds;
-          console.log(`✅ Using extracted content bounds: ${JSON.stringify(contentBoundsToSave)}`);
+          // Use normalized bounds (0,0-based) if tight crop was performed, otherwise use original extracted bounds
+          contentBoundsToSave = normalizedBoundsForSave || boundsResult.contentBounds;
+          console.log(`✅ Using ${normalizedBoundsForSave ? 'normalized' : 'extracted'} content bounds: ${JSON.stringify(contentBoundsToSave)}`);
         } else {
           // Fallback: Create content bounds from display dimensions
           // This ensures ALL logos have content bounds for position warnings
-          const mmToPixelRatio = 2.834645669; // 72 DPI conversion
+          const mmToPixelRatio = 1 / svgPxToMm;
           const widthPx = displayWidth * mmToPixelRatio;
           const heightPx = displayHeight * mmToPixelRatio;
           contentBoundsToSave = {
