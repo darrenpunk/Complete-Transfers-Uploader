@@ -4155,6 +4155,9 @@ export async function registerRoutes(app: express.Application) {
         // Store original PDF content bounds for cropping during PDF generation
         // These are the ORIGINAL coordinates BEFORE normalization - needed to crop original PDF
         let originalPdfBounds: { xMin: number; yMin: number; xMax: number; yMax: number; width: number; height: number; units: string } | null = null;
+        
+        // Track normalized content bounds (set during tight crop for raw SVGs) for saving to DB
+        let normalizedBoundsForSave: { xMin: number; yMin: number; xMax: number; yMax: number; width: number; height: number; units: string } | null = null;
 
         // CRITICAL: For complex file PNG fallbacks, use the pre-extracted PDF bounds
         if ((file as any).isComplexFilePngFallback && (file as any).originalPdfBounds) {
@@ -5061,9 +5064,6 @@ export async function registerRoutes(app: express.Application) {
               if (!boundsResult) {
                 boundsResult = await svgAnalyzer.extractSVGBounds(svgPath);
               }
-              
-              // Track normalized content bounds (set during tight crop) for saving to DB
-              let normalizedBoundsForSave: { xMin: number; yMin: number; xMax: number; yMax: number; width: number; height: number; units: string } | null = null;
               
               if (boundsResult.success && boundsResult.contentBounds) {
                 console.log(`✅ PRECISE BOUNDS DETECTED: ${boundsResult.contentBounds.width.toFixed(1)}×${boundsResult.contentBounds.height.toFixed(1)}px using ${boundsResult.method}`);
