@@ -909,7 +909,7 @@ function ServerHealthTab() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1"><Cpu className="h-3.5 w-3.5" />Active Ops</div>
-            <div className="text-xl font-bold">{ops?.active || 0}<span className="text-sm text-muted-foreground font-normal"> / {ops?.maxConcurrent || 2}</span></div>
+            <div className="text-xl font-bold">{ops?.active || 0}<span className="text-sm text-muted-foreground font-normal"> / {ops?.maxConcurrent || 3}</span></div>
           </CardContent>
         </Card>
         <Card>
@@ -930,9 +930,9 @@ function ServerHealthTab() {
         <Card>
           <CardHeader className="pb-3"><CardTitle className="text-sm">Memory Usage</CardTitle></CardHeader>
           <CardContent className="space-y-3">
-            <MemoryBar label="RSS (Total Process)" usedMB={mem?.rssMB || 0} totalMB={512} warnMB={384} />
-            <MemoryBar label="Heap Used" usedMB={mem?.heapUsedMB || 0} totalMB={mem?.heapTotalMB || 384} warnMB={300} />
-            <MemoryBar label="External (Buffers)" usedMB={mem?.externalMB || 0} totalMB={128} />
+            <MemoryBar label="RSS (Total Process)" usedMB={mem?.rssMB || 0} totalMB={4096} warnMB={2048} />
+            <MemoryBar label="Heap Used" usedMB={mem?.heapUsedMB || 0} totalMB={mem?.heapTotalMB || 2048} warnMB={1024} />
+            <MemoryBar label="External (Buffers)" usedMB={mem?.externalMB || 0} totalMB={1024} />
           </CardContent>
         </Card>
 
