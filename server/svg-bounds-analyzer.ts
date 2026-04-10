@@ -396,7 +396,7 @@ export class SVGBoundsAnalyzer {
    */
   private analyzeGeometryBounds(svgElement: Element): SVGBounds | null {
     const geometrySelectors = [
-      'rect', 'circle', 'ellipse', 'line', 'polyline', 'polygon', 'path'
+      'rect', 'circle', 'ellipse', 'line', 'polyline', 'polygon', 'path', 'image', 'text', 'use'
     ];
 
     let minX = Infinity, minY = Infinity;
@@ -468,21 +468,6 @@ export class SVGBoundsAnalyzer {
   private getElementBounds(element: Element): SVGBounds | null {
     const tagName = element.tagName.toLowerCase();
     
-    // CRITICAL: Exclude gradient-only fill paths (backgrounds/masks, not artwork)
-    const fill = element.getAttribute('fill') || '';
-    const stroke = element.getAttribute('stroke');
-    const style = element.getAttribute('style') || '';
-    
-    // Skip elements with ONLY gradient fills and no stroke (decorative backgrounds)
-    const hasGradientFill = fill.startsWith('url(#');
-    const hasNoStroke = !stroke || stroke === 'none';
-    const hasNoStrokeInStyle = !style.includes('stroke:');
-    
-    if (hasGradientFill && hasNoStroke && hasNoStrokeInStyle) {
-      console.log(`⏭️  SKIPPING GRADIENT-ONLY: fill="${fill}", stroke="${stroke}", tag="${tagName}"`);
-      return null;
-    }
-    
     let bounds: SVGBounds | null = null;
 
     switch (tagName) {
@@ -506,6 +491,37 @@ export class SVGBoundsAnalyzer {
       case 'polyline':
         bounds = this.getPolygonBounds(element);
         break;
+      case 'image': {
+        const x = parseFloat(element.getAttribute('x') || '0');
+        const y = parseFloat(element.getAttribute('y') || '0');
+        const w = parseFloat(element.getAttribute('width') || '0');
+        const h = parseFloat(element.getAttribute('height') || '0');
+        if (w > 0 && h > 0) {
+          bounds = { xMin: x, yMin: y, xMax: x + w, yMax: y + h, width: w, height: h, units: 'px' };
+        }
+        break;
+      }
+      case 'text': {
+        const tx = parseFloat(element.getAttribute('x') || '0');
+        const ty = parseFloat(element.getAttribute('y') || '0');
+        const fontSize = parseFloat(element.getAttribute('font-size') || element.getAttribute('style')?.match(/font-size:\s*([\d.]+)/)?.[1] || '16');
+        const textLen = (element.textContent || '').length;
+        const estW = textLen * fontSize * 0.6;
+        if (estW > 0) {
+          bounds = { xMin: tx, yMin: ty - fontSize, xMax: tx + estW, yMax: ty, width: estW, height: fontSize, units: 'px' };
+        }
+        break;
+      }
+      case 'use': {
+        const ux = parseFloat(element.getAttribute('x') || '0');
+        const uy = parseFloat(element.getAttribute('y') || '0');
+        const uw = parseFloat(element.getAttribute('width') || '0');
+        const uh = parseFloat(element.getAttribute('height') || '0');
+        if (uw > 0 && uh > 0) {
+          bounds = { xMin: ux, yMin: uy, xMax: ux + uw, yMax: uy + uh, width: uw, height: uh, units: 'px' };
+        }
+        break;
+      }
       default:
         return null;
     }

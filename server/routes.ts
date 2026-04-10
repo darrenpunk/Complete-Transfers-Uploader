@@ -5023,7 +5023,27 @@ export async function registerRoutes(app: express.Application) {
               const { SVGBoundsAnalyzer } = await import('./svg-bounds-analyzer');
               const svgAnalyzer = new SVGBoundsAnalyzer();
               
-              // If PDF bounds extraction failed, use SVG bounds analyzer
+              // If PDF bounds extraction failed, use Inkscape for accurate bounds (handles images, text, transforms)
+              if (!boundsResult) {
+                try {
+                  const { execSync: execSyncBounds } = await import('child_process');
+                  const inkW = parseFloat(execSyncBounds(`inkscape --query-width "${svgPath}" 2>/dev/null`, { encoding: 'utf8', timeout: 30000 }).trim());
+                  const inkH = parseFloat(execSyncBounds(`inkscape --query-height "${svgPath}" 2>/dev/null`, { encoding: 'utf8', timeout: 30000 }).trim());
+                  if (inkW > 0 && inkH > 0) {
+                    console.log(`✅ Inkscape SVG bounds: ${inkW.toFixed(2)}×${inkH.toFixed(2)}px`);
+                    boundsResult = {
+                      success: true,
+                      method: 'inkscape-query' as any,
+                      hasContent: true,
+                      contentBounds: { xMin: 0, yMin: 0, xMax: inkW, yMax: inkH, width: inkW, height: inkH, units: 'px' as const }
+                    };
+                  }
+                } catch (inkErr) {
+                  console.log(`⚠️ Inkscape bounds query failed for direct SVG, falling back to SVG analyzer`);
+                }
+              }
+              
+              // Fallback: use SVG bounds analyzer if Inkscape failed
               if (!boundsResult) {
                 boundsResult = await svgAnalyzer.extractSVGBounds(svgPath);
               }
@@ -5204,12 +5224,13 @@ export async function registerRoutes(app: express.Application) {
                 // For standard sizes, use artboard dimensions (decorative elements are extending beyond)
                 const shouldUseArtboard = isStandardCutSize && originalWidthDiff < 100 && originalHeightDiff < 50;
                 
-                // CRITICAL FIX: When Ghostscript bbox succeeds, use its dimensions directly 
-                // WITHOUT creating a tight-content SVG (GS coords are in PDF space, not SVG space)
+                // CRITICAL FIX: When Ghostscript bbox or Inkscape query succeeds, use dimensions directly
+                // WITHOUT creating a tight-content SVG (these give accurate total dimensions)
                 const isGhostscriptSource = boundsResult.method === 'ghostscript-bbox';
+                const isInkscapeQuerySource = boundsResult.method === 'inkscape-query';
                 
-                // Enable tight crop ONLY for non-Ghostscript sources where coords match SVG space
-                const needsTightCrop = !isGhostscriptSource && !shouldUseArtboard && (originalWidthDiff > 5 || originalHeightDiff > 5);
+                // Enable tight crop ONLY for SVG analyzer sources where coords match SVG space
+                const needsTightCrop = !isGhostscriptSource && !isInkscapeQuerySource && !shouldUseArtboard && (originalWidthDiff > 5 || originalHeightDiff > 5);
                 
                 if (hasNegativeCoords) {
                   console.log(`🚨 NEGATIVE COORDINATES DETECTED: Content extends before origin (${contentBounds.xMin.toFixed(1)}, ${contentBounds.yMin.toFixed(1)})`);
@@ -5219,10 +5240,11 @@ export async function registerRoutes(app: express.Application) {
                 }
                 
                 if (isGhostscriptSource) {
-                  // CRITICAL: Ghostscript gives us accurate dimensions - use them directly
-                  // DON'T modify the SVG (GS coords are PDF-space, not SVG-space)
                   console.log(`✅ GHOSTSCRIPT BBOX: Using exact dimensions ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm - NO tight-content SVG needed`);
                   console.log(`📐 Canvas element will use GS bbox dimensions, original SVG preserved`);
+                } else if (isInkscapeQuerySource) {
+                  console.log(`✅ INKSCAPE QUERY: Using exact dimensions ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm - NO tight-content SVG needed`);
+                  console.log(`📐 Canvas element will use Inkscape dimensions, original SVG preserved`);
                 } else if (needsTightCrop) {
                   console.log(`📐 TIGHT CONTENT NEEDED: ViewBox ${originalWidthMm.toFixed(1)}×${originalHeightMm.toFixed(1)}mm vs Content ${originalContentWidthMm.toFixed(1)}×${originalContentHeightMm.toFixed(1)}mm (diff: ${originalWidthDiff.toFixed(1)}×${originalHeightDiff.toFixed(1)}mm)`);
                 } else {
@@ -5358,25 +5380,22 @@ export async function registerRoutes(app: express.Application) {
                   console.log(`✅ CONTENT SIZE REASONABLE: Using original SVG bounds without tight crop`);
                 }
                 
-                // CRITICAL: Only update dimensions if NOT using Ghostscript bbox
-                // Ghostscript already set accurate displayWidth/displayHeight at extraction time
-                if (!isGhostscriptSource) {
-                  // Use actual content bounds for canvas display (for SVG analyzer source)
+                // CRITICAL: Only update dimensions if NOT using Ghostscript bbox or Inkscape query
+                // These already set accurate displayWidth/displayHeight at extraction time
+                if (!isGhostscriptSource && !isInkscapeQuerySource) {
                   displayWidth = contentWidthMm;
                   displayHeight = contentHeightMm;
                   console.log(`🎯 CANVAS DISPLAY: Using SVG analyzer bounds ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm`);
                 } else {
-                  // Ghostscript source: displayWidth/displayHeight already set from GS bbox
-                  console.log(`✅ GHOSTSCRIPT SOURCE: Keeping GS bbox dimensions ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm`);
+                  console.log(`✅ ACCURATE SOURCE: Keeping dimensions ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm`);
                 }
               }
               
             } // End of if (needsTightCrop && !isGhostscriptSource) block
             
-            // CRITICAL: When Ghostscript bbox succeeded, preserve those dimensions
-            // This runs AFTER the tight-content block (whether it executed or was skipped)
-            if (boundsResult?.method === 'ghostscript-bbox') {
-              console.log(`✅ GHOSTSCRIPT FINAL: displayWidth=${displayWidth.toFixed(2)}mm, displayHeight=${displayHeight.toFixed(2)}mm preserved from GS bbox`);
+            // CRITICAL: When Ghostscript bbox or Inkscape query succeeded, preserve those dimensions
+            if (boundsResult?.method === 'ghostscript-bbox' || boundsResult?.method === 'inkscape-query') {
+              console.log(`✅ BOUNDS FINAL: displayWidth=${displayWidth.toFixed(2)}mm, displayHeight=${displayHeight.toFixed(2)}mm preserved from ${boundsResult.method}`);
             }
             
             // CRITICAL FIX: After font outlining, the content may extend beyond Ghostscript bbox
