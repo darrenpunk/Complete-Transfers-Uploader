@@ -715,25 +715,32 @@ export default function UploadTool() {
           const orderId = data?.website_sale_order;
           const accessToken = data?.access_token;
           
-          if (isInIframe) {
-            // Send cart details to parent window so it can claim the cart
-            // This syncs the browser session with the cart updated via API
-            console.log('🔗 Sending claim-cart message to parent:', { orderId, accessToken, cartUrl });
-            window.parent.postMessage({
-              type: 'claim-cart',
-              orderId: orderId,
-              accessToken: accessToken,
-              cartUrl: cartUrl
-            }, '*');
+          if (orderId && accessToken) {
+            // Use claim-cart endpoint to link the API-created order to the customer's browser session
+            const claimUrl = `${odooBaseUrl}/artwork/claim-cart?order_id=${orderId}&access_token=${accessToken}&redirect=${encodeURIComponent(cartUrl)}`;
+            console.log('🔗 Claiming cart via Odoo endpoint:', { orderId, claimUrl });
             
-            // Fallback: direct navigation after a longer delay
-            // This gives the parent time to claim the cart first
-            setTimeout(() => {
-              console.log('🔗 Fallback: direct parent navigation to:', cartUrl);
-              window.parent.location.href = cartUrl;
-            }, 1500);
+            if (isInIframe) {
+              window.parent.postMessage({
+                type: 'claim-cart',
+                orderId: orderId,
+                accessToken: accessToken,
+                cartUrl: cartUrl
+              }, '*');
+              setTimeout(() => {
+                console.log('🔗 Navigating parent to claim-cart URL:', claimUrl);
+                window.parent.location.href = claimUrl;
+              }, 1500);
+            } else {
+              window.location.href = claimUrl;
+            }
           } else {
-            window.location.href = cartUrl;
+            console.warn('⚠️ No order_id or access_token — falling back to direct cart URL');
+            if (isInIframe) {
+              window.parent.location.href = cartUrl;
+            } else {
+              window.location.href = cartUrl;
+            }
           }
         }, 1000);
       }

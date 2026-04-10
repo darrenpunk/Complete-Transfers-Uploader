@@ -5956,7 +5956,8 @@ export async function registerRoutes(app: express.Application) {
   app.get('/api/template-sizes', async (req, res) => {
     try {
       const templateSizes = await storage.getTemplateSizes();
-      const customerCode = req.query.customerCode as string | undefined;
+      const rawCustomerCode = req.query.customerCode as string | undefined;
+      const customerCode = rawCustomerCode?.trim().toLowerCase();
       const allAssignments = await storage.getAllCustomerTemplates();
 
       const restrictedTemplateIds = new Set<string>();
@@ -5967,7 +5968,7 @@ export async function registerRoutes(app: express.Application) {
       const customerAllowedIds = new Set<string>();
       if (customerCode) {
         for (const assignment of allAssignments) {
-          if (assignment.customerCode === customerCode) {
+          if (assignment.customerCode.toLowerCase() === customerCode) {
             customerAllowedIds.add(assignment.templateId);
           }
         }

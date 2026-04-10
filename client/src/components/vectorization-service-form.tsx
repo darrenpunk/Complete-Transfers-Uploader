@@ -76,6 +76,7 @@ export function VectorizationServiceForm({ open, onOpenChange, partnerEmail, aut
   const [showSuccess, setShowSuccess] = useState(false);
   const [requestId, setRequestId] = useState<string>("");
   const [cartReady, setCartReady] = useState(false);
+  const [claimCartData, setClaimCartData] = useState<{ orderId: number; accessToken: string } | null>(null);
   const [showProductLauncher, setShowProductLauncher] = useState(false);
   const [showTemplateSelector, setShowTemplateSelector] = useState(false);
   const [selectedProductGroup, setSelectedProductGroup] = useState<string>("");
@@ -118,9 +119,13 @@ export function VectorizationServiceForm({ open, onOpenChange, partnerEmail, aut
   const cartUrl = `${odooBaseUrl}/shop/cart`;
   
 
-  // Fetch available templates
+  // Fetch available templates (filtered by customer code if available)
+  const templateQueryUrl = partnerEmail 
+    ? `/api/template-sizes?customerCode=${encodeURIComponent(partnerEmail)}`
+    : '/api/template-sizes';
   const { data: templates = [] } = useQuery<TemplateSize[]>({
-    queryKey: ['/api/template-sizes'],
+    queryKey: ['/api/template-sizes', partnerEmail],
+    queryFn: () => fetch(templateQueryUrl).then(r => r.json()),
   });
 
   const form = useForm<VectorizationFormData>({
@@ -204,6 +209,7 @@ export function VectorizationServiceForm({ open, onOpenChange, partnerEmail, aut
       
       // Helper function to trigger claim-cart flow
       const triggerClaimCart = (orderId: number, accessToken: string) => {
+        setClaimCartData({ orderId, accessToken });
         if (isInIframe && orderId && accessToken) {
           console.log('📨 Sending claim-cart message to parent window:', { orderId });
           window.parent.postMessage({
@@ -410,10 +416,14 @@ export function VectorizationServiceForm({ open, onOpenChange, partnerEmail, aut
               </Button>
               <Button 
                 onClick={() => {
+                  let targetUrl = cartUrl;
+                  if (claimCartData?.orderId && claimCartData?.accessToken) {
+                    targetUrl = `${odooBaseUrl}/artwork/claim-cart?order_id=${claimCartData.orderId}&access_token=${claimCartData.accessToken}&redirect=${encodeURIComponent(cartUrl)}`;
+                  }
                   if (isInIframe) {
-                    window.parent.location.href = cartUrl;
+                    window.parent.location.href = targetUrl;
                   } else {
-                    window.location.href = cartUrl;
+                    window.location.href = targetUrl;
                   }
                 }}
                 className="flex-1"

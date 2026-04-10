@@ -176,10 +176,10 @@ export function registerAnalyticsRoutes(app: Express, storage: IStorage) {
       if (!customerCode || !templateId) {
         return res.status(400).json({ error: "Customer code and template ID are required" });
       }
-      const trimmedCode = customerCode.trim();
+      const trimmedCode = customerCode.trim().toLowerCase();
       const existing = await storage.getAllCustomerTemplates();
       const duplicate = existing.find(
-        (a) => a.customerCode === trimmedCode && a.templateId === templateId
+        (a) => a.customerCode.toLowerCase() === trimmedCode && a.templateId === templateId
       );
       if (duplicate) {
         return res.status(409).json({ error: "This assignment already exists" });
