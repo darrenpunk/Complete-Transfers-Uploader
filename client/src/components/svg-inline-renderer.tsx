@@ -384,24 +384,22 @@ export default function SvgInlineRenderer({
     const boundsWidthMm = bounds.width * ptsToMm;
     const boundsHeightMm = bounds.height * ptsToMm;
     
-    // Check if SVG is already normalized (bounds start at 0,0)
-    // Also detect normalized SVGs where contentBounds in DB are stale (pre-normalization coords)
-    // but the actual SVG file has been tight-cropped with viewBox starting at 0,0
+    // Check if SVG viewBox dimensions match content bounds dimensions
+    // When they match, the SVG should fill the container at 100% — no translation needed
+    // This handles: zero-origin viewBox, negative-origin viewBox, and stale contentBounds
     let isNormalized = bounds.xMin === 0 && bounds.yMin === 0;
     
     if (!isNormalized && svgContent) {
       const viewBoxMatch = svgContent.match(/viewBox\s*=\s*["']([^"']+)["']/i);
       if (viewBoxMatch) {
         const vbParts = viewBoxMatch[1].split(/[\s,]+/).map(Number);
-        if (vbParts[0] === 0 && vbParts[1] === 0) {
-          const vbWidth = vbParts[2];
-          const vbHeight = vbParts[3];
-          const widthMatch = Math.abs(vbWidth - bounds.width) < 2;
-          const heightMatch = Math.abs(vbHeight - bounds.height) < 2;
-          if (widthMatch && heightMatch) {
-            console.log(`🔧 SVG viewBox (0 0 ${vbWidth} ${vbHeight}) matches content size but bounds have offset origin (${bounds.xMin.toFixed(1)}, ${bounds.yMin.toFixed(1)}) - treating as normalized`);
-            isNormalized = true;
-          }
+        const vbWidth = vbParts[2];
+        const vbHeight = vbParts[3];
+        const widthMatch = Math.abs(vbWidth - bounds.width) < 2;
+        const heightMatch = Math.abs(vbHeight - bounds.height) < 2;
+        if (widthMatch && heightMatch) {
+          console.log(`🔧 SVG viewBox dimensions (${vbWidth.toFixed(1)}×${vbHeight.toFixed(1)}) match content bounds — rendering at full container size`);
+          isNormalized = true;
         }
       }
     }
@@ -422,12 +420,10 @@ export default function SvgInlineRenderer({
         /<svg([^>]*)>/i,
         (match, attrs) => {
           let newAttrs = attrs;
-          if (!attrs.includes('xmlns:xlink')) {
+          if (!newAttrs.includes('xmlns:xlink')) {
             newAttrs += ' xmlns:xlink="http://www.w3.org/1999/xlink"';
           }
-          // Override width/height to fill container exactly, use preserveAspectRatio="none" 
-          // since element dimensions already match content aspect ratio
-          // Respect overflow="hidden" if explicitly set (e.g., split region SVGs)
+          newAttrs = newAttrs.replace(/preserveAspectRatio="[^"]*"/g, '');
           const hasOverflowHidden = attrs.includes('overflow="hidden"');
           const overflowStyle = hasOverflowHidden ? 'hidden' : 'visible';
           return `<svg${newAttrs} preserveAspectRatio="none" style="width:100%;height:100%;overflow:${overflowStyle}">`;
@@ -447,9 +443,9 @@ export default function SvgInlineRenderer({
       );
     }
     
-    // Only detect overflow if bounds extend beyond element by more than 1mm tolerance
-    const hasOverflow = bounds.xMin < 0 || bounds.yMin < 0 || 
-                        boundsWidthMm > element.width + 1 || boundsHeightMm > element.height + 1;
+    // Only detect overflow if bounds EXCEED element dimensions by more than 1mm tolerance
+    // Negative xMin/yMin is OK if the viewBox matches (it's just a coordinate origin choice)
+    const hasOverflow = boundsWidthMm > element.width + 1 || boundsHeightMm > element.height + 1;
     
     if (hasOverflow) {
       console.log('🎯 Content extends beyond bounds: Using simplified rendering for proper display');
