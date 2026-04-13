@@ -2714,14 +2714,32 @@ export async function registerRoutes(app: express.Application) {
             (file as any).originalPdfFilename = originalPdfFilename;
             
             // PASS-THROUGH MODE: Detect page count for multi-page PDFs
+            // Use lightweight CLI tools for large files to avoid loading 100MB+ into Node memory
             try {
-              const { PDFDocument } = await import('pdf-lib');
-              const pdfBytes = fs.readFileSync(sourcePdfPath);
-              const pdfDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
-              const pageCount = pdfDoc.getPageCount();
+              const fileSizeMB = fs.statSync(sourcePdfPath).size / (1024 * 1024);
+              let pageCount = 1;
+              if (fileSizeMB > 30) {
+                try {
+                  const gsPages = execSync(`gs -dNODISPLAY -dQUIET -dNOPAUSE -dBATCH -c "(${sourcePdfPath}) (r) file runpdfbegin pdfpagecount = quit" 2>/dev/null`, { encoding: 'utf8', timeout: 10000 }).trim();
+                  const parsed = parseInt(gsPages, 10);
+                  if (parsed > 0) pageCount = parsed;
+                } catch {
+                  try {
+                    const identifyPages = execSync(`identify "${sourcePdfPath}" 2>/dev/null | wc -l`, { encoding: 'utf8', timeout: 15000 }).trim();
+                    const parsed = parseInt(identifyPages, 10);
+                    if (parsed > 0) pageCount = parsed;
+                  } catch {}
+                }
+                console.log(`📄 PDF page count detected (lightweight): ${pageCount} pages for ${file.filename} (${fileSizeMB.toFixed(0)}MB)`);
+              } else {
+                const { PDFDocument } = await import('pdf-lib');
+                const pdfBytes = fs.readFileSync(sourcePdfPath);
+                const pdfDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
+                pageCount = pdfDoc.getPageCount();
+                console.log(`📄 PDF page count detected: ${pageCount} pages for ${file.filename}`);
+              }
               (file as any).pageCount = pageCount;
               (file as any).hasGarmentPages = false; // Set to true only if garment footer text is actually detected below
-              console.log(`📄 PDF page count detected: ${pageCount} pages for ${file.filename}`);
               
               // Force hasGarmentPages to true for any multi-page PDF to ensure pass-through
               if (pageCount > 1) {
@@ -2844,14 +2862,45 @@ export async function registerRoutes(app: express.Application) {
               let dtfPageHeightPts = 0;
               try {
                 // Get PDF page dimensions AND content bounds for proper sizing on canvas
+                // Use identify (ImageMagick) to get page dimensions WITHOUT loading entire PDF into Node memory
                 try {
-                  const { PDFDocument: PDFDocLarge } = await import('pdf-lib');
-                  const largePdfBytes = fs.readFileSync(pdfPath);
-                  const largePdfDoc = await PDFDocLarge.load(largePdfBytes);
-                  const [largePage] = largePdfDoc.getPages();
-                  const largePageSize = largePage.getSize();
-                  const pageWidthPts = largePageSize.width;
-                  const pageHeightPts = largePageSize.height;
+                  let pageWidthPts = 0;
+                  let pageHeightPts = 0;
+                  try {
+                    const identifyDims = execSync(`identify -format "%w %h" "${pdfPath}[0]" 2>/dev/null`, { encoding: 'utf8', timeout: 10000 }).trim();
+                    const [pw, ph] = identifyDims.split(' ').map(Number);
+                    if (pw > 0 && ph > 0) {
+                      pageWidthPts = pw;
+                      pageHeightPts = ph;
+                    }
+                  } catch {
+                    // Fallback: use pdfinfo or Ghostscript for page size
+                    try {
+                      const gsPageInfo = execSync(`gs -dNODISPLAY -dQUIET -dNOPAUSE -dBATCH -c "(${pdfPath}) (r) file runpdfbegin 1 pdfgetpage /MediaBox pdfgetpageattr == quit" 2>/dev/null`, { encoding: 'utf8', timeout: 10000 });
+                      const boxMatch = gsPageInfo.match(/\[([0-9.]+)\s+([0-9.]+)\s+([0-9.]+)\s+([0-9.]+)\]/);
+                      if (boxMatch) {
+                        pageWidthPts = parseFloat(boxMatch[3]) - parseFloat(boxMatch[1]);
+                        pageHeightPts = parseFloat(boxMatch[4]) - parseFloat(boxMatch[2]);
+                      }
+                    } catch {}
+                  }
+                  // Final fallback: only load via pdf-lib if file is small enough
+                  if (pageWidthPts <= 0 || pageHeightPts <= 0) {
+                    const fileSizeMB = fs.statSync(pdfPath).size / (1024 * 1024);
+                    if (fileSizeMB < 30) {
+                      const { PDFDocument: PDFDocLarge } = await import('pdf-lib');
+                      const largePdfBytes = fs.readFileSync(pdfPath);
+                      const largePdfDoc = await PDFDocLarge.load(largePdfBytes);
+                      const [largePage] = largePdfDoc.getPages();
+                      const largePageSize = largePage.getSize();
+                      pageWidthPts = largePageSize.width;
+                      pageHeightPts = largePageSize.height;
+                    } else {
+                      console.log(`⚠️ DTF PDF too large (${fileSizeMB.toFixed(0)}MB) for pdf-lib fallback — using template dimensions`);
+                      pageWidthPts = (dtfTemplateWmm / 0.352778);
+                      pageHeightPts = (dtfTemplateHmm / 0.352778);
+                    }
+                  }
                   dtfPageWidthPts = pageWidthPts;
                   dtfPageHeightPts = pageHeightPts;
                   console.log(`📐 DTF PDF page: ${(pageWidthPts * 0.352778).toFixed(0)}×${(pageHeightPts * 0.352778).toFixed(0)}mm`);
