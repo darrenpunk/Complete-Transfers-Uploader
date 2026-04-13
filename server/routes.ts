@@ -9,7 +9,31 @@ import { exec, execSync, execFile } from 'child_process';
 import FormData from 'form-data';
 import fetch from 'node-fetch';
 import { IStorage } from './storage';
-import { guardRoute, getOperationStats, isMemoryCritical } from './operation-guard';
+import { guardRoute, getOperationStats, isMemoryCritical, getMemoryUsage } from './operation-guard';
+
+function getSmartPreviewDPI(pdfPath: string): number {
+  try {
+    const fileSizeMB = fs.existsSync(pdfPath) ? fs.statSync(pdfPath).size / (1024 * 1024) : 0;
+    const mem = getMemoryUsage();
+    const memPressure = mem.rssMB > 1500;
+
+    if (fileSizeMB > 50 || memPressure) {
+      console.log(`[SMART-DPI] Using 72 DPI (file: ${fileSizeMB.toFixed(1)}MB, RSS: ${mem.rssMB}MB)`);
+      return 72;
+    }
+    if (fileSizeMB > 20) {
+      console.log(`[SMART-DPI] Using 96 DPI (file: ${fileSizeMB.toFixed(1)}MB)`);
+      return 96;
+    }
+    if (fileSizeMB > 5) {
+      console.log(`[SMART-DPI] Using 120 DPI (file: ${fileSizeMB.toFixed(1)}MB)`);
+      return 120;
+    }
+    return 150;
+  } catch {
+    return 120;
+  }
+}
 import { 
   insertProjectSchema, 
   insertLogoSchema, 
@@ -141,7 +165,7 @@ async function extractOriginalPNG(pdfPath: string, outputPrefix: string): Promis
           console.log('🔄 Retrying at 96 DPI as fallback...');
           const timestamp = Date.now();
           const fallbackPath = path.join(path.dirname(pdfPath), `${path.basename(outputPrefix)}_direct_${timestamp}.png`);
-          const fallbackCmd = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r96 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -dMaxBitmap=200000000 -sOutputFile="${fallbackPath}" "${pdfPath}"`;
+          const fallbackCmd = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r96 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -dMaxBitmap=150000000 -sOutputFile="${fallbackPath}" "${pdfPath}"`;
           await execAsync(fallbackCmd, { timeout: 60000 });
           if (fs.existsSync(fallbackPath)) {
             const stats = fs.statSync(fallbackPath);
@@ -3108,7 +3132,8 @@ export async function registerRoutes(app: express.Application) {
                       const pngPath = path.join(uploadDir, pngFilename);
                       
                       try {
-                        const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r150 -dMaxBitmap=200000000 -dAlignToPixels=0 -dGridFitTT=2 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`;
+                        const smartDPI = getSmartPreviewDPI(pdfPath);
+                        const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r${smartDPI} -dMaxBitmap=150000000 -dAlignToPixels=0 -dGridFitTT=2 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`;
                         execSync(gsCommand, { encoding: 'buffer', timeout: 120000 });
                         
                         // CRITICAL: Crop PNG to content bounds if bounds are available
@@ -3155,7 +3180,7 @@ export async function registerRoutes(app: express.Application) {
                           
                           if (!isValidPng) {
                             console.log(`⚠️ PNG corrupted, regenerating...`);
-                            execSync(`gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r150 -dMaxBitmap=500000000 -dAlignToPixels=0 -dGridFitTT=2 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`, { encoding: 'buffer', timeout: 120000 });
+                            execSync(`gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r96 -dMaxBitmap=150000000 -dAlignToPixels=0 -dGridFitTT=2 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`, { encoding: 'buffer', timeout: 120000 });
                             const regenBuffer = fs.readFileSync(pngPath);
                             const regenSig = regenBuffer.slice(0, 8).toString('hex');
                             console.log(`🔍 Regenerated PNG: signature=${regenSig}, valid=${regenSig === '89504e470d0a1a0a'}`);
@@ -3361,7 +3386,8 @@ export async function registerRoutes(app: express.Application) {
                     const pngPath = path.join(uploadDir, pngFilename);
                     
                     try {
-                      const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r150 -dMaxBitmap=200000000 -dAlignToPixels=0 -dGridFitTT=2 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`;
+                      const smartDPI2 = getSmartPreviewDPI(pdfPath);
+                      const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r${smartDPI2} -dMaxBitmap=150000000 -dAlignToPixels=0 -dGridFitTT=2 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`;
                       execSync(gsCommand, { encoding: 'buffer', timeout: 120000 });
                       
                       if (fs.existsSync(pngPath) && fs.statSync(pngPath).size > 0) {
@@ -3372,7 +3398,7 @@ export async function registerRoutes(app: express.Application) {
                         
                         if (!isValidPng) {
                           console.log(`⚠️ PNG corrupted, regenerating...`);
-                          execSync(`gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r150 -dMaxBitmap=500000000 -dAlignToPixels=0 -dGridFitTT=2 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`, { encoding: 'buffer', timeout: 120000 });
+                          execSync(`gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r96 -dMaxBitmap=150000000 -dAlignToPixels=0 -dGridFitTT=2 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`, { encoding: 'buffer', timeout: 120000 });
                         }
                         
                         // Store original PDF path for final output
@@ -3465,7 +3491,8 @@ export async function registerRoutes(app: express.Application) {
                     };
                   } catch {}
 
-                  const gsCmd = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r150 -dMaxBitmap=150000000 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`;
+                  const smartDPI3 = getSmartPreviewDPI(pdfPath);
+                  const gsCmd = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r${smartDPI3} -dMaxBitmap=150000000 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`;
                   await execAsync(gsCmd, { timeout: 60000 });
 
                   if (fs.existsSync(pngPath) && fs.statSync(pngPath).size > 0) {
