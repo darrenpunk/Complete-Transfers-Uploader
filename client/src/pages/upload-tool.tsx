@@ -1992,13 +1992,62 @@ export default function UploadTool() {
       
       const pdfWithRasterOnly = newLogos.find((logo: any) => logo.isPdfWithRasterOnly === true);
       const regularRasterFile = newLogos.find((logo: any) => 
-        !logo.isPdfWithRasterOnly && 
-        (logo.mimeType === 'image/png' || logo.mimeType === 'image/jpeg')
+        !logo.isComplexFilePngFallback && !logo.isPdfWithRasterOnly && 
+        (logo.mimeType === 'image/png' || logo.mimeType === 'image/jpeg' ||
+         logo.filetype === 'image/png' || logo.filetype === 'image/jpeg')
       );
-      if (pdfWithRasterOnly || regularRasterFile) {
-        const rasterLogo = pdfWithRasterOnly || regularRasterFile;
-        setRasterUploadedLogo(rasterLogo);
-        setShowVectorizationModal(true);
+      const extractedPngFromPdf = newLogos.find((logo: any) => 
+        !logo.isComplexFilePngFallback &&
+        logo.originalName?.endsWith('.pdf') && 
+        logo.mimeType === 'image/png' && 
+        logo.filename?.includes('_raster-gs.png')
+      );
+      if (pdfWithRasterOnly) {
+        setPendingRasterFile({ 
+          file: new File([], pdfWithRasterOnly.originalName),
+          fileName: pdfWithRasterOnly.originalName,
+          logoId: pdfWithRasterOnly.id,
+          url: pdfWithRasterOnly.url
+        });
+        setShowRasterWarning(true);
+      } else if (extractedPngFromPdf) {
+        (async () => {
+          try {
+            const response = await fetch(extractedPngFromPdf.url);
+            if (response.ok) {
+              const blob = await response.blob();
+              const rasterFile = new File([blob], extractedPngFromPdf.originalName.replace('.pdf', '.png'), { type: 'image/png' });
+              setPendingRasterFile({ 
+                file: rasterFile,
+                fileName: extractedPngFromPdf.originalName.replace('.pdf', '.png'),
+                logoId: extractedPngFromPdf.id,
+                url: extractedPngFromPdf.url
+              });
+              setShowRasterWarning(true);
+            }
+          } catch (err) {
+            console.error('Failed to prepare extracted PNG for vectorization:', err);
+          }
+        })();
+      } else if (regularRasterFile) {
+        (async () => {
+          try {
+            const response = await fetch(regularRasterFile.url);
+            if (response.ok) {
+              const blob = await response.blob();
+              const rasterFile = new File([blob], regularRasterFile.originalName || 'upload.png', { type: regularRasterFile.mimeType });
+              setPendingRasterFile({ 
+                file: rasterFile,
+                fileName: regularRasterFile.originalName || 'upload.png',
+                logoId: regularRasterFile.id,
+                url: regularRasterFile.url
+              });
+              setShowRasterWarning(true);
+            }
+          } catch (err) {
+            console.error('Failed to prepare raster file for vectorization:', err);
+          }
+        })();
       }
       
     } catch (error: any) {
