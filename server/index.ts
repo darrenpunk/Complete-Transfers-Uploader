@@ -129,16 +129,42 @@ process.on('SIGINT', () => {
 
 if (process.env.NODE_ENV === 'production') {
   const MEMORY_CHECK_INTERVAL = 30_000;
-  const MEMORY_WARN_MB = 2048;
-  const MEMORY_GC_MB = 1024;
-  const MEMORY_RESTART_MB = 4096;
+  const MEMORY_GC_MB = 300;
+  const MEMORY_WARN_MB = 380;
+  const MEMORY_RESTART_MB = 440;
   let restartScheduled = false;
+
+  function dropCaches() {
+    try {
+      const tmpDir = './uploads';
+      if (fs.existsSync(tmpDir)) {
+        const files = fs.readdirSync(tmpDir);
+        const now = Date.now();
+        let cleaned = 0;
+        for (const f of files) {
+          if (f.startsWith('chunk_') || f.startsWith('tmp_') || f.endsWith('.tmp')) {
+            try {
+              const fPath = `${tmpDir}/${f}`;
+              const stat = fs.statSync(fPath);
+              if (now - stat.mtimeMs > 300_000) {
+                fs.unlinkSync(fPath);
+                cleaned++;
+              }
+            } catch {}
+          }
+        }
+        if (cleaned > 0) console.log(`[MEMORY] Cleaned ${cleaned} stale temp files`);
+      }
+    } catch {}
+  }
+
   setInterval(() => {
     const mem = process.memoryUsage();
     const rssMB = Math.round(mem.rss / 1024 / 1024);
     const heapMB = Math.round(mem.heapUsed / 1024 / 1024);
     if (rssMB > MEMORY_GC_MB && typeof global.gc === 'function') {
       global.gc();
+      dropCaches();
       const after = Math.round(process.memoryUsage().rss / 1024 / 1024);
       console.log(`[MEMORY] GC triggered at ${rssMB}MB RSS → ${after}MB RSS`);
     }
