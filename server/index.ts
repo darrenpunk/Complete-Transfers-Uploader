@@ -94,6 +94,17 @@ persistCrashLog('server_start', `Server process started (PID ${process.pid})`);
 })();
 
 process.on('uncaughtException', (err) => {
+  const isNeonConnectionError = err.message?.includes('terminating connection due to administrator command') ||
+    err.message?.includes('Connection terminated') ||
+    err.message?.includes('connection was forcibly closed') ||
+    (err.message?.includes('terminated') && err.stack?.includes('@neondatabase'));
+  
+  if (isNeonConnectionError) {
+    console.warn('[DB] Neon connection terminated (non-fatal, will reconnect):', err.message);
+    persistCrashLog('db_connection_reset', `Neon DB connection terminated: ${err.message}`);
+    return;
+  }
+  
   console.error('[CRASH PROTECTION] Uncaught exception caught:', err.message);
   console.error(err.stack);
   persistCrashLog('uncaught_exception', err.message, { stack: err.stack });

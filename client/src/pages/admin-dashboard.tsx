@@ -859,6 +859,7 @@ function CrashLogsTab() {
     memory_warning: "bg-orange-500/10 text-orange-500 border-orange-500/30",
     memory_critical: "bg-red-500/10 text-red-500 border-red-500/30",
     suspected_crash: "bg-red-600/20 text-red-400 border-red-600/40",
+    db_connection_reset: "bg-blue-500/10 text-blue-500 border-blue-500/30",
   };
 
   const eventTypeIcons: Record<string, typeof Bug> = {
@@ -870,6 +871,7 @@ function CrashLogsTab() {
     memory_warning: Cpu,
     memory_critical: AlertTriangle,
     suspected_crash: Bug,
+    db_connection_reset: Clock,
   };
 
   if (isLoading) {
