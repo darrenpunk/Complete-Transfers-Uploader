@@ -62,13 +62,11 @@ process.on('unhandledRejection', (reason, promise) => {
 process.on('SIGTERM', () => {
   console.warn('[SIGNAL] SIGTERM received — container shutting down');
   persistCrashLog('sigterm', 'SIGTERM received — container being stopped/restarted');
-  setTimeout(() => process.exit(0), 1000);
 });
 
 process.on('SIGINT', () => {
   console.warn('[SIGNAL] SIGINT received');
   persistCrashLog('sigint', 'SIGINT received');
-  setTimeout(() => process.exit(0), 1000);
 });
 
 if (process.env.NODE_ENV === 'production') {
