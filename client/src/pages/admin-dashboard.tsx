@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Lock, Users, Activity, BarChart3, RefreshCw, Search, X, Upload, ShoppingCart, LayoutTemplate, Plus, Trash2, Zap, TrendingUp, FileText, Eye, HeartPulse, Cpu, HardDrive, Clock, AlertTriangle, CheckCircle } from "lucide-react";
+import { Lock, Users, Activity, BarChart3, RefreshCw, Search, X, Upload, ShoppingCart, LayoutTemplate, Plus, Trash2, Zap, TrendingUp, FileText, Eye, HeartPulse, Cpu, HardDrive, Clock, AlertTriangle, CheckCircle, Bug } from "lucide-react";
 import { queryClient } from "@/lib/queryClient";
 import type { TemplateSize } from "@shared/schema";
 import {
@@ -843,6 +843,98 @@ function MemoryBar({ label, usedMB, totalMB, warnMB }: { label: string; usedMB: 
   );
 }
 
+function CrashLogsTab() {
+  const { data: crashLogs, isLoading } = useQuery({
+    queryKey: ["admin-crash-logs"],
+    queryFn: () => adminFetch("/api/admin/crash-logs?limit=100"),
+    refetchInterval: 30000,
+  });
+
+  const eventTypeColors: Record<string, string> = {
+    server_start: "bg-green-500/10 text-green-500 border-green-500/30",
+    uncaught_exception: "bg-red-500/10 text-red-500 border-red-500/30",
+    unhandled_rejection: "bg-red-500/10 text-red-500 border-red-500/30",
+    sigterm: "bg-yellow-500/10 text-yellow-500 border-yellow-500/30",
+    sigint: "bg-yellow-500/10 text-yellow-500 border-yellow-500/30",
+    memory_warning: "bg-orange-500/10 text-orange-500 border-orange-500/30",
+    memory_critical: "bg-red-500/10 text-red-500 border-red-500/30",
+  };
+
+  const eventTypeIcons: Record<string, typeof Bug> = {
+    server_start: CheckCircle,
+    uncaught_exception: AlertTriangle,
+    unhandled_rejection: AlertTriangle,
+    sigterm: Clock,
+    sigint: Clock,
+    memory_warning: Cpu,
+    memory_critical: AlertTriangle,
+  };
+
+  if (isLoading) {
+    return <div className="text-center py-8 text-muted-foreground">Loading crash logs...</div>;
+  }
+
+  const logs = Array.isArray(crashLogs) ? crashLogs : [];
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Bug className="h-5 w-5" />
+          Crash & Event Logs ({logs.length})
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {logs.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">No crash logs recorded yet.</div>
+        ) : (
+          <div className="space-y-2 max-h-[600px] overflow-y-auto">
+            {logs.map((log: any) => {
+              const IconComp = eventTypeIcons[log.eventType] || Bug;
+              const colorClass = eventTypeColors[log.eventType] || "bg-muted text-muted-foreground border-border";
+              const date = new Date(log.createdAt);
+              const timeStr = date.toLocaleString();
+              const uptimeMin = log.uptimeSeconds ? Math.round(log.uptimeSeconds / 60) : null;
+
+              return (
+                <div key={log.id} className="border rounded-lg p-3 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className={colorClass}>
+                        <IconComp className="h-3 w-3 mr-1" />
+                        {log.eventType}
+                      </Badge>
+                      <span className="text-xs text-muted-foreground">{timeStr}</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                      {log.memoryRssMb != null && (
+                        <span>RSS: {log.memoryRssMb}MB</span>
+                      )}
+                      {log.memoryHeapMb != null && (
+                        <span>Heap: {log.memoryHeapMb}MB</span>
+                      )}
+                      {uptimeMin != null && (
+                        <span>Uptime: {uptimeMin}m</span>
+                      )}
+                      {log.activeOps != null && (
+                        <span>Ops: {log.activeOps}/{log.queuedOps}</span>
+                      )}
+                    </div>
+                  </div>
+                  <p className="text-sm">{log.message}</p>
+                  {log.details?.stack && (
+                    <pre className="text-xs bg-muted p-2 rounded mt-1 overflow-x-auto max-h-32 whitespace-pre-wrap">{log.details.stack}</pre>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 function ServerHealthTab() {
   const { data: health, isLoading, refetch } = useQuery({
     queryKey: ["admin-health"],
@@ -1018,7 +1110,7 @@ function ServerHealthTab() {
 }
 
 function Dashboard() {
-  const [activeTab, setActiveTab] = useState<"analytics" | "customer-templates" | "server-health">("analytics");
+  const [activeTab, setActiveTab] = useState<"analytics" | "customer-templates" | "server-health" | "crash-logs">("analytics");
   const [userFilter, setUserFilter] = useState("");
   const [eventFilter, setEventFilter] = useState("all");
   const [timeFilter, setTimeFilter] = useState("all");
@@ -1122,8 +1214,15 @@ function Dashboard() {
                 <HeartPulse className="h-4 w-4 inline mr-1.5" />
                 Server Health
               </button>
+              <button
+                onClick={() => setActiveTab("crash-logs")}
+                className={`px-3 py-1.5 text-sm font-medium transition-colors ${activeTab === "crash-logs" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"}`}
+              >
+                <Bug className="h-4 w-4 inline mr-1.5" />
+                Crash Logs
+              </button>
             </div>
-            {(activeTab === "analytics" || activeTab === "server-health") && (
+            {(activeTab === "analytics" || activeTab === "server-health" || activeTab === "crash-logs") && (
               <Button variant="outline" size="sm" onClick={handleRefresh}>
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Refresh
@@ -1141,6 +1240,10 @@ function Dashboard() {
 
         {activeTab === "server-health" && (
           <ServerHealthTab />
+        )}
+
+        {activeTab === "crash-logs" && (
+          <CrashLogsTab />
         )}
 
         {activeTab === "analytics" && (

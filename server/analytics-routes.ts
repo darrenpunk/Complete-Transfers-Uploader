@@ -236,4 +236,15 @@ export function registerAnalyticsRoutes(app: Express, storage: IStorage) {
       res.json({ stats: [], summary: { totalEvents: 0, uniqueUsers: 0, activeSessions: 0 } });
     }
   });
+
+  app.get("/api/admin/crash-logs", adminAuth, async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 50;
+      const logs = await storage.getCrashLogs(limit);
+      res.json(logs);
+    } catch (error) {
+      console.error("Failed to fetch crash logs:", error);
+      res.status(500).json({ error: "Failed to fetch crash logs" });
+    }
+  });
 }

@@ -251,6 +251,23 @@ export type ActiveSession = typeof activeSessions.$inferSelect;
 export type InsertCustomerTemplate = z.infer<typeof insertCustomerTemplateSchema>;
 export type CustomerTemplate = typeof customerTemplates.$inferSelect;
 
+export const crashLogs = pgTable("crash_logs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  eventType: text("event_type").notNull(),
+  message: text("message"),
+  memoryRssMb: integer("memory_rss_mb"),
+  memoryHeapMb: integer("memory_heap_mb"),
+  uptimeSeconds: integer("uptime_seconds"),
+  activeOps: integer("active_ops"),
+  queuedOps: integer("queued_ops"),
+  details: jsonb("details"),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const insertCrashLogSchema = createInsertSchema(crashLogs).omit({ id: true, createdAt: true });
+export type InsertCrashLog = z.infer<typeof insertCrashLogSchema>;
+export type CrashLog = typeof crashLogs.$inferSelect;
+
 // Content bounds type definition
 export type ContentBounds = {
   xMin: number;

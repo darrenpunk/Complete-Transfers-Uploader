@@ -18,6 +18,8 @@ import {
   type ActiveSession,
   type CustomerTemplate,
   type InsertCustomerTemplate,
+  type CrashLog,
+  type InsertCrashLog,
   users,
   projects,
   logos,
@@ -26,7 +28,8 @@ import {
   supportTickets,
   analyticsEvents,
   activeSessions,
-  customerTemplates
+  customerTemplates,
+  crashLogs
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
@@ -87,6 +90,9 @@ export interface IStorage {
   getAllCustomerTemplates(): Promise<CustomerTemplate[]>;
   createCustomerTemplate(assignment: InsertCustomerTemplate): Promise<CustomerTemplate>;
   deleteCustomerTemplate(id: string): Promise<boolean>;
+
+  createCrashLog(entry: InsertCrashLog): Promise<CrashLog>;
+  getCrashLogs(limit?: number): Promise<CrashLog[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -646,6 +652,20 @@ export class MemStorage implements IStorage {
       );
     }, undefined, "cleanupOldSessions");
   }
+
+  async createCrashLog(entry: InsertCrashLog): Promise<CrashLog> {
+    const fallback: CrashLog = { id: randomUUID(), ...entry, createdAt: new Date().toISOString() } as CrashLog;
+    return this.dbRetry(async () => {
+      const [result] = await db.insert(crashLogs).values(entry).returning();
+      return result;
+    }, fallback, "createCrashLog");
+  }
+
+  async getCrashLogs(limit: number = 50): Promise<CrashLog[]> {
+    return this.dbRetry(async () => {
+      return await db.select().from(crashLogs).orderBy(desc(crashLogs.createdAt)).limit(limit);
+    }, [], "getCrashLogs");
+  }
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1161,6 +1181,19 @@ export class DatabaseStorage implements IStorage {
         sql`${activeSessions.lastSeen} < ${cutoff}`
       );
     }, undefined, "cleanupOldSessions");
+  }
+
+  async createCrashLog(entry: InsertCrashLog): Promise<CrashLog> {
+    return this.dbRetry(async () => {
+      const [result] = await db.insert(crashLogs).values(entry).returning();
+      return result;
+    }, { id: randomUUID(), ...entry, createdAt: new Date().toISOString() } as CrashLog, "createCrashLog");
+  }
+
+  async getCrashLogs(limit: number = 50): Promise<CrashLog[]> {
+    return this.dbRetry(async () => {
+      return await db.select().from(crashLogs).orderBy(desc(crashLogs.createdAt)).limit(limit);
+    }, [], "getCrashLogs");
   }
 }
 

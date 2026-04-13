@@ -7,19 +7,68 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { getOperationStats } from "./operation-guard";
+import { storage } from "./storage";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 dotenv.config();
 
+const serverStartTime = Date.now();
+
+function getMemSnapshot() {
+  const mem = process.memoryUsage();
+  return {
+    rssMb: Math.round(mem.rss / 1024 / 1024),
+    heapMb: Math.round(mem.heapUsed / 1024 / 1024),
+  };
+}
+
+function getUptimeSeconds() {
+  return Math.round((Date.now() - serverStartTime) / 1000);
+}
+
+function persistCrashLog(eventType: string, message: string, details?: any) {
+  const { rssMb, heapMb } = getMemSnapshot();
+  let activeOps = 0, queuedOps = 0;
+  try { const s = getOperationStats(); activeOps = s.active; queuedOps = s.queued; } catch {}
+  storage.createCrashLog({
+    eventType,
+    message,
+    memoryRssMb: rssMb,
+    memoryHeapMb: heapMb,
+    uptimeSeconds: getUptimeSeconds(),
+    activeOps,
+    queuedOps,
+    details: details || null,
+  }).catch(err => console.error('[CRASH LOG] Failed to persist:', err.message));
+}
+
+persistCrashLog('server_start', `Server process started (PID ${process.pid})`);
+
 process.on('uncaughtException', (err) => {
   console.error('[CRASH PROTECTION] Uncaught exception caught:', err.message);
   console.error(err.stack);
+  persistCrashLog('uncaught_exception', err.message, { stack: err.stack });
 });
 
 process.on('unhandledRejection', (reason, promise) => {
   console.error('[CRASH PROTECTION] Unhandled promise rejection:', reason);
+  const msg = reason instanceof Error ? reason.message : String(reason);
+  const stack = reason instanceof Error ? reason.stack : undefined;
+  persistCrashLog('unhandled_rejection', msg, { stack });
+});
+
+process.on('SIGTERM', () => {
+  console.warn('[SIGNAL] SIGTERM received — container shutting down');
+  persistCrashLog('sigterm', 'SIGTERM received — container being stopped/restarted');
+  setTimeout(() => process.exit(0), 1000);
+});
+
+process.on('SIGINT', () => {
+  console.warn('[SIGNAL] SIGINT received');
+  persistCrashLog('sigint', 'SIGINT received');
+  setTimeout(() => process.exit(0), 1000);
 });
 
 if (process.env.NODE_ENV === 'production') {
@@ -39,10 +88,12 @@ if (process.env.NODE_ENV === 'production') {
     }
     if (rssMB > MEMORY_WARN_MB) {
       console.warn(`[MEMORY WARNING] RSS: ${rssMB}MB, Heap: ${heapMB}MB — approaching container limit`);
+      persistCrashLog('memory_warning', `RSS: ${rssMB}MB, Heap: ${heapMB}MB`);
     }
     if (rssMB > MEMORY_RESTART_MB && !restartScheduled) {
       restartScheduled = true;
       console.error(`[MEMORY CRITICAL] RSS: ${rssMB}MB — graceful restart in 3s to avoid OOM kill`);
+      persistCrashLog('memory_critical', `RSS: ${rssMB}MB — scheduling graceful restart`);
       setTimeout(() => {
         console.error('[MEMORY CRITICAL] Exiting for graceful restart');
         process.exit(1);
