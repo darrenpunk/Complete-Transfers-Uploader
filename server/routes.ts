@@ -9,16 +9,17 @@ import { exec, execSync, execFile } from 'child_process';
 import FormData from 'form-data';
 import fetch from 'node-fetch';
 import { IStorage } from './storage';
-import { guardRoute, getOperationStats, isMemoryCritical, getMemoryUsage } from './operation-guard';
+import { guardRoute, getOperationStats, isMemoryCritical, getMemoryUsage, shouldSkipNonEssential, getContainerMemoryMB } from './operation-guard';
 
 function getSmartPreviewDPI(pdfPath: string): number {
   try {
     const fileSizeMB = fs.existsSync(pdfPath) ? fs.statSync(pdfPath).size / (1024 * 1024) : 0;
     const mem = getMemoryUsage();
-    const memPressure = mem.rssMB > 440;
+    const containerMB = getContainerMemoryMB();
+    const memPressure = mem.rssMB > 350 || containerMB > 380;
 
     if (fileSizeMB > 50 || memPressure) {
-      console.log(`[SMART-DPI] Using 72 DPI (file: ${fileSizeMB.toFixed(1)}MB, RSS: ${mem.rssMB}MB)`);
+      console.log(`[SMART-DPI] Using 72 DPI (file: ${fileSizeMB.toFixed(1)}MB, RSS: ${mem.rssMB}MB, Container: ${containerMB}MB)`);
       return 72;
     }
     if (fileSizeMB > 20) {
@@ -26,16 +27,16 @@ function getSmartPreviewDPI(pdfPath: string): number {
       return 72;
     }
     if (fileSizeMB > 10) {
+      console.log(`[SMART-DPI] Using 72 DPI (file: ${fileSizeMB.toFixed(1)}MB)`);
+      return 72;
+    }
+    if (fileSizeMB > 5) {
       console.log(`[SMART-DPI] Using 96 DPI (file: ${fileSizeMB.toFixed(1)}MB)`);
       return 96;
     }
-    if (fileSizeMB > 5) {
-      console.log(`[SMART-DPI] Using 120 DPI (file: ${fileSizeMB.toFixed(1)}MB)`);
-      return 120;
-    }
-    return 150;
-  } catch {
     return 120;
+  } catch {
+    return 96;
   }
 }
 import { 
@@ -108,14 +109,15 @@ async function extractOriginalPNG(pdfPath: string, outputPrefix: string): Promis
     // Use 150 DPI as the default — this prevents oversized images from large-format PDFs.
     // After rendering we resize down if needed. 300 DPI is only necessary for print output,
     // not for canvas previews.
-    let renderDPI = 150;
-    let gsTimeout = 45000; // 45 seconds default
-    if (fileSizeMB > 20) {
-      renderDPI = 96;
+    const containerMB = getContainerMemoryMB();
+    let renderDPI = 120;
+    let gsTimeout = 45000;
+    if (fileSizeMB > 20 || containerMB > 380) {
+      renderDPI = 72;
       gsTimeout = 60000;
-      console.log(`⚠️ Large file detected (${fileSizeMB.toFixed(1)}MB) - using ${renderDPI} DPI to prevent memory issues`);
+      console.log(`⚠️ Large file or memory pressure (${fileSizeMB.toFixed(1)}MB, Container: ${containerMB}MB) - using ${renderDPI} DPI`);
     } else if (fileSizeMB > 5) {
-      renderDPI = 120;
+      renderDPI = 96;
       gsTimeout = 50000;
       console.log(`📦 Medium file (${fileSizeMB.toFixed(1)}MB) - using ${renderDPI} DPI`);
     }
@@ -3717,7 +3719,8 @@ export async function registerRoutes(app: express.Application) {
         // IMPORTANT: Skip all expensive analysis for large format DTF — the file is already
         // handled (PNG preview created); running pdf2svg/GS on it crashes the production server.
         const filePath = path.join(uploadDir, file.filename);
-        const preflightResult = isLargeFormatDTF
+        const skipPreflight = isLargeFormatDTF || shouldSkipNonEssential();
+        const preflightResult = skipPreflight
           ? {
               colorSpaceDetected: (file as any).isCMYKPreserved ? 'CMYK' : 'RGB',
               hasRasterContent: false,
@@ -3737,12 +3740,13 @@ export async function registerRoutes(app: express.Application) {
           hasRaster: preflightResult.hasRasterContent,
           hasVector: preflightResult.hasVectorContent,
           warnings: preflightResult.warnings.length,
-          skipped: isLargeFormatDTF ? 'large-format-DTF' : false
+          skipped: isLargeFormatDTF ? 'large-format-DTF' : skipPreflight ? 'memory-pressure' : false
         });
 
         // For PDFs, analyze the original PDF file before conversion
         // Skip for large format DTF — pdf2svg on these files crashes the server
-        if (file.mimetype === 'application/pdf' && !isLargeFormatDTF) {
+        // Skip when container memory is high to prevent OOM
+        if (file.mimetype === 'application/pdf' && !isLargeFormatDTF && !shouldSkipNonEssential()) {
           const originalPdfPath = path.join(uploadDir, file.filename);
           const contentAnalysis = await MixedContentDetector.analyzeFile(originalPdfPath, file.mimetype);
           
@@ -3860,7 +3864,7 @@ export async function registerRoutes(app: express.Application) {
             (file as any).originalPdfPath = originalPdfPath;
             (file as any).isMixedContent = true;
           }
-        } else if (fileType === FileType.VECTOR_SVG) {
+        } else if (fileType === FileType.VECTOR_SVG && !shouldSkipNonEssential()) {
           // For SVGs, check the converted file for mixed content
           const filePath = path.join(uploadDir, finalFilename);
           const contentAnalysis = await MixedContentDetector.analyzeFile(filePath, finalMimeType);

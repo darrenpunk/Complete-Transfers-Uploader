@@ -1,12 +1,18 @@
 import type { Response } from 'express';
+import { execSync } from 'child_process';
+import * as fs from 'fs';
 
 const MAX_CONCURRENT_HEAVY = 1;
 const MAX_QUEUE_SIZE = 8;
 const QUEUE_TIMEOUT_MS = 120_000;
 const STALE_OP_TIMEOUT_MS = 180_000;
 
-const MEMORY_REJECT_MB = 480;
-const MEMORY_SERIAL_MB = 440;
+const MEMORY_REJECT_MB = 440;
+const MEMORY_SERIAL_MB = 380;
+
+const CONTAINER_LIMIT_MB = 512;
+const CONTAINER_REJECT_MB = 460;
+const CONTAINER_WARN_MB = 400;
 
 interface QueueEntry {
   resolve: () => void;
@@ -29,6 +35,29 @@ let totalProcessed = 0;
 let totalQueued = 0;
 let totalRejected = 0;
 
+function getContainerMemoryMB(): number {
+  try {
+    const cgroupPaths = [
+      '/sys/fs/cgroup/memory/memory.usage_in_bytes',
+      '/sys/fs/cgroup/memory.current',
+    ];
+    for (const p of cgroupPaths) {
+      if (fs.existsSync(p)) {
+        const bytes = parseInt(fs.readFileSync(p, 'utf8').trim(), 10);
+        if (!isNaN(bytes) && bytes > 0) {
+          return Math.round(bytes / 1024 / 1024);
+        }
+      }
+    }
+  } catch {}
+  try {
+    const memInfo = execSync("free -m | awk 'NR==2{print $3}'", { encoding: 'utf8', timeout: 2000 }).trim();
+    const used = parseInt(memInfo, 10);
+    if (!isNaN(used) && used > 0) return used;
+  } catch {}
+  return getMemoryUsage().rssMB;
+}
+
 function cleanStaleOps() {
   const now = Date.now();
   const before = activeOps.length;
@@ -46,7 +75,8 @@ function cleanStaleOps() {
 
 function drainQueue() {
   const mem = getMemoryUsage();
-  if (mem.rssMB > MEMORY_SERIAL_MB && activeOps.length > 0) {
+  const containerMB = getContainerMemoryMB();
+  if ((mem.rssMB > MEMORY_SERIAL_MB || containerMB > CONTAINER_WARN_MB) && activeOps.length > 0) {
     return;
   }
   while (activeOps.length < MAX_CONCURRENT_HEAVY && queue.length > 0) {
@@ -68,7 +98,8 @@ function createRelease(opId: number, label: string): () => void {
       const elapsed = Math.round((Date.now() - activeOps[idx].startedAt) / 1000);
       const memNow = getMemoryUsage().rssMB;
       const memDelta = memNow - activeOps[idx].memAtStart;
-      console.log(`[OP-GUARD] Released "${label}" after ${elapsed}s (RSS: ${memNow}MB, delta: ${memDelta > 0 ? '+' : ''}${memDelta}MB, active: ${activeOps.length - 1}, queued: ${queue.length})`);
+      const containerMB = getContainerMemoryMB();
+      console.log(`[OP-GUARD] Released "${label}" after ${elapsed}s (RSS: ${memNow}MB, Container: ${containerMB}MB, delta: ${memDelta > 0 ? '+' : ''}${memDelta}MB, active: ${activeOps.length - 1}, queued: ${queue.length})`);
       activeOps.splice(idx, 1);
     }
     totalProcessed++;
@@ -83,24 +114,25 @@ export async function acquireHeavyOp(label: string): Promise<() => void> {
   cleanStaleOps();
 
   const mem = getMemoryUsage();
+  const containerMB = getContainerMemoryMB();
 
-  if (mem.rssMB > MEMORY_REJECT_MB) {
+  if (mem.rssMB > MEMORY_REJECT_MB || containerMB > CONTAINER_REJECT_MB) {
     totalRejected++;
-    console.error(`[OP-GUARD] REJECTED "${label}" — memory critical (RSS: ${mem.rssMB}MB, Heap: ${mem.heapUsedMB}MB)`);
+    console.error(`[OP-GUARD] REJECTED "${label}" — memory critical (RSS: ${mem.rssMB}MB, Container: ${containerMB}MB, Heap: ${mem.heapUsedMB}MB)`);
     if (typeof global.gc === 'function') {
       try { global.gc(); } catch {}
     }
     throw new Error('Server is under heavy load. Please wait a moment and try again.');
   }
 
-  if (mem.rssMB > MEMORY_SERIAL_MB && activeOps.length > 0) {
+  if ((mem.rssMB > MEMORY_SERIAL_MB || containerMB > CONTAINER_WARN_MB) && activeOps.length > 0) {
     if (queue.length >= MAX_QUEUE_SIZE) {
       totalRejected++;
-      console.error(`[OP-GUARD] REJECTED "${label}" — memory high + queue full (RSS: ${mem.rssMB}MB, active: ${activeOps.length}, queued: ${queue.length})`);
+      console.error(`[OP-GUARD] REJECTED "${label}" — memory high + queue full (RSS: ${mem.rssMB}MB, Container: ${containerMB}MB, active: ${activeOps.length}, queued: ${queue.length})`);
       throw new Error('Server is busy processing other requests. Please try again in a moment.');
     }
     totalQueued++;
-    console.log(`[OP-GUARD] Queuing "${label}" — memory high, serializing (RSS: ${mem.rssMB}MB, active: ${activeOps.length}, queued: ${queue.length + 1})`);
+    console.log(`[OP-GUARD] Queuing "${label}" — memory high, serializing (RSS: ${mem.rssMB}MB, Container: ${containerMB}MB, active: ${activeOps.length}, queued: ${queue.length + 1})`);
     return new Promise<() => void>((resolve, reject) => {
       const timer = setTimeout(() => {
         const idx = queue.findIndex(e => e.timer === timer);
@@ -122,7 +154,7 @@ export async function acquireHeavyOp(label: string): Promise<() => void> {
   if (activeOps.length < MAX_CONCURRENT_HEAVY) {
     const opId = nextId++;
     activeOps.push({ id: opId, label, startedAt: Date.now(), memAtStart: mem.rssMB });
-    console.log(`[OP-GUARD] Started "${label}" (active: ${activeOps.length}/${MAX_CONCURRENT_HEAVY}, RSS: ${mem.rssMB}MB)`);
+    console.log(`[OP-GUARD] Started "${label}" (active: ${activeOps.length}/${MAX_CONCURRENT_HEAVY}, RSS: ${mem.rssMB}MB, Container: ${containerMB}MB)`);
     return createRelease(opId, label);
   }
 
@@ -133,7 +165,7 @@ export async function acquireHeavyOp(label: string): Promise<() => void> {
   }
 
   totalQueued++;
-  console.log(`[OP-GUARD] Queuing "${label}" (active: ${activeOps.length}, queued: ${queue.length + 1}, RSS: ${mem.rssMB}MB)`);
+  console.log(`[OP-GUARD] Queuing "${label}" (active: ${activeOps.length}, queued: ${queue.length + 1}, RSS: ${mem.rssMB}MB, Container: ${containerMB}MB)`);
 
   return new Promise<() => void>((resolve, reject) => {
     const timer = setTimeout(() => {
@@ -179,12 +211,26 @@ export function getMemoryUsage() {
   };
 }
 
-export function isMemoryCritical(thresholdMB = 450): boolean {
-  const mem = process.memoryUsage();
-  return Math.round(mem.rss / 1024 / 1024) > thresholdMB;
+export function isMemoryCritical(thresholdMB = 400): boolean {
+  const containerMB = getContainerMemoryMB();
+  const rssMB = Math.round(process.memoryUsage().rss / 1024 / 1024);
+  return rssMB > thresholdMB || containerMB > CONTAINER_WARN_MB;
 }
 
+export function shouldSkipNonEssential(): boolean {
+  const containerMB = getContainerMemoryMB();
+  const rssMB = Math.round(process.memoryUsage().rss / 1024 / 1024);
+  const skip = containerMB > 350 || rssMB > 300;
+  if (skip) {
+    console.log(`[OP-GUARD] Skipping non-essential ops (RSS: ${rssMB}MB, Container: ${containerMB}MB)`);
+  }
+  return skip;
+}
+
+export { getContainerMemoryMB };
+
 export function getOperationStats() {
+  const containerMB = getContainerMemoryMB();
   return {
     active: activeOps.length,
     queued: queue.length,
@@ -193,6 +239,7 @@ export function getOperationStats() {
     totalQueued,
     totalRejected,
     memory: getMemoryUsage(),
+    containerMemoryMB: containerMB,
     activeOps: activeOps.map(op => ({
       label: op.label,
       runningSeconds: Math.round((Date.now() - op.startedAt) / 1000),
@@ -204,11 +251,12 @@ setInterval(cleanStaleOps, 30_000);
 
 setInterval(() => {
   const mem = getMemoryUsage();
-  if (mem.rssMB > 420) {
-    console.log(`[OP-GUARD] Memory watchdog: RSS ${mem.rssMB}MB, Heap ${mem.heapUsedMB}/${mem.heapTotalMB}MB, External ${mem.externalMB}MB, Active ops: ${activeOps.length}, Queued: ${queue.length}`);
+  const containerMB = getContainerMemoryMB();
+  if (containerMB > 350 || mem.rssMB > 350) {
+    console.log(`[OP-GUARD] Memory watchdog: RSS ${mem.rssMB}MB, Container ${containerMB}MB, Heap ${mem.heapUsedMB}/${mem.heapTotalMB}MB, External ${mem.externalMB}MB, Active ops: ${activeOps.length}, Queued: ${queue.length}`);
   }
-  if (typeof global.gc === 'function' && mem.rssMB > 420) {
+  if (typeof global.gc === 'function' && (containerMB > 380 || mem.rssMB > 380)) {
     console.log('[OP-GUARD] Memory pressure detected, triggering GC');
     global.gc();
   }
-}, 30_000);
+}, 15_000);
