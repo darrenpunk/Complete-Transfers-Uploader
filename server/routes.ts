@@ -5654,7 +5654,8 @@ export async function registerRoutes(app: express.Application) {
         } else {
           // Fallback: Create content bounds from display dimensions
           // This ensures ALL logos have content bounds for position warnings
-          const mmToPixelRatio = 1 / svgPxToMm;
+          const fallbackPxToMm = 25.4 / 72;
+          const mmToPixelRatio = 1 / fallbackPxToMm;
           const widthPx = displayWidth * mmToPixelRatio;
           const heightPx = displayHeight * mmToPixelRatio;
           contentBoundsToSave = {
