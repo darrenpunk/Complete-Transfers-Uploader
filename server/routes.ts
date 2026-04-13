@@ -2960,11 +2960,12 @@ export async function registerRoutes(app: express.Application) {
                   console.log(`⚠️ Could not read DTF PDF page size: ${sizeErr}`);
                 }
 
-                // 96 DPI is sufficient — image is capped at 2000px anyway, and lower DPI
-                // dramatically reduces memory usage for complex vector PDFs (prevents OOM in production).
+                // Smart DPI based on file size and memory — image is capped at 2000px anyway.
+                // Lower DPI dramatically reduces memory usage for complex vector PDFs (prevents OOM in production).
                 // SIGKILL ensures GS is immediately terminated on timeout (SIGTERM is ignored by GS during rendering).
-                const gsCmd = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r96 -dMaxBitmap=150000000 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`;
-                await execAsync(gsCmd, { timeout: 40000, killSignal: 'SIGKILL' });
+                const dtfDPI = getSmartPreviewDPI(pdfPath);
+                const dtfGsCmd = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r${dtfDPI} -dMaxBitmap=150000000 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`;
+                await execAsync(dtfGsCmd, { timeout: 60000, killSignal: 'SIGKILL' });
 
                 if (fs.existsSync(pngPath) && fs.statSync(pngPath).size > 0) {
                   // Crop PNG to content bounds if GS detected smaller content area
