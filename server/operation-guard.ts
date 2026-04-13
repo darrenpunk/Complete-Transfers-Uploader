@@ -55,24 +55,46 @@ function getContainerMemoryMB(): number {
     }
 
     if (totalUsageBytes > 0) {
-      let cacheBytes = 0;
+      let reclaimableBytes = 0;
       for (const sp of statPaths) {
         if (fs.existsSync(sp)) {
           const statContent = fs.readFileSync(sp, 'utf8');
-          const inactiveMatch = statContent.match(/total_inactive_file\s+(\d+)/);
-          if (inactiveMatch) {
-            cacheBytes = parseInt(inactiveMatch[1], 10);
-          } else {
-            const cacheMatch = statContent.match(/^cache\s+(\d+)/m);
-            if (cacheMatch) {
-              cacheBytes = parseInt(cacheMatch[1], 10);
+
+          const inactiveFileMatch = statContent.match(/^inactive_file\s+(\d+)/m);
+          if (inactiveFileMatch) {
+            reclaimableBytes += parseInt(inactiveFileMatch[1], 10);
+          }
+          const totalInactiveFileMatch = statContent.match(/total_inactive_file\s+(\d+)/);
+          if (totalInactiveFileMatch) {
+            reclaimableBytes = Math.max(reclaimableBytes, parseInt(totalInactiveFileMatch[1], 10));
+          }
+
+          if (reclaimableBytes === 0) {
+            const fileMatch = statContent.match(/^file\s+(\d+)/m);
+            if (fileMatch) {
+              reclaimableBytes = parseInt(fileMatch[1], 10);
             }
           }
+
+          const cacheMatch = statContent.match(/^cache\s+(\d+)/m);
+          if (cacheMatch) {
+            reclaimableBytes = Math.max(reclaimableBytes, parseInt(cacheMatch[1], 10));
+          }
+
+          const inactiveAnonMatch = statContent.match(/^inactive_anon\s+(\d+)/m);
+          if (inactiveAnonMatch) {
+            reclaimableBytes += parseInt(inactiveAnonMatch[1], 10);
+          }
+
           break;
         }
       }
-      const realUsage = Math.round((totalUsageBytes - cacheBytes) / 1024 / 1024);
-      return Math.max(realUsage, getMemoryUsage().rssMB);
+      const realUsage = Math.round((totalUsageBytes - reclaimableBytes) / 1024 / 1024);
+      const rssMB = getMemoryUsage().rssMB;
+      if (realUsage > 1024) {
+        return rssMB;
+      }
+      return Math.max(realUsage, rssMB);
     }
   } catch {}
   return getMemoryUsage().rssMB;
