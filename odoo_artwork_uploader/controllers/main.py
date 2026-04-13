@@ -1921,6 +1921,12 @@ class ArtworkUploaderController(http.Controller):
                 for line in order.order_line:
                     has_artwork_project = hasattr(line, 'artwork_project_id') and line.artwork_project_id
                     has_artwork_file = hasattr(line, 'artwork_file_name') and line.artwork_file_name
+                    if not has_artwork_file:
+                        has_artwork_file = bool(request.env['ir.attachment'].sudo().search([
+                            ('res_model', '=', 'sale.order.line'),
+                            ('res_id', '=', line.id),
+                            '|', ('mimetype', '=', 'application/pdf'), ('name', 'ilike', '%.pdf'),
+                        ], limit=1))
                     
                     product_name = (line.product_id.name or '').lower() if line.product_id else ''
                     line_name = (line.name or '').lower()
@@ -1966,8 +1972,8 @@ class ArtworkUploaderController(http.Controller):
                             'garmentColors': [],
                             'garmentColorName': '',
                             'inkColorName': '',
-                            'hasPdf': bool(line.artwork_file_name),
-                            'pdfFileName': line.artwork_file_name if hasattr(line, 'artwork_file_name') else '',
+                            'hasPdf': bool(has_artwork_file),
+                            'pdfFileName': line.artwork_file_name if hasattr(line, 'artwork_file_name') and line.artwork_file_name else 'artwork.pdf',
                             'state': order.state or 'draft',
                             'createdDate': order.date_order.isoformat() if order.date_order else '',
                         })
@@ -2079,11 +2085,51 @@ class ArtworkUploaderController(http.Controller):
             if line.order_id.partner_id.id != partner.id:
                 return request.make_response('Access denied', status=403)
             
-            if not hasattr(line, 'artwork_files_datas') or not line.artwork_files_datas:
+            pdf_data = None
+            filename = 'artwork.pdf'
+
+            if hasattr(line, 'artwork_files_datas') and line.artwork_files_datas:
+                pdf_data = base64.b64decode(line.artwork_files_datas)
+                filename = line.artwork_file_name if hasattr(line, 'artwork_file_name') and line.artwork_file_name else 'artwork.pdf'
+                _logger.info(f"📄 Order PDF found via artwork_files_datas for line {line_id}")
+
+            if not pdf_data:
+                attachment = request.env['ir.attachment'].sudo().search([
+                    ('res_model', '=', 'sale.order.line'),
+                    ('res_id', '=', line_id),
+                    ('mimetype', '=', 'application/pdf'),
+                ], order='id desc', limit=1)
+                if not attachment:
+                    attachment = request.env['ir.attachment'].sudo().search([
+                        ('res_model', '=', 'sale.order.line'),
+                        ('res_id', '=', line_id),
+                        ('name', 'ilike', '%.pdf'),
+                    ], order='id desc', limit=1)
+                if attachment and attachment.datas:
+                    pdf_data = base64.b64decode(attachment.datas)
+                    filename = attachment.name or 'artwork.pdf'
+                    _logger.info(f"📄 Order PDF found via ir.attachment #{attachment.id} for line {line_id} (Cloud Storage/Dropbox)")
+
+            if not pdf_data:
+                so_attachment = request.env['ir.attachment'].sudo().search([
+                    ('res_model', '=', 'sale.order'),
+                    ('res_id', '=', line.order_id.id),
+                    ('mimetype', '=', 'application/pdf'),
+                ], order='id desc', limit=1)
+                if not so_attachment:
+                    so_attachment = request.env['ir.attachment'].sudo().search([
+                        ('res_model', '=', 'sale.order'),
+                        ('res_id', '=', line.order_id.id),
+                        ('name', 'ilike', '%.pdf'),
+                    ], order='id desc', limit=1)
+                if so_attachment and so_attachment.datas:
+                    pdf_data = base64.b64decode(so_attachment.datas)
+                    filename = so_attachment.name or 'artwork.pdf'
+                    _logger.info(f"📄 Order PDF found via sale.order ir.attachment #{so_attachment.id} for line {line_id}")
+
+            if not pdf_data:
+                _logger.warning(f"❌ No PDF found for order line {line_id} — checked artwork_files_datas, line attachments, and order attachments")
                 return request.make_response('No PDF available', status=404)
-            
-            pdf_data = base64.b64decode(line.artwork_files_datas)
-            filename = line.artwork_file_name if hasattr(line, 'artwork_file_name') and line.artwork_file_name else 'artwork.pdf'
             
             headers = [
                 ('Content-Type', 'application/pdf'),
