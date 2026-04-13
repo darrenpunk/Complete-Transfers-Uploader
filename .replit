@@ -9,7 +9,7 @@ packages = ["imagemagick", "ghostscript", "poppler_utils", "pdf2svg", "librsvg",
 [deployment]
 deploymentTarget = "autoscale"
 build = ["npm", "run", "build"]
-run = ["node", "dist/index.js"]
+run = ["node", "--max-old-space-size=384", "--expose-gc", "dist/index.js"]
 
 [env]
 PORT = "5000"
@@ -58,5 +58,4 @@ ADMIN_PASSWORD = "admin123"
 
 [userenv.production]
 NODE_ENV = "production"
-NODE_OPTIONS = "--max-old-space-size=384 --expose-gc"
 MALLOC_ARENA_MAX = "2"
