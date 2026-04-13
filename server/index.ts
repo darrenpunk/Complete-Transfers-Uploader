@@ -445,7 +445,7 @@ async function main() {
         const tmpDir = '/tmp';
         const now = Date.now();
         const maxAge = 10 * 60 * 1000;
-        const prefixes = ['canvas_el_', 'gs_', 'magick-', 'inkscape_', 'rsvg_', 'pdf_gen_', 'recolored_'];
+        const prefixes = ['canvas_el_', 'gs_', 'magick-', 'inkscape_', 'rsvg_', 'pdf_gen_', 'recolored_', 'dtf_in_', 'dtf_out_', 'mixed_check_', 'cmyk_', 'rgb_', 'bounds_'];
         const entries = fs.readdirSync(tmpDir);
         let cleaned = 0;
         for (const entry of entries) {

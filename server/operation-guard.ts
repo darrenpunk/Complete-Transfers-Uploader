@@ -1,9 +1,12 @@
 import type { Response } from 'express';
 
-const MAX_CONCURRENT_HEAVY = 2;
-const MAX_QUEUE_SIZE = 10;
+const MAX_CONCURRENT_HEAVY = 1;
+const MAX_QUEUE_SIZE = 8;
 const QUEUE_TIMEOUT_MS = 60_000;
-const STALE_OP_TIMEOUT_MS = 180_000;
+const STALE_OP_TIMEOUT_MS = 120_000;
+
+const MEMORY_REJECT_MB = 480;
+const MEMORY_SERIAL_MB = 440;
 
 interface QueueEntry {
   resolve: () => void;
@@ -16,6 +19,7 @@ interface ActiveOp {
   id: number;
   label: string;
   startedAt: number;
+  memAtStart: number;
 }
 
 let nextId = 1;
@@ -41,10 +45,15 @@ function cleanStaleOps() {
 }
 
 function drainQueue() {
+  const mem = getMemoryUsage();
+  if (mem.rssMB > MEMORY_SERIAL_MB && activeOps.length > 0) {
+    return;
+  }
   while (activeOps.length < MAX_CONCURRENT_HEAVY && queue.length > 0) {
     const entry = queue.shift()!;
     clearTimeout(entry.timer);
-    activeOps.push({ id: nextId++, label: entry.label, startedAt: Date.now() });
+    const startMem = getMemoryUsage().rssMB;
+    activeOps.push({ id: nextId++, label: entry.label, startedAt: Date.now(), memAtStart: startMem });
     entry.resolve();
   }
 }
@@ -57,7 +66,9 @@ function createRelease(opId: number, label: string): () => void {
     const idx = activeOps.findIndex(op => op.id === opId);
     if (idx >= 0) {
       const elapsed = Math.round((Date.now() - activeOps[idx].startedAt) / 1000);
-      console.log(`[OP-GUARD] Released "${label}" after ${elapsed}s (active: ${activeOps.length - 1}, queued: ${queue.length})`);
+      const memNow = getMemoryUsage().rssMB;
+      const memDelta = memNow - activeOps[idx].memAtStart;
+      console.log(`[OP-GUARD] Released "${label}" after ${elapsed}s (RSS: ${memNow}MB, delta: ${memDelta > 0 ? '+' : ''}${memDelta}MB, active: ${activeOps.length - 1}, queued: ${queue.length})`);
       activeOps.splice(idx, 1);
     }
     totalProcessed++;
@@ -71,9 +82,10 @@ function createRelease(opId: number, label: string): () => void {
 export async function acquireHeavyOp(label: string): Promise<() => void> {
   cleanStaleOps();
 
-  if (isMemoryCritical(1500)) {
+  const mem = getMemoryUsage();
+
+  if (mem.rssMB > MEMORY_REJECT_MB) {
     totalRejected++;
-    const mem = getMemoryUsage();
     console.error(`[OP-GUARD] REJECTED "${label}" — memory critical (RSS: ${mem.rssMB}MB, Heap: ${mem.heapUsedMB}MB)`);
     if (typeof global.gc === 'function') {
       try { global.gc(); } catch {}
@@ -81,10 +93,36 @@ export async function acquireHeavyOp(label: string): Promise<() => void> {
     throw new Error('Server is under heavy load. Please wait a moment and try again.');
   }
 
+  if (mem.rssMB > MEMORY_SERIAL_MB && activeOps.length > 0) {
+    if (queue.length >= MAX_QUEUE_SIZE) {
+      totalRejected++;
+      console.error(`[OP-GUARD] REJECTED "${label}" — memory high + queue full (RSS: ${mem.rssMB}MB, active: ${activeOps.length}, queued: ${queue.length})`);
+      throw new Error('Server is busy processing other requests. Please try again in a moment.');
+    }
+    totalQueued++;
+    console.log(`[OP-GUARD] Queuing "${label}" — memory high, serializing (RSS: ${mem.rssMB}MB, active: ${activeOps.length}, queued: ${queue.length + 1})`);
+    return new Promise<() => void>((resolve, reject) => {
+      const timer = setTimeout(() => {
+        const idx = queue.findIndex(e => e.timer === timer);
+        if (idx >= 0) queue.splice(idx, 1);
+        reject(new Error('Request timed out waiting in queue. Please try again.'));
+      }, QUEUE_TIMEOUT_MS);
+      queue.push({
+        resolve: () => {
+          const opId = activeOps[activeOps.length - 1]?.id ?? nextId;
+          resolve(createRelease(opId, label));
+        },
+        reject,
+        timer,
+        label,
+      });
+    });
+  }
+
   if (activeOps.length < MAX_CONCURRENT_HEAVY) {
     const opId = nextId++;
-    activeOps.push({ id: opId, label, startedAt: Date.now() });
-    console.log(`[OP-GUARD] Started "${label}" (active: ${activeOps.length}/${MAX_CONCURRENT_HEAVY})`);
+    activeOps.push({ id: opId, label, startedAt: Date.now(), memAtStart: mem.rssMB });
+    console.log(`[OP-GUARD] Started "${label}" (active: ${activeOps.length}/${MAX_CONCURRENT_HEAVY}, RSS: ${mem.rssMB}MB)`);
     return createRelease(opId, label);
   }
 
@@ -95,7 +133,7 @@ export async function acquireHeavyOp(label: string): Promise<() => void> {
   }
 
   totalQueued++;
-  console.log(`[OP-GUARD] Queuing "${label}" (active: ${activeOps.length}, queued: ${queue.length + 1})`);
+  console.log(`[OP-GUARD] Queuing "${label}" (active: ${activeOps.length}, queued: ${queue.length + 1}, RSS: ${mem.rssMB}MB)`);
 
   return new Promise<() => void>((resolve, reject) => {
     const timer = setTimeout(() => {
@@ -165,8 +203,12 @@ export function getOperationStats() {
 setInterval(cleanStaleOps, 30_000);
 
 setInterval(() => {
-  if (typeof global.gc === 'function' && isMemoryCritical(1024)) {
+  const mem = getMemoryUsage();
+  if (mem.rssMB > 420) {
+    console.log(`[OP-GUARD] Memory watchdog: RSS ${mem.rssMB}MB, Heap ${mem.heapUsedMB}/${mem.heapTotalMB}MB, External ${mem.externalMB}MB, Active ops: ${activeOps.length}, Queued: ${queue.length}`);
+  }
+  if (typeof global.gc === 'function' && mem.rssMB > 420) {
     console.log('[OP-GUARD] Memory pressure detected, triggering GC');
     global.gc();
   }
-}, 60_000);
+}, 30_000);

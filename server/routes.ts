@@ -15,13 +15,17 @@ function getSmartPreviewDPI(pdfPath: string): number {
   try {
     const fileSizeMB = fs.existsSync(pdfPath) ? fs.statSync(pdfPath).size / (1024 * 1024) : 0;
     const mem = getMemoryUsage();
-    const memPressure = mem.rssMB > 1500;
+    const memPressure = mem.rssMB > 440;
 
     if (fileSizeMB > 50 || memPressure) {
       console.log(`[SMART-DPI] Using 72 DPI (file: ${fileSizeMB.toFixed(1)}MB, RSS: ${mem.rssMB}MB)`);
       return 72;
     }
     if (fileSizeMB > 20) {
+      console.log(`[SMART-DPI] Using 72 DPI (file: ${fileSizeMB.toFixed(1)}MB — large file safety)`);
+      return 72;
+    }
+    if (fileSizeMB > 10) {
       console.log(`[SMART-DPI] Using 96 DPI (file: ${fileSizeMB.toFixed(1)}MB)`);
       return 96;
     }
@@ -123,7 +127,7 @@ async function extractOriginalPNG(pdfPath: string, outputPrefix: string): Promis
       const timestamp = Date.now();
       const outputPath = path.join(path.dirname(pdfPath), `${path.basename(outputPrefix)}_direct_${timestamp}.png`);
       
-      const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r${renderDPI} -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -dMaxBitmap=150000000 -sOutputFile="${outputPath}" "${pdfPath}"`;
+      const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r${renderDPI} -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -dMaxBitmap=80000000 -sOutputFile="${outputPath}" "${pdfPath}"`;
       
       console.log('📋 Ghostscript direct rendering command:', gsCommand);
       await execAsync(gsCommand, { timeout: gsTimeout });
@@ -165,7 +169,7 @@ async function extractOriginalPNG(pdfPath: string, outputPrefix: string): Promis
           console.log('🔄 Retrying at 96 DPI as fallback...');
           const timestamp = Date.now();
           const fallbackPath = path.join(path.dirname(pdfPath), `${path.basename(outputPrefix)}_direct_${timestamp}.png`);
-          const fallbackCmd = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r96 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -dMaxBitmap=150000000 -sOutputFile="${fallbackPath}" "${pdfPath}"`;
+          const fallbackCmd = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r96 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -dMaxBitmap=80000000 -sOutputFile="${fallbackPath}" "${pdfPath}"`;
           await execAsync(fallbackCmd, { timeout: 60000 });
           if (fs.existsSync(fallbackPath)) {
             const stats = fs.statSync(fallbackPath);
@@ -343,8 +347,8 @@ async function extractRasterImageWithDeduplication(pdfPath: string, outputPrefix
       try {
         extractedFile = path.join(path.dirname(pdfPath), `${outputPrefix}_clean_logo.png`);
         // Use 200 DPI resolution with sharper rendering for clean vectorization
-        const cleanLogoCommand = `gs -sDEVICE=png16m -dNOPAUSE -dBATCH -dSAFER -r200 -dFirstPage=1 -dLastPage=1 -dAutoRotatePages=/None -dGraphicsAlphaBits=1 -dTextAlphaBits=1 -sOutputFile="${extractedFile}" "${pdfPath}"`;
-        console.log('🏃 Method 3: Running clean logo extraction for vectorization (200 DPI fallback):', cleanLogoCommand);
+        const cleanLogoCommand = `gs -sDEVICE=png16m -dNOPAUSE -dBATCH -dSAFER -r150 -dFirstPage=1 -dLastPage=1 -dAutoRotatePages=/None -dGraphicsAlphaBits=1 -dTextAlphaBits=1 -dMaxBitmap=80000000 -sOutputFile="${extractedFile}" "${pdfPath}"`;
+        console.log('🏃 Method 3: Running clean logo extraction for vectorization (150 DPI fallback):', cleanLogoCommand);
         
         const { stdout, stderr } = await execAsync(cleanLogoCommand);
         console.log('📤 Clean logo extraction stdout:', stdout);
@@ -366,7 +370,7 @@ async function extractRasterImageWithDeduplication(pdfPath: string, outputPrefix
     if (!extractedFile) {
       try {
         extractedFile = path.join(path.dirname(pdfPath), `${outputPrefix}_rendered.png`);
-        const gsCommand = `gs -sDEVICE=png16m -dNOPAUSE -dBATCH -dSAFER -r200 -dFirstPage=1 -dLastPage=1 -dAutoRotatePages=/None -dFitPage -sOutputFile="${extractedFile}" "${pdfPath}"`;
+        const gsCommand = `gs -sDEVICE=png16m -dNOPAUSE -dBATCH -dSAFER -r150 -dFirstPage=1 -dLastPage=1 -dAutoRotatePages=/None -dFitPage -dMaxBitmap=80000000 -sOutputFile="${extractedFile}" "${pdfPath}"`;
         console.log('🏃 Method 3: Running standard Ghostscript rendering:', gsCommand);
         
         const { stdout, stderr } = await execAsync(gsCommand);
@@ -2964,7 +2968,7 @@ export async function registerRoutes(app: express.Application) {
                 // Lower DPI dramatically reduces memory usage for complex vector PDFs (prevents OOM in production).
                 // SIGKILL ensures GS is immediately terminated on timeout (SIGTERM is ignored by GS during rendering).
                 const dtfDPI = getSmartPreviewDPI(pdfPath);
-                const dtfGsCmd = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r${dtfDPI} -dMaxBitmap=150000000 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`;
+                const dtfGsCmd = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r${dtfDPI} -dMaxBitmap=80000000 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`;
                 await execAsync(dtfGsCmd, { timeout: 60000, killSignal: 'SIGKILL' });
 
                 if (fs.existsSync(pngPath) && fs.statSync(pngPath).size > 0) {
