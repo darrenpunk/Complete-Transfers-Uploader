@@ -37,23 +37,43 @@ let totalRejected = 0;
 
 function getContainerMemoryMB(): number {
   try {
-    const cgroupPaths = [
+    const statPaths = [
+      '/sys/fs/cgroup/memory/memory.stat',
+      '/sys/fs/cgroup/memory.stat',
+    ];
+    const usagePaths = [
       '/sys/fs/cgroup/memory/memory.usage_in_bytes',
       '/sys/fs/cgroup/memory.current',
     ];
-    for (const p of cgroupPaths) {
+
+    let totalUsageBytes = 0;
+    for (const p of usagePaths) {
       if (fs.existsSync(p)) {
-        const bytes = parseInt(fs.readFileSync(p, 'utf8').trim(), 10);
-        if (!isNaN(bytes) && bytes > 0) {
-          return Math.round(bytes / 1024 / 1024);
-        }
+        const val = parseInt(fs.readFileSync(p, 'utf8').trim(), 10);
+        if (!isNaN(val) && val > 0) { totalUsageBytes = val; break; }
       }
     }
-  } catch {}
-  try {
-    const memInfo = execSync("free -m | awk 'NR==2{print $3}'", { encoding: 'utf8', timeout: 2000 }).trim();
-    const used = parseInt(memInfo, 10);
-    if (!isNaN(used) && used > 0) return used;
+
+    if (totalUsageBytes > 0) {
+      let cacheBytes = 0;
+      for (const sp of statPaths) {
+        if (fs.existsSync(sp)) {
+          const statContent = fs.readFileSync(sp, 'utf8');
+          const inactiveMatch = statContent.match(/total_inactive_file\s+(\d+)/);
+          if (inactiveMatch) {
+            cacheBytes = parseInt(inactiveMatch[1], 10);
+          } else {
+            const cacheMatch = statContent.match(/^cache\s+(\d+)/m);
+            if (cacheMatch) {
+              cacheBytes = parseInt(cacheMatch[1], 10);
+            }
+          }
+          break;
+        }
+      }
+      const realUsage = Math.round((totalUsageBytes - cacheBytes) / 1024 / 1024);
+      return Math.max(realUsage, getMemoryUsage().rssMB);
+    }
   } catch {}
   return getMemoryUsage().rssMB;
 }
