@@ -6035,7 +6035,7 @@ export async function registerRoutes(app: express.Application) {
     }
   });
 
-  app.post('/api/projects/:projectId/logos/from-chunked', guardRoute('chunked-upload'), async (req, res) => {
+  app.post('/api/projects/:projectId/logos/from-chunked', async (req, res) => {
     try {
       const projectId = req.params.projectId;
       const { filename, originalName, mimetype, size } = req.body;

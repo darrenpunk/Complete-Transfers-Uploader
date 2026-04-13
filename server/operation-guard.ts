@@ -2,8 +2,8 @@ import type { Response } from 'express';
 
 const MAX_CONCURRENT_HEAVY = 1;
 const MAX_QUEUE_SIZE = 8;
-const QUEUE_TIMEOUT_MS = 60_000;
-const STALE_OP_TIMEOUT_MS = 120_000;
+const QUEUE_TIMEOUT_MS = 120_000;
+const STALE_OP_TIMEOUT_MS = 180_000;
 
 const MEMORY_REJECT_MB = 480;
 const MEMORY_SERIAL_MB = 440;
