@@ -2947,7 +2947,7 @@ export async function registerRoutes(app: express.Application) {
                             widthMm: bw * 0.352778,
                             heightMm: bh * 0.352778
                           };
-                          console.log(`✅ DTF using content bounds: ${dtfContentBounds.widthMm.toFixed(1)}×${dtfContentBounds.heightMm.toFixed(1)}mm (instead of full page ${pageWmm.toFixed(0)}×${pageHmm.toFixed(0)}mm)`);
+                          console.log(`✅ DTF GS content bounds: ${dtfContentBounds.widthMm.toFixed(1)}×${dtfContentBounds.heightMm.toFixed(1)}mm (instead of full page ${pageWmm.toFixed(0)}×${pageHmm.toFixed(0)}mm)`);
                         } else {
                           console.log(`⚠️ DTF GS bbox too small or empty — using full page as bounds`);
                         }
@@ -2956,6 +2956,53 @@ export async function registerRoutes(app: express.Application) {
                       }
                     } catch (gsBboxErr) {
                       console.log(`⚠️ DTF GS bbox extraction failed, using full page:`, gsBboxErr);
+                    }
+
+                    if (dtfContentBounds) {
+                      try {
+                        const alphaPng = pdfPath + '.alpha_check.png';
+                        execSync(`gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pngalpha -r36 -dMaxBitmap=40000000 -sOutputFile="${alphaPng}" "${pdfPath}"`, { timeout: 15000 });
+                        if (fs.existsSync(alphaPng) && fs.statSync(alphaPng).size > 0) {
+                          const origDims = execSync(`identify -format "%w %h" "${alphaPng}"`, { encoding: 'utf8', timeout: 5000 }).trim();
+                          const [origW, origH] = origDims.split(/\s+/).map(Number);
+                          const trimInfo = execSync(`convert "${alphaPng}" -trim -format "%w %h %X %Y" info:`, { encoding: 'utf8', timeout: 5000 }).trim();
+                          const parts = trimInfo.split(/\s+/).map(Number);
+                          if (parts.length >= 4 && parts[0] > 0 && parts[1] > 0 && origW > 0 && origH > 0) {
+                            const [trimW, trimH, trimOffX, trimOffY] = parts;
+                            const scaleX = pageWidthPts / origW;
+                            const scaleY = pageHeightPts / origH;
+                            const alphaXMin = Math.abs(trimOffX) * scaleX;
+                            const alphaYTop = Math.abs(trimOffY) * scaleY;
+                            const alphaW = trimW * scaleX;
+                            const alphaH = trimH * scaleY;
+                            const alphaYMin = pageHeightPts - alphaYTop - alphaH;
+                            const alphaArea = alphaW * alphaH;
+                            const gsBoundsArea = dtfContentBounds.width * dtfContentBounds.height;
+
+                            console.log(`🔍 DTF alpha-trim bounds: ${(alphaW * 0.352778).toFixed(1)}×${(alphaH * 0.352778).toFixed(1)}mm vs GS bbox: ${dtfContentBounds.widthMm.toFixed(1)}×${dtfContentBounds.heightMm.toFixed(1)}mm`);
+
+                            if (alphaArea > gsBoundsArea * 1.15) {
+                              const unionXMin = Math.min(dtfContentBounds.xMin, alphaXMin);
+                              const unionYMin = Math.min(dtfContentBounds.yMin, alphaYMin);
+                              const unionXMax = Math.max(dtfContentBounds.xMax, alphaXMin + alphaW);
+                              const unionYMax = Math.max(dtfContentBounds.yMax, alphaYMin + alphaH);
+                              const unionW = unionXMax - unionXMin;
+                              const unionH = unionYMax - unionYMin;
+                              dtfContentBounds = {
+                                xMin: unionXMin, yMin: unionYMin,
+                                xMax: unionXMax, yMax: unionYMax,
+                                width: unionW, height: unionH,
+                                widthMm: unionW * 0.352778,
+                                heightMm: unionH * 0.352778
+                              };
+                              console.log(`⚠️ DTF GS bbox missed white/light content — expanded to alpha-trim bounds: ${dtfContentBounds.widthMm.toFixed(1)}×${dtfContentBounds.heightMm.toFixed(1)}mm`);
+                            }
+                          }
+                          try { fs.unlinkSync(alphaPng); } catch {}
+                        }
+                      } catch (alphaErr) {
+                        console.log(`⚠️ DTF alpha-trim check failed (non-critical):`, alphaErr);
+                      }
                     }
                   }
 
@@ -3158,22 +3205,58 @@ export async function registerRoutes(app: express.Application) {
                           const hiresMatch = bboxOutput.match(/%%HiResBoundingBox:\s*([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)/);
                           if (hiresMatch) {
                             const [, xMin, yMin, xMax, yMax] = hiresMatch.map(parseFloat);
-                            const widthPt = xMax - xMin;
-                            const heightPt = yMax - yMin;
-                            const widthMm = widthPt * 0.352778;
-                            const heightMm = heightPt * 0.352778;
+                            let widthPt = xMax - xMin;
+                            let heightPt = yMax - yMin;
+                            let finalXMin = xMin, finalYMin = yMin, finalXMax = xMax, finalYMax = yMax;
                             
-                            console.log(`📐 Complex file PDF bounds: ${widthMm.toFixed(1)}mm x ${heightMm.toFixed(1)}mm`);
+                            console.log(`📐 Complex file GS bbox: ${(widthPt * 0.352778).toFixed(1)}mm x ${(heightPt * 0.352778).toFixed(1)}mm`);
+                            
+                            const pageArea = complexPageSize.width * complexPageSize.height;
+                            const gsArea = widthPt * heightPt;
+                            if (gsArea / pageArea < 0.90) {
+                              try {
+                                const alphaPng = pdfPath + '.alpha_bounds.png';
+                                execSync(`gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pngalpha -r36 -dMaxBitmap=40000000 -sOutputFile="${alphaPng}" "${pdfPath}"`, { timeout: 15000 });
+                                if (fs.existsSync(alphaPng) && fs.statSync(alphaPng).size > 0) {
+                                  const origDimsC = execSync(`identify -format "%w %h" "${alphaPng}"`, { encoding: 'utf8', timeout: 5000 }).trim();
+                                  const [origW, origH] = origDimsC.split(/\s+/).map(Number);
+                                  const trimInfo = execSync(`convert "${alphaPng}" -trim -format "%w %h %X %Y" info:`, { encoding: 'utf8', timeout: 5000 }).trim();
+                                  const parts = trimInfo.split(/\s+/).map(Number);
+                                  if (parts.length >= 4 && parts[0] > 0 && parts[1] > 0 && origW > 0 && origH > 0) {
+                                    const [trimW, trimH, trimOffX, trimOffY] = parts;
+                                    const scX = complexPageSize.width / origW;
+                                    const scY = complexPageSize.height / origH;
+                                    const aXMin = Math.abs(trimOffX) * scX;
+                                    const aYTop = Math.abs(trimOffY) * scY;
+                                    const aW = trimW * scX;
+                                    const aH = trimH * scY;
+                                    const aYMin = complexPageSize.height - aYTop - aH;
+                                    if (aW * aH > gsArea * 1.15) {
+                                      finalXMin = Math.min(finalXMin, aXMin);
+                                      finalYMin = Math.min(finalYMin, aYMin);
+                                      finalXMax = Math.max(finalXMax, aXMin + aW);
+                                      finalYMax = Math.max(finalYMax, aYMin + aH);
+                                      widthPt = finalXMax - finalXMin;
+                                      heightPt = finalYMax - finalYMin;
+                                      console.log(`⚠️ GS bbox missed white content — expanded to alpha-trim: ${(widthPt * 0.352778).toFixed(1)}×${(heightPt * 0.352778).toFixed(1)}mm`);
+                                    }
+                                  }
+                                  try { fs.unlinkSync(alphaPng); } catch {}
+                                }
+                              } catch (alphaErr) {
+                                console.log(`⚠️ Alpha-trim bounds check failed (non-critical):`, alphaErr);
+                              }
+                            }
                             
                             (file as any).originalPdfBounds = {
-                              xMin: xMin,
-                              yMin: yMin,
-                              xMax: xMax,
-                              yMax: yMax,
+                              xMin: finalXMin,
+                              yMin: finalYMin,
+                              xMax: finalXMax,
+                              yMax: finalYMax,
                               width: widthPt,
                               height: heightPt,
-                              widthMm: widthMm,
-                              heightMm: heightMm
+                              widthMm: widthPt * 0.352778,
+                              heightMm: heightPt * 0.352778
                             };
                           }
                         }
@@ -3187,7 +3270,7 @@ export async function registerRoutes(app: express.Application) {
                       
                       try {
                         const smartDPI = getSmartPreviewDPI(pdfPath);
-                        const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r${smartDPI} -dMaxBitmap=150000000 -dAlignToPixels=0 -dGridFitTT=2 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`;
+                        const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r${smartDPI} -dMaxBitmap=80000000 -dAlignToPixels=0 -dGridFitTT=2 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`;
                         execSync(gsCommand, { encoding: 'buffer', timeout: 120000 });
                         
                         // CRITICAL: Crop PNG to content bounds if bounds are available
@@ -3412,23 +3495,63 @@ export async function registerRoutes(app: express.Application) {
                       const hiresMatch = bboxOutput.match(/%%HiResBoundingBox:\s*([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)/);
                       if (hiresMatch) {
                         const [, xMin, yMin, xMax, yMax] = hiresMatch.map(parseFloat);
-                        const widthPt = xMax - xMin;
-                        const heightPt = yMax - yMin;
-                        const widthMm = widthPt * 0.352778;
-                        const heightMm = heightPt * 0.352778;
+                        let widthPt = xMax - xMin;
+                        let heightPt = yMax - yMin;
+                        let finalXMin = xMin, finalYMin = yMin, finalXMax = xMax, finalYMax = yMax;
                         
-                        console.log(`📐 Complex RGB file PDF bounds: ${widthMm.toFixed(1)}mm x ${heightMm.toFixed(1)}mm`);
+                        console.log(`📐 Complex RGB file GS bbox: ${(widthPt * 0.352778).toFixed(1)}mm x ${(heightPt * 0.352778).toFixed(1)}mm`);
                         
-                        // Store original PDF bounds for canvas display sizing
+                        try {
+                          const { PDFDocument: PDFDocRgb } = await import('pdf-lib');
+                          const rgbPdfBytes = fs.readFileSync(pdfPath);
+                          const rgbPdfDoc = await PDFDocRgb.load(rgbPdfBytes);
+                          const rgbPage = rgbPdfDoc.getPages()[0];
+                          const rgbPageSize = rgbPage.getSize();
+                          const rgbPageArea = rgbPageSize.width * rgbPageSize.height;
+                          const gsArea = widthPt * heightPt;
+                          if (gsArea / rgbPageArea < 0.90) {
+                            const alphaPng = pdfPath + '.alpha_rgb.png';
+                            execSync(`gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pngalpha -r36 -dMaxBitmap=40000000 -sOutputFile="${alphaPng}" "${pdfPath}"`, { timeout: 15000 });
+                            if (fs.existsSync(alphaPng) && fs.statSync(alphaPng).size > 0) {
+                              const origDimsR = execSync(`identify -format "%w %h" "${alphaPng}"`, { encoding: 'utf8', timeout: 5000 }).trim();
+                              const [origW, origH] = origDimsR.split(/\s+/).map(Number);
+                              const trimInfo = execSync(`convert "${alphaPng}" -trim -format "%w %h %X %Y" info:`, { encoding: 'utf8', timeout: 5000 }).trim();
+                              const parts = trimInfo.split(/\s+/).map(Number);
+                              if (parts.length >= 4 && parts[0] > 0 && parts[1] > 0 && origW > 0 && origH > 0) {
+                                const [trimW, trimH, trimOffX, trimOffY] = parts;
+                                const scX = rgbPageSize.width / origW;
+                                const scY = rgbPageSize.height / origH;
+                                const aXMin = Math.abs(trimOffX) * scX;
+                                const aYTop = Math.abs(trimOffY) * scY;
+                                const aW = trimW * scX;
+                                const aH = trimH * scY;
+                                const aYMin = rgbPageSize.height - aYTop - aH;
+                                if (aW * aH > gsArea * 1.15) {
+                                  finalXMin = Math.min(finalXMin, aXMin);
+                                  finalYMin = Math.min(finalYMin, aYMin);
+                                  finalXMax = Math.max(finalXMax, aXMin + aW);
+                                  finalYMax = Math.max(finalYMax, aYMin + aH);
+                                  widthPt = finalXMax - finalXMin;
+                                  heightPt = finalYMax - finalYMin;
+                                  console.log(`⚠️ GS bbox missed white content in RGB file — expanded: ${(widthPt * 0.352778).toFixed(1)}×${(heightPt * 0.352778).toFixed(1)}mm`);
+                                }
+                              }
+                              try { fs.unlinkSync(alphaPng); } catch {}
+                            }
+                          }
+                        } catch (alphaErr) {
+                          console.log(`⚠️ Alpha-trim RGB bounds check failed (non-critical):`, alphaErr);
+                        }
+                        
                         (file as any).originalPdfBounds = {
-                          xMin: xMin,
-                          yMin: yMin,
-                          xMax: xMax,
-                          yMax: yMax,
+                          xMin: finalXMin,
+                          yMin: finalYMin,
+                          xMax: finalXMax,
+                          yMax: finalYMax,
                           width: widthPt,
                           height: heightPt,
-                          widthMm: widthMm,
-                          heightMm: heightMm
+                          widthMm: widthPt * 0.352778,
+                          heightMm: heightPt * 0.352778
                         };
                       }
                     } catch (bboxError) {
@@ -3441,7 +3564,7 @@ export async function registerRoutes(app: express.Application) {
                     
                     try {
                       const smartDPI2 = getSmartPreviewDPI(pdfPath);
-                      const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r${smartDPI2} -dMaxBitmap=150000000 -dAlignToPixels=0 -dGridFitTT=2 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`;
+                      const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r${smartDPI2} -dMaxBitmap=80000000 -dAlignToPixels=0 -dGridFitTT=2 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`;
                       execSync(gsCommand, { encoding: 'buffer', timeout: 120000 });
                       
                       if (fs.existsSync(pngPath) && fs.statSync(pngPath).size > 0) {
