@@ -27,7 +27,7 @@ Current focus: Core functionality over complex color management features.
 
 ### System Design Choices
 - **Storage Management**: Single shared `DatabaseStorage` instance backed by PostgreSQL for all persistent data (projects, logos, canvas elements, vectorization requests, support tickets).
-- **Operation Guard**: Concurrency limiter for heavy operations (PDF generation, file uploads, SVG extraction) with queueing and memory-based rejection to prevent OOM.
+- **Operation Guard**: Concurrency limiter for heavy operations (PDF generation, file uploads, SVG extraction) with queueing and memory-based rejection to prevent OOM. Uses **container-level cgroup memory monitoring** (not just Node RSS) to accurately track total memory including child processes (Ghostscript, ImageMagick). Non-essential operations (MixedContentDetector, preflight checks) are automatically skipped when container memory exceeds 350MB. Production runs with `--max-old-space-size=384` and `MALLOC_ARENA_MAX=2` to limit Node heap and glibc arena fragmentation.
 - **Smart DPI System**: Dynamically selects Ghostscript rendering DPI based on PDF file size and memory pressure, with bitmap allocation caps.
 - **Crash Logging System**: Persistent PostgreSQL table records server lifecycle events, accessible via an admin endpoint.
 - **Color Workflow Isolation**: `ColorWorkflowManager` for robust vector/raster color handling and CMYK preservation.
