@@ -2958,52 +2958,7 @@ export async function registerRoutes(app: express.Application) {
                       console.log(`⚠️ DTF GS bbox extraction failed, using full page:`, gsBboxErr);
                     }
 
-                    if (dtfContentBounds) {
-                      try {
-                        const alphaPng = pdfPath + '.alpha_check.png';
-                        execSync(`gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pngalpha -r36 -dMaxBitmap=40000000 -sOutputFile="${alphaPng}" "${pdfPath}"`, { timeout: 15000 });
-                        if (fs.existsSync(alphaPng) && fs.statSync(alphaPng).size > 0) {
-                          const origDims = execSync(`identify -format "%w %h" "${alphaPng}"`, { encoding: 'utf8', timeout: 5000 }).trim();
-                          const [origW, origH] = origDims.split(/\s+/).map(Number);
-                          const trimInfo = execSync(`convert "${alphaPng}" -trim -format "%w %h %X %Y" info:`, { encoding: 'utf8', timeout: 5000 }).trim();
-                          const parts = trimInfo.split(/\s+/).map(Number);
-                          if (parts.length >= 4 && parts[0] > 0 && parts[1] > 0 && origW > 0 && origH > 0) {
-                            const [trimW, trimH, trimOffX, trimOffY] = parts;
-                            const scaleX = pageWidthPts / origW;
-                            const scaleY = pageHeightPts / origH;
-                            const alphaXMin = Math.abs(trimOffX) * scaleX;
-                            const alphaYTop = Math.abs(trimOffY) * scaleY;
-                            const alphaW = trimW * scaleX;
-                            const alphaH = trimH * scaleY;
-                            const alphaYMin = pageHeightPts - alphaYTop - alphaH;
-                            const alphaArea = alphaW * alphaH;
-                            const gsBoundsArea = dtfContentBounds.width * dtfContentBounds.height;
-
-                            console.log(`🔍 DTF alpha-trim bounds: ${(alphaW * 0.352778).toFixed(1)}×${(alphaH * 0.352778).toFixed(1)}mm vs GS bbox: ${dtfContentBounds.widthMm.toFixed(1)}×${dtfContentBounds.heightMm.toFixed(1)}mm`);
-
-                            if (alphaArea > gsBoundsArea * 1.15) {
-                              const unionXMin = Math.min(dtfContentBounds.xMin, alphaXMin);
-                              const unionYMin = Math.min(dtfContentBounds.yMin, alphaYMin);
-                              const unionXMax = Math.max(dtfContentBounds.xMax, alphaXMin + alphaW);
-                              const unionYMax = Math.max(dtfContentBounds.yMax, alphaYMin + alphaH);
-                              const unionW = unionXMax - unionXMin;
-                              const unionH = unionYMax - unionYMin;
-                              dtfContentBounds = {
-                                xMin: unionXMin, yMin: unionYMin,
-                                xMax: unionXMax, yMax: unionYMax,
-                                width: unionW, height: unionH,
-                                widthMm: unionW * 0.352778,
-                                heightMm: unionH * 0.352778
-                              };
-                              console.log(`⚠️ DTF GS bbox missed white/light content — expanded to alpha-trim bounds: ${dtfContentBounds.widthMm.toFixed(1)}×${dtfContentBounds.heightMm.toFixed(1)}mm`);
-                            }
-                          }
-                          try { fs.unlinkSync(alphaPng); } catch {}
-                        }
-                      } catch (alphaErr) {
-                        console.log(`⚠️ DTF alpha-trim check failed (non-critical):`, alphaErr);
-                      }
-                    }
+                    (file as any)._dtfNeedsAlphaTrimCheck = !!dtfContentBounds;
                   }
 
                   (file as any).originalPdfBounds = dtfContentBounds;
@@ -3019,25 +2974,66 @@ export async function registerRoutes(app: express.Application) {
                 await execAsync(dtfGsCmd, { timeout: 60000, killSignal: 'SIGKILL' });
 
                 if (fs.existsSync(pngPath) && fs.statSync(pngPath).size > 0) {
-                  // Crop PNG to content bounds if GS detected smaller content area
                   const dtfBounds = (file as any).originalPdfBounds;
-                  if (dtfBounds && dtfBounds.xMin !== undefined) {
-                    const pageW = dtfBounds.xMin === 0 && dtfBounds.yMin === 0 ? dtfBounds.width : (dtfBounds.xMax > dtfBounds.width ? dtfBounds.xMax : null);
-                    // Only crop if content bounds are smaller than the page
+                  if ((file as any)._dtfNeedsAlphaTrimCheck && dtfBounds && dtfPageWidthPts > 0 && dtfPageHeightPts > 0) {
                     try {
                       const identifyOut = execSync(`identify -format "%w %h" "${pngPath}"`, { encoding: 'utf8', timeout: 5000 }).trim();
                       const [pngW, pngH] = identifyOut.split(' ').map(Number);
+                      if (pngW > 0 && pngH > 0) {
+                        const trimInfo = execSync(`convert "${pngPath}" -trim -format "%w %h %X %Y" info:`, { encoding: 'utf8', timeout: 5000 }).trim();
+                        const trimParts = trimInfo.split(/\s+/).map(Number);
+                        if (trimParts.length >= 4 && trimParts[0] > 0 && trimParts[1] > 0) {
+                          const [trimW, trimH, trimOffX, trimOffY] = trimParts;
+                          const scaleX = dtfPageWidthPts / pngW;
+                          const scaleY = dtfPageHeightPts / pngH;
+                          const alphaXMin = Math.abs(trimOffX) * scaleX;
+                          const alphaYMin = Math.abs(trimOffY) * scaleY;
+                          const alphaW = trimW * scaleX;
+                          const alphaH = trimH * scaleY;
+                          const alphaYMinPdf = dtfPageHeightPts - alphaYMin - alphaH;
+                          const alphaArea = alphaW * alphaH;
+                          const gsBoundsArea = dtfBounds.width * dtfBounds.height;
+                          
+                          console.log(`🔍 DTF alpha-trim: ${(alphaW * 0.352778).toFixed(1)}×${(alphaH * 0.352778).toFixed(1)}mm vs GS bbox: ${dtfBounds.widthMm.toFixed(1)}×${dtfBounds.heightMm.toFixed(1)}mm`);
+                          
+                          if (alphaArea > gsBoundsArea * 1.15) {
+                            const unionXMin = Math.min(dtfBounds.xMin, alphaXMin);
+                            const unionYMin = Math.min(dtfBounds.yMin, alphaYMinPdf);
+                            const unionXMax = Math.max(dtfBounds.xMax, alphaXMin + alphaW);
+                            const unionYMax = Math.max(dtfBounds.yMax, alphaYMinPdf + alphaH);
+                            const unionW = unionXMax - unionXMin;
+                            const unionH = unionYMax - unionYMin;
+                            (file as any).originalPdfBounds = {
+                              xMin: unionXMin, yMin: unionYMin,
+                              xMax: unionXMax, yMax: unionYMax,
+                              width: unionW, height: unionH,
+                              widthMm: unionW * 0.352778,
+                              heightMm: unionH * 0.352778
+                            };
+                            console.log(`⚠️ DTF GS bbox missed white content — expanded: ${(unionW * 0.352778).toFixed(1)}×${(unionH * 0.352778).toFixed(1)}mm`);
+                          }
+                        }
+                      }
+                    } catch (alphaTrimErr) {
+                      console.log(`⚠️ DTF alpha-trim check failed (non-critical):`, alphaTrimErr);
+                    }
+                  }
+
+                  const dtfBoundsForCrop = (file as any).originalPdfBounds;
+                  if (dtfBoundsForCrop && dtfBoundsForCrop.xMin !== undefined) {
+                    try {
+                      const identifyOut2 = execSync(`identify -format "%w %h" "${pngPath}"`, { encoding: 'utf8', timeout: 5000 }).trim();
+                      const [pngW, pngH] = identifyOut2.split(' ').map(Number);
                       if (pngW > 0 && pngH > 0 && dtfPageWidthPts > 0 && dtfPageHeightPts > 0) {
                         const scaleX = pngW / dtfPageWidthPts;
                         const scaleY = pngH / dtfPageHeightPts;
-                        // PDF bbox uses bottom-left origin; PNG uses top-left origin
-                        const cropX = Math.max(0, Math.floor(dtfBounds.xMin * scaleX));
-                        const cropYFromBottom = dtfBounds.yMin * scaleY;
-                        const cropW = Math.ceil(dtfBounds.width * scaleX);
-                        const cropH = Math.ceil(dtfBounds.height * scaleY);
+                        const cropX = Math.max(0, Math.floor(dtfBoundsForCrop.xMin * scaleX));
+                        const cropYFromBottom = dtfBoundsForCrop.yMin * scaleY;
+                        const cropW = Math.ceil(dtfBoundsForCrop.width * scaleX);
+                        const cropH = Math.ceil(dtfBoundsForCrop.height * scaleY);
                         const cropY = Math.max(0, Math.floor(pngH - cropYFromBottom - cropH));
                         
-                        const contentPageRatio = (dtfBounds.width * dtfBounds.height) / (dtfPageWidthPts * dtfPageHeightPts);
+                        const contentPageRatio = (dtfBoundsForCrop.width * dtfBoundsForCrop.height) / (dtfPageWidthPts * dtfPageHeightPts);
                         if (contentPageRatio < 0.90 && cropW > 10 && cropH > 10) {
                           console.log(`✂️ DTF cropping PNG to content: ${cropW}×${cropH}px at (${cropX},${cropY}) from ${pngW}×${pngH}px`);
                           const croppedPath = pngPath + '.crop.png';
@@ -3214,38 +3210,8 @@ export async function registerRoutes(app: express.Application) {
                             const pageArea = complexPageSize.width * complexPageSize.height;
                             const gsArea = widthPt * heightPt;
                             if (gsArea / pageArea < 0.90) {
-                              try {
-                                const alphaPng = pdfPath + '.alpha_bounds.png';
-                                execSync(`gs -dNOPAUSE -dBATCH -dSAFER -sDEVICE=pngalpha -r36 -dMaxBitmap=40000000 -sOutputFile="${alphaPng}" "${pdfPath}"`, { timeout: 15000 });
-                                if (fs.existsSync(alphaPng) && fs.statSync(alphaPng).size > 0) {
-                                  const origDimsC = execSync(`identify -format "%w %h" "${alphaPng}"`, { encoding: 'utf8', timeout: 5000 }).trim();
-                                  const [origW, origH] = origDimsC.split(/\s+/).map(Number);
-                                  const trimInfo = execSync(`convert "${alphaPng}" -trim -format "%w %h %X %Y" info:`, { encoding: 'utf8', timeout: 5000 }).trim();
-                                  const parts = trimInfo.split(/\s+/).map(Number);
-                                  if (parts.length >= 4 && parts[0] > 0 && parts[1] > 0 && origW > 0 && origH > 0) {
-                                    const [trimW, trimH, trimOffX, trimOffY] = parts;
-                                    const scX = complexPageSize.width / origW;
-                                    const scY = complexPageSize.height / origH;
-                                    const aXMin = Math.abs(trimOffX) * scX;
-                                    const aYTop = Math.abs(trimOffY) * scY;
-                                    const aW = trimW * scX;
-                                    const aH = trimH * scY;
-                                    const aYMin = complexPageSize.height - aYTop - aH;
-                                    if (aW * aH > gsArea * 1.15) {
-                                      finalXMin = Math.min(finalXMin, aXMin);
-                                      finalYMin = Math.min(finalYMin, aYMin);
-                                      finalXMax = Math.max(finalXMax, aXMin + aW);
-                                      finalYMax = Math.max(finalYMax, aYMin + aH);
-                                      widthPt = finalXMax - finalXMin;
-                                      heightPt = finalYMax - finalYMin;
-                                      console.log(`⚠️ GS bbox missed white content — expanded to alpha-trim: ${(widthPt * 0.352778).toFixed(1)}×${(heightPt * 0.352778).toFixed(1)}mm`);
-                                    }
-                                  }
-                                  try { fs.unlinkSync(alphaPng); } catch {}
-                                }
-                              } catch (alphaErr) {
-                                console.log(`⚠️ Alpha-trim bounds check failed (non-critical):`, alphaErr);
-                              }
+                              (file as any)._needsAlphaTrimCheck = true;
+                              (file as any)._alphaTrimPageSize = complexPageSize;
                             }
                             
                             (file as any).originalPdfBounds = {
