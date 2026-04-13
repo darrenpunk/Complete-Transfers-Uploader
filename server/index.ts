@@ -46,6 +46,53 @@ function persistCrashLog(eventType: string, message: string, details?: any) {
 
 persistCrashLog('server_start', `Server process started (PID ${process.pid})`);
 
+// Detect suspected crashes (OOM kills, SIGKILL, etc.) by checking if previous shutdown was clean
+(async () => {
+  try {
+    const recentLogs = await storage.getCrashLogs(10);
+    // Skip the server_start we just logged (recentLogs[0])
+    const previousEvents = recentLogs.slice(1);
+    if (previousEvents.length >= 1) {
+      const lastEvent = previousEvents[0];
+      const cleanShutdownTypes = ['sigterm', 'sigint'];
+      // If the previous event was a server_start (no shutdown signal between starts),
+      // it means the previous instance was killed without clean shutdown
+      if (lastEvent.eventType === 'server_start') {
+        // Calculate time gap between starts
+        const lastStartTime = new Date(lastEvent.createdAt).getTime();
+        const now = Date.now();
+        const gapSeconds = Math.round((now - lastStartTime) / 1000);
+        
+        // Only flag as suspected crash if previous server ran for some time
+        // (gap > 30s means it wasn't just a quick dev restart)
+        if (gapSeconds > 30) {
+          persistCrashLog('suspected_crash', 
+            `Previous server instance (PID from ${new Date(lastStartTime).toLocaleTimeString()}, RSS: ${lastEvent.memoryRssMb || '?'}MB) terminated without clean shutdown after ~${Math.round(gapSeconds / 60)}min — likely OOM kill or SIGKILL`,
+            { 
+              previousPid: lastEvent.message?.match(/PID (\d+)/)?.[1],
+              previousMemoryRssMb: lastEvent.memoryRssMb,
+              previousMemoryHeapMb: lastEvent.memoryHeapMb,
+              timeSinceLastStart: gapSeconds,
+              previousActiveOps: lastEvent.activeOps,
+              previousQueuedOps: lastEvent.queuedOps,
+            }
+          );
+          console.log(`[CRASH DETECTION] ⚠️ Suspected unclean shutdown detected — previous server started ${gapSeconds}s ago with no clean shutdown logged`);
+        }
+      } else if (!cleanShutdownTypes.includes(lastEvent.eventType) && 
+                 lastEvent.eventType !== 'uncaught_exception' && 
+                 lastEvent.eventType !== 'unhandled_rejection' &&
+                 lastEvent.eventType !== 'suspected_crash' &&
+                 lastEvent.eventType !== 'memory_warning' &&
+                 lastEvent.eventType !== 'memory_critical') {
+        console.log(`[CRASH DETECTION] Previous shutdown event: ${lastEvent.eventType} — "${lastEvent.message}"`);
+      }
+    }
+  } catch (err: any) {
+    console.error('[CRASH DETECTION] Failed to check previous shutdown:', err.message);
+  }
+})();
+
 process.on('uncaughtException', (err) => {
   console.error('[CRASH PROTECTION] Uncaught exception caught:', err.message);
   console.error(err.stack);
