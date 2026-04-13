@@ -213,8 +213,8 @@ app.get('/health', async (_req, res) => {
   });
 });
 
-app.use(express.json({ limit: '25mb' }));
-app.use(express.urlencoded({ extended: false, limit: '25mb' }));
+app.use(express.json({ limit: '750mb' }));
+app.use(express.urlencoded({ extended: false, limit: '750mb' }));
 
 
 app.get('/uploads/:filename', async (req, res, next) => {
