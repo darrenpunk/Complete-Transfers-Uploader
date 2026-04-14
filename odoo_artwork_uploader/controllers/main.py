@@ -2064,17 +2064,17 @@ class ArtworkUploaderController(http.Controller):
             return request.make_response('', headers=headers)
         
         try:
-            partner = None
+            partners = request.env['res.partner']
             user = request.env.user
             if user.id != request.env.ref('base.public_user').id:
-                partner = user.partner_id
+                partners = user.partner_id
             
-            if not partner and email:
-                partner = request.env['res.partner'].sudo().search([
+            if not partners and email:
+                partners = request.env['res.partner'].sudo().search([
                     ('email', '=ilike', email)
-                ], limit=1)
+                ])
             
-            if not partner:
+            if not partners:
                 return request.make_response('Login required', status=401)
             
             line = request.env['sale.order.line'].sudo().browse(line_id)
@@ -2083,13 +2083,18 @@ class ArtworkUploaderController(http.Controller):
                 return request.make_response('Order line not found', status=404)
             
             order_partner = line.order_id.partner_id
-            allowed_ids = {partner.id}
-            if partner.parent_id:
-                allowed_ids.add(partner.parent_id.id)
-            child_ids = request.env['res.partner'].sudo().search([('parent_id', '=', partner.id)]).ids
-            allowed_ids.update(child_ids)
-            if partner.commercial_partner_id:
-                allowed_ids.add(partner.commercial_partner_id.id)
+            allowed_ids = set()
+            for p in partners:
+                allowed_ids.add(p.id)
+                if p.parent_id:
+                    allowed_ids.add(p.parent_id.id)
+                    allowed_ids.update(p.parent_id.child_ids.ids)
+                if p.child_ids:
+                    allowed_ids.update(p.child_ids.ids)
+                if p.commercial_partner_id:
+                    allowed_ids.add(p.commercial_partner_id.id)
+                    if p.commercial_partner_id.child_ids:
+                        allowed_ids.update(p.commercial_partner_id.child_ids.ids)
             
             if order_partner.id not in allowed_ids:
                 _logger.warning(f"❌ PDF access denied for line {line_id}: order partner {order_partner.id} not in allowed set {allowed_ids} (email: {email})")
