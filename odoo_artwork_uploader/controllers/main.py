@@ -2082,7 +2082,17 @@ class ArtworkUploaderController(http.Controller):
             if not line.exists():
                 return request.make_response('Order line not found', status=404)
             
-            if line.order_id.partner_id.id != partner.id:
+            order_partner = line.order_id.partner_id
+            allowed_ids = {partner.id}
+            if partner.parent_id:
+                allowed_ids.add(partner.parent_id.id)
+            child_ids = request.env['res.partner'].sudo().search([('parent_id', '=', partner.id)]).ids
+            allowed_ids.update(child_ids)
+            if partner.commercial_partner_id:
+                allowed_ids.add(partner.commercial_partner_id.id)
+            
+            if order_partner.id not in allowed_ids:
+                _logger.warning(f"❌ PDF access denied for line {line_id}: order partner {order_partner.id} not in allowed set {allowed_ids} (email: {email})")
                 return request.make_response('Access denied', status=403)
             
             pdf_data = None
