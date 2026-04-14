@@ -129,47 +129,57 @@ process.on('SIGINT', () => {
 
 if (process.env.NODE_ENV === 'production') {
   const MEMORY_CHECK_INTERVAL = 30_000;
-  const MEMORY_GC_MB = 300;
-  const MEMORY_WARN_MB = 380;
-  const MEMORY_RESTART_MB = 440;
+  const MEMORY_GC_INTERVAL = 120_000;
+  const MEMORY_WARN_MB = 350;
+  const MEMORY_RESTART_MB = 400;
   let restartScheduled = false;
 
-  function dropCaches() {
+  function cleanTempFiles() {
     try {
-      const tmpDir = './uploads';
-      if (fs.existsSync(tmpDir)) {
+      const dirs = ['./uploads', '/tmp'];
+      const now = Date.now();
+      let cleaned = 0;
+      for (const tmpDir of dirs) {
+        if (!fs.existsSync(tmpDir)) continue;
         const files = fs.readdirSync(tmpDir);
-        const now = Date.now();
-        let cleaned = 0;
         for (const f of files) {
-          if (f.startsWith('chunk_') || f.startsWith('tmp_') || f.endsWith('.tmp')) {
+          const shouldClean = f.startsWith('chunk_') || f.startsWith('tmp_') || f.startsWith('gs_') ||
+            f.startsWith('magick-') || f.endsWith('.tmp') || f.startsWith('original_') ||
+            (tmpDir === '/tmp' && (f.endsWith('.pdf') || f.endsWith('.svg') || f.endsWith('.png')));
+          if (shouldClean) {
             try {
               const fPath = `${tmpDir}/${f}`;
               const stat = fs.statSync(fPath);
-              if (now - stat.mtimeMs > 300_000) {
+              if (now - stat.mtimeMs > 180_000) {
                 fs.unlinkSync(fPath);
                 cleaned++;
               }
             } catch {}
           }
         }
-        if (cleaned > 0) console.log(`[MEMORY] Cleaned ${cleaned} stale temp files`);
       }
+      if (cleaned > 0) console.log(`[MEMORY] Cleaned ${cleaned} stale temp files`);
     } catch {}
   }
+
+  setInterval(() => {
+    if (typeof global.gc === 'function') {
+      try { global.gc(); } catch {}
+    }
+    cleanTempFiles();
+  }, MEMORY_GC_INTERVAL);
 
   setInterval(() => {
     const mem = process.memoryUsage();
     const rssMB = Math.round(mem.rss / 1024 / 1024);
     const heapMB = Math.round(mem.heapUsed / 1024 / 1024);
-    if (rssMB > MEMORY_GC_MB && typeof global.gc === 'function') {
-      global.gc();
-      dropCaches();
-      const after = Math.round(process.memoryUsage().rss / 1024 / 1024);
-      console.log(`[MEMORY] GC triggered at ${rssMB}MB RSS → ${after}MB RSS`);
-    }
     if (rssMB > MEMORY_WARN_MB) {
-      console.warn(`[MEMORY WARNING] RSS: ${rssMB}MB, Heap: ${heapMB}MB — approaching container limit`);
+      if (typeof global.gc === 'function') {
+        global.gc();
+        cleanTempFiles();
+      }
+      const after = Math.round(process.memoryUsage().rss / 1024 / 1024);
+      console.warn(`[MEMORY WARNING] RSS: ${rssMB}MB → ${after}MB after GC, Heap: ${heapMB}MB`);
       persistCrashLog('memory_warning', `RSS: ${rssMB}MB, Heap: ${heapMB}MB`);
     }
     if (rssMB > MEMORY_RESTART_MB && !restartScheduled) {
