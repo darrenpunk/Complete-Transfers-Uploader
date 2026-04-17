@@ -136,21 +136,19 @@ if (process.env.NODE_ENV === 'production') {
 
   function cleanTempFiles() {
     try {
-      const dirs = ['./uploads', '/tmp'];
       const now = Date.now();
       let cleaned = 0;
-      for (const tmpDir of dirs) {
-        if (!fs.existsSync(tmpDir)) continue;
-        const files = fs.readdirSync(tmpDir);
+
+      const uploadsDir = './uploads';
+      if (fs.existsSync(uploadsDir)) {
+        const files = fs.readdirSync(uploadsDir);
         for (const f of files) {
-          const shouldClean = f.startsWith('chunk_') || f.startsWith('tmp_') || f.startsWith('gs_') ||
-            f.startsWith('magick-') || f.endsWith('.tmp') || f.startsWith('original_') ||
-            (tmpDir === '/tmp' && (f.endsWith('.pdf') || f.endsWith('.svg') || f.endsWith('.png')));
-          if (shouldClean) {
+          const isUploadsTemp = f.startsWith('chunk_') || f.startsWith('tmp_') || f.endsWith('.tmp');
+          if (isUploadsTemp) {
             try {
-              const fPath = `${tmpDir}/${f}`;
+              const fPath = `${uploadsDir}/${f}`;
               const stat = fs.statSync(fPath);
-              if (now - stat.mtimeMs > 180_000) {
+              if (now - stat.mtimeMs > 600_000) {
                 fs.unlinkSync(fPath);
                 cleaned++;
               }
@@ -158,6 +156,26 @@ if (process.env.NODE_ENV === 'production') {
           }
         }
       }
+
+      const sysTmp = '/tmp';
+      if (fs.existsSync(sysTmp)) {
+        const files = fs.readdirSync(sysTmp);
+        for (const f of files) {
+          const isSysTemp = f.startsWith('gs_') || f.startsWith('magick-') ||
+            f.startsWith('tmp_') || f.endsWith('.tmp');
+          if (isSysTemp) {
+            try {
+              const fPath = `${sysTmp}/${f}`;
+              const stat = fs.statSync(fPath);
+              if (now - stat.mtimeMs > 600_000) {
+                fs.unlinkSync(fPath);
+                cleaned++;
+              }
+            } catch {}
+          }
+        }
+      }
+
       if (cleaned > 0) console.log(`[MEMORY] Cleaned ${cleaned} stale temp files`);
     } catch {}
   }
