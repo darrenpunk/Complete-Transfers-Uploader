@@ -1,7 +1,25 @@
 // SVG recoloring utility for Single Colour Transfer templates
 
+const isWhiteOrSkip = (color: string): boolean => {
+  const c = color.trim().toLowerCase().replace(/\s+/g, '');
+  if (c === 'none' || c === 'transparent' || c === 'currentcolor' || c.startsWith('url(')) return true;
+  if (c === 'white' || c === '#fff' || c === '#ffffff') return true;
+  // rgb(255,255,255) or rgb(100%,100%,100%)
+  const rgbMatch = c.match(/^rgb\(([^)]+)\)$/);
+  if (rgbMatch) {
+    const parts = rgbMatch[1].split(',').map(s => s.trim());
+    if (parts.length === 3) {
+      const isWhite = parts.every(p => {
+        if (p.endsWith('%')) return parseFloat(p) >= 99;
+        return parseInt(p, 10) >= 250;
+      });
+      if (isWhite) return true;
+    }
+  }
+  return false;
+};
+
 export function recolorSVG(svgContent: string, inkColor: string): string {
-  // Convert the ink color to RGB values for consistent replacement
   const hexToRgb = (hex: string) => {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
     return result ? {
@@ -10,74 +28,65 @@ export function recolorSVG(svgContent: string, inkColor: string): string {
       b: parseInt(result[3], 16)
     } : null;
   };
-  
+
   const rgbColor = hexToRgb(inkColor);
   if (!rgbColor) {
     console.warn('Invalid ink color format:', inkColor);
     return svgContent;
   }
-  
-  // Create RGB string for replacement
-  const newRgbString = `rgb(${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b})`;
-  const newRgbPercentString = `rgb(${(rgbColor.r/255*100).toFixed(6)}%, ${(rgbColor.g/255*100).toFixed(6)}%, ${(rgbColor.b/255*100).toFixed(6)}%)`;
-  
-  console.log(`Recoloring to: ${newRgbString} / ${newRgbPercentString}`);
-  
-  // Replace all fill colors except white/transparent
+
+  console.log(`Recoloring SVG to: ${inkColor}`);
+
   let recoloredContent = svgContent;
-  
-  // Replace fill attributes with hex colors (but preserve white)
+
+  // 1. Replace colors inside <style>...</style> blocks (CSS rules from Illustrator/Inkscape)
+  recoloredContent = recoloredContent.replace(/<style\b[^>]*>([\s\S]*?)<\/style>/gi, (match, css) => {
+    let newCss = css;
+    // fill: <color>;  and  stroke: <color>;
+    newCss = newCss.replace(/(fill|stroke)\s*:\s*([^;}\s]+)/gi, (m: string, prop: string, color: string) => {
+      if (isWhiteOrSkip(color)) return m;
+      return `${prop}:${inkColor}`;
+    });
+    return match.replace(css, newCss);
+  });
+
+  // 2. Replace fill="..." attributes
   recoloredContent = recoloredContent.replace(/fill="([^"]+)"/g, (match, color) => {
-    // Keep white colors, none, and transparent
-    if (color === '#ffffff' || color === '#FFFFFF' || color === 'white' || 
-        color === 'none' || color === 'transparent' || color.startsWith('url(')) {
-      return match;
-    }
+    if (isWhiteOrSkip(color)) return match;
     return `fill="${inkColor}"`;
   });
-  
-  // Replace fill attributes with rgb() colors (but preserve white)
-  recoloredContent = recoloredContent.replace(/fill="rgb\(([^)]+)\)"/g, (match, rgbValues) => {
-    // Check if it's white (255, 255, 255 or 100%, 100%, 100%)
-    if (rgbValues === '255, 255, 255' || rgbValues === '100%, 100%, 100%' || 
-        rgbValues.includes('255') && rgbValues.split(',').every((v: string) => parseInt(v.trim()) >= 250)) {
-      return match; // Keep white
-    }
-    return `fill="${inkColor}"`;
-  });
-  
-  // Replace stroke colors (but preserve white and none)
+
+  // 3. Replace stroke="..." attributes
   recoloredContent = recoloredContent.replace(/stroke="([^"]+)"/g, (match, color) => {
-    if (color === '#ffffff' || color === '#FFFFFF' || color === 'white' || 
-        color === 'none' || color === 'transparent') {
-      return match;
-    }
+    if (isWhiteOrSkip(color)) return match;
     return `stroke="${inkColor}"`;
   });
-  
-  // Replace CSS fill properties in style attributes
+
+  // 4. Replace fill/stroke inside style="..." attributes
   recoloredContent = recoloredContent.replace(/style="([^"]*)"/g, (match, styleContent) => {
-    let newStyle = styleContent.replace(/fill:\s*([^;]+)/g, (fillMatch: string, fillColor: string) => {
-      const cleanColor = fillColor.trim();
-      if (cleanColor === '#ffffff' || cleanColor === '#FFFFFF' || cleanColor === 'white' || 
-          cleanColor === 'none' || cleanColor === 'transparent') {
-        return fillMatch;
-      }
-      return `fill:${inkColor}`;
+    let newStyle = styleContent.replace(/(fill|stroke)\s*:\s*([^;]+)/gi, (m: string, prop: string, color: string) => {
+      if (isWhiteOrSkip(color)) return m;
+      return `${prop}:${inkColor}`;
     });
-    
-    newStyle = newStyle.replace(/stroke:\s*([^;]+)/g, (strokeMatch: string, strokeColor: string) => {
-      const cleanColor = strokeColor.trim();
-      if (cleanColor === '#ffffff' || cleanColor === '#FFFFFF' || cleanColor === 'white' || 
-          cleanColor === 'none' || cleanColor === 'transparent') {
-        return strokeMatch;
-      }
-      return `stroke:${inkColor}`;
-    });
-    
     return `style="${newStyle}"`;
   });
-  
+
+  // 5. Add fill="<inkColor>" to drawable elements that have no fill attribute, no fill in style,
+  // and no class attribute (since class might apply a fill via CSS we already processed).
+  // Default SVG fill is black, so these elements would render as black without an explicit fill.
+  const drawableTags = ['path', 'rect', 'circle', 'ellipse', 'polygon', 'polyline', 'line', 'text'];
+  for (const tag of drawableTags) {
+    const tagRegex = new RegExp(`<${tag}\\b([^>]*?)(/?>)`, 'gi');
+    recoloredContent = recoloredContent.replace(tagRegex, (match, attrs, close) => {
+      if (/\bfill\s*=/.test(attrs)) return match;
+      const styleMatch = attrs.match(/style\s*=\s*"([^"]*)"/);
+      if (styleMatch && /\bfill\s*:/i.test(styleMatch[1])) return match;
+      // Has a class — let CSS-rule rewrite handle it
+      if (/\bclass\s*=/.test(attrs)) return match;
+      return `<${tag}${attrs} fill="${inkColor}"${close}`;
+    });
+  }
+
   console.log('SVG recolored for Single Colour Transfer');
   return recoloredContent;
 }
