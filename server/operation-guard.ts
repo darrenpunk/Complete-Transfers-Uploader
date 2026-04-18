@@ -91,7 +91,10 @@ function getContainerMemoryMB(): number {
       }
       const realUsage = Math.round((totalUsageBytes - reclaimableBytes) / 1024 / 1024);
       const rssMB = getMemoryUsage().rssMB;
-      if (realUsage > 1024) {
+      // If cgroup usage is much larger than our process RSS, the cgroup is measuring
+      // more than just this process (e.g., dev workspace cgroup includes Vite, esbuild,
+      // editor processes). Trust RSS in that case.
+      if (realUsage > 1024 || realUsage > rssMB * 2 + 200) {
         return rssMB;
       }
       return Math.max(realUsage, rssMB);
