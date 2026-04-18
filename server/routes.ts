@@ -4802,18 +4802,32 @@ export async function registerRoutes(app: express.Application) {
                     // If ArtBox (Illustrator artboard) is available and larger than GS ink-area, prefer it.
                     // ArtBox = designer's explicit artboard boundary = intended print/transfer size.
                     // GS bbox = tight ink area only (excludes white ink on dark backgrounds, masked/clipped content).
+                    //
+                    // CAVEAT: Corel exports often set TrimBox to the template size even when the actual
+                    // artwork is much smaller and sits inside it. In that case, using TrimBox as bounds
+                    // stretches a small logo to fill the whole template area, leaving it visually off-center.
+                    // Only honor ArtBox/TrimBox when the visible content fills a meaningful fraction of it
+                    // (≥60% area coverage). Otherwise the artwork doesn't fill the artboard — use GS bounds.
                     const artBoxFromPdfGs = pdfPageDimensions && (pdfPageDimensions as any).artBoxPts;
                     if (artBoxFromPdfGs && (artBoxFromPdfGs.width > gsBounds.width + 2 || artBoxFromPdfGs.height > gsBounds.height + 2)) {
-                      console.log(`🎨 ArtBox (${artBoxFromPdfGs.width.toFixed(1)}×${artBoxFromPdfGs.height.toFixed(1)}pts) is larger than GS bbox (${gsBounds.width.toFixed(1)}×${gsBounds.height.toFixed(1)}pts) — using ArtBox as intended print area`);
-                      gsBounds = {
-                        xMin: artBoxFromPdfGs.x,
-                        yMin: artBoxFromPdfGs.y,
-                        xMax: artBoxFromPdfGs.x + artBoxFromPdfGs.width,
-                        yMax: artBoxFromPdfGs.y + artBoxFromPdfGs.height,
-                        width: artBoxFromPdfGs.width,
-                        height: artBoxFromPdfGs.height
-                      };
-                      boundsSourceIsArtBox = true;
+                      const artBoxArea = artBoxFromPdfGs.width * artBoxFromPdfGs.height;
+                      const gsAreaForArtCheck = gsBounds.width * gsBounds.height;
+                      const gsToArtBoxCoverage = artBoxArea > 0 ? gsAreaForArtCheck / artBoxArea : 0;
+
+                      if (gsToArtBoxCoverage < 0.60) {
+                        console.log(`⚠️ GS content (${gsBounds.width.toFixed(1)}×${gsBounds.height.toFixed(1)}pts) only fills ${(gsToArtBoxCoverage * 100).toFixed(0)}% of ArtBox/TrimBox (${artBoxFromPdfGs.width.toFixed(1)}×${artBoxFromPdfGs.height.toFixed(1)}pts) — artwork doesn't fill artboard, keeping tight GS bounds`);
+                      } else {
+                        console.log(`🎨 ArtBox (${artBoxFromPdfGs.width.toFixed(1)}×${artBoxFromPdfGs.height.toFixed(1)}pts) is larger than GS bbox (${gsBounds.width.toFixed(1)}×${gsBounds.height.toFixed(1)}pts) and content fills ${(gsToArtBoxCoverage * 100).toFixed(0)}% of it — using ArtBox as intended print area`);
+                        gsBounds = {
+                          xMin: artBoxFromPdfGs.x,
+                          yMin: artBoxFromPdfGs.y,
+                          xMax: artBoxFromPdfGs.x + artBoxFromPdfGs.width,
+                          yMax: artBoxFromPdfGs.y + artBoxFromPdfGs.height,
+                          width: artBoxFromPdfGs.width,
+                          height: artBoxFromPdfGs.height
+                        };
+                        boundsSourceIsArtBox = true;
+                      }
                     }
                     
                     // LOW-COVERAGE FALLBACK: If GS coverage is extremely low (< 15%), GS is clearly
