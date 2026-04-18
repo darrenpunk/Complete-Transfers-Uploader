@@ -4739,17 +4739,18 @@ export async function registerRoutes(app: express.Application) {
                           const inkWidthBigger = inkscapeVerifyBounds.width > gsBounds.width * 1.05;
                           const inkHeightBigger = inkscapeVerifyBounds.height > gsBounds.height * 1.05;
                           
-                          // If Inkscape reports nearly full-page bounds (>97% coverage) AND GS already
-                          // covers a large portion of the page (>60%), Inkscape is likely just
-                          // picking up a background rectangle — trust GS in that case.
-                          // BUT if GS coverage is low (<60%), it means GS missed real content
-                          // (e.g. white ink, clipped paths, CorelDRAW transparency) — trust Inkscape.
-                          // NOTE: Threshold raised from 90% to 97% because CorelDRAW files with
-                          // white elements on dark backgrounds legitimately have 90-95% coverage
-                          // in Inkscape while GS only detects the dark (visible) portions.
-                          const inkscapeIsFullPage = inkPageCoverage > 0.97;
+                          // If Inkscape reports near-full-page bounds (>85%) AND GS already detected
+                          // meaningful content (>20% coverage), Inkscape is most likely picking up an
+                          // invisible background rect or clip path (common in Corel/Illustrator exports)
+                          // — trust GS's tight bounds in that case.
+                          // BUT if GS coverage is very low (<20%), GS likely missed real content
+                          // (e.g. white ink on light background, clipped paths) — trust Inkscape.
+                          // NOTE: Lowered from 0.97/0.60 because Corel-exported PDFs commonly have
+                          // an invisible page-sized clip/background that Inkscape includes (~85-95%)
+                          // while the actual artwork only covers a fraction of the page.
+                          const inkscapeIsFullPage = inkPageCoverage > 0.85;
                           const gsBboxPageCoverage = gsArea / pageArea;
-                          const shouldTrustGSOverInkscape = inkscapeIsFullPage && gsBboxPageCoverage > 0.60;
+                          const shouldTrustGSOverInkscape = inkscapeIsFullPage && gsBboxPageCoverage > 0.20;
                           
                           if ((inkWidthBigger || inkHeightBigger) && !shouldTrustGSOverInkscape) {
                             const gsPageCov = (gsArea / pageArea * 100).toFixed(0);
