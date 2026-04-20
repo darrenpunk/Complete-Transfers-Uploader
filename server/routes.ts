@@ -1180,6 +1180,31 @@ export async function registerRoutes(app: express.Application) {
       const pageHeight = existingPage.getHeight();
       const page = pdfDoc.addPage([pageWidth, pageHeight]);
 
+      // Build dimension summary line from canvas elements (in mm, accounting for rotation)
+      let dimsLine = '';
+      try {
+        if (canvasElements && canvasElements.length > 0) {
+          const visibleEls = canvasElements.filter((el: any) => el.isVisible !== false && el.width && el.height);
+          const dimStrs = visibleEls.map((el: any) => {
+            const rot = ((el.rotation || 0) * Math.PI) / 180;
+            const cos = Math.abs(Math.cos(rot));
+            const sin = Math.abs(Math.sin(rot));
+            const visW = el.width * cos + el.height * sin;
+            const visH = el.width * sin + el.height * cos;
+            return `${visW.toFixed(1)} × ${visH.toFixed(1)} mm`;
+          });
+          if (dimStrs.length === 1) {
+            dimsLine = `Artwork: ${dimStrs[0]}`;
+          } else if (dimStrs.length > 1 && dimStrs.length <= 4) {
+            dimsLine = `Artwork: ${dimStrs.join('  |  ')}`;
+          } else if (dimStrs.length > 4) {
+            dimsLine = `Artwork (${dimStrs.length} items): ${dimStrs.slice(0, 3).join('  |  ')}  | +${dimStrs.length - 3} more`;
+          }
+        }
+      } catch (e) {
+        // best-effort; leave dimsLine empty on failure
+      }
+
       const labelH = 28;
       page.drawRectangle({
         x: 0,
@@ -1194,10 +1219,39 @@ export async function registerRoutes(app: express.Application) {
         size: 12,
         color: rgb(0.85, 0.85, 0.85),
       });
+      if (dimsLine) {
+        const fontSize = 10;
+        // Approximate text width for right-alignment (avg char width ~0.5*fontSize for Helvetica)
+        const approxTextW = dimsLine.length * fontSize * 0.5;
+        page.drawText(dimsLine, {
+          x: Math.max(12, pageWidth - approxTextW - 12),
+          y: pageHeight - labelH + 9,
+          size: fontSize,
+          color: rgb(0.85, 0.85, 0.85),
+        });
+      }
+
+      // Footer band with dimension(s) printed larger for readability
+      const footerH = dimsLine ? 24 : 0;
+      if (footerH) {
+        page.drawRectangle({
+          x: 0,
+          y: 0,
+          width: pageWidth,
+          height: footerH,
+          color: rgb(0.15, 0.15, 0.15),
+        });
+        page.drawText(dimsLine, {
+          x: 12,
+          y: 7,
+          size: 12,
+          color: rgb(0.95, 0.95, 0.95),
+        });
+      }
 
       const margin = 24;
       const availW = pageWidth - margin * 2;
-      const availH = pageHeight - margin * 2 - labelH;
+      const availH = pageHeight - margin * 2 - labelH - footerH;
       let drawW: number, drawH: number;
       if (imgAspect > availW / availH) {
         drawW = availW;
