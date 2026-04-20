@@ -2619,10 +2619,71 @@ export async function registerRoutes(app: express.Application) {
         let finalMimeType = file.mimetype;
         let finalUrl = `/uploads/${file.filename}`;
 
-        // Handle AI/EPS files - convert to SVG for display
-        if (file.mimetype === 'application/postscript' || 
-            file.mimetype === 'application/illustrator' || 
-            file.mimetype === 'application/x-illustrator') {
+        // Handle AI/EPS files — convert to PDF and route through the standard PDF pipeline.
+        // Rationale: AI files are essentially PDFs (Illustrator's "Create PDF Compatible File"
+        // option produces a valid PDF inside the .ai container), so we get the most accurate
+        // bounds detection, CMYK preservation, and tight-content cropping by treating them
+        // exactly like PDF uploads instead of going AI → SVG via pdf2svg, which loses precision
+        // and skips the Ghostscript bbox / ArtBox / TrimBox handling.
+        const isAiOrEpsUpload = file.mimetype === 'application/postscript' ||
+            file.mimetype === 'application/illustrator' ||
+            file.mimetype === 'application/x-illustrator';
+
+        if (isAiOrEpsUpload) {
+          const sourcePath = path.join(uploadDir, file.filename);
+          const extension = (file.filename.toLowerCase().split('.').pop() || 'ai');
+          console.log(`🎨 Processing ${extension.toUpperCase()} file as PDF: ${file.filename}`);
+
+          const pdfFilename = `${file.filename}.pdf`;
+          const pdfPath = path.join(uploadDir, pdfFilename);
+
+          // Step 1: try the AI as a PDF directly (most modern .ai files are valid PDFs)
+          let convertedToPdf = false;
+          try {
+            const head = fs.readFileSync(sourcePath, { encoding: 'binary', flag: 'r' }).slice(0, 1024);
+            if (head.startsWith('%PDF-')) {
+              fs.copyFileSync(sourcePath, pdfPath);
+              convertedToPdf = true;
+              console.log(`✅ ${extension.toUpperCase()} file is already a valid PDF — copied as ${pdfFilename}`);
+            }
+          } catch (e: any) {
+            console.log(`⚠️ Failed to inspect ${extension.toUpperCase()} header: ${e.message}`);
+          }
+
+          // Step 2: fall back to Ghostscript conversion (for EPS or non-PDF-compatible AI files)
+          if (!convertedToPdf) {
+            try {
+              const gsCmd = `gs -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dEPSCrop -sOutputFile="${pdfPath}" "${sourcePath}"`;
+              await execAsync(gsCmd);
+              if (fs.existsSync(pdfPath) && fs.statSync(pdfPath).size > 0) {
+                convertedToPdf = true;
+                console.log(`✅ Converted ${extension.toUpperCase()} → PDF via Ghostscript: ${pdfFilename}`);
+              }
+            } catch (gsErr: any) {
+              console.error(`❌ Ghostscript ${extension.toUpperCase()}→PDF conversion failed: ${gsErr.message}`);
+            }
+          }
+
+          if (convertedToPdf) {
+            // Track the original AI/EPS source for reference (downstream may use this)
+            (file as any).originalVectorPath = sourcePath;
+            (file as any).originalVectorType = extension;
+            (file as any).isCMYKPreserved = true;
+
+            // Mutate the file object so the rest of the pipeline treats it as a normal PDF upload
+            (file as any).filename = pdfFilename;
+            (file as any).mimetype = 'application/pdf';
+            finalFilename = pdfFilename;
+            finalMimeType = 'application/pdf';
+            finalUrl = `/uploads/${pdfFilename}`;
+            // Do NOT enter the legacy AI→SVG branch — fall through to PDF processing below
+          } else {
+            console.log(`⚠️ Could not convert ${extension.toUpperCase()} to PDF — falling back to legacy SVG conversion`);
+          }
+        }
+
+        // Legacy AI/EPS → SVG fallback (only runs if PDF conversion above failed)
+        if (isAiOrEpsUpload && file.mimetype !== 'application/pdf') {
           try {
             const sourcePath = path.join(uploadDir, file.filename);
             const svgFilename = `${file.filename}.svg`;
