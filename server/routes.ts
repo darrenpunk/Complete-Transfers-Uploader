@@ -5524,8 +5524,13 @@ export async function registerRoutes(app: express.Application) {
                   (Math.abs(originalWidthMm - 200) < 1 && Math.abs(originalHeightMm - 200) < 1)    // 200×200mm
                 );
                 
-                // For standard sizes, use artboard dimensions (decorative elements are extending beyond)
-                const shouldUseArtboard = isStandardCutSize && originalWidthDiff < 100 && originalHeightDiff < 50;
+                // For standard sizes, use artboard dimensions ONLY when decorative elements
+                // extend beyond the artboard (bleed marks, registration marks, etc.).
+                // When content is smaller than the artboard (e.g., AI files where the page is the
+                // template size but the actual artwork is smaller), we MUST tight-crop — otherwise
+                // the SVG renders with the full-artboard viewBox into a content-sized canvas element
+                // and the artwork gets squeezed by preserveAspectRatio="meet" (visibly clipped/scaled down).
+                const shouldUseArtboard = isStandardCutSize && extendsBeyondViewBox && originalWidthDiff < 100 && originalHeightDiff < 50;
                 
                 // CRITICAL FIX: When Ghostscript bbox succeeds, use dimensions directly
                 // WITHOUT creating a tight-content SVG (GS coords are in PDF space, not SVG space)
