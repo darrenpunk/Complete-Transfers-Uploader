@@ -25,6 +25,8 @@ export const projects = pgTable("projects", {
   embroideryPreviewPath: text("embroidery_preview_path"), // Path to saved AI embroidery preview image
   attachedZipPath: text("attached_zip_path"), // Path to attached ZIP file for repeat applique orders
   attachedZipName: text("attached_zip_name"), // Original filename of attached ZIP
+  uploaderEmail: text("uploader_email"), // Odoo email of the user who uploaded the first file (for incident traceability)
+  uploaderId: text("uploader_id"), // Odoo user id of the uploader
 });
 
 
@@ -178,6 +180,8 @@ export const customerTemplates = pgTable("customer_templates", {
 export const insertProjectSchema = createInsertSchema(projects).omit({
   id: true,
   createdAt: true,
+  uploaderEmail: true, // server-resolved from Odoo session, never client-supplied
+  uploaderId: true,
 });
 
 export const insertLogoSchema = createInsertSchema(logos).omit({

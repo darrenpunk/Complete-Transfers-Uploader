@@ -2598,6 +2598,54 @@ export async function registerRoutes(app: express.Application) {
         return res.status(404).json({ error: 'Project not found' });
       }
 
+      // INCIDENT TRACEABILITY: Resolve the Odoo uploader (strictly best-effort) and stamp
+      // their email/id on the project the first time they upload. This lets us tie any
+      // crash, OOM, or ImageMagick/Inkscape failure back to the actual customer
+      // (instead of just an anonymous "Untitled Project"). MUST NOT slow down uploads.
+      let uploaderEmail: string | null = (project as any).uploaderEmail || null;
+      let uploaderId: string | null = (project as any).uploaderId || null;
+      const alreadyAttempted = !!(uploaderEmail || uploaderId);
+      const clientCookies = req.headers.cookie || '';
+      if (!alreadyAttempted && clientCookies) {
+        const odooBaseUrl = process.env.VITE_ODOO_URL || 'https://www.completetransfers.com';
+        const ac = new AbortController();
+        const timer = setTimeout(() => ac.abort(), 400); // 400ms hard cap, never blocks upload
+        try {
+          const sessionResp = await fetch(`${odooBaseUrl}/web/session/info`, {
+            method: 'GET',
+            headers: { 'Cookie': clientCookies, 'Accept': 'application/json' },
+            signal: ac.signal,
+          });
+          if (sessionResp.ok) {
+            const sessionData: any = await sessionResp.json();
+            // Odoo /web/session/info: `username` is the login (email for our store);
+            // `user_id` is `[id, display_name]` so [1] is NOT the email.
+            const resolvedEmail = sessionData?.username || sessionData?.partner_email || null;
+            const resolvedId = sessionData?.uid ? String(sessionData.uid) : null;
+            if (resolvedEmail || resolvedId) {
+              uploaderEmail = resolvedEmail;
+              uploaderId = resolvedId;
+              // Fire-and-forget persistence so we don't add DB latency to the upload path
+              storage.updateProject(projectId, {
+                uploaderEmail: resolvedEmail || undefined,
+                uploaderId: resolvedId || undefined,
+              } as any).catch((persistErr: any) => {
+                console.warn(`[UPLOAD CTX] Failed to persist uploader on project ${projectId}: ${persistErr?.message}`);
+              });
+            }
+          }
+        } catch (sessionErr: any) {
+          // Aborts and network errors are intentionally swallowed; never block uploads.
+          if (sessionErr?.name !== 'AbortError') {
+            console.warn(`[UPLOAD CTX] Odoo session lookup failed for project ${projectId}: ${sessionErr?.message}`);
+          }
+        } finally {
+          clearTimeout(timer);
+        }
+      }
+      const uploaderTag = uploaderEmail || uploaderId || 'anonymous';
+      console.log(`🏷️  [UPLOAD CTX] project=${projectId} uploader=${uploaderTag} files=${files.length} names=[${files.map(f => f.originalname).join(', ')}]`);
+
       // PRODUCTION FLOW: Import production flow manager
       const { productionFlow } = await import('./production-flow-manager');
       const { fixSVGNamespaces } = await import('./fix-svg-namespaces');
@@ -6091,7 +6139,8 @@ export async function registerRoutes(app: express.Application) {
       })));
       res.json(logos);
     } catch (error) {
-      console.error('Upload error:', error);
+      const ctxFiles = ((req.files as Express.Multer.File[]) || []).map(f => f.originalname).join(', ') || 'unknown';
+      console.error(`Upload error [project=${req.params.projectId} files=[${ctxFiles}]]:`, error);
       res.status(500).json({ error: 'Upload failed' });
     }
   });
