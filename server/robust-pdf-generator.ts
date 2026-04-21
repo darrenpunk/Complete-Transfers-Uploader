@@ -1172,7 +1172,15 @@ grestore`;
         
         // Check if we have ink color overrides - if so, skip original PDF and use recolored SVG
         const colorOverrides = element.colorOverrides as any;
-        if (colorOverrides && colorOverrides.inkColor) {
+        // FONTS-OUTLINED CHECK: If the user has explicitly outlined fonts, the original PDF
+        // still contains the live text — using it would silently undo the outlining the user
+        // requested. Skip the original PDF and fall through to the SVG path so the outlined
+        // SVG (with text-as-paths) is used for the export.
+        if ((logo as any).fontsOutlined === true) {
+          console.log(`🔤 FONTS OUTLINED — skipping original PDF and using outlined SVG (${logo.filename}) so PDF output has no live text`);
+          // Don't set logoPdfPath - force it to use the SVG conversion path with the outlined SVG
+        }
+        else if (colorOverrides && colorOverrides.inkColor) {
           console.log(`🎨 Ink color override detected (${colorOverrides.inkColor}) - skipping original PDF to apply recoloring`);
           // Don't set logoPdfPath - force it to use the SVG conversion path with recoloring
         } 
