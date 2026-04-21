@@ -8,7 +8,15 @@
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
-import { execSync, execFileSync, spawnSync } from 'child_process';
+import { execSync, execFileSync, spawnSync, exec } from 'child_process';
+import { promisify } from 'util';
+
+// All shell calls in this file MUST go through execAsync with an explicit
+// timeout. Sync exec calls (or async without a timeout) freeze the Node event
+// loop, which causes the production health check to mark the container
+// unhealthy and SIGKILL it mid-upload — exactly the crash signature we keep
+// hitting on PDFs that contain soft masks / large embedded gradients.
+const execAsync = promisify(exec);
 
 export interface BoundingBox {
   xMin: number;
@@ -422,16 +430,18 @@ export class PDFBoundsExtractor {
         const trimCommand = `convert "${rasterPath}" -trim +repage "${trimPath}"`;
         
         try {
-          execSync(trimCommand);
+          await execAsync(trimCommand, { timeout: 30000, killSignal: 'SIGKILL' });
           
           if (fs.existsSync(trimPath)) {
             // Get original dimensions
             const originalSizeCmd = `identify -format "%w,%h" "${rasterPath}"`;
-            const [origWidth, origHeight] = execSync(originalSizeCmd, { encoding: 'utf8' }).trim().split(',').map(Number);
+            const { stdout: origStdout } = await execAsync(originalSizeCmd, { encoding: 'utf8', timeout: 15000, killSignal: 'SIGKILL' });
+            const [origWidth, origHeight] = origStdout.trim().split(',').map(Number);
             
             // Get trimmed dimensions and offset
             const trimInfoCmd = `identify -format "%w,%h,%X,%Y" "${trimPath}"`;
-            const trimOutput = execSync(trimInfoCmd, { encoding: 'utf8' }).trim();
+            const { stdout: trimStdout } = await execAsync(trimInfoCmd, { encoding: 'utf8', timeout: 15000, killSignal: 'SIGKILL' });
+            const trimOutput = trimStdout.trim();
             const [trimWidth, trimHeight, trimX, trimY] = trimOutput.split(',').map(Number);
             
             console.log(`📐 Original: ${origWidth}×${origHeight}px, Trimmed: ${trimWidth}×${trimHeight}px at offset (${trimX},${trimY})`);
@@ -466,7 +476,8 @@ export class PDFBoundsExtractor {
           
           // Fallback to original approach
           const identifyCommand = `identify -format "%w,%h" "${rasterPath}"`;
-          const sizeOutput = execSync(identifyCommand, { encoding: 'utf8' }).trim();
+          const { stdout: sizeStdout } = await execAsync(identifyCommand, { encoding: 'utf8', timeout: 15000, killSignal: 'SIGKILL' });
+          const sizeOutput = sizeStdout.trim();
           const [width, height] = sizeOutput.split(',').map(Number);
           
           const scale = 72 / dpi;
@@ -554,7 +565,8 @@ export class PDFBoundsExtractor {
       
       // Fallback to ImageMagick
       const identifyCommand = `identify -format "%[fx:page.width],%[fx:page.height]" "${pdfPath}[${pageNumber - 1}]"`;
-      const output = execSync(identifyCommand, { encoding: 'utf8', timeout: 15000 }).trim();
+      const { stdout: pageStdout } = await execAsync(identifyCommand, { encoding: 'utf8', timeout: 15000, killSignal: 'SIGKILL' });
+      const output = pageStdout.trim();
       const [width, height] = output.split(',').map(Number);
 
       if (!isNaN(width) && !isNaN(height) && width > 0 && height > 0) {
@@ -675,22 +687,24 @@ export class PDFBoundsExtractor {
       const rsvgCommand = `rsvg-convert --dpi-x=${dpi} --dpi-y=${dpi} --format=png --output="${rasterPath}" "${svgPath}"`;
       
       console.log(`🔍 Verifying SVG bounds by rendering at ${dpi}DPI...`);
-      execSync(rsvgCommand, { stdio: 'pipe' });
+      await execAsync(rsvgCommand, { timeout: 60000, killSignal: 'SIGKILL' });
       
       if (fs.existsSync(rasterPath)) {
         // Use ImageMagick to detect actual content bounds
         const trimPath = path.join(tempDir, `svg_trimmed_${timestamp}.png`);
         const trimCommand = `convert "${rasterPath}" -trim +repage "${trimPath}"`;
         
-        execSync(trimCommand, { stdio: 'pipe' });
+        await execAsync(trimCommand, { timeout: 30000, killSignal: 'SIGKILL' });
         
         if (fs.existsSync(trimPath)) {
           // Get original and trimmed dimensions
           const originalSizeCmd = `identify -format "%w,%h" "${rasterPath}"`;
-          const [origWidth, origHeight] = execSync(originalSizeCmd, { encoding: 'utf8' }).trim().split(',').map(Number);
+          const { stdout: vOrigStdout } = await execAsync(originalSizeCmd, { encoding: 'utf8', timeout: 15000, killSignal: 'SIGKILL' });
+          const [origWidth, origHeight] = vOrigStdout.trim().split(',').map(Number);
           
           const trimInfoCmd = `identify -format "%w,%h,%X,%Y" "${trimPath}"`;
-          const [trimWidth, trimHeight, trimX, trimY] = execSync(trimInfoCmd, { encoding: 'utf8' }).trim().split(',').map(Number);
+          const { stdout: vTrimStdout } = await execAsync(trimInfoCmd, { encoding: 'utf8', timeout: 15000, killSignal: 'SIGKILL' });
+          const [trimWidth, trimHeight, trimX, trimY] = vTrimStdout.trim().split(',').map(Number);
           
           // Convert pixel coordinates back to points (DPI aware)
           const pxToPt = 72 / dpi;
