@@ -5456,6 +5456,15 @@ export async function registerRoutes(app: express.Application) {
                             // clip/mask/alpha compositing that browsers can't reliably render.
                             // Force a PNG fallback so the canvas shows the real artwork.
                             (file as any).__forcePngFallback = true;
+                            // Mark on the metrics so the canvas renderer knows to ALWAYS use the PNG
+                            // fallback (not just when path count exceeds the complexity threshold).
+                            // The SVG itself is unrenderable on every browser, regardless of size.
+                            const existingMetrics = (file as any).vectorComplexityMetrics || {};
+                            (file as any).vectorComplexityMetrics = {
+                              ...existingMetrics,
+                              hasUnrenderableContent: true,
+                              hasUnrenderableContentReason: 'stripped-broken-compositing-group-filters',
+                            };
                           }
                         } catch (cleanupErr) {
                           console.warn(`⚠️ Filter cleanup skipped:`, (cleanupErr as Error).message);

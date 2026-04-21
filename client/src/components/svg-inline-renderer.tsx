@@ -134,9 +134,16 @@ export default function SvgInlineRenderer({
       
       const COMPLEX_PATH_THRESHOLD = 15000;
       const isGenuinelyComplex = metrics && (metrics.pathCount > COMPLEX_PATH_THRESHOLD || metrics.elementCount > COMPLEX_PATH_THRESHOLD);
+      // The server marks SVGs as unrenderable when it had to strip broken PDF compositing-group
+      // filter chains during normalization. Browsers (Chrome, Firefox, Safari) cannot render the
+      // resulting SVG correctly even though the path count is low — always use the PNG fallback.
+      const hasUnrenderableContent = !!metrics?.hasUnrenderableContent;
       
-      if (hasComplexVectorFallback && isGenuinelyComplex) {
-        console.log(`🎨 COMPLEX VECTOR: Using PNG fallback for canvas (paths: ${metrics?.pathCount || 'unknown'}, elements: ${metrics?.elementCount || 'unknown'})`);
+      if (hasComplexVectorFallback && (isGenuinelyComplex || hasUnrenderableContent)) {
+        const reason = hasUnrenderableContent
+          ? `unrenderable SVG content (${metrics?.hasUnrenderableContentReason || 'flagged by server'})`
+          : `complex vector (paths: ${metrics?.pathCount || 'unknown'}, elements: ${metrics?.elementCount || 'unknown'})`;
+        console.log(`🎨 Using PNG fallback for canvas — ${reason}`);
         setUseFallbackImg(true);
         setIsLoading(false);
         return;
