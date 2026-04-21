@@ -5416,7 +5416,47 @@ export async function registerRoutes(app: express.Application) {
                         
                         // Mark as geometry-cropped and normalized
                         svgContent = svgContent.replace(/<svg\s/, '<svg data-geometry-cropped="true" data-normalized="true" ');
-                        
+
+                        // ────────────────────────────────────────────────────────────────
+                        // STRIP BROKEN PDF BLEND-MODE FILTERS
+                        // Ghostscript's pdf2svg path emits <filter> elements with
+                        // <feImage xlink:href="#compositing-group-N"/> references that
+                        // point to elements that don't exist in the output SVG. Browsers
+                        // silently produce nothing for these filters, which causes any
+                        // path with filter="url(#filter-N)" to render as empty — visible
+                        // symptom: blank canvas. Strip the broken filters and the
+                        // attributes that reference them so the underlying paths render.
+                        // ────────────────────────────────────────────────────────────────
+                        try {
+                          const brokenFilterIds = new Set<string>();
+                          const filterRegex = /<filter\b[^>]*\bid="([^"]+)"[^>]*>([\s\S]*?)<\/filter>/g;
+                          let fm: RegExpExecArray | null;
+                          while ((fm = filterRegex.exec(svgContent)) !== null) {
+                            const [, id, body] = fm;
+                            if (/xlink:href\s*=\s*"#compositing-group-/.test(body)) {
+                              brokenFilterIds.add(id);
+                            }
+                          }
+                          if (brokenFilterIds.size > 0) {
+                            const before = svgContent.length;
+                            // Remove the broken <filter> definitions entirely
+                            svgContent = svgContent.replace(filterRegex, (full, id) =>
+                              brokenFilterIds.has(id) ? '' : full
+                            );
+                            // Drop filter="url(#filter-N)" attributes pointing at them
+                            for (const id of brokenFilterIds) {
+                              const attrRegex = new RegExp(
+                                `\\s+filter\\s*=\\s*"url\\(#${id.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&')}\\)"`,
+                                'g'
+                              );
+                              svgContent = svgContent.replace(attrRegex, '');
+                            }
+                            console.log(`🧹 Stripped ${brokenFilterIds.size} broken PDF blend-mode filter(s) (compositing-group refs) — saved ${before - svgContent.length} bytes`);
+                          }
+                        } catch (cleanupErr) {
+                          console.warn(`⚠️ Filter cleanup skipped:`, (cleanupErr as Error).message);
+                        }
+
                         fs.writeFileSync(svgPath, svgContent);
                         console.log(`✅ SVG normalized to zero-origin with content translation - centered correctly`);
                         
