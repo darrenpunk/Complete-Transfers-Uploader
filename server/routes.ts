@@ -1701,9 +1701,19 @@ export async function registerRoutes(app: express.Application) {
           // pdf2svg can lose text when fonts aren't embedded; the original PDF has exact content
           // The tight-content SVG is for canvas display only
           const isTightContent = (logo as any).filename && (logo as any).filename.includes('_tight-content');
-          
+
+          // EXCEPTION: when the user has explicitly outlined fonts, the original PDF still
+          // contains the live text — using it would silently undo the outlining the user
+          // requested. In that case, prefer the outlined SVG (logo.filename) for output.
+          const fontsOutlined = (logo as any).fontsOutlined === true;
+
           let cropToContentBounds = false;
-          if (isTightContent && (logo as any).originalFilename && await ensureFileOnDisk(originalPdfPath)) {
+          if (fontsOutlined && await ensureFileOnDisk(svgPath)) {
+            console.log(`🔤 FONTS OUTLINED — using outlined SVG instead of original PDF: ${(logo as any).filename}`);
+            usePath = svgPath;
+            useOriginalPdf = false;
+            cropToContentBounds = isTightContent;
+          } else if (isTightContent && (logo as any).originalFilename && await ensureFileOnDisk(originalPdfPath)) {
             console.log(`🎯 TIGHT-CONTENT SVG exists but USING ORIGINAL PDF to preserve fonts/text: ${(logo as any).originalFilename}`);
             usePath = originalPdfPath;
             useOriginalPdf = true;
