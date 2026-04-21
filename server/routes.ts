@@ -5404,14 +5404,16 @@ export async function registerRoutes(app: express.Application) {
                           try {
                             const pngFilename = (file as any).canvasFallbackFilename;
                             const pngPath = path.join(uploadDir, pngFilename);
-                            const { execSync: execSyncPng } = await import('child_process');
                             const pngScale = 4;
                             const pngW = Math.round(contentWidthPts * pngScale);
                             const pngH = Math.round(contentHeightPts * pngScale);
                             console.log(`🔄 REGENERATING PNG fallback after SVG normalization: ${contentWidthPts.toFixed(1)}×${contentHeightPts.toFixed(1)}pts → ${pngW}×${pngH}px`);
-                            execSyncPng(`rsvg-convert "${svgPath}" -o "${pngPath}" -w ${pngW} -h ${pngH}`, { 
-                              stdio: 'pipe',
-                              timeout: 30000 
+                            // CRITICAL: Use async exec (NOT execSync) — synchronous spawn here was blocking
+                            // the Node event loop for 15-30s on complex SVGs, causing platform health-check
+                            // failures and SIGKILL in production. Use the module-scope execAsyncRaw.
+                            await execAsyncRaw(`rsvg-convert "${svgPath}" -o "${pngPath}" -w ${pngW} -h ${pngH}`, {
+                              timeout: 30000,
+                              killSignal: 'SIGKILL' as any,
                             });
                             console.log(`✅ PNG fallback regenerated from normalized SVG: ${pngFilename}`);
                           } catch (pngRegenError) {
