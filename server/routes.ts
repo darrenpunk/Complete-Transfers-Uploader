@@ -6120,7 +6120,12 @@ export async function registerRoutes(app: express.Application) {
           originalHeight: displayHeight,
           // CRITICAL: Store original PDF content bounds (before normalization) for cropping
           // These are the coordinates in the ORIGINAL PDF that need to be cropped for proper embedding
-          ...(originalPdfBounds && { originalPdfBounds })
+          ...(originalPdfBounds && { originalPdfBounds }),
+          // CRITICAL: Persist late-set PNG fallback + complexity metrics produced during SVG normalization
+          // (filter-stripping for compositing-group refs, forced PNG fallback for unrenderable SVGs).
+          // Without these, the renderer cannot know to use the PNG instead of the broken SVG.
+          ...((file as any).canvasFallbackFilename && { canvasFallbackFilename: (file as any).canvasFallbackFilename }),
+          ...((file as any).vectorComplexityMetrics && { vectorComplexityMetrics: (file as any).vectorComplexityMetrics })
         });
         
         console.log(`✅ SAVED CONTENTBOUNDS: ${JSON.stringify(contentBoundsToSave)} to logo ${logo.id}`);
