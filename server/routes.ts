@@ -5487,14 +5487,34 @@ export async function registerRoutes(app: express.Application) {
                             const pngScale = 4;
                             const pngW = Math.round(contentWidthPts * pngScale);
                             const pngH = Math.round(contentHeightPts * pngScale);
-                            console.log(`🔄 ${needsForcedFallback && !(file as any).canvasFallbackFilename ? 'GENERATING' : 'REGENERATING'} PNG fallback: ${contentWidthPts.toFixed(1)}×${contentHeightPts.toFixed(1)}pts → ${pngW}×${pngH}px${needsForcedFallback ? ' (forced — complex PDF compositing)' : ''}`);
+                            // CRITICAL: When the SVG had its blend-mode filter chains stripped,
+                            // rsvg-convert on that SVG produces wrong output (occluded layers,
+                            // missing color compositing). Render the ORIGINAL PDF with Ghostscript
+                            // instead — it natively handles PDF blend modes, transparency groups,
+                            // and soft masks. Only fall back to rsvg-convert when no original PDF
+                            // exists (e.g. native SVG uploads or PDFs that already lost the original).
+                            const originalPdfFilename = (file as any).originalPdfFilename;
+                            const originalPdfPath = originalPdfFilename
+                              ? path.join(uploadDir, originalPdfFilename)
+                              : null;
+                            const useGhostscript = needsForcedFallback && originalPdfPath && fs.existsSync(originalPdfPath);
+                            const renderer = useGhostscript ? 'Ghostscript→PDF' : 'rsvg-convert→SVG';
+                            console.log(`🔄 ${needsForcedFallback && !(file as any).canvasFallbackFilename ? 'GENERATING' : 'REGENERATING'} PNG fallback via ${renderer}: ${contentWidthPts.toFixed(1)}×${contentHeightPts.toFixed(1)}pts → ${pngW}×${pngH}px${needsForcedFallback ? ' (forced — complex PDF compositing)' : ''}`);
                             // CRITICAL: Use async exec (NOT execSync) — synchronous spawn here was blocking
                             // the Node event loop for 15-30s on complex SVGs, causing platform health-check
                             // failures and SIGKILL in production. Use the module-scope execAsyncRaw.
-                            await execAsyncRaw(`rsvg-convert "${svgPath}" -o "${pngPath}" -w ${pngW} -h ${pngH}`, {
-                              timeout: 30000,
-                              killSignal: 'SIGKILL' as any,
-                            });
+                            if (useGhostscript) {
+                              const dpi = pngScale * 72;
+                              await execAsyncRaw(
+                                `gs -dNOPAUSE -dBATCH -dSAFER -dQUIET -sDEVICE=pngalpha -r${dpi} -dFirstPage=1 -dLastPage=1 -dUseCropBox -dGraphicsAlphaBits=4 -dTextAlphaBits=4 -sOutputFile="${pngPath}" "${originalPdfPath}"`,
+                                { timeout: 60000, killSignal: 'SIGKILL' as any, maxBuffer: 32 * 1024 * 1024 }
+                              );
+                            } else {
+                              await execAsyncRaw(`rsvg-convert "${svgPath}" -o "${pngPath}" -w ${pngW} -h ${pngH}`, {
+                                timeout: 30000,
+                                killSignal: 'SIGKILL' as any,
+                              });
+                            }
                             // Only accept the PNG if it's actually valid (>1KB — 0-byte files mean rsvg failed silently)
                             const pngSize = fs.existsSync(pngPath) ? fs.statSync(pngPath).size : 0;
                             if (pngSize > 1024) {
