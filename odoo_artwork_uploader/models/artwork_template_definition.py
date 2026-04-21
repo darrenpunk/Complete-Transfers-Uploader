@@ -123,7 +123,6 @@ class ArtworkTemplateDefinition(models.Model):
             {'template_id': 'uvdtf-A3', 'name': 'A3 UV DTF', 'category': 'uvdtf', 'width_mm': 297, 'height_mm': 420, 'sequence': 1},
             
             # Digital Transfers - Woven Badges
-            {'template_id': 'woven-A6', 'name': 'A6 Woven', 'category': 'woven', 'width_mm': 105, 'height_mm': 148, 'sequence': 1},
             {'template_id': 'woven-square', 'name': '95×95mm Woven', 'category': 'woven', 'width_mm': 95, 'height_mm': 95, 'sequence': 2},
             {'template_id': 'woven-badge', 'name': '100×70mm Woven', 'category': 'woven', 'width_mm': 100, 'height_mm': 70, 'sequence': 3},
             {'template_id': 'woven-small', 'name': '60×60mm Woven', 'category': 'woven', 'width_mm': 60, 'height_mm': 60, 'sequence': 4},

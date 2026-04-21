@@ -80,7 +80,6 @@ class ArtworkUploaderController(http.Controller):
             {"id": "uvdtf-A3", "name": "uv_dtf_A3", "label": "A3 UV DTF", "width": 297, "height": 420, "pixelWidth": 842, "pixelHeight": 1191, "group": "Digital Transfers", "description": "Hard Surface Transfers"},
             
             # Digital Transfers - Custom Badges (4 templates)
-            {"id": "woven-A6", "name": "woven_A6", "label": "A6 Woven", "width": 105, "height": 148, "pixelWidth": 298, "pixelHeight": 420, "group": "Digital Transfers", "description": "Polyester textile woven badges"},
             {"id": "woven-square", "name": "woven_square", "label": "95×95mm Woven", "width": 95, "height": 95, "pixelWidth": 269, "pixelHeight": 269, "group": "Digital Transfers", "description": "Polyester textile woven badges"},
             {"id": "woven-badge", "name": "woven_badge", "label": "100×70mm Woven", "width": 100, "height": 70, "pixelWidth": 283, "pixelHeight": 198, "group": "Digital Transfers", "description": "Polyester textile woven badges"},
             {"id": "woven-small", "name": "woven_small", "label": "60×60mm Woven", "width": 60, "height": 60, "pixelWidth": 170, "pixelHeight": 170, "group": "Digital Transfers", "description": "Polyester textile woven badges"},

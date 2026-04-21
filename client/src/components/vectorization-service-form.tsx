@@ -873,7 +873,7 @@ export function VectorizationServiceForm({ open, onOpenChange, partnerEmail, aut
             "single-colour-transfers": ["single-A3", "single-A4", "single-A5", "single-A6", "single-transfer-size", "single-square", "single-badge", "single-small"],
             "dtf-transfers": ["dtf-SRA3", "dtf-large"],
             "uv-dtf": ["uvdtf-A3"],
-            "custom-badges": ["woven-A6", "woven-square", "woven-badge", "woven-small"],
+            "custom-badges": ["woven-square", "woven-badge", "woven-small"],
             "applique-badges": ["applique-A6", "applique-square", "applique-badge", "applique-small"],
             "reflective-transfers": ["reflective-A3", "reflective-A4", "reflective-A5", "reflective-A6", "reflective-transfer-size", "reflective-square", "reflective-badge", "reflective-small"],
             "zero-single-colour": ["zero-A3", "zero-A4", "zero-A5", "zero-A6", "zero-transfer-size", "zero-square", "zero-badge", "zero-small"],
