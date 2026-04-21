@@ -2607,44 +2607,60 @@ export async function registerRoutes(app: express.Application) {
       let uploaderId: string | null = (project as any).uploaderId || null;
       const alreadyAttempted = !!(uploaderEmail || uploaderId);
       const clientCookies = req.headers.cookie || '';
-      if (!alreadyAttempted && clientCookies) {
-        const odooBaseUrl = process.env.VITE_ODOO_URL || 'https://www.completetransfers.com';
-        const ac = new AbortController();
-        const timer = setTimeout(() => ac.abort(), 400); // 400ms hard cap, never blocks upload
-        try {
-          const sessionResp = await fetch(`${odooBaseUrl}/web/session/info`, {
-            method: 'GET',
-            headers: { 'Cookie': clientCookies, 'Accept': 'application/json' },
-            signal: ac.signal,
-          });
-          if (sessionResp.ok) {
-            const sessionData: any = await sessionResp.json();
-            // Odoo /web/session/info: `username` is the login (email for our store);
-            // `user_id` is `[id, display_name]` so [1] is NOT the email.
-            const resolvedEmail = sessionData?.username || sessionData?.partner_email || null;
-            const resolvedId = sessionData?.uid ? String(sessionData.uid) : null;
-            if (resolvedEmail || resolvedId) {
-              uploaderEmail = resolvedEmail;
-              uploaderId = resolvedId;
-              // Fire-and-forget persistence so we don't add DB latency to the upload path
-              storage.updateProject(projectId, {
-                uploaderEmail: resolvedEmail || undefined,
-                uploaderId: resolvedId || undefined,
-              } as any).catch((persistErr: any) => {
-                console.warn(`[UPLOAD CTX] Failed to persist uploader on project ${projectId}: ${persistErr?.message}`);
-              });
+      let lookupDiag = 'skipped';
+      if (!alreadyAttempted) {
+        if (!clientCookies) {
+          lookupDiag = 'no-cookies-on-request';
+        } else {
+          const odooBaseUrl = process.env.VITE_ODOO_URL || 'https://www.completetransfers.com';
+          const ac = new AbortController();
+          const lookupStart = Date.now();
+          const timer = setTimeout(() => ac.abort(), 1500); // 1.5s hard cap; runs in parallel with upload setup
+          try {
+            const sessionResp = await fetch(`${odooBaseUrl}/web/session/info`, {
+              method: 'GET',
+              headers: { 'Cookie': clientCookies, 'Accept': 'application/json' },
+              signal: ac.signal,
+            });
+            const elapsed = Date.now() - lookupStart;
+            if (!sessionResp.ok) {
+              lookupDiag = `http-${sessionResp.status}-in-${elapsed}ms`;
+            } else {
+              const sessionData: any = await sessionResp.json();
+              // Odoo /web/session/info: `username` is the login (email for our store);
+              // `user_id` is `[id, display_name]` so [1] is NOT the email.
+              const resolvedEmail = sessionData?.username || sessionData?.partner_email || null;
+              const resolvedId = sessionData?.uid ? String(sessionData.uid) : null;
+              if (resolvedEmail || resolvedId) {
+                uploaderEmail = resolvedEmail;
+                uploaderId = resolvedId;
+                lookupDiag = `ok-in-${elapsed}ms`;
+                // Fire-and-forget persistence so we don't add DB latency to the upload path
+                storage.updateProject(projectId, {
+                  uploaderEmail: resolvedEmail || undefined,
+                  uploaderId: resolvedId || undefined,
+                } as any).catch((persistErr: any) => {
+                  console.warn(`[UPLOAD CTX] Failed to persist uploader on project ${projectId}: ${persistErr?.message}`);
+                });
+              } else {
+                lookupDiag = `no-username-in-response-after-${elapsed}ms uid=${sessionData?.uid ?? 'none'}`;
+              }
             }
+          } catch (sessionErr: any) {
+            const elapsed = Date.now() - lookupStart;
+            if (sessionErr?.name === 'AbortError') {
+              lookupDiag = `timeout-after-${elapsed}ms`;
+            } else {
+              lookupDiag = `error-after-${elapsed}ms: ${sessionErr?.message}`;
+            }
+          } finally {
+            clearTimeout(timer);
           }
-        } catch (sessionErr: any) {
-          // Aborts and network errors are intentionally swallowed; never block uploads.
-          if (sessionErr?.name !== 'AbortError') {
-            console.warn(`[UPLOAD CTX] Odoo session lookup failed for project ${projectId}: ${sessionErr?.message}`);
-          }
-        } finally {
-          clearTimeout(timer);
         }
+      } else {
+        lookupDiag = 'already-known';
       }
-      const uploaderTag = uploaderEmail || uploaderId || 'anonymous';
+      const uploaderTag = uploaderEmail || uploaderId || `anonymous(${lookupDiag})`;
       console.log(`🏷️  [UPLOAD CTX] project=${projectId} uploader=${uploaderTag} files=${files.length} names=[${files.map(f => f.originalname).join(', ')}]`);
 
       // PRODUCTION FLOW: Import production flow manager
