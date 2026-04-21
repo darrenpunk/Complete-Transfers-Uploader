@@ -7,12 +7,19 @@ const MAX_QUEUE_SIZE = 8;
 const QUEUE_TIMEOUT_MS = 120_000;
 const STALE_OP_TIMEOUT_MS = 180_000;
 
-const MEMORY_REJECT_MB = 440;
-const MEMORY_SERIAL_MB = 380;
+// Thresholds are tuned for the production deployment's 512MB container.
+// In development the workspace is much larger and Vite + esbuild + tsx alone
+// occupy ~380MB before any user activity, so we'd reject every upload at idle
+// if we used the production caps. Use generous dev caps to mirror real prod
+// behaviour without false rejections during local testing.
+const IS_PROD = process.env.NODE_ENV === 'production';
 
-const CONTAINER_LIMIT_MB = 512;
-const CONTAINER_REJECT_MB = 460;
-const CONTAINER_WARN_MB = 400;
+const MEMORY_REJECT_MB = IS_PROD ? 440 : 1200;
+const MEMORY_SERIAL_MB = IS_PROD ? 380 : 1000;
+
+const CONTAINER_LIMIT_MB = IS_PROD ? 512 : 2048;
+const CONTAINER_REJECT_MB = IS_PROD ? 460 : 1800;
+const CONTAINER_WARN_MB = IS_PROD ? 400 : 1500;
 
 interface QueueEntry {
   resolve: () => void;
