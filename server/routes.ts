@@ -5452,6 +5452,10 @@ export async function registerRoutes(app: express.Application) {
                               svgContent = svgContent.replace(attrRegex, '');
                             }
                             console.log(`🧹 Stripped ${brokenFilterIds.size} broken PDF blend-mode filter(s) (compositing-group refs) — saved ${before - svgContent.length} bytes`);
+                            // Even after cleanup, PDFs that relied on these filters use complex
+                            // clip/mask/alpha compositing that browsers can't reliably render.
+                            // Force a PNG fallback so the canvas shows the real artwork.
+                            (file as any).__forcePngFallback = true;
                           }
                         } catch (cleanupErr) {
                           console.warn(`⚠️ Filter cleanup skipped:`, (cleanupErr as Error).message);
@@ -5461,15 +5465,20 @@ export async function registerRoutes(app: express.Application) {
                         console.log(`✅ SVG normalized to zero-origin with content translation - centered correctly`);
                         
                         // CRITICAL: Regenerate PNG fallback AFTER normalization if one was created earlier
-                        // The original PNG was generated from the full-page SVG before cropping
-                        if ((file as any).canvasFallbackFilename) {
+                        // The original PNG was generated from the full-page SVG before cropping.
+                        // ALSO: if we just stripped broken PDF blend-mode filters, the SVG won't
+                        // render correctly in browsers — force a PNG fallback so the canvas shows
+                        // the real artwork instead of a blank/partial render.
+                        const needsForcedFallback = (file as any).__forcePngFallback === true;
+                        if ((file as any).canvasFallbackFilename || needsForcedFallback) {
                           try {
-                            const pngFilename = (file as any).canvasFallbackFilename;
+                            const pngFilename = (file as any).canvasFallbackFilename
+                              || finalFilename.replace(/\.svg$/, '-canvas-fallback.png');
                             const pngPath = path.join(uploadDir, pngFilename);
                             const pngScale = 4;
                             const pngW = Math.round(contentWidthPts * pngScale);
                             const pngH = Math.round(contentHeightPts * pngScale);
-                            console.log(`🔄 REGENERATING PNG fallback after SVG normalization: ${contentWidthPts.toFixed(1)}×${contentHeightPts.toFixed(1)}pts → ${pngW}×${pngH}px`);
+                            console.log(`🔄 ${needsForcedFallback && !(file as any).canvasFallbackFilename ? 'GENERATING' : 'REGENERATING'} PNG fallback: ${contentWidthPts.toFixed(1)}×${contentHeightPts.toFixed(1)}pts → ${pngW}×${pngH}px${needsForcedFallback ? ' (forced — complex PDF compositing)' : ''}`);
                             // CRITICAL: Use async exec (NOT execSync) — synchronous spawn here was blocking
                             // the Node event loop for 15-30s on complex SVGs, causing platform health-check
                             // failures and SIGKILL in production. Use the module-scope execAsyncRaw.
@@ -5477,9 +5486,18 @@ export async function registerRoutes(app: express.Application) {
                               timeout: 30000,
                               killSignal: 'SIGKILL' as any,
                             });
-                            console.log(`✅ PNG fallback regenerated from normalized SVG: ${pngFilename}`);
+                            // Only accept the PNG if it's actually valid (>1KB — 0-byte files mean rsvg failed silently)
+                            const pngSize = fs.existsSync(pngPath) ? fs.statSync(pngPath).size : 0;
+                            if (pngSize > 1024) {
+                              (file as any).canvasFallbackFilename = pngFilename;
+                              (file as any).isComplexVector = true;
+                              console.log(`✅ PNG fallback ready: ${pngFilename} (${pngSize} bytes)`);
+                            } else {
+                              console.log(`⚠️ PNG fallback produced ${pngSize} bytes — not using`);
+                              if (fs.existsSync(pngPath)) try { fs.unlinkSync(pngPath); } catch {}
+                            }
                           } catch (pngRegenError) {
-                            console.log(`⚠️ PNG fallback regeneration failed:`, pngRegenError);
+                            console.log(`⚠️ PNG fallback regeneration failed:`, (pngRegenError as Error).message);
                           }
                         }
                       } catch (svgCropError) {
