@@ -2531,7 +2531,8 @@ export async function registerRoutes(app: express.Application) {
           ].filter(Boolean).join(' ');
           
           console.log('🔧 Executing Ghostscript CMYK conversion...');
-          execSync(gsCommand, { encoding: 'utf8', timeout: 60000 });
+          // CRITICAL: async exec — GS CMYK conversion can block event loop for up to 60s
+          await execAsyncRaw(gsCommand, { encoding: 'utf8' as any, timeout: 60000 });
           
           if (fs.existsSync(tempCmykPath)) {
             const cmykPdfBytes = fs.readFileSync(tempCmykPath);
@@ -3412,7 +3413,8 @@ export async function registerRoutes(app: express.Application) {
                       try {
                         const smartDPI = getSmartPreviewDPI(pdfPath);
                         const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r${smartDPI} -dMaxBitmap=80000000 -dAlignToPixels=0 -dGridFitTT=2 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`;
-                        execSync(gsCommand, { encoding: 'buffer', timeout: 120000 });
+                        // CRITICAL: async exec — GS PDF→PNG render with 120s timeout was a major event-loop blocker.
+                        await execAsyncRaw(gsCommand, { timeout: 120000, maxBuffer: 1024 * 1024 * 50 });
                         
                         if ((file as any)._needsAlphaTrimCheck && (file as any).originalPdfBounds && (file as any)._alphaTrimPageSize) {
                           try {
@@ -3494,7 +3496,8 @@ export async function registerRoutes(app: express.Application) {
                           
                           if (!isValidPng) {
                             console.log(`⚠️ PNG corrupted, regenerating...`);
-                            execSync(`gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r96 -dMaxBitmap=80000000 -dAlignToPixels=0 -dGridFitTT=2 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`, { encoding: 'buffer', timeout: 120000 });
+                            // CRITICAL: async exec — don't block event loop on regen.
+                            await execAsyncRaw(`gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r96 -dMaxBitmap=80000000 -dAlignToPixels=0 -dGridFitTT=2 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`, { timeout: 120000, maxBuffer: 1024 * 1024 * 50 });
                             const regenBuffer = fs.readFileSync(pngPath);
                             const regenSig = regenBuffer.slice(0, 8).toString('hex');
                             console.log(`🔍 Regenerated PNG: signature=${regenSig}, valid=${regenSig === '89504e470d0a1a0a'}`);
@@ -3716,7 +3719,8 @@ export async function registerRoutes(app: express.Application) {
                     try {
                       const smartDPI2 = getSmartPreviewDPI(pdfPath);
                       const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r${smartDPI2} -dMaxBitmap=80000000 -dAlignToPixels=0 -dGridFitTT=2 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`;
-                      execSync(gsCommand, { encoding: 'buffer', timeout: 120000 });
+                      // CRITICAL: async exec — RGB PDF→PNG render path
+                      await execAsyncRaw(gsCommand, { timeout: 120000, maxBuffer: 1024 * 1024 * 50 });
                       
                       if (fs.existsSync(pngPath) && fs.statSync(pngPath).size > 0) {
                         const pngBuffer = fs.readFileSync(pngPath);
@@ -3726,7 +3730,8 @@ export async function registerRoutes(app: express.Application) {
                         
                         if (!isValidPng) {
                           console.log(`⚠️ PNG corrupted, regenerating...`);
-                          execSync(`gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r96 -dMaxBitmap=80000000 -dAlignToPixels=0 -dGridFitTT=2 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`, { encoding: 'buffer', timeout: 120000 });
+                          // CRITICAL: async exec — don't block event loop on regen.
+                          await execAsyncRaw(`gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r96 -dMaxBitmap=80000000 -dAlignToPixels=0 -dGridFitTT=2 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`, { timeout: 120000, maxBuffer: 1024 * 1024 * 50 });
                         }
 
                         if ((file as any)._needsAlphaTrimCheck && (file as any).originalPdfBounds && (file as any)._alphaTrimPageSize) {
@@ -4301,11 +4306,10 @@ export async function registerRoutes(app: express.Application) {
                   
                   // Use Inkscape to query accurate bounds - much more reliable than path parsing
                   try {
-                    const { execSync } = await import('child_process');
-                    
-                    // Query actual rendered dimensions from Inkscape
-                    const inkscapeWidth = execSync(`timeout 10 inkscape --query-width "${svgPath}" 2>/dev/null`, { encoding: 'utf8' }).trim();
-                    const inkscapeHeight = execSync(`timeout 10 inkscape --query-height "${svgPath}" 2>/dev/null`, { encoding: 'utf8' }).trim();
+                    // CRITICAL: async exec — these inkscape queries can block the event loop
+                    // for 10-20s on complex SVGs and were responsible for production crashes.
+                    const inkscapeWidth = (await execAsyncRaw(`timeout 10 inkscape --query-width "${svgPath}" 2>/dev/null`, { encoding: 'utf8' as any })).stdout.toString().trim();
+                    const inkscapeHeight = (await execAsyncRaw(`timeout 10 inkscape --query-height "${svgPath}" 2>/dev/null`, { encoding: 'utf8' as any })).stdout.toString().trim();
                     
                     const widthPx = parseFloat(inkscapeWidth);
                     const heightPx = parseFloat(inkscapeHeight);
@@ -4805,12 +4809,12 @@ export async function registerRoutes(app: express.Application) {
                   // This is more reliable than SVG geometry analysis as it detects ALL visible content
                   console.log(`🎯 USING Ghostscript bbox for accurate content detection (most reliable)`);
                   
-                  const { execSync } = await import('child_process');
                   let gsBounds: { xMin: number; yMin: number; xMax: number; yMax: number; width: number; height: number } | null = null;
                   
                   try {
                     const originalPdfPath = (file as any).originalPdfPath;
-                    const gsOutput = execSync(`gs -dBATCH -dNOPAUSE -dQUIET -sDEVICE=bbox "${originalPdfPath}" 2>&1`, { encoding: 'utf8' });
+                    // CRITICAL: async exec — Ghostscript bbox can take several seconds on complex PDFs
+                    const gsOutput = (await execAsyncRaw(`gs -dBATCH -dNOPAUSE -dQUIET -sDEVICE=bbox "${originalPdfPath}" 2>&1`, { encoding: 'utf8' as any, timeout: 30000 })).stdout.toString();
                     
                     // Parse HiResBoundingBox for precise bounds
                     const hiResMatch = gsOutput.match(/%%HiResBoundingBox:\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)/);
@@ -4852,7 +4856,9 @@ export async function registerRoutes(app: express.Application) {
                       
                       let inkscapeVerifyBounds: typeof gsBounds | null = null;
                       try {
-                        const queryResult = execSync(`inkscape --query-all "${svgPath}" 2>/dev/null`, { encoding: 'utf8', timeout: 10000 });
+                        // CRITICAL: async exec — inkscape --query-all is the heaviest call in the
+                        // pipeline and was repeatedly blocking the event loop, killing prod.
+                        const queryResult = (await execAsyncRaw(`inkscape --query-all "${svgPath}" 2>/dev/null`, { encoding: 'utf8' as any, timeout: 10000 })).stdout.toString();
                         const lines = queryResult.trim().split('\n');
                         let globalXMin = Infinity, globalYMin = Infinity, globalXMax = -Infinity, globalYMax = -Infinity;
                         const verifyPageW = pdfPageDimensions?.widthPts ?? Infinity;
@@ -5217,8 +5223,8 @@ export async function registerRoutes(app: express.Application) {
                         let svgBoundsWidth = contentWidthPts, svgBoundsHeight = contentHeightPts;
                         
                         try {
-                          const { execSync } = await import('child_process');
-                          const queryResult = execSync(`inkscape --query-all "${svgPath}" 2>/dev/null`, { encoding: 'utf8', timeout: 15000 });
+                          // CRITICAL: async exec — see notes above about inkscape blocking the event loop.
+                          const queryResult = (await execAsyncRaw(`inkscape --query-all "${svgPath}" 2>/dev/null`, { encoding: 'utf8' as any, timeout: 15000 })).stdout.toString();
                           const allLines = queryResult.trim().split('\n');
                           
                           const rootParts = allLines[0]?.split(',');
