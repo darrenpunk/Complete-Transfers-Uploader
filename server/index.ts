@@ -434,12 +434,37 @@ async function main() {
   if (isProduction) {
     // In production, start listening FIRST so the health check responds immediately
     // during route registration (which may take several seconds).
-    await new Promise<void>((resolve) => {
-      server.listen(port, "0.0.0.0", () => {
-        console.log(`[SERVER] Listening on port ${port} — health check now available`);
-        log(`serving on port ${port}`);
-        resolve();
-      });
+    // Retry on EADDRINUSE: after a SIGKILL the prior process may still be holding
+    // port 5000 in TIME_WAIT, and a hard exit would cause a crash-loop on the VM.
+    await new Promise<void>(async (resolve, reject) => {
+      const maxAttempts = 12;
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+          await new Promise<void>((ok, fail) => {
+            const onError = (err: any) => {
+              server.removeListener('listening', onListening);
+              fail(err);
+            };
+            const onListening = () => {
+              server.removeListener('error', onError);
+              console.log(`[SERVER] Listening on port ${port} — health check now available`);
+              log(`serving on port ${port}`);
+              ok();
+            };
+            server.once('error', onError);
+            server.once('listening', onListening);
+            server.listen(port, "0.0.0.0");
+          });
+          return resolve();
+        } catch (err: any) {
+          if (err && err.code === 'EADDRINUSE' && attempt < maxAttempts) {
+            console.warn(`[SERVER] Port ${port} busy (attempt ${attempt}/${maxAttempts}) — retrying in 5s…`);
+            await new Promise((r) => setTimeout(r, 5000));
+            continue;
+          }
+          return reject(err);
+        }
+      }
     });
   }
 

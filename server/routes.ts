@@ -4178,7 +4178,9 @@ export async function registerRoutes(app: express.Application) {
                 const pngFilename = finalFilename.replace(/\.svg$/, '-canvas-fallback.png');
                 const pngPath = path.join(uploadDir, pngFilename);
                 
-                const { execSync } = await import('child_process');
+                const { exec } = await import('child_process');
+                const { promisify } = await import('util');
+                const execAsync = promisify(exec);
                 try {
                   const svgContentForSize = fs.readFileSync(svgPath, 'utf-8');
                   const svgWidthMatch = svgContentForSize.match(/width="([^"]+)"/);
@@ -4189,15 +4191,14 @@ export async function registerRoutes(app: express.Application) {
                   const pngW = Math.round(svgW * pngScale);
                   const pngH = Math.round(svgH * pngScale);
                   console.log(`📐 PNG fallback: SVG ${svgW}×${svgH}px → PNG ${pngW}×${pngH}px (${pngScale}x scale)`);
-                  execSync(`rsvg-convert "${svgPath}" -o "${pngPath}" -w ${pngW} -h ${pngH}`, { 
-                    stdio: 'pipe',
-                    timeout: 30000 
+                  await execAsync(`rsvg-convert "${svgPath}" -o "${pngPath}" -w ${pngW} -h ${pngH}`, { 
+                    timeout: 30000,
+                    killSignal: 'SIGKILL'
                   });
                   console.log(`✅ PNG fallback generated using rsvg-convert: ${pngFilename}`);
                 } catch (rsvgError) {
                   console.log(`⚠️ rsvg-convert failed, trying Inkscape...`);
-                  execSync(`inkscape "${svgPath}" --export-filename="${pngPath}" --export-dpi=150`, {
-                    stdio: 'pipe',
+                  await execAsync(`inkscape "${svgPath}" --export-filename="${pngPath}" --export-dpi=150`, {
                     timeout: 15000,
                     killSignal: 'SIGKILL'
                   });
@@ -6541,12 +6542,18 @@ export async function registerRoutes(app: express.Application) {
         const safariScale = 4;
         const safariPngW = Math.round(safariW * safariScale);
         const safariPngH = Math.round(safariH * safariScale);
-        execSync(`rsvg-convert "${svgToConvert}" -o "${pngPath}" -w ${safariPngW} -h ${safariPngH}`, { 
-          stdio: 'pipe', timeout: 30000 
+        const { exec: execAsyncImport2 } = await import('child_process');
+        const { promisify: promisify2 } = await import('util');
+        const execAsync2 = promisify2(execAsyncImport2);
+        await execAsync2(`rsvg-convert "${svgToConvert}" -o "${pngPath}" -w ${safariPngW} -h ${safariPngH}`, { 
+          timeout: 30000, killSignal: 'SIGKILL'
         });
       } catch {
-        execSync(`inkscape "${svgToConvert}" --export-filename="${pngPath}" --export-dpi=150`, {
-          stdio: 'pipe', timeout: 15000, killSignal: 'SIGKILL'
+        const { exec: execAsyncImport3 } = await import('child_process');
+        const { promisify: promisify3 } = await import('util');
+        const execAsync3 = promisify3(execAsyncImport3);
+        await execAsync3(`inkscape "${svgToConvert}" --export-filename="${pngPath}" --export-dpi=150`, {
+          timeout: 15000, killSignal: 'SIGKILL'
         });
       }
       
