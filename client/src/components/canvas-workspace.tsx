@@ -1,6 +1,7 @@
 import { useRef, useEffect, useState, useCallback, forwardRef, useImperativeHandle } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
+import { displayGarmentColor } from "@/lib/garment-color-display";
 import type { Project, Logo, CanvasElement, TemplateSize, ContentBounds } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -2604,7 +2605,7 @@ const CanvasWorkspace = forwardRef(function CanvasWorkspace({
               style={{
                 width: canvasWidth,
                 height: canvasHeight,
-                backgroundColor: bleedMarginMm > 0 ? '#808080' : (project.garmentColor || '#EAEAEA')
+                backgroundColor: bleedMarginMm > 0 ? '#808080' : displayGarmentColor(project.garmentColor)
               }}
               onClick={handleCanvasClick}
             >
@@ -2617,7 +2618,7 @@ const CanvasWorkspace = forwardRef(function CanvasWorkspace({
                   top: bleedInPixels,
                   width: innerCanvasWidth,
                   height: innerCanvasHeight,
-                  backgroundColor: project.garmentColor || '#EAEAEA',
+                  backgroundColor: displayGarmentColor(project.garmentColor),
                   border: '2px dashed rgba(0, 0, 0, 0.3)'
                 }}
               >

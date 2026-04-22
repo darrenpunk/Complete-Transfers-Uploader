@@ -1,6 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { displayGarmentColor } from "@/lib/garment-color-display";
 import { Eye, Layers, Palette, Type, FileText, ChevronLeft, ChevronRight, Download, ImageIcon } from "lucide-react";
 import { CompleteTransferLogo } from "./complete-transfer-logo";
 import { useState, useMemo, useCallback } from "react";
@@ -581,7 +582,7 @@ export default function PDFPreviewModal({
                       <div 
                         className="relative border border-dashed border-gray-300 shadow-sm overflow-hidden"
                         style={{
-                          backgroundColor: project?.garmentColor || '#d7da14',
+                          backgroundColor: displayGarmentColor(project?.garmentColor, '#d7da14'),
                           aspectRatio: template ? `${template.width}/${template.height}` : '297/420',
                           ...(template && template.width > template.height
                             ? { width: '95%', maxHeight: '90%' }
@@ -613,7 +614,7 @@ export default function PDFPreviewModal({
                             imageUrl = `${imageUrl}${sep}inkColor=${encodeURIComponent(project.inkColor)}&recolor=true&t=${Date.now()}`;
                           }
 
-                          const elBgColor = element.garmentColor || project?.garmentColor || '#d7da14';
+                          const elBgColor = displayGarmentColor(element.garmentColor || project?.garmentColor, '#d7da14');
 
                           return (
                             <div
