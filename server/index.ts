@@ -301,23 +301,26 @@ app.get('/uploads/:filename', async (req, res, next) => {
       res.setHeader('Content-Type', 'image/svg+xml');
       res.send(recoloredContent);
     } else if (lowerFilename.endsWith('.png') || lowerFilename.endsWith('.jpg') || lowerFilename.endsWith('.jpeg')) {
-      const { execSync } = (await import('child_process'));
+      const { exec } = (await import('child_process'));
+      const { promisify } = (await import('util'));
+      const execAsync = promisify(exec);
       const tmpOutput = path.join('/tmp', `recolored_${Date.now()}_${filename.replace(/\.[^.]+$/, '.png')}`);
       const isJpeg = lowerFilename.endsWith('.jpg') || lowerFilename.endsWith('.jpeg');
       
       if (isJpeg) {
-        execSync(`convert "${filePath}" -grayscale Rec709Luminance -fill "${inkColor}" -colorize 100 "${tmpOutput}"`, { timeout: 30000 });
+        await execAsync(`convert "${filePath}" -grayscale Rec709Luminance -fill "${inkColor}" -colorize 100 "${tmpOutput}"`, { timeout: 30000, maxBuffer: 1024 * 1024 });
       } else {
         // Check if the PNG has meaningful transparency
         let hasAlpha = false;
         try {
-          const alphaCheck = execSync(`identify -format "%A" "${filePath}" 2>/dev/null || echo "False"`, { timeout: 10000 }).toString().trim();
+          const { stdout: alphaStdout } = await execAsync(`identify -format "%A" "${filePath}" 2>/dev/null || echo "False"`, { timeout: 10000, maxBuffer: 64 * 1024 });
+          const alphaCheck = alphaStdout.trim();
           hasAlpha = alphaCheck === 'True' || alphaCheck === 'Blend';
           
           if (hasAlpha) {
             // Check if the alpha channel is actually used (not all opaque)
-            const meanAlpha = execSync(`convert "${filePath}" -alpha extract -format "%[fx:mean]" info: 2>/dev/null || echo "1"`, { timeout: 10000 }).toString().trim();
-            const alphaVal = parseFloat(meanAlpha);
+            const { stdout: meanStdout } = await execAsync(`convert "${filePath}" -alpha extract -format "%[fx:mean]" info: 2>/dev/null || echo "1"`, { timeout: 10000, maxBuffer: 64 * 1024 });
+            const alphaVal = parseFloat(meanStdout.trim());
             if (!isNaN(alphaVal) && alphaVal > 0.99) {
               hasAlpha = false; // Alpha exists but is all opaque - treat as no alpha
             }
@@ -328,13 +331,14 @@ app.get('/uploads/:filename', async (req, res, next) => {
         
         if (hasAlpha) {
           // PNG with transparency: extract alpha, fill with ink color, reapply alpha
-          execSync(`convert "${filePath}" -alpha extract -background "${inkColor}" -alpha shape "${tmpOutput}"`, { timeout: 30000 });
+          await execAsync(`convert "${filePath}" -alpha extract -background "${inkColor}" -alpha shape "${tmpOutput}"`, { timeout: 30000, maxBuffer: 1024 * 1024 });
         } else {
           // Opaque PNG: luminance-based — create grayscale mask, apply as alpha on solid ink color
           const tmpGray = tmpOutput.replace('.png', '_gray.png');
-          execSync(`convert "${filePath}" -grayscale Rec709Luminance "${tmpGray}"`, { timeout: 30000 });
-          const dims = execSync(`identify -format "%wx%h" "${filePath}" 2>/dev/null`, { timeout: 10000 }).toString().trim();
-          execSync(`convert -size ${dims} xc:"${inkColor}" "${tmpGray}" -alpha off -compose CopyOpacity -composite "${tmpOutput}"`, { timeout: 30000 });
+          await execAsync(`convert "${filePath}" -grayscale Rec709Luminance "${tmpGray}"`, { timeout: 30000, maxBuffer: 1024 * 1024 });
+          const { stdout: dimsStdout } = await execAsync(`identify -format "%wx%h" "${filePath}" 2>/dev/null`, { timeout: 10000, maxBuffer: 64 * 1024 });
+          const dims = dimsStdout.trim();
+          await execAsync(`convert -size ${dims} xc:"${inkColor}" "${tmpGray}" -alpha off -compose CopyOpacity -composite "${tmpOutput}"`, { timeout: 30000, maxBuffer: 1024 * 1024 });
           try { fs.unlinkSync(tmpGray); } catch(e) {}
         }
       }
