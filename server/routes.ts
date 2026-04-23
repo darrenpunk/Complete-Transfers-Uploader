@@ -4250,8 +4250,18 @@ export async function registerRoutes(app: express.Application) {
                 const { exec } = await import('child_process');
                 const { promisify } = await import('util');
                 const execAsync = promisify(exec);
+                const svgContentForSize = fs.readFileSync(svgPath, 'utf-8');
+                // Detect broken PDF compositing-group filter refs that neither rsvg nor inkscape can render.
+                // When present, skip straight to the post-normalization Ghostscript→PDF fallback path
+                // (which will run later and render the original PDF directly). Trying rsvg/inkscape here
+                // wastes ~15-30s, produces 50+ "SPFeImage::reread_href failed" warnings, and burns RAM
+                // on per-failed-href raster surface allocations — a known contributor to OOM pressure.
+                const hasBrokenCompositingGroups = /compositing-group-\d+/.test(svgContentForSize);
+                if (hasBrokenCompositingGroups) {
+                  console.log(`⏭️ Skipping upload-time rsvg/inkscape PNG fallback — SVG contains broken PDF compositing-group refs; deferring to Ghostscript→original-PDF fallback path`);
+                  throw new Error('DEFER_TO_GHOSTSCRIPT_FALLBACK');
+                }
                 try {
-                  const svgContentForSize = fs.readFileSync(svgPath, 'utf-8');
                   const svgWidthMatch = svgContentForSize.match(/width="([^"]+)"/);
                   const svgHeightMatch = svgContentForSize.match(/height="([^"]+)"/);
                   const svgW = svgWidthMatch ? parseFloat(svgWidthMatch[1]) : 200;
@@ -6698,26 +6708,30 @@ export async function registerRoutes(app: express.Application) {
         }
       }
       
+      const safariSvgContent = fs.readFileSync(svgToConvert, 'utf-8');
+      // Same broken-compositing-group guard as the upload-time path — never let inkscape
+      // attempt these SVGs; it will burn RAM with per-failed-href raster surfaces.
+      const safariHasBrokenCompositingGroups = /compositing-group-\d+/.test(safariSvgContent);
+      const safariWMatch = safariSvgContent.match(/width="([^"]+)"/);
+      const safariHMatch = safariSvgContent.match(/height="([^"]+)"/);
+      const safariW = safariWMatch ? parseFloat(safariWMatch[1]) : 200;
+      const safariH = safariHMatch ? parseFloat(safariHMatch[1]) : 200;
+      const safariScale = 4;
+      const safariPngW = Math.round(safariW * safariScale);
+      const safariPngH = Math.round(safariH * safariScale);
+      const { exec: execAsyncImport2 } = await import('child_process');
+      const { promisify: promisify2 } = await import('util');
+      const execAsync2 = promisify2(execAsyncImport2);
       try {
-        const safariSvgContent = fs.readFileSync(svgToConvert, 'utf-8');
-        const safariWMatch = safariSvgContent.match(/width="([^"]+)"/);
-        const safariHMatch = safariSvgContent.match(/height="([^"]+)"/);
-        const safariW = safariWMatch ? parseFloat(safariWMatch[1]) : 200;
-        const safariH = safariHMatch ? parseFloat(safariHMatch[1]) : 200;
-        const safariScale = 4;
-        const safariPngW = Math.round(safariW * safariScale);
-        const safariPngH = Math.round(safariH * safariScale);
-        const { exec: execAsyncImport2 } = await import('child_process');
-        const { promisify: promisify2 } = await import('util');
-        const execAsync2 = promisify2(execAsyncImport2);
         await execAsync2(`rsvg-convert "${svgToConvert}" -o "${pngPath}" -w ${safariPngW} -h ${safariPngH}`, { 
           timeout: 30000, killSignal: 'SIGKILL'
         });
-      } catch {
-        const { exec: execAsyncImport3 } = await import('child_process');
-        const { promisify: promisify3 } = await import('util');
-        const execAsync3 = promisify3(execAsyncImport3);
-        await execAsync3(`inkscape "${svgToConvert}" --export-filename="${pngPath}" --export-dpi=150`, {
+      } catch (rsvgErr) {
+        if (safariHasBrokenCompositingGroups) {
+          console.log(`⏭️ Safari PNG: skipping inkscape fallback — broken PDF compositing-group refs present`);
+          throw rsvgErr;
+        }
+        await execAsync2(`inkscape "${svgToConvert}" --export-filename="${pngPath}" --export-dpi=150`, {
           timeout: 15000, killSignal: 'SIGKILL'
         });
       }
