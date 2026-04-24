@@ -2013,10 +2013,11 @@ const CanvasWorkspace = forwardRef(function CanvasWorkspace({
 
   return (
     <TooltipProvider>
-    <div className="flex-1 flex flex-col">
-      {/* Position Warning Banner - Only when elements are outside canvas bounds */}
+    <div className="flex-1 flex flex-col relative">
+      {/* Position Warning Banner - Absolute overlay so it doesn't reflow the canvas
+          while dragging an element near the edge (which would cause flicker). */}
       {hasElementsOutsideCanvas && (
-        <div className="bg-red-50 border-b border-red-300 px-4 py-2 text-center">
+        <div className="absolute top-0 left-0 right-0 z-30 bg-red-50/95 border-b border-red-300 px-4 py-2 text-center pointer-events-none shadow-sm">
           <p className="text-sm text-red-800 font-medium">
             ⚠️ Position Warning
           </p>
