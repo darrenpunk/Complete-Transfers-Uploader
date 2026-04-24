@@ -88,6 +88,8 @@ export default function UploadTool() {
   } | null>(null);
   const [partnerEmail, setPartnerEmail] = useState<string | null>(null);
   const [authStatus, setAuthStatus] = useState<'checking' | 'authenticated' | 'not-authenticated'>('checking');
+  const [customerVectorOnly, setCustomerVectorOnly] = useState(false);
+  const [customerFeaturesLoaded, setCustomerFeaturesLoaded] = useState(false);
   const [showPassThroughModal, setShowPassThroughModal] = useState(false);
   const [pendingPassThroughLogo, setPendingPassThroughLogo] = useState<{ logoId: string; pageCount: number; fileName: string } | null>(null);
   const [detectedReorderColors, setDetectedReorderColors] = useState<Array<{color: string; colorName: string; quantity: number}>>([]);
@@ -944,6 +946,38 @@ export default function UploadTool() {
       setCurrentProject(project);
     }
   }, [project]);
+
+  // Fetch per-customer feature flags. If this customer is restricted to the
+  // Vectorisation Service only, we'll skip the product launcher and open the
+  // vector form directly.
+  useEffect(() => {
+    let email = partnerEmail;
+    if (!email) {
+      try {
+        email = sessionStorage.getItem('partner_email') || localStorage.getItem('partner_email') || null;
+      } catch {}
+    }
+    if (!email) {
+      setCustomerVectorOnly(false);
+      setCustomerFeaturesLoaded(true);
+      return;
+    }
+    setCustomerFeaturesLoaded(false);
+    fetch(`/api/customer-features?email=${encodeURIComponent(email)}`)
+      .then(r => r.json())
+      .then(data => setCustomerVectorOnly(!!data.vectorizationOnly))
+      .catch(() => setCustomerVectorOnly(false))
+      .finally(() => setCustomerFeaturesLoaded(true));
+  }, [partnerEmail]);
+
+  // For vectorisation-only customers, transparently swap the product launcher
+  // for the vectorisation service form.
+  useEffect(() => {
+    if (customerVectorOnly && showProductLauncher) {
+      setShowProductLauncher(false);
+      setShowVectorizationForm(true);
+    }
+  }, [customerVectorOnly, showProductLauncher]);
 
   useEffect(() => {
     if (id && projectFetched && !project && (projectLoadError || !currentProject)) {
@@ -2443,7 +2477,7 @@ export default function UploadTool() {
           </div>
         )}
         <ProductLauncherModal
-          open={showProductLauncher}
+          open={showProductLauncher && customerFeaturesLoaded && !customerVectorOnly}
           onClose={() => setShowProductLauncher(false)}
           onSelectProduct={handleProductSelect}
           onOpenVectorizationForm={() => setShowVectorizationForm(true)}
@@ -2506,6 +2540,7 @@ export default function UploadTool() {
           onOpenChange={setShowVectorizationForm}
           partnerEmail={partnerEmail}
           authStatus={authStatus}
+          vectorOnlyOverride={customerFeaturesLoaded ? customerVectorOnly : undefined}
         />
 
         <DtfQuickUploadModal
@@ -2931,6 +2966,7 @@ export default function UploadTool() {
         onOpenChange={setShowVectorizationForm}
         partnerEmail={partnerEmail}
         authStatus={authStatus}
+        vectorOnlyOverride={customerFeaturesLoaded ? customerVectorOnly : undefined}
       />
 
       {/* Onboarding Tutorial */}

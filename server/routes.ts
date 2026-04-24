@@ -9149,7 +9149,23 @@ ${svgClose}`;
         return res.status(400).json({ error: 'No file uploaded' });
       }
 
-      const serviceType = req.body.serviceType || 'vectorization-with-product'; // Default to legacy behavior
+      let serviceType = req.body.serviceType || 'vectorization-with-product'; // Default to legacy behavior
+
+      // Server-side enforcement: vectorisation-only customers can never submit
+      // a transfer product alongside their vectorisation request. Override the
+      // serviceType regardless of what the client sent.
+      try {
+        const customerEmail: string | undefined = req.body.customerCode || req.body.partnerEmail || req.body.email;
+        if (customerEmail) {
+          const assignments = await storage.getCustomerTemplates(customerEmail);
+          const isVectorOnly = assignments.some((a: any) => a.templateId === '__vectorization_only__');
+          if (isVectorOnly) {
+            serviceType = 'vectorization-only';
+          }
+        }
+      } catch (err) {
+        console.warn('Could not enforce vectorization-only flag:', err);
+      }
 
       // Validate request body
       const requestData = insertVectorizationRequestSchema.parse({

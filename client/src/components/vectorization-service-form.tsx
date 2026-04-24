@@ -55,6 +55,7 @@ interface VectorizationServiceFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   partnerEmail?: string | null;
+  vectorOnlyOverride?: boolean;
 }
 
 interface TemplateSize {
@@ -70,7 +71,7 @@ interface TemplateSize {
   placeholderImage: string | null;
 }
 
-export function VectorizationServiceForm({ open, onOpenChange, partnerEmail, authStatus }: VectorizationServiceFormProps) {
+export function VectorizationServiceForm({ open, onOpenChange, partnerEmail, authStatus, vectorOnlyOverride }: VectorizationServiceFormProps) {
   console.log('VectorizationServiceForm render:', { open });
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -83,7 +84,28 @@ export function VectorizationServiceForm({ open, onOpenChange, partnerEmail, aut
   const [selectedProduct, setSelectedProduct] = useState<TemplateSize | null>(null);
   const [garmentColor, setGarmentColor] = useState<string | null>(null);
   const [inkColor, setInkColor] = useState<string | null>(null);
+  const [vectorOnlyFetched, setVectorOnlyFetched] = useState<boolean | null>(null);
+  const vectorOnlyCustomer = vectorOnlyOverride ?? vectorOnlyFetched ?? false;
   const { toast } = useToast();
+
+  useEffect(() => {
+    // If parent passed a resolved override we trust it — no local fetch needed.
+    if (typeof vectorOnlyOverride === 'boolean') return;
+    let email = partnerEmail;
+    if (!email) {
+      try {
+        email = sessionStorage.getItem('partner_email') || localStorage.getItem('partner_email') || null;
+      } catch {}
+    }
+    if (!email) {
+      setVectorOnlyFetched(false);
+      return;
+    }
+    fetch(`/api/customer-features?email=${encodeURIComponent(email)}`)
+      .then(r => r.json())
+      .then(data => setVectorOnlyFetched(!!data.vectorizationOnly))
+      .catch(() => setVectorOnlyFetched(false));
+  }, [partnerEmail, vectorOnlyOverride]);
   
   const isInIframe = window.self !== window.top;
   const getOdooBaseUrl = () => {
@@ -143,6 +165,14 @@ export function VectorizationServiceForm({ open, onOpenChange, partnerEmail, aut
 
   const serviceType = form.watch("serviceType");
 
+  // Force vectorisation-only customers onto the "vectorization-only" service
+  // type so the UI never offers (or submits) the transfer-product variant.
+  useEffect(() => {
+    if (vectorOnlyCustomer && form.getValues("serviceType") !== "vectorization-only") {
+      form.setValue("serviceType", "vectorization-only");
+    }
+  }, [vectorOnlyCustomer, form]);
+
   // Check if the selected product is a single-color template
   const isSingleColorTemplate = (template: TemplateSize | null): boolean => {
     if (!template || !template.id) return false;
@@ -159,13 +189,16 @@ export function VectorizationServiceForm({ open, onOpenChange, partnerEmail, aut
 
   const submitMutation = useMutation({
     mutationFn: async (data: VectorizationFormData) => {
+      // Hard-override at submit time so vectorisation-only customers can never
+      // accidentally (or intentionally) submit the transfer-product variant.
+      const effectiveServiceType = vectorOnlyCustomer ? "vectorization-only" : data.serviceType;
       const formData = new FormData();
       formData.append('file', data.file);
       formData.append('comments', data.comments);
       formData.append('printSize', data.printSize);
-      formData.append('serviceType', data.serviceType);
+      formData.append('serviceType', effectiveServiceType);
       
-      if (data.serviceType === "vectorization-with-product") {
+      if (effectiveServiceType === "vectorization-with-product") {
         if (!data.transferProduct) {
           throw new Error("Please select a transfer product");
         }
@@ -393,8 +426,8 @@ export function VectorizationServiceForm({ open, onOpenChange, partnerEmail, aut
               <div className="bg-muted p-4 rounded-lg space-y-2">
                 <p className="font-medium">Request ID: {requestId}</p>
                 <div className="text-sm text-muted-foreground">
-                  <p className="font-medium text-foreground mb-1">Added to Cart:</p>
-                  <p>• Vectorization Service - €15.00 ex VAT</p>
+                  <p className="font-medium text-foreground mb-1">{vectorOnlyCustomer ? "Submitted:" : "Added to Cart:"}</p>
+                  <p>• Vectorization Service{vectorOnlyCustomer ? "" : " - €15.00 ex VAT"}</p>
                   {serviceType === "vectorization-with-product" && selectedProduct && (
                     <p>• {selectedProduct.label} Transfer (with quantity)</p>
                   )}
@@ -468,10 +501,12 @@ export function VectorizationServiceForm({ open, onOpenChange, partnerEmail, aut
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-3">
-                      <div className="flex justify-between items-center">
-                        <span className="font-medium">Service Charge:</span>
-                        <span className="text-lg font-bold text-primary">€15.00 ex VAT</span>
-                      </div>
+                      {!vectorOnlyCustomer && (
+                        <div className="flex justify-between items-center">
+                          <span className="font-medium">Service Charge:</span>
+                          <span className="text-lg font-bold text-primary">€15.00 ex VAT</span>
+                        </div>
+                      )}
                       <div className="text-sm text-muted-foreground space-y-1">
                         <p>• High-quality vector conversion</p>
                         <p>• Scalable SVG format output</p>
@@ -527,7 +562,8 @@ export function VectorizationServiceForm({ open, onOpenChange, partnerEmail, aut
 
                 {/* Right Column */}
                 <div className="space-y-4">
-                  {/* Service Type Selection */}
+                  {/* Service Type Selection — hidden for vectorisation-only customers */}
+                  {!vectorOnlyCustomer && (
                   <FormField
                     control={form.control}
                     name="serviceType"
@@ -561,6 +597,7 @@ export function VectorizationServiceForm({ open, onOpenChange, partnerEmail, aut
                       </FormItem>
                     )}
                   />
+                  )}
 
                   {/* Transfer Product Selection (only show if vectorization-with-product selected) */}
                   {serviceType === "vectorization-with-product" && (
