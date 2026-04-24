@@ -135,15 +135,32 @@ function ProductContent({
 }: Omit<ProductLauncherModalProps, 'open' | 'inline'> & { hideHeader?: boolean }) {
   const [showTutorial, setShowTutorial] = useState(false);
   const [hasDtfQuickUpload, setHasDtfQuickUpload] = useState(false);
+  // When true, this customer only sees the Vectorisation Service tile (everything else
+  // is hidden). Backed by an admin assignment of the magic id "__vectorization_only__".
+  const [vectorizationOnlyMode, setVectorizationOnlyMode] = useState(false);
 
   useEffect(() => {
-    if (!partnerEmail) return;
-    fetch(`/api/customer-features?email=${encodeURIComponent(partnerEmail)}`)
+    let email = partnerEmail;
+    if (!email) {
+      try {
+        email = sessionStorage.getItem('partner_email') || localStorage.getItem('partner_email') || null;
+      } catch {}
+    }
+    if (!email) {
+      setHasDtfQuickUpload(false);
+      setVectorizationOnlyMode(false);
+      return;
+    }
+    fetch(`/api/customer-features?email=${encodeURIComponent(email)}`)
       .then(r => r.json())
       .then(data => {
-        if (data.dtfQuickUpload) setHasDtfQuickUpload(true);
+        setHasDtfQuickUpload(!!data.dtfQuickUpload);
+        setVectorizationOnlyMode(!!data.vectorizationOnly);
       })
-      .catch(() => {});
+      .catch(() => {
+        setHasDtfQuickUpload(false);
+        setVectorizationOnlyMode(false);
+      });
   }, [partnerEmail]);
 
   const handleProductSelect = (productId: string) => {
@@ -154,6 +171,11 @@ function ProductContent({
       onSelectProduct(productId);
     }
   };
+
+  // Filter the visible tiles. Vectorisation-only customers see ONLY the vector tile.
+  const visibleProducts = vectorizationOnlyMode
+    ? productCategories.filter(p => p.id === "vectorization-service")
+    : productCategories;
 
   const isDev = import.meta.env.DEV;
   const effectiveAuth = isDev ? 'authenticated' : (authStatus || 'not-authenticated');
@@ -251,8 +273,8 @@ function ProductContent({
         
         <div className="relative px-2 md:px-6 pt-2 pb-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {/* DTF Quick Upload card — only shown to enabled customers */}
-            {hasDtfQuickUpload && onQuickUploadDtf && (
+            {/* DTF Quick Upload card — only shown to enabled customers, hidden in vector-only mode */}
+            {hasDtfQuickUpload && onQuickUploadDtf && !vectorizationOnlyMode && (
               <Card
                 className="cursor-pointer hover:shadow-lg transition-shadow duration-200 border border-yellow-500/50 bg-yellow-500/5 hover:border-yellow-400"
                 onClick={() => { onClose(); onQuickUploadDtf(); }}
@@ -287,7 +309,7 @@ function ProductContent({
               </Card>
             )}
 
-            {productCategories.map((product) => (
+            {visibleProducts.map((product) => (
               <Card 
                 key={product.id}
                 className="cursor-pointer hover:shadow-lg transition-shadow duration-200 border border-gray-700 bg-gray-900 hover:border-primary"

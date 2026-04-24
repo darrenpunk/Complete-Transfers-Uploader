@@ -49,7 +49,7 @@ Current focus: Core functionality over complex color management features.
 - **Order History**: Customer-facing page displaying past artwork orders from Odoo with PDF downloads and reorder functionality.
 - **Monorepo Structure**: Shared TypeScript types between frontend and backend.
 - **Customer Template Assignments**: Admin-managed system for assigning exclusive templates to specific customers.
-- **Customer Features System**: Extends customer_templates to flag per-customer feature access, such as the DTF 1000x550 Quick Upload Button.
+- **Customer Features System**: Extends customer_templates to flag per-customer feature access via magic template IDs. Current flags: `__dtf_quick_upload__` (shows DTF 1000x550 Quick Upload tile), `__vectorization_only__` (hides all product tiles except Vectorization Service for the customer). The `/api/customer-features` endpoint returns these flags by partner email; the Product Launcher modal reads partner email from prop, sessionStorage, or localStorage.
 - **Odoo Module Enhancements**: Automatic project comments, garment color inclusion in sales orders, hot deployment, robust error handling, and integrated PDF processing.
 
 ## External Dependencies

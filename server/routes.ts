@@ -9967,13 +9967,17 @@ ${svgClose}`;
   // Returns feature flags for a customer (e.g. DTF Quick Upload button)
   app.get('/api/customer-features', async (req, res) => {
     const email = req.query.email as string;
-    if (!email) return res.json({ dtfQuickUpload: false });
+    if (!email) return res.json({ dtfQuickUpload: false, vectorizationOnly: false });
     try {
       const assignments = await storage.getCustomerTemplates(email);
       const dtfQuickUpload = assignments.some((a: any) => a.templateId === '__dtf_quick_upload__');
-      res.json({ dtfQuickUpload });
+      // When this flag is set, the product launcher hides every tile except the
+      // Vectorisation Service. Special pricing for this customer is handled in Odoo
+      // via pricelists assigned to the existing vector-service product.
+      const vectorizationOnly = assignments.some((a: any) => a.templateId === '__vectorization_only__');
+      res.json({ dtfQuickUpload, vectorizationOnly });
     } catch (e) {
-      res.json({ dtfQuickUpload: false });
+      res.json({ dtfQuickUpload: false, vectorizationOnly: false });
     }
   });
 
