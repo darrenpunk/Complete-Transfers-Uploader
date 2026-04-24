@@ -1224,14 +1224,30 @@ grestore`;
               console.log(`📄 FULL-PAGE PDF CHECK${orientationNote}: PDF page (${origPageSize.width.toFixed(1)}×${origPageSize.height.toFixed(1)}pts) matches template (${templateWPts.toFixed(1)}×${templateHPts.toFixed(1)}pts)`);
               console.log(`📄 Content coverage: ${(coverageRatio * 100).toFixed(1)}% (${contentWidthPts.toFixed(1)}×${contentHeightPts.toFixed(1)} content in ${origPageSize.width.toFixed(1)}×${origPageSize.height.toFixed(1)} page)`);
               
+              // MARGIN CHECK: Compute padding on every side. Real "full-page" PDFs have
+              // artwork that extends close to all four edges. Centred artwork with 17mm
+              // padding (e.g. 64×65 crest in a 70×100 page) is NOT full-page — embedding
+              // the whole page on a rotated template clips the artwork (Waterford bug).
+              const marginLeft = originalPdfBounds.xMin;
+              const marginRight = origPageSize.width - originalPdfBounds.xMax;
+              const marginBottom = originalPdfBounds.yMin;
+              const marginTop = origPageSize.height - originalPdfBounds.yMax;
+              const maxMarginX = Math.max(marginLeft, marginRight);
+              const maxMarginY = Math.max(marginTop, marginBottom);
+              const maxMarginXPct = maxMarginX / origPageSize.width;
+              const maxMarginYPct = maxMarginY / origPageSize.height;
+              const FULLPAGE_MARGIN_PCT = 0.05; // each side must be within 5% of the page edge
+              const marginsLookFullPage = maxMarginXPct < FULLPAGE_MARGIN_PCT && maxMarginYPct < FULLPAGE_MARGIN_PCT;
+              console.log(`📐 Margins (pts): L=${marginLeft.toFixed(1)} R=${marginRight.toFixed(1)} T=${marginTop.toFixed(1)} B=${marginBottom.toFixed(1)} → maxX=${(maxMarginXPct*100).toFixed(1)}%, maxY=${(maxMarginYPct*100).toFixed(1)}% (full-page requires <${FULLPAGE_MARGIN_PCT*100}%)`);
+              
               if (isFullPageMatchRotated && hasUserRotation) {
                 console.log(`📄 LANDSCAPE PDF with user rotation (${element.rotation}°) - NOT treating as full-page landscape`);
                 console.log(`📄 User has manually rotated this element - will crop to content bounds then apply rotation`);
                 // DO NOT set logoPdfPath here - let the normal cropping flow handle it
                 // Setting logoPdfPath = originalPdfPath would embed the full 842×595 page
                 // but drawPage would force it into element dimensions (~737×312pts), squashing the content
-              } else if (coverageRatio > 0.5) {
-                console.log(`📄 Content fills >50% of page - treating as full-page PDF`);
+              } else if (coverageRatio > 0.85 && marginsLookFullPage) {
+                console.log(`📄 Content fills >85% of page AND extends to all edges - treating as full-page PDF`);
                 console.log(`📄 Skipping content-bounds cropping - embedding full page to prevent clipping`);
                 logoPdfPath = originalPdfPath;
                 (element as any)._isFullPagePdf = true;
@@ -1241,8 +1257,8 @@ grestore`;
                   (element as any)._origPageHeight = origPageSize.height;
                 }
               } else {
-                console.log(`📄 Content only covers ${(coverageRatio * 100).toFixed(1)}% of page - NOT treating as full-page PDF`);
-                console.log(`📄 Page dimensions match template but content is small - will use content bounds and apply rotation normally`);
+                console.log(`📄 Coverage ${(coverageRatio * 100).toFixed(1)}% / margins ${(maxMarginXPct*100).toFixed(1)}%×${(maxMarginYPct*100).toFixed(1)}% - artwork is inset, NOT treating as full-page PDF`);
+                console.log(`📄 Will crop to content bounds so artwork fits the canvas element correctly`);
               }
             }
             // ELEMENT-MATCHES-PAGE CHECK: If the canvas element dimensions are close to the original
