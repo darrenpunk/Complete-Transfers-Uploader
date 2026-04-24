@@ -7,9 +7,9 @@ channel = "stable-24_05"
 packages = ["imagemagick", "ghostscript", "poppler_utils", "pdf2svg", "librsvg", "inkscape", "jq", "zip"]
 
 [deployment]
-deploymentTarget = "autoscale"
+deploymentTarget = "vm"
 build = ["npm", "run", "build"]
-run = ["sh", "-c", "MALLOC_ARENA_MAX=2 node --max-old-space-size=384 --expose-gc dist/index.js"]
+run = ["sh", "-c", "MALLOC_ARENA_MAX=2 node --max-old-space-size=4096 --expose-gc dist/index.js"]
 
 [env]
 PORT = "5000"
