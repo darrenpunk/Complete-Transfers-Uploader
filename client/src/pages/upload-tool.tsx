@@ -261,12 +261,18 @@ export default function UploadTool() {
   }, []);
 
   // Fetch template sizes - with direct fetch fallback for production reliability
+  // NOTE: cache key includes 'with-landscape' to avoid collisions with any other component
+  // that might use ["/api/template-sizes"] (without landscape variants).
   const { data: queryTemplateSizes } = useQuery<TemplateSize[]>({
-    queryKey: ["/api/template-sizes", partnerEmail],
-    queryFn: () => fetch(`/api/template-sizes?includeLandscape=true${partnerEmail ? `&customerCode=${encodeURIComponent(partnerEmail)}` : ''}`).then(r => r.json()),
+    queryKey: ["/api/template-sizes-with-landscape", partnerEmail],
+    queryFn: async () => {
+      const url = `/api/template-sizes?includeLandscape=true${partnerEmail ? `&customerCode=${encodeURIComponent(partnerEmail)}` : ''}`;
+      const r = await fetch(url);
+      return await r.json();
+    },
   });
   const [fallbackTemplateSizes, setFallbackTemplateSizes] = useState<TemplateSize[]>([]);
-  
+
   useEffect(() => {
     const doFetch = () => {
       console.log('⏰ Fetching template sizes directly...');
@@ -280,15 +286,21 @@ export default function UploadTool() {
         })
         .catch(err => console.error('❌ Direct fetch failed:', err));
     };
-    
-    if (!queryTemplateSizes || queryTemplateSizes.length === 0) {
-      doFetch();
-      const timer = setTimeout(doFetch, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [queryTemplateSizes, partnerEmail]);
-  
-  const templateSizes: TemplateSize[] = (queryTemplateSizes && queryTemplateSizes.length > 0) ? queryTemplateSizes : fallbackTemplateSizes;
+
+    // Always run the direct fetch on mount as a safety net — guarantees we have a list
+    // that includes landscape variants even if the React Query cache somehow holds a stale
+    // (filtered) response.
+    doFetch();
+  }, [partnerEmail]);
+
+  // Prefer whichever loaded first/has more entries; both fetch with includeLandscape=true
+  // so they should agree, but if one is missing landscape variants we want the bigger one.
+  const templateSizes: TemplateSize[] = (() => {
+    const q = (queryTemplateSizes && queryTemplateSizes.length > 0) ? queryTemplateSizes : null;
+    const f = (fallbackTemplateSizes.length > 0) ? fallbackTemplateSizes : null;
+    if (q && f) return q.length >= f.length ? q : f;
+    return q || f || [];
+  })();
 
   // Fetch project if ID provided
   const { data: project, isError: projectLoadError, isFetched: projectFetched } = useQuery<Project>({
@@ -323,6 +335,15 @@ export default function UploadTool() {
       return;
     }
     
+    // Wait until ALL pending logos have canvas elements with measured dimensions before
+    // making the orientation decision; otherwise we may consume the pending IDs prematurely
+    // and skip auto-switch even when it should fire.
+    const allElementsReady = pendingOrientationCheckLogoIds.every(logoId => {
+      const el = canvasElements.find(e => e.logoId?.toString() === logoId.toString());
+      return el && el.width && el.height;
+    });
+    if (!allElementsReady) return;
+    
     let needsSwitch = false;
     for (const logoId of pendingOrientationCheckLogoIds) {
       const element = canvasElements.find(el => el.logoId?.toString() === logoId.toString());
@@ -349,36 +370,60 @@ export default function UploadTool() {
     
     setPendingOrientationCheckLogoIds([]);
     
-    if (needsSwitch) {
-      const currentTemplateId = currentProject.templateSize;
-      let targetTemplateId: string;
-      let newOrientationLabel: string;
-      
-      if (currentTemplateId.endsWith('-landscape')) {
-        targetTemplateId = currentTemplateId.replace('-landscape', '');
-        newOrientationLabel = 'Portrait';
-      } else {
-        targetTemplateId = `${currentTemplateId}-landscape`;
-        newOrientationLabel = 'Landscape';
-      }
-      
-      const targetTemplate = templateSizes.find(t => t.id === targetTemplateId);
-      if (!targetTemplate) {
-        console.log(`📐 Orientation variant "${targetTemplateId}" not found — skipping auto-switch`);
-      } else {
-        (async () => {
-          try {
-            await apiRequest("PATCH", `/api/projects/${currentProject.id}`, { templateSize: targetTemplateId });
-            queryClient.invalidateQueries({ queryKey: ["/api/projects", currentProject.id] });
-            queryClient.invalidateQueries({ queryKey: ["/api/projects", currentProject.id, "canvas-elements"] });
-            toast({ title: `Switched to ${newOrientationLabel}`, description: `Canvas automatically adjusted to match your artwork orientation.` });
-          } catch (err) {
-            console.error('Failed to auto-switch template orientation:', err);
-          }
-        })();
-      }
+    if (!needsSwitch) return;
+
+    const currentTemplateId = currentProject.templateSize;
+    const projectIdAtStart = currentProject.id;
+    const templateSizeAtStart = currentProject.templateSize;
+    let targetTemplateId: string;
+    let newOrientationLabel: string;
+
+    if (currentTemplateId.endsWith('-landscape')) {
+      targetTemplateId = currentTemplateId.replace('-landscape', '');
+      newOrientationLabel = 'Portrait';
+    } else {
+      targetTemplateId = `${currentTemplateId}-landscape`;
+      newOrientationLabel = 'Landscape';
     }
-  }, [canvasElements, pendingOrientationCheckLogoIds, currentProject?.templateSize, currentProject?.id]);
+
+    // NOTE: do NOT abort this IIFE on effect cleanup — clearing pendingOrientationCheckLogoIds
+    // above triggers a re-render which fires the cleanup and would cancel the PATCH. The
+    // queryClient.getQueryData check below handles the only race that matters (user manually
+    // changes the template before the PATCH lands).
+    (async () => {
+      try {
+        // Local templateSizes may be stale or filtered; verify variant via direct API fetch as fallback
+        let targetTemplate = templateSizes.find(t => t.id === targetTemplateId);
+        if (!targetTemplate) {
+          const url = `/api/template-sizes?includeLandscape=true${partnerEmail ? `&customerCode=${encodeURIComponent(partnerEmail)}` : ''}`;
+          const res = await fetch(url);
+          if (res.ok) {
+            const all: TemplateSize[] = await res.json();
+            targetTemplate = all.find(t => t.id === targetTemplateId);
+          }
+        }
+
+        if (!targetTemplate) {
+          console.log(`📐 Orientation variant "${targetTemplateId}" not available — skipping auto-switch`);
+          return;
+        }
+
+        // Re-read latest project from query cache before mutating; user may have changed templates
+        const latestProject = queryClient.getQueryData<Project>(["/api/projects", projectIdAtStart]);
+        if (latestProject && latestProject.templateSize !== templateSizeAtStart) {
+          console.log(`📐 Template changed during orientation check (${templateSizeAtStart} → ${latestProject.templateSize}) — aborting auto-switch`);
+          return;
+        }
+
+        await apiRequest("PATCH", `/api/projects/${projectIdAtStart}`, { templateSize: targetTemplateId });
+        queryClient.invalidateQueries({ queryKey: ["/api/projects", projectIdAtStart] });
+        queryClient.invalidateQueries({ queryKey: ["/api/projects", projectIdAtStart, "canvas-elements"] });
+        toast({ title: `Switched to ${newOrientationLabel}`, description: `Canvas automatically adjusted to match your artwork orientation.` });
+      } catch (err: any) {
+        console.error('Failed to auto-switch template orientation:', err);
+      }
+    })();
+  }, [canvasElements, pendingOrientationCheckLogoIds, currentProject?.templateSize, currentProject?.id, templateSizes, partnerEmail]);
 
   // Auto-select newly uploaded logos after their canvas elements appear
   useEffect(() => {
