@@ -6524,6 +6524,11 @@ export async function registerRoutes(app: express.Application) {
       const includeLandscape = req.query.includeLandscape === 'true';
       const filtered = templateSizes.filter(t => {
         if (!includeLandscape && t.id.endsWith('-landscape')) return false;
+        // customerExclusive templates are hidden by default — only visible if the
+        // requesting customer has an explicit assignment for them.
+        if ((t as any).customerExclusive) {
+          return !!(customerCode && customerAllowedIds.has(t.id));
+        }
         if (!restrictedTemplateIds.has(t.id)) return true;
         if (customerCode && customerAllowedIds.has(t.id)) return true;
         return false;

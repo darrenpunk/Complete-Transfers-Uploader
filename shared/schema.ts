@@ -118,6 +118,7 @@ export const templateSizes = pgTable("template_sizes", {
   placeholderImage: text("placeholder_image"), // Template-specific placeholder for Dropbox uploads
   bleedMargin: integer("bleed_margin"), // Optional bleed margin in mm (added around canvas, label shows inner dimensions)
   productCode: text("product_code"), // Odoo product internal reference code (e.g., CTCCA3, STCCA4)
+  customerExclusive: boolean("customer_exclusive").default(false), // If true, hidden from all customers by default — only visible to customers explicitly assigned via customer_templates
 });
 
 export const vectorizationRequests = pgTable("vectorization_requests", {

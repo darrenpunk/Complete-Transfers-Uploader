@@ -1585,8 +1585,13 @@ grestore`;
       }
       
       // Template-specific coordinate calculation to avoid affecting other templates
+      // Detect large-format DTF by dimensions (1000mm wide) so all variants
+      // (dtf-large, dtf-large-next-day, future variants) use the direct Y mapping.
       let yPts: number;
-      if (templateSize.id === 'dtf-large' || templateSize.name === 'large_dtf') {
+      const isLargeDTF = (templateSize.id?.startsWith('dtf-large') ?? false)
+        || templateSize.name === 'large_dtf'
+        || (templateSize.name?.startsWith('large_dtf') ?? false);
+      if (isLargeDTF) {
         // For DTF large format template - direct coordinate mapping
         // DTF canvas Y coordinate maps directly to PDF Y coordinate
         // Canvas coordinate system: Y=0 is at top, increasing downward
