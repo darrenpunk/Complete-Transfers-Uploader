@@ -144,35 +144,46 @@ const eventColors: Record<string, string> = {
 };
 
 const DTF_QUICK_UPLOAD_ID = "__dtf_quick_upload__";
+const VECTORIZATION_ONLY_ID = "__vectorization_only__";
 
-function CustomerFeaturesManager() {
-  const [featureEmail, setFeatureEmail] = useState("");
+function FeatureToggleSection({
+  magicId,
+  title,
+  description,
+  accentColor,
+  assignments,
+  refetch,
+}: {
+  magicId: string;
+  title: string;
+  description: string;
+  accentColor: "yellow" | "purple";
+  assignments: any[] | undefined;
+  refetch: () => void;
+}) {
+  const [email, setEmail] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const { data: assignments, refetch } = useQuery<any[]>({
-    queryKey: ["admin-customer-templates"],
-    queryFn: () => adminFetch("/api/admin/customer-templates"),
-  });
-
   const enabledEmails = useMemo(() => {
-    if (!assignments) return [] as string[];
+    if (!assignments) return [] as Array<{ id: string; email: string }>;
     return assignments
-      .filter((a: any) => a.templateId === DTF_QUICK_UPLOAD_ID)
+      .filter((a: any) => a.templateId === magicId)
       .map((a: any) => ({ id: a.id, email: a.customerCode }));
-  }, [assignments]);
+  }, [assignments, magicId]);
 
   const handleEnable = async () => {
-    if (!featureEmail.trim()) return;
-    if (enabledEmails.some((e: any) => e.email === featureEmail.trim())) return;
+    const trimmed = email.trim();
+    if (!trimmed) return;
+    if (enabledEmails.some((e) => e.email === trimmed)) return;
     setSaving(true);
     try {
       const token = getAdminToken();
       await fetch("/api/admin/customer-templates", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ customerCode: featureEmail.trim(), templateId: DTF_QUICK_UPLOAD_ID }),
+        body: JSON.stringify({ customerCode: trimmed, templateId: magicId }),
       });
-      setFeatureEmail("");
+      setEmail("");
       refetch();
     } catch (e) {
       console.error("Failed to enable feature", e);
@@ -189,6 +200,61 @@ function CustomerFeaturesManager() {
     refetch();
   };
 
+  const iconColor = accentColor === "yellow" ? "text-yellow-400" : "text-purple-400";
+  const pillBg = accentColor === "yellow" ? "bg-yellow-500/10 border-yellow-500/20" : "bg-purple-500/10 border-purple-500/20";
+  const pillText = accentColor === "yellow" ? "text-yellow-300" : "text-purple-300";
+
+  return (
+    <div className="border rounded-lg p-4 space-y-3">
+      <div className="flex items-center gap-2">
+        <Zap className={`h-4 w-4 ${iconColor}`} />
+        <span className="text-sm font-medium">{title}</span>
+      </div>
+      <p className="text-xs text-muted-foreground">{description}</p>
+      <div className="flex gap-2 items-end">
+        <div className="space-y-1 flex-1">
+          <label className="text-xs text-muted-foreground">Customer Email</label>
+          <Input
+            placeholder="customer@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleEnable()}
+            className="h-9"
+          />
+        </div>
+        <Button onClick={handleEnable} disabled={saving || !email.trim()} size="sm" className="h-9">
+          <Plus className="h-4 w-4 mr-1" />
+          Enable
+        </Button>
+      </div>
+      {enabledEmails.length > 0 ? (
+        <div className="space-y-2">
+          <p className="text-xs text-muted-foreground font-medium">Enabled for:</p>
+          {enabledEmails.map((e) => (
+            <div key={e.id} className={`flex items-center justify-between ${pillBg} border rounded px-3 py-2`}>
+              <span className={`text-sm ${pillText}`}>{e.email}</span>
+              <button
+                onClick={() => handleDisable(e.id)}
+                className="text-muted-foreground hover:text-destructive transition-colors"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-xs text-muted-foreground italic">Not enabled for any customers yet.</p>
+      )}
+    </div>
+  );
+}
+
+function CustomerFeaturesManager() {
+  const { data: assignments, refetch } = useQuery<any[]>({
+    queryKey: ["admin-customer-templates"],
+    queryFn: () => adminFetch("/api/admin/customer-templates"),
+  });
+
   return (
     <div className="space-y-6 mt-8">
       <Card>
@@ -202,49 +268,22 @@ function CustomerFeaturesManager() {
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="border rounded-lg p-4 space-y-3">
-            <div className="flex items-center gap-2">
-              <Zap className="h-4 w-4 text-yellow-400" />
-              <span className="text-sm font-medium">DTF 1000×550 Quick Upload Button</span>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Shows a special "Quick Upload" card on the product selector page. The customer uploads a PDF directly and it goes straight to cart — no canvas step.
-            </p>
-            <div className="flex gap-2 items-end">
-              <div className="space-y-1 flex-1">
-                <label className="text-xs text-muted-foreground">Customer Email</label>
-                <Input
-                  placeholder="customer@example.com"
-                  value={featureEmail}
-                  onChange={(e) => setFeatureEmail(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleEnable()}
-                  className="h-9"
-                />
-              </div>
-              <Button onClick={handleEnable} disabled={saving || !featureEmail.trim()} size="sm" className="h-9">
-                <Plus className="h-4 w-4 mr-1" />
-                Enable
-              </Button>
-            </div>
-            {enabledEmails.length > 0 ? (
-              <div className="space-y-2">
-                <p className="text-xs text-muted-foreground font-medium">Enabled for:</p>
-                {enabledEmails.map((e: any) => (
-                  <div key={e.id} className="flex items-center justify-between bg-yellow-500/10 border border-yellow-500/20 rounded px-3 py-2">
-                    <span className="text-sm text-yellow-300">{e.email}</span>
-                    <button
-                      onClick={() => handleDisable(e.id)}
-                      className="text-muted-foreground hover:text-destructive transition-colors"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-xs text-muted-foreground italic">Not enabled for any customers yet.</p>
-            )}
-          </div>
+          <FeatureToggleSection
+            magicId={DTF_QUICK_UPLOAD_ID}
+            title="DTF 1000×550 Quick Upload Button"
+            description='Shows a special "Quick Upload" card on the product selector page. The customer uploads a PDF directly and it goes straight to cart — no canvas step.'
+            accentColor="yellow"
+            assignments={assignments}
+            refetch={refetch}
+          />
+          <FeatureToggleSection
+            magicId={VECTORIZATION_ONLY_ID}
+            title="Vectorisation Service — Hide Prices"
+            description="When this customer opens the Vectorisation Service form, all €15.00 prices and the Service Type radio are hidden, and any submission is forced to vectorisation-only. They still see and can order all other products as normal."
+            accentColor="purple"
+            assignments={assignments}
+            refetch={refetch}
+          />
         </CardContent>
       </Card>
     </div>
