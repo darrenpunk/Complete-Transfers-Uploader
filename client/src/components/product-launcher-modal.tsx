@@ -135,10 +135,6 @@ function ProductContent({
 }: Omit<ProductLauncherModalProps, 'open' | 'inline'> & { hideHeader?: boolean }) {
   const [showTutorial, setShowTutorial] = useState(false);
   const [hasDtfQuickUpload, setHasDtfQuickUpload] = useState(false);
-  // When true, this customer only sees the Vectorisation Service tile (everything else
-  // is hidden). Backed by an admin assignment of the magic id "__vectorization_only__".
-  const [vectorizationOnlyMode, setVectorizationOnlyMode] = useState(false);
-
   useEffect(() => {
     let email = partnerEmail;
     if (!email) {
@@ -148,18 +144,15 @@ function ProductContent({
     }
     if (!email) {
       setHasDtfQuickUpload(false);
-      setVectorizationOnlyMode(false);
       return;
     }
     fetch(`/api/customer-features?email=${encodeURIComponent(email)}`)
       .then(r => r.json())
       .then(data => {
         setHasDtfQuickUpload(!!data.dtfQuickUpload);
-        setVectorizationOnlyMode(!!data.vectorizationOnly);
       })
       .catch(() => {
         setHasDtfQuickUpload(false);
-        setVectorizationOnlyMode(false);
       });
   }, [partnerEmail]);
 
@@ -171,11 +164,6 @@ function ProductContent({
       onSelectProduct(productId);
     }
   };
-
-  // Filter the visible tiles. Vectorisation-only customers see ONLY the vector tile.
-  const visibleProducts = vectorizationOnlyMode
-    ? productCategories.filter(p => p.id === "vectorization-service")
-    : productCategories;
 
   const isDev = import.meta.env.DEV;
   const effectiveAuth = isDev ? 'authenticated' : (authStatus || 'not-authenticated');
@@ -309,7 +297,7 @@ function ProductContent({
               </Card>
             )}
 
-            {visibleProducts.map((product) => (
+            {productCategories.map((product) => (
               <Card 
                 key={product.id}
                 className="cursor-pointer hover:shadow-lg transition-shadow duration-200 border border-gray-700 bg-gray-900 hover:border-primary"

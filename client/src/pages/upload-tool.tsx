@@ -970,15 +970,6 @@ export default function UploadTool() {
       .finally(() => setCustomerFeaturesLoaded(true));
   }, [partnerEmail]);
 
-  // For vectorisation-only customers, transparently swap the product launcher
-  // for the vectorisation service form.
-  useEffect(() => {
-    if (customerVectorOnly && showProductLauncher) {
-      setShowProductLauncher(false);
-      setShowVectorizationForm(true);
-    }
-  }, [customerVectorOnly, showProductLauncher]);
-
   useEffect(() => {
     if (id && projectFetched && !project && (projectLoadError || !currentProject)) {
       console.log('⚠️ Project not found, showing product launcher:', id);
@@ -2477,7 +2468,7 @@ export default function UploadTool() {
           </div>
         )}
         <ProductLauncherModal
-          open={showProductLauncher && customerFeaturesLoaded && !customerVectorOnly}
+          open={showProductLauncher}
           onClose={() => setShowProductLauncher(false)}
           onSelectProduct={handleProductSelect}
           onOpenVectorizationForm={() => setShowVectorizationForm(true)}
