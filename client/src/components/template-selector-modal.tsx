@@ -296,17 +296,24 @@ export default function TemplateSelectorModal({
               </CardHeader>
 
               <CardContent className="pt-0">
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                    {groupTemplates.map((template) => (
+                  {(() => {
+                    const regularTemplates = groupTemplates.filter(t => !t.id.includes('next-day'));
+                    const nextDayTemplates = groupTemplates.filter(t => t.id.includes('next-day'));
+                    const renderTemplateButton = (template: TemplateSize, isNextDay: boolean) => (
                       <Button
                         key={template.id}
                         variant={selectedTemplate === template.id ? "default" : "outline"}
                         className={`h-auto p-3 flex flex-col items-center justify-center space-y-2 transition-colors ${
-                          selectedTemplate === template.id 
-                            ? "bg-primary text-primary-foreground border-primary" 
-                            : "hover:bg-gray-400 hover:border-blue-500"
+                          selectedTemplate === template.id
+                            ? isNextDay
+                              ? "bg-green-600 text-white border-green-600 hover:bg-green-600"
+                              : "bg-primary text-primary-foreground border-primary"
+                            : isNextDay
+                              ? "border-green-500 bg-green-500/10 text-green-200 hover:bg-green-500/20 hover:border-green-400"
+                              : "hover:bg-gray-400 hover:border-blue-500"
                         }`}
                         onClick={() => handleTemplateSelect(template.id)}
+                        data-testid={`template-button-${template.id}`}
                       >
                         <div className="font-semibold">{template.label}</div>
                         <div className="text-xs opacity-75">
@@ -318,8 +325,31 @@ export default function TemplateSelectorModal({
                           </Badge>
                         )}
                       </Button>
-                    ))}
-                  </div>
+                    );
+                    return (
+                      <>
+                        {regularTemplates.length > 0 && (
+                          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                            {regularTemplates.map(t => renderTemplateButton(t, false))}
+                          </div>
+                        )}
+                        {nextDayTemplates.length > 0 && (
+                          <>
+                            <div className="flex items-center gap-2 mt-4 mb-2">
+                              <div className="h-px flex-1 bg-green-500/30" />
+                              <span className="text-xs font-semibold uppercase tracking-wider text-green-400">
+                                Next Day Production
+                              </span>
+                              <div className="h-px flex-1 bg-green-500/30" />
+                            </div>
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                              {nextDayTemplates.map(t => renderTemplateButton(t, true))}
+                            </div>
+                          </>
+                        )}
+                      </>
+                    );
+                  })()}
                 </CardContent>
             </Card>
           ))}
