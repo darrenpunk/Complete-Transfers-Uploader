@@ -168,11 +168,32 @@ export default function UploadTool() {
   useEffect(() => {
     const isInIframe = window !== window.parent;
     let resolved = false;
+    // Track HOW we resolved so a late iframe message can only "rescue" a timeout —
+    // it must not silently overwrite an email already obtained from a verified
+    // source (URL params or backend session).
+    let resolutionSource: 'url' | 'iframe' | 'backend' | 'timeout' | null = null;
     const authTimeouts: NodeJS.Timeout[] = [];
 
-    const resolveEmail = (email: string, source: string) => {
+    // Strict origin allowlist — exact hostname match (or *.completetransfers.com),
+    // never substring matching, to prevent spoofing via attacker-controlled hostnames.
+    const isTrustedOdooOrigin = (rawOrigin: string): boolean => {
+      try {
+        const { hostname, protocol } = new URL(rawOrigin);
+        if (protocol !== 'https:' && protocol !== 'http:') return false;
+        if (hostname === 'completetransfers.com') return true;
+        if (hostname.endsWith('.completetransfers.com')) return true;
+        // Dev only
+        if (hostname === 'localhost' || hostname === '127.0.0.1') return true;
+        return false;
+      } catch {
+        return false;
+      }
+    };
+
+    const resolveEmail = (email: string, source: 'url' | 'iframe' | 'backend') => {
       if (resolved) return;
       resolved = true;
+      resolutionSource = source;
       authTimeouts.forEach(t => clearTimeout(t));
       console.log(`✅ User email identified via ${source}:`, email);
       setPartnerEmail(email);
@@ -191,38 +212,80 @@ export default function UploadTool() {
     }
 
     // IMMEDIATELY set up iframe message listener so we catch the parent's auto-send
-    // (parent sends user data ~500ms after iframe load — we must be listening by then)
+    // (parent sends user data ~500ms after iframe load — we must be listening by then).
+    // IMPORTANT: late postMessages (after the auth timeout) must STILL update partnerEmail
+    // so that customer-exclusive template filtering works. The "resolved" flag only gates
+    // the auth-status decision; the email itself can keep flowing in for filtering.
     const handleMessage = (event: MessageEvent) => {
-      if (event.data?.type === 'odoo-user-data') {
-        const origin = event.origin || '';
-        const trustedOrigins = ['completetransfers.com', 'localhost'];
-        const isTrustedOrigin = trustedOrigins.some(domain => origin.includes(domain));
-        if (!isTrustedOrigin) {
-          console.warn('⚠️ Ignoring odoo-user-data from untrusted origin:', origin);
-          return;
+      if (event.data?.type !== 'odoo-user-data') return;
+
+      // Only accept messages from our actual parent window — protects against
+      // sibling-iframe / popup spoofing.
+      if (event.source !== window.parent) {
+        console.warn('⚠️ Ignoring odoo-user-data from non-parent source');
+        return;
+      }
+      const origin = event.origin || '';
+      if (!isTrustedOdooOrigin(origin)) {
+        console.warn('⚠️ Ignoring odoo-user-data from untrusted origin:', origin);
+        return;
+      }
+
+      console.log('📨 Received odoo-user-data message:', { email: event.data.email, isPublic: event.data.isPublic, origin, resolved, resolutionSource });
+
+      if (event.data.isPublic) {
+        console.warn('⚠️ Parent says user is public (not logged in) — not authenticating');
+        if (!resolved) {
+          resolved = true;
+          resolutionSource = 'iframe';
+          authTimeouts.forEach(t => clearTimeout(t));
+          setAuthStatus('not-authenticated');
+          try { localStorage.removeItem('partner_email'); } catch {}
+          try { sessionStorage.removeItem('partner_email'); } catch {}
         }
-        console.log('📨 Received odoo-user-data message:', { email: event.data.email, isPublic: event.data.isPublic, origin });
-        if (event.data.isPublic) {
-          console.warn('⚠️ Parent says user is public (not logged in) — not authenticating');
-          if (!resolved) {
-            resolved = true;
-            authTimeouts.forEach(t => clearTimeout(t));
-            setAuthStatus('not-authenticated');
-            try { localStorage.removeItem('partner_email'); } catch {}
-            try { sessionStorage.removeItem('partner_email'); } catch {}
-          }
-        } else if (event.data.email) {
-          resolveEmail(event.data.email, 'iframe postMessage');
-        } else {
-          console.warn('⚠️ Parent sent odoo-user-data but email is empty (user may be public on Odoo)');
-        }
+        return;
+      }
+
+      if (!event.data.email) {
+        console.warn('⚠️ Parent sent odoo-user-data but email is empty (user may be public on Odoo)');
+        return;
+      }
+
+      if (!resolved) {
+        // Initial resolution via iframe.
+        resolveEmail(event.data.email, 'iframe');
+        return;
+      }
+
+      // Already resolved. Only allow a late iframe message to RESCUE a timeout —
+      // never overwrite a verified backend/URL identity.
+      if (resolutionSource === 'timeout') {
+        console.log('📬 Late odoo-user-data rescuing prior timeout — applying for filtering:', event.data.email);
+        resolutionSource = 'iframe';
+        setPartnerEmail(event.data.email);
+        setAuthStatus('authenticated');
+        try { localStorage.setItem('partner_email', event.data.email); } catch {}
+        try { sessionStorage.setItem('partner_email', event.data.email); } catch {}
+      } else {
+        console.log('ℹ️ Ignoring late odoo-user-data — identity already established via', resolutionSource);
       }
     };
 
     if (isInIframe) {
       console.log('🔍 In iframe — listening for parent postMessage immediately');
       window.addEventListener('message', handleMessage);
+      // Send the initial request immediately
       window.parent.postMessage({ type: 'request-user-data' }, '*');
+      // Re-send a few times in case the parent's listener wasn't ready yet, or the parent
+      // is still loading session info (Odoo can be slow). Stop once we get an email.
+      [500, 1500, 3000, 5000].forEach((delay) => {
+        const t = setTimeout(() => {
+          if (resolved) return;
+          console.log(`🔁 Re-requesting user data from parent (after ${delay}ms)`);
+          try { window.parent.postMessage({ type: 'request-user-data' }, '*'); } catch {}
+        }, delay);
+        authTimeouts.push(t);
+      });
     }
 
     // Also try backend session fetch in parallel (non-blocking)
@@ -243,17 +306,17 @@ export default function UploadTool() {
         console.warn('ℹ️ Backend fetch did not return logged-in user:', e.message);
       });
 
-    // Fallback timeout: if nothing resolves within 2 seconds, mark as not authenticated
-    // Do NOT trust localStorage/sessionStorage as auth proof — a stored email from a previous
-    // session does not mean the user is currently logged in to Odoo
+    // Fallback timeout: if nothing resolves within 6 seconds, mark as not authenticated.
+    // Extended from 2s because Odoo's session lookup can take 3–5s in production.
+    // We do NOT clear stored email here — the message handler can still arrive late
+    // and we want to honour it for filtering; auth status separately tracks login state.
     const fallbackTimeout = setTimeout(() => {
       if (resolved) return;
-      console.log('❌ Could not identify user via any method — user is not authenticated');
+      console.log('❌ Could not identify user via any method within 6s — user is not authenticated');
       resolved = true;
+      resolutionSource = 'timeout';
       setAuthStatus('not-authenticated');
-      try { localStorage.removeItem('partner_email'); } catch {}
-      try { sessionStorage.removeItem('partner_email'); } catch {}
-    }, 2000);
+    }, 6000);
     authTimeouts.push(fallbackTimeout);
 
     return () => {
