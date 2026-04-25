@@ -908,7 +908,7 @@ export function VectorizationServiceForm({ open, onOpenChange, partnerEmail, aut
             "full-colour-metallic": ["metallic-A3", "metallic-A4", "metallic-A5", "metallic-A6", "metallic-transfer-size", "metallic-square", "metallic-badge", "metallic-small"],
             "full-colour-hd": ["hd-A3", "hd-A4"],
             "single-colour-transfers": ["single-A3", "single-A4", "single-A5", "single-A6", "single-transfer-size", "single-square", "single-badge", "single-small"],
-            "dtf-transfers": ["dtf-SRA3", "dtf-large"],
+            "dtf-transfers": ["dtf-SRA3", "dtf-large", "dtf-SRA3-next-day", "dtf-large-next-day"],
             "uv-dtf": ["uvdtf-A3"],
             "custom-badges": ["woven-square", "woven-badge", "woven-small"],
             "applique-badges": ["applique-A6", "applique-square", "applique-badge", "applique-small"],

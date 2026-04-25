@@ -198,6 +198,8 @@ function getTemplateName(templateId: string): string {
     'zero-small': 'Zero 60×60mm',
     'dtf-SRA3': 'DTF SRA3',
     'dtf-large': 'DTF 1000×550mm',
+    'dtf-SRA3-next-day': 'DTF SRA3 Next Day',
+    'dtf-large-next-day': 'DTF 1000×550mm Next Day',
     'uvdtf-A3': 'UV DTF A3',
     'woven-A6': 'Woven A6',
     'woven-square': 'Woven 95×95mm',
