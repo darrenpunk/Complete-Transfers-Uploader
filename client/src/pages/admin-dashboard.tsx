@@ -145,6 +145,7 @@ const eventColors: Record<string, string> = {
 
 const DTF_QUICK_UPLOAD_ID = "__dtf_quick_upload__";
 const VECTORIZATION_ONLY_ID = "__vectorization_only__";
+const TEST_FEATURE_ID = "__test_feature__";
 
 function FeatureToggleSection({
   magicId,
@@ -157,7 +158,7 @@ function FeatureToggleSection({
   magicId: string;
   title: string;
   description: string;
-  accentColor: "yellow" | "purple";
+  accentColor: "yellow" | "purple" | "cyan";
   assignments: any[] | undefined;
   refetch: () => void;
 }) {
@@ -200,9 +201,18 @@ function FeatureToggleSection({
     refetch();
   };
 
-  const iconColor = accentColor === "yellow" ? "text-yellow-400" : "text-purple-400";
-  const pillBg = accentColor === "yellow" ? "bg-yellow-500/10 border-yellow-500/20" : "bg-purple-500/10 border-purple-500/20";
-  const pillText = accentColor === "yellow" ? "text-yellow-300" : "text-purple-300";
+  const iconColor =
+    accentColor === "yellow" ? "text-yellow-400"
+    : accentColor === "purple" ? "text-purple-400"
+    : "text-cyan-400";
+  const pillBg =
+    accentColor === "yellow" ? "bg-yellow-500/10 border-yellow-500/20"
+    : accentColor === "purple" ? "bg-purple-500/10 border-purple-500/20"
+    : "bg-cyan-500/10 border-cyan-500/20";
+  const pillText =
+    accentColor === "yellow" ? "text-yellow-300"
+    : accentColor === "purple" ? "text-purple-300"
+    : "text-cyan-300";
 
   return (
     <div className="border rounded-lg p-4 space-y-3">
@@ -281,6 +291,14 @@ function CustomerFeaturesManager() {
             title="Vectorisation Service — Hide Prices"
             description="When this customer opens the Vectorisation Service form, all €15.00 prices and the Service Type radio are hidden, and any submission is forced to vectorisation-only. They still see and can order all other products as normal."
             accentColor="purple"
+            assignments={assignments}
+            refetch={refetch}
+          />
+          <FeatureToggleSection
+            magicId={TEST_FEATURE_ID}
+            title="Test Feature — Diagnostic Banner"
+            description="Diagnostic only. When enabled, this customer sees a cyan banner across the top of the product launcher confirming their email was recognised. Use it to verify end-to-end that the iframe is identifying the customer correctly. Has no effect on pricing, products, or anything else."
+            accentColor="cyan"
             assignments={assignments}
             refetch={refetch}
           />

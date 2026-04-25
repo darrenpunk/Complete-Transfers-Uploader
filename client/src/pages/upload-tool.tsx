@@ -171,7 +171,7 @@ export default function UploadTool() {
     // Track HOW we resolved so a late iframe message can only "rescue" a timeout —
     // it must not silently overwrite an email already obtained from a verified
     // source (URL params or backend session).
-    let resolutionSource: 'url' | 'iframe' | 'backend' | 'timeout' | null = null;
+    let resolutionSource: string | null = null;
     const authTimeouts: NodeJS.Timeout[] = [];
 
     // Strict origin allowlist — exact hostname match (or *.completetransfers.com),
@@ -190,7 +190,7 @@ export default function UploadTool() {
       }
     };
 
-    const resolveEmail = (email: string, source: 'url' | 'iframe' | 'backend') => {
+    const resolveEmail = (email: string, source: string) => {
       if (resolved) return;
       resolved = true;
       resolutionSource = source;

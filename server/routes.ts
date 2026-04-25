@@ -9983,7 +9983,10 @@ ${svgClose}`;
   // Returns feature flags for a customer (e.g. DTF Quick Upload button)
   app.get('/api/customer-features', async (req, res) => {
     const email = req.query.email as string;
-    if (!email) return res.json({ dtfQuickUpload: false, vectorizationOnly: false });
+    if (!email) {
+      console.log('[customer-features] no email provided');
+      return res.json({ dtfQuickUpload: false, vectorizationOnly: false, testFeature: false });
+    }
     try {
       const assignments = await storage.getCustomerTemplates(email);
       const dtfQuickUpload = assignments.some((a: any) => a.templateId === '__dtf_quick_upload__');
@@ -9991,9 +9994,15 @@ ${svgClose}`;
       // Vectorisation Service. Special pricing for this customer is handled in Odoo
       // via pricelists assigned to the existing vector-service product.
       const vectorizationOnly = assignments.some((a: any) => a.templateId === '__vectorization_only__');
-      res.json({ dtfQuickUpload, vectorizationOnly });
+      // Diagnostic flag — when enabled, the launcher shows a visible banner.
+      // Use this to verify end-to-end that the customer's email is reaching this
+      // endpoint from the iframe. No effect on pricing or product visibility.
+      const testFeature = assignments.some((a: any) => a.templateId === '__test_feature__');
+      console.log(`[customer-features] ${email} → dtfQuickUpload=${dtfQuickUpload} vectorizationOnly=${vectorizationOnly} testFeature=${testFeature}`);
+      res.json({ dtfQuickUpload, vectorizationOnly, testFeature });
     } catch (e) {
-      res.json({ dtfQuickUpload: false, vectorizationOnly: false });
+      console.warn('[customer-features] lookup failed:', e);
+      res.json({ dtfQuickUpload: false, vectorizationOnly: false, testFeature: false });
     }
   });
 

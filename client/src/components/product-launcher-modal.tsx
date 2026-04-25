@@ -135,6 +135,8 @@ function ProductContent({
 }: Omit<ProductLauncherModalProps, 'open' | 'inline'> & { hideHeader?: boolean }) {
   const [showTutorial, setShowTutorial] = useState(false);
   const [hasDtfQuickUpload, setHasDtfQuickUpload] = useState(false);
+  const [hasTestFeature, setHasTestFeature] = useState(false);
+  const [testFeatureEmail, setTestFeatureEmail] = useState<string | null>(null);
   useEffect(() => {
     let email = partnerEmail;
     if (!email) {
@@ -144,15 +146,22 @@ function ProductContent({
     }
     if (!email) {
       setHasDtfQuickUpload(false);
+      setHasTestFeature(false);
+      setTestFeatureEmail(null);
       return;
     }
-    fetch(`/api/customer-features?email=${encodeURIComponent(email)}`)
+    const lookupEmail = email;
+    fetch(`/api/customer-features?email=${encodeURIComponent(lookupEmail)}`)
       .then(r => r.json())
       .then(data => {
         setHasDtfQuickUpload(!!data.dtfQuickUpload);
+        setHasTestFeature(!!data.testFeature);
+        setTestFeatureEmail(data.testFeature ? lookupEmail : null);
       })
       .catch(() => {
         setHasDtfQuickUpload(false);
+        setHasTestFeature(false);
+        setTestFeatureEmail(null);
       });
   }, [partnerEmail]);
 
@@ -222,6 +231,15 @@ function ProductContent({
   return (
     <>
       <div className="w-full max-w-7xl mx-auto">
+        {hasTestFeature && testFeatureEmail && (
+          <div
+            className="mb-4 mx-2 md:mx-6 rounded-lg border border-cyan-500/40 bg-cyan-500/10 px-4 py-3 text-cyan-200 text-sm flex items-center gap-2"
+            data-testid="test-feature-banner"
+          >
+            <span className="font-semibold">✅ Test feature active.</span>
+            <span className="opacity-90">Recognised as <span className="font-mono">{testFeatureEmail}</span> — your account is being identified correctly.</span>
+          </div>
+        )}
         {!hideHeader && (
           <div className="text-center mb-6">
             <CompleteTransferLogo size="md" className="mb-4" />
