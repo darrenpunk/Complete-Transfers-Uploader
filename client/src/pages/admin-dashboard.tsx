@@ -11,7 +11,7 @@ import { queryClient } from "@/lib/queryClient";
 import type { TemplateSize } from "@shared/schema";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  PieChart, Pie, Cell,
+  PieChart, Pie, Cell, AreaChart, Area,
 } from "recharts";
 
 function parseBrowser(ua: string | null | undefined): string {
@@ -505,7 +505,8 @@ function StatCard({ label, value, sub, icon: Icon, gradient }: {
 }
 
 function AnalyticsTab({
-  activeData, eventsData, statsData, visibleEvents, filteredEvents,
+  activeData, eventsData, statsData, concurrentData, concurrentRange, setConcurrentRange,
+  visibleEvents, filteredEvents,
   allEventTypes, allUsers, hasActiveFilters, clearFilters,
   userFilter, setUserFilter, eventFilter, setEventFilter, timeFilter, setTimeFilter,
 }: any) {
@@ -572,10 +573,15 @@ function AnalyticsTab({
   return (
     <div className="space-y-6">
       {/* KPI cards */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
         <StatCard label="Active Now" value={activeData?.activeCount ?? 0}
           sub={(activeData?.idleCount ?? 0) > 0 ? `+${activeData.idleCount} idle` : "Last 3 min"}
           icon={Users} gradient="bg-gradient-to-br from-blue-500 to-cyan-400" />
+        <StatCard label="Peak (24h)" value={concurrentData?.peak ?? 0}
+          sub={concurrentData?.peakTime
+            ? new Date(concurrentData.peakTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+            : "No data"}
+          icon={TrendingUp} gradient="bg-gradient-to-br from-fuchsia-500 to-pink-400" />
         <StatCard label="Total Events" value={statsData?.summary?.totalEvents ?? 0}
           sub="All time" icon={Activity}
           gradient="bg-gradient-to-br from-violet-500 to-purple-400" />
@@ -589,6 +595,82 @@ function AnalyticsTab({
           sub={`${totalCart} cart adds`} icon={TrendingUp}
           gradient="bg-gradient-to-br from-orange-500 to-amber-400" />
       </div>
+
+      {/* Concurrent users over time */}
+      <Card>
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <Users className="h-4 w-4 text-primary" />
+              Concurrent Users — {concurrentRange === "168" ? "Last 7 days" : "Last 24 hours"}
+              {(concurrentData?.current ?? 0) > 0 && (
+                <span className="ml-1 inline-flex items-center gap-1">
+                  <span className="h-2 w-2 rounded-full bg-green-400 animate-pulse" />
+                  <span className="text-xs text-green-400 font-normal">{concurrentData.current} now</span>
+                </span>
+              )}
+            </CardTitle>
+            <div className="flex border rounded-md overflow-hidden">
+              <button
+                onClick={() => setConcurrentRange("24")}
+                className={`px-2.5 py-1 text-xs font-medium transition-colors ${concurrentRange === "24" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"}`}
+                data-testid="button-concurrent-24h"
+              >
+                24h
+              </button>
+              <button
+                onClick={() => setConcurrentRange("168")}
+                className={`px-2.5 py-1 text-xs font-medium transition-colors ${concurrentRange === "168" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"}`}
+                data-testid="button-concurrent-7d"
+              >
+                7d
+              </button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {concurrentData?.buckets?.length > 0 ? (
+            <ResponsiveContainer width="100%" height={220}>
+              <AreaChart data={concurrentData.buckets} margin={{ top: 8, right: 12, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="concurrentFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#22d3ee" stopOpacity={0.6} />
+                    <stop offset="100%" stopColor="#22d3ee" stopOpacity={0.05} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                <XAxis
+                  dataKey="time"
+                  tick={{ fontSize: 11, fill: "#9ca3af" }}
+                  tickFormatter={(v: string) => {
+                    const d = new Date(v);
+                    return concurrentRange === "168"
+                      ? d.toLocaleDateString([], { month: "short", day: "numeric" })
+                      : d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+                  }}
+                  minTickGap={40}
+                />
+                <YAxis tick={{ fontSize: 11, fill: "#9ca3af" }} allowDecimals={false} />
+                <Tooltip
+                  contentStyle={{ background: "#1f2937", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, fontSize: 12 }}
+                  labelStyle={{ color: "#f9fafb" }}
+                  labelFormatter={(v: string) => new Date(v).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                  formatter={(value: any, name: string) => [value, name === "count" ? "Sessions" : "Logged-in users"]}
+                />
+                <Area type="monotone" dataKey="count" stroke="#22d3ee" strokeWidth={2} fill="url(#concurrentFill)" />
+                <Area type="monotone" dataKey="namedCount" stroke="#a78bfa" strokeWidth={1.5} fill="none" strokeDasharray="4 3" />
+              </AreaChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-[220px] flex items-center justify-center text-sm text-muted-foreground">
+              No activity in this window yet
+            </div>
+          )}
+          <p className="text-xs text-muted-foreground pt-2">
+            Distinct sessions active per {concurrentRange === "168" ? "60-min" : "5-min"} bucket. Dashed line shows logged-in users only.
+          </p>
+        </CardContent>
+      </Card>
 
       {/* Charts row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -1194,10 +1276,19 @@ function Dashboard() {
     refetchInterval: 30000,
   });
 
+  const [concurrentRange, setConcurrentRange] = useState<"24" | "168">("24");
+  const { data: concurrentData, refetch: refetchConcurrent } = useQuery({
+    queryKey: ["admin-concurrent", concurrentRange],
+    queryFn: () => adminFetch(`/api/admin/analytics/concurrent?hours=${concurrentRange}&bucketMinutes=${concurrentRange === "168" ? 60 : 5}`),
+    refetchInterval: 30000,
+    enabled: activeTab === "analytics",
+  });
+
   const handleRefresh = () => {
     refetchActive();
     refetchEvents();
     refetchStats();
+    refetchConcurrent();
   };
 
   const visibleEvents = useMemo(() => {
@@ -1312,6 +1403,9 @@ function Dashboard() {
           activeData={activeData}
           eventsData={eventsData}
           statsData={statsData}
+          concurrentData={concurrentData}
+          concurrentRange={concurrentRange}
+          setConcurrentRange={setConcurrentRange}
           visibleEvents={visibleEvents}
           filteredEvents={filteredEvents}
           allEventTypes={allEventTypes}

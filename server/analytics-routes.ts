@@ -237,6 +237,54 @@ export function registerAnalyticsRoutes(app: Express, storage: IStorage) {
     }
   });
 
+  app.get("/api/admin/analytics/concurrent", adminAuth, async (req, res) => {
+    try {
+      const hours = Math.min(Math.max(parseInt(req.query.hours as string) || 24, 1), 168);
+      const bucketMinutes = Math.min(Math.max(parseInt(req.query.bucketMinutes as string) || 5, 1), 60);
+      const bucketSeconds = bucketMinutes * 60;
+      const since = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
+      const client = await pool.connect();
+      try {
+        const result = await client.query(
+          `SELECT
+             (floor(extract(epoch from created_at::timestamptz) / $2) * $2 * 1000)::bigint AS bucket_ms,
+             COUNT(DISTINCT session_id)::int AS count,
+             COUNT(DISTINCT user_email) FILTER (WHERE user_email IS NOT NULL)::int AS named_count
+           FROM analytics_events
+           WHERE created_at::timestamptz >= $1::timestamptz
+           GROUP BY bucket_ms
+           ORDER BY bucket_ms ASC`,
+          [since, bucketSeconds]
+        );
+        const buckets = result.rows.map((r: any) => ({
+          time: new Date(Number(r.bucket_ms)).toISOString(),
+          count: r.count,
+          namedCount: r.named_count,
+        }));
+        let peak = 0;
+        let peakTime: string | null = null;
+        for (const b of buckets) {
+          if (b.count > peak) {
+            peak = b.count;
+            peakTime = b.time;
+          }
+        }
+        const allSessions = await storage.getActiveSessions(3);
+        const now = Date.now();
+        const current = allSessions.filter((s: any) => {
+          const idleSeconds = Math.floor((now - new Date(s.lastSeen).getTime()) / 1000);
+          return idleSeconds <= 90;
+        }).length;
+        res.json({ hours, bucketMinutes, buckets, peak, peakTime, current });
+      } finally {
+        client.release();
+      }
+    } catch (e: any) {
+      console.error("Concurrent users history error:", e?.message || e);
+      res.json({ hours: 24, bucketMinutes: 5, buckets: [], peak: 0, peakTime: null, current: 0 });
+    }
+  });
+
   app.get("/api/admin/crash-logs", adminAuth, async (req, res) => {
     try {
       const limit = parseInt(req.query.limit as string) || 50;
