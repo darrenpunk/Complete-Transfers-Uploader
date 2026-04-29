@@ -9990,9 +9990,11 @@ ${svgClose}`;
     try {
       const assignments = await storage.getCustomerTemplates(email);
       const dtfQuickUpload = assignments.some((a: any) => a.templateId === '__dtf_quick_upload__');
-      // When this flag is set, the product launcher hides every tile except the
-      // Vectorisation Service. Special pricing for this customer is handled in Odoo
-      // via pricelists assigned to the existing vector-service product.
+      // When this flag is set, the DTF Quick Upload tile is hidden in the launcher
+      // and special vectorisation-service pricing is applied in Odoo via pricelists.
+      // It does NOT hide other product tiles — vector-only customers can still
+      // browse and use any product type (e.g. seanbo@portwest.ie has this flag but
+      // also needs DTF + every other product visible in the launcher).
       const vectorizationOnly = assignments.some((a: any) => a.templateId === '__vectorization_only__');
       // Diagnostic flag — when enabled, the launcher shows a visible banner.
       // Use this to verify end-to-end that the customer's email is reaching this

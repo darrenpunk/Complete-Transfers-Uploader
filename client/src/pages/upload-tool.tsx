@@ -1010,9 +1010,9 @@ export default function UploadTool() {
     }
   }, [project]);
 
-  // Fetch per-customer feature flags. If this customer is restricted to the
-  // Vectorisation Service only, we'll skip the product launcher and open the
-  // vector form directly.
+  // Fetch per-customer feature flags. The vectorizationOnly flag is used by
+  // child components (e.g. vectorization service form) to enforce vector-only
+  // ordering/pricing — it does NOT hide other product tiles in the launcher.
   useEffect(() => {
     let email = partnerEmail;
     if (!email) {

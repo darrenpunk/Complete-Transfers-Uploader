@@ -169,10 +169,6 @@ function ProductContent({
       });
   }, [partnerEmail]);
 
-  const visibleProductCategories = hasVectorizationOnly
-    ? productCategories.filter(p => p.id === 'vectorization-service')
-    : productCategories;
-
   const handleProductSelect = (productId: string) => {
     if (productId === "vectorization-service" && onOpenVectorizationForm) {
       onClose();
@@ -323,7 +319,7 @@ function ProductContent({
               </Card>
             )}
 
-            {visibleProductCategories.map((product) => (
+            {productCategories.map((product) => (
               <Card 
                 key={product.id}
                 className="cursor-pointer hover:shadow-lg transition-shadow duration-200 border border-gray-700 bg-gray-900 hover:border-primary"
