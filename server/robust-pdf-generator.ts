@@ -398,11 +398,48 @@ grestore`;
               el => el.logoId === logo.id && el.rotation && el.rotation !== 0
             );
             if (isRotatedMatch && origSize.width > origSize.height && !hasElementRotation) {
-              console.log(`📄 LANDSCAPE PDF DETECTED (single-logo): ${logo.originalFilename} (${origSize.width.toFixed(1)}×${origSize.height.toFixed(1)}pts)`);
-              console.log(`📄 Switching output to landscape orientation`);
-              pageWidth = origSize.width;
-              pageHeight = origSize.height;
-              isLandscapeOutput = true;
+              // CONTENT-AWARE LANDSCAPE GUARD: A landscape A3 PDF page does NOT necessarily
+              // mean the artwork is landscape — many users export a small/centered crest on a
+              // landscape A3 sheet. Switching output to landscape in that case clips the
+              // canvas-positioned artwork (teddy.pdf bug), because element placement still
+              // uses the portrait template coordinate frame.
+              //
+              // Only flip orientation when the source PDF is unambiguously a full-page
+              // landscape design: high content coverage AND small margins on every side
+              // (mirrors the per-element full-page check at ~line 1218). Anything else
+              // keeps the template (portrait) orientation so canvas placement stays valid.
+              const bounds = (logo as any).originalPdfBounds;
+              let isTrueFullPageLandscape = false;
+              let contentCoverage = 0;
+              let maxMarginPct = 1;
+              if (bounds && typeof bounds.xMin === 'number') {
+                const cw = bounds.width || (bounds.xMax - bounds.xMin);
+                const ch = bounds.height || (bounds.yMax - bounds.yMin);
+                if (cw > 0 && ch > 0) {
+                  contentCoverage = (cw * ch) / (origSize.width * origSize.height);
+                  const marginLeft = bounds.xMin;
+                  const marginRight = origSize.width - bounds.xMax;
+                  const marginBottom = bounds.yMin;
+                  const marginTop = origSize.height - bounds.yMax;
+                  const maxMarginXPct = Math.max(marginLeft, marginRight) / origSize.width;
+                  const maxMarginYPct = Math.max(marginTop, marginBottom) / origSize.height;
+                  maxMarginPct = Math.max(maxMarginXPct, maxMarginYPct);
+                  isTrueFullPageLandscape = contentCoverage > 0.85 && maxMarginPct < 0.05;
+                }
+              } else {
+                // No bounds available — be conservative and KEEP template orientation.
+                // (Old behaviour was to flip; that caused the teddy.pdf bug.)
+                isTrueFullPageLandscape = false;
+              }
+              if (isTrueFullPageLandscape) {
+                console.log(`📄 LANDSCAPE PDF DETECTED (single-logo, full-page): ${logo.originalFilename} (${origSize.width.toFixed(1)}×${origSize.height.toFixed(1)}pts, coverage ${(contentCoverage*100).toFixed(0)}%, max margin ${(maxMarginPct*100).toFixed(1)}%)`);
+                console.log(`📄 Switching output to landscape orientation`);
+                pageWidth = origSize.width;
+                pageHeight = origSize.height;
+                isLandscapeOutput = true;
+              } else {
+                console.log(`📄 Landscape PDF page detected but content is not full-page (coverage ${(contentCoverage*100).toFixed(0)}%, max margin ${(maxMarginPct*100).toFixed(1)}%) — keeping template orientation so canvas placement stays valid`);
+              }
             } else if (isRotatedMatch && hasElementRotation) {
               console.log(`📄 LANDSCAPE PDF DETECTED but element has manual rotation - keeping template orientation`);
             }
