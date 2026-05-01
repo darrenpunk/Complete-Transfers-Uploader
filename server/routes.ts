@@ -9367,26 +9367,39 @@ ${svgClose}`;
           let pdfBase64 = '';
           const selectedPlaceholder = await findPlaceholder(req.body.transferProduct);
           const garmentColorHex = req.body.garmentColor || '';
-          
+
+          // Helper: try to read a file, return null on any I/O error (e.g. EIO from
+          // a corrupted Nix-store snapshot). Never throws.
+          const safeReadFile = (p: string): Buffer | null => {
+            try {
+              if (!fs.existsSync(p)) return null;
+              return fs.readFileSync(p);
+            } catch (readErr) {
+              console.warn(`⚠️ Could not read ${p}:`, (readErr as Error).message);
+              return null;
+            }
+          };
+
           try {
             const { PDFDocument, rgb } = await import('pdf-lib');
-            
+
             let placeholderDoc: any;
             let pageWidth: number;
             let pageHeight: number;
-            
-            if (selectedPlaceholder && fs.existsSync(selectedPlaceholder)) {
-              const placeholderBytes = fs.readFileSync(selectedPlaceholder);
+
+            const placeholderBytes = selectedPlaceholder ? safeReadFile(selectedPlaceholder) : null;
+            if (placeholderBytes) {
               placeholderDoc = await PDFDocument.load(placeholderBytes);
               const firstPage = placeholderDoc.getPage(0);
               const { width, height } = firstPage.getSize();
               pageWidth = width;
               pageHeight = height;
-              console.log(`📄 Loaded sized placeholder: ${path.basename(selectedPlaceholder)} (${pageWidth}×${pageHeight}pts)`);
+              console.log(`📄 Loaded sized placeholder: ${path.basename(selectedPlaceholder!)} (${pageWidth}×${pageHeight}pts)`);
             } else {
               const fallbackPath = path.join(process.cwd(), 'attached_assets', 'Vector_Service_1768292962486.pdf');
-              if (fs.existsSync(fallbackPath)) {
-                placeholderDoc = await PDFDocument.load(fs.readFileSync(fallbackPath));
+              const fallbackBytes = safeReadFile(fallbackPath);
+              if (fallbackBytes) {
+                placeholderDoc = await PDFDocument.load(fallbackBytes);
                 const firstPage = placeholderDoc.getPage(0);
                 const { width, height } = firstPage.getSize();
                 pageWidth = width;
@@ -9397,16 +9410,16 @@ ${svgClose}`;
                 pageWidth = 841.89;
                 pageHeight = 1190.55;
                 placeholderDoc.addPage([pageWidth, pageHeight]);
-                console.log('⚠️ No placeholder found, created blank A3 page');
+                console.log('⚠️ No placeholder file readable, created blank A3 page in-memory');
               }
             }
-            
+
             if (garmentColorHex) {
               const hex = garmentColorHex.replace('#', '');
               const r = parseInt(hex.substring(0, 2), 16) / 255;
               const g = parseInt(hex.substring(2, 4), 16) / 255;
               const b = parseInt(hex.substring(4, 6), 16) / 255;
-              
+
               const colorPage = placeholderDoc.addPage([pageWidth, pageHeight]);
               colorPage.drawRectangle({
                 x: 0, y: 0,
@@ -9415,15 +9428,25 @@ ${svgClose}`;
               });
               console.log(`🎨 Added garment colour page: ${garmentColorHex} (${pageWidth}×${pageHeight}pts)`);
             }
-            
+
             const pdfBytes = await placeholderDoc.save();
             pdfBase64 = Buffer.from(pdfBytes).toString('base64');
             console.log(`📄 Generated ${placeholderDoc.getPageCount()}-page placeholder PDF: ${(pdfBase64.length / 1024).toFixed(0)}KB base64`);
           } catch (pdfErr) {
-            console.warn('⚠️ Placeholder PDF generation failed, using raw file:', pdfErr);
-            const fallbackPath = path.join(process.cwd(), 'attached_assets', 'Vector_Service_1768292962486.pdf');
-            if (fs.existsSync(fallbackPath)) {
-              pdfBase64 = fs.readFileSync(fallbackPath).toString('base64');
+            console.warn('⚠️ Placeholder PDF generation failed, falling back to minimal in-memory PDF:', pdfErr);
+            // Final fallback: build a minimal blank A3 PDF in memory so the
+            // transfer product line still gets posted to Odoo. We never want
+            // a disk error to silently drop the transfer item from the cart.
+            try {
+              const { PDFDocument } = await import('pdf-lib');
+              const minimalDoc = await PDFDocument.create();
+              minimalDoc.addPage([841.89, 1190.55]);
+              const minimalBytes = await minimalDoc.save();
+              pdfBase64 = Buffer.from(minimalBytes).toString('base64');
+              console.log(`📄 Generated minimal in-memory placeholder PDF: ${(pdfBase64.length / 1024).toFixed(0)}KB base64`);
+            } catch (minimalErr) {
+              console.error('❌ Even minimal PDF generation failed:', minimalErr);
+              pdfBase64 = '';
             }
           }
           
