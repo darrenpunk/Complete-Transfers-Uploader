@@ -1,0 +1,182 @@
+{
+  "fixtures": [
+    {
+      "id": "01-teddy-landscape-page-portrait-content",
+      "file": "01_landscape-page-portrait-content_TEDDY.pdf",
+      "templateId": "template-A3",
+      "garmentColor": "#FFFFFF",
+      "place": "fit-to-content",
+      "enabled": true,
+      "assertions": {
+        "minPages": 1,
+        "page1WidthPt": 842,
+        "page1HeightPt": 1191,
+        "tolerancePt": 4,
+        "note": "Output must stay portrait A3. The teddy fix prevents flipping to landscape just because the source page is landscape with mostly-empty whitespace around a small crest."
+      }
+    },
+    {
+      "id": "02-waterford-small-crest-on-landscape-page",
+      "file": "02_small-crest-on-landscape-page_WATERFORD.pdf",
+      "templateId": "template-A3",
+      "garmentColor": "#FFFFFF",
+      "place": "fit-to-content",
+      "enabled": true,
+      "assertions": {
+        "minPages": 1,
+        "page1WidthPt": 842,
+        "page1HeightPt": 1191,
+        "tolerancePt": 4,
+        "note": "Same family as teddy. Must stay portrait A3 — small inset crest on otherwise empty landscape sheet must not trigger full-page-match misdetection."
+      }
+    },
+    {
+      "id": "13-roadstone-narrow-template-scaling",
+      "file": "13_scaled-down-on-narrow-template_ROADSTONE.pdf",
+      "templateId": "template-transfer-size",
+      "garmentColor": "#FFFFFF",
+      "place": "fit-to-content",
+      "enabled": true,
+      "assertions": {
+        "minPages": 1,
+        "page1WidthPt": 836,
+        "page1HeightPt": 283,
+        "tolerancePt": 4,
+        "contentBboxMm": {
+          "minWidthMm": 270,
+          "minHeightMm": 50,
+          "note": "Source is 295x105mm (5mm taller than 295x100mm template). Visible content is 289.8x57mm. If the full-page-match detector misfires it embeds the entire source page at the canvas-element coordinates and the artwork shrinks far below 270mm wide."
+        }
+      }
+    },
+    {
+      "id": "14-bem-A5-cut-rotated-fullpage-match",
+      "file": "14_scaled-down-on-A5-cut_BEM.pdf",
+      "templateId": "template-A5",
+      "garmentColor": "#FFFFFF",
+      "place": { "mode": "fit-to-content", "rotation": 90 },
+      "enabled": true,
+      "assertions": {
+        "minPages": 1,
+        "page1WidthPt": 420,
+        "page1HeightPt": 595,
+        "tolerancePt": 4,
+        "contentBboxMm": {
+          "minHeightMm": 180,
+          "minWidthMm": 80,
+          "note": "Source is landscape A5 (210x148mm), template is portrait A5 (148x210mm). Visible content is 204.9x98.5mm. Customer rotates artwork 90° to fit portrait template, so on the rendered page the 204.9mm dimension runs vertically. If rotated-full-page-match misfires the artwork shrinks far below 180mm in its larger dimension."
+        }
+      }
+    },
+    {
+      "id": "03-mtsg-gradient-true-fullpage-landscape",
+      "file": "03_true-fullpage-landscape_MTSG-GRADIENT.pdf",
+      "templateId": "template-A3",
+      "garmentColor": "#FFFFFF",
+      "place": "fit-to-template",
+      "enabled": false,
+      "assertions": {
+        "note": "Disabled in v1: requires landscape-variant switch prompt (UI interaction). Counter-test for teddy fix — must NOT regress legitimate full-page landscape designs."
+      }
+    },
+    {
+      "id": "04-intersport-landscape-A4-on-portrait-template",
+      "file": "04_landscape-A4-on-portrait-template_INTERSPORT.pdf",
+      "templateId": "template-A3",
+      "garmentColor": "#FFFFFF",
+      "place": "fit-to-content",
+      "enabled": false,
+      "assertions": {
+        "note": "Disabled in v1: requires landscape-variant switch prompt (UI interaction)."
+      }
+    },
+    {
+      "id": "05-illustration-brown-outlined-fonts",
+      "file": "05_outlined-fonts_ILLUSTRATION-BROWN.pdf",
+      "templateId": "template-A3",
+      "garmentColor": "#FFFFFF",
+      "place": "fit-to-content",
+      "enabled": false,
+      "assertions": {
+        "note": "Disabled in v1: requires the Outline Fonts button to be triggered — needs separate POST /api/logos/:id/outline-fonts call."
+      }
+    },
+    {
+      "id": "06-rainbow-dog-multi-color",
+      "file": "06_multi-color-order_RAINBOW-DOG-6UP.pdf",
+      "templateId": "template-A3",
+      "garmentColor": "#FFFFFF",
+      "place": "fit-to-content",
+      "enabled": false,
+      "assertions": {
+        "note": "Disabled in v1: requires garmentColors array setup (multi-color order)."
+      }
+    },
+    {
+      "id": "07-rainbow-dog-imposition-source",
+      "file": "07_grid-imposition-source_RAINBOW-DOG-SOURCE.pdf",
+      "templateId": "template-A3",
+      "garmentColor": "#FFFFFF",
+      "place": "fit-to-content",
+      "enabled": false,
+      "assertions": {
+        "note": "Disabled in v1: requires Imposition tool (POST /api/canvas-elements/:id/imposition)."
+      }
+    },
+    {
+      "id": "08-er-applique-dual-canvas",
+      "file": "08_applique-dual-canvas_ER-APPLIQUE.pdf",
+      "templateId": "applique-100x70",
+      "garmentColor": "#FFFFFF",
+      "place": "fit-to-content",
+      "enabled": false,
+      "assertions": {
+        "note": "Disabled in v1: requires dual-canvas + appliqueBadgesForm data."
+      }
+    },
+    {
+      "id": "09-grub-applique-with-embroidery",
+      "file": "09_applique-with-embroidery_GRUB-APPLIQUE.pdf",
+      "templateId": "applique-100x70",
+      "garmentColor": "#FFFFFF",
+      "place": "fit-to-content",
+      "enabled": false,
+      "assertions": {
+        "note": "Disabled in v1: requires embroidery preview generation."
+      }
+    },
+    {
+      "id": "10-bui-applique-100x70",
+      "file": "10_applique-100x70_BUI-TESTER.pdf",
+      "templateId": "applique-100x70",
+      "garmentColor": "#FFFFFF",
+      "place": "fit-to-content",
+      "enabled": false,
+      "assertions": {
+        "note": "Disabled in v1: applique form. Should be enabled once applique fixture template id is verified."
+      }
+    },
+    {
+      "id": "11-hair-dtf-passthrough-sra3",
+      "file": "11_dtf-passthrough-SRA3_HAIR.pdf",
+      "templateId": "dtf-SRA3",
+      "garmentColor": "#FFFFFF",
+      "place": "fit-to-content",
+      "enabled": false,
+      "assertions": {
+        "note": "Disabled in v1: DTF passthrough mode hits a different code path; needs dedicated assertions for canvas-screenshot tail page."
+      }
+    },
+    {
+      "id": "12-seachtain-gaeilge-large-dtf",
+      "file": "12_dtf-large-art_SEACHTAIN-GAEILGE.pdf",
+      "templateId": "dtf-SRA3",
+      "garmentColor": "#FFFFFF",
+      "place": "fit-to-content",
+      "enabled": false,
+      "assertions": {
+        "note": "Disabled in v1: 35MB upload; runs slow in dev sandbox. Enable for production smoke tests only."
+      }
+    }
+  ]
+}

@@ -149,6 +149,24 @@ template" listed below and confirm the resulting PDF matches "Expected output".
   canvas-positioned location (full width of template, top portion). Canvas
   screenshot page must show the artwork unclipped.
 
+### `14_scaled-down-on-A5-cut_BEM.pdf`
+- **Source:** original customer upload, `attached_assets/BEM_1777712277563.pdf`
+  (Adobe Illustrator 30.3, single page, 595.276 × 419.528 pts = **210×148 mm**,
+  i.e. landscape A5). Actual artwork content inside is 204.9 × 98.5 mm.
+- **Bug history:** May 2026 (reported alongside #13). On the CTCCA5 "Cut A5
+  148×210mm" template, the BEM logo appears at ~136mm wide instead of 204.9mm
+  in the output and is clipped on the canvas screenshot. Same family as
+  #13/#1 — source page (210×148mm landscape) is a near-perfect rotated match
+  for the 148×210mm portrait template, so the rotated-full-page-match
+  detector embeds the *entire source page* at the canvas-element coordinates.
+  The canvas element is sized for the actual 204.9×98.5mm content, so the
+  full source page gets squashed into a smaller content box and the artwork
+  scales down further.
+- **Recommended template:** A5 portrait (CTCCA5)
+- **Expected output:** Page 1 artwork must render at ~204.9×98.5mm at the
+  canvas-positioned location. Canvas screenshot page must show the artwork
+  unclipped.
+
 ---
 
 ## Fixtures NOT included in this folder (too large)

@@ -17,7 +17,7 @@ title = "Fix: Login Required for Logged-In Users"
 id = "j4sIHIQ7gI-xGmkqfMJH_"
 uri = "file://tests/pdf-fixtures/README.md"
 type = "text"
-title = "PDF Regression Test Suite — Fixture Catalogue"
+title = "Updated fixture catalogue (14 fixtures)"
 
 [[outputs]]
 id = "4_H0HNRyQEx5NyJRrO3rh"
@@ -90,3 +90,21 @@ id = "pShKTXJeSxd3mu-qKnEnp"
 uri = "file://tests/pdf-fixtures/12_dtf-large-art_SEACHTAIN-GAEILGE.pdf"
 type = "pdf"
 title = "12 — Seachtain Gaeilge (large DTF, 35MB)"
+
+[[outputs]]
+id = "jbuEVO9GikJXpxr56v0Dj"
+uri = "file://tests/pdf-fixtures/fixtures.json"
+type = "unspecified"
+title = "fixtures.json — runner manifest"
+
+[[outputs]]
+id = "seqgJTL8YLqIExNb6xWyS"
+uri = "file://tests/pdf-fixtures/13_scaled-down-on-narrow-template_ROADSTONE.pdf"
+type = "pdf"
+title = "Fixture 13 — Roadstone source"
+
+[[outputs]]
+id = "-_nSF8P03e6TErWjraLk7"
+uri = "file://tests/pdf-fixtures/14_scaled-down-on-A5-cut_BEM.pdf"
+type = "pdf"
+title = "Fixture 14 — BEM source"
