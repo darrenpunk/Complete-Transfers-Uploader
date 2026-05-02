@@ -550,6 +550,17 @@ async function main() {
     }, TEMP_CLEANUP_INTERVAL);
     console.log(`[SERVER] Temp file cleanup every ${TEMP_CLEANUP_INTERVAL / 1000}s`);
   }
+
+  // PDF health monitor — runs in production (no-op in dev unless
+  // PDF_HEALTH_CHECK_ENABLED=1). Periodically generates a small synthetic PDF
+  // through the customer pipeline and emails alerts to PDF_HEALTH_ALERT_TO
+  // (default darren@serigraf.com) when generation fails.
+  try {
+    const { startPdfHealthMonitor } = await import('./health-monitor');
+    startPdfHealthMonitor();
+  } catch (e) {
+    console.error('[SERVER] Failed to start PDF health monitor:', e);
+  }
 }
 
 main().catch(error => {

@@ -295,4 +295,34 @@ export function registerAnalyticsRoutes(app: Express, storage: IStorage) {
       res.status(500).json({ error: "Failed to fetch crash logs" });
     }
   });
+
+  // PDF health monitor — manual trigger. Runs the same end-to-end probe the
+  // scheduler runs but does NOT send an alert email (so admins can poke at it
+  // freely without spamming themselves). Result is still persisted to crashLogs.
+  app.get("/api/admin/health/pdf", adminAuth, async (_req, res) => {
+    try {
+      const { runPdfHealthCheck, getLastSuccessAt } = await import("./health-monitor");
+      const result = await runPdfHealthCheck({ sendAlertOnFailure: false });
+      res.json({ ...result, lastSuccessAt: getLastSuccessAt() });
+    } catch (error: any) {
+      console.error("PDF health check error:", error);
+      res.status(500).json({ ok: false, error: error?.message || String(error) });
+    }
+  });
+
+  // PDF health monitor — recent history (pulls from crashLogs, filtered to the
+  // pdf-health-* event types).
+  app.get("/api/admin/health/pdf/history", adminAuth, async (req, res) => {
+    try {
+      const limit = Math.min(500, parseInt(req.query.limit as string) || 100);
+      const allLogs = await storage.getCrashLogs(limit * 4); // overfetch then filter
+      const healthLogs = allLogs
+        .filter((l) => l.eventType?.startsWith("pdf-health"))
+        .slice(0, limit);
+      res.json(healthLogs);
+    } catch (error: any) {
+      console.error("PDF health history error:", error);
+      res.status(500).json({ error: "Failed to fetch health history" });
+    }
+  });
 }
