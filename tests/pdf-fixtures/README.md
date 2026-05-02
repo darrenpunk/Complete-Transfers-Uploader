@@ -18,12 +18,14 @@ template" listed below and confirm the resulting PDF matches "Expected output".
 ## Fixture catalogue
 
 ### `01_landscape-page-portrait-content_TEDDY.pdf`
-- **Source:** `attached_assets/teddy_(1)_(1)_1777648232527.pdf`
+- **Source:** original customer upload, `attached_assets/teddy_1777711689843.pdf`
+  (Adobe Illustrator 29.5, single A3 landscape page, 1190.55×841.89pt).
 - **Bug history:** Today (May 2026). PDF page is A3 landscape, but the actual
-  artwork is a small circular crest, square-ish in shape (~270×274mm). Old code
-  detected the landscape *page* and flipped the entire output to landscape,
-  clipping the artwork because canvas elements are positioned in portrait
-  template coordinates.
+  artwork is a small circular crest, square-ish in shape (~270×274mm) sitting
+  in the middle of an otherwise empty landscape sheet. Old code detected the
+  landscape *page* and flipped the entire output PDF to landscape, clipping
+  the artwork because canvas elements are positioned in the portrait template
+  coordinate frame.
 - **Recommended template:** A3 Single Colour (297×420mm portrait)
 - **Expected output:** PDF page must be portrait A3 (842×1191pt). Artwork
   centered, not clipped.
