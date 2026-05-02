@@ -132,6 +132,23 @@ template" listed below and confirm the resulting PDF matches "Expected output".
 - **Expected output:** Generation succeeds without OOM. Production PDF
   contains the original artwork at full quality.
 
+### `13_scaled-down-on-narrow-template_ROADSTONE.pdf`
+- **Source:** original customer upload, `attached_assets/Roadstone_1777711858382.pdf`
+  (Adobe Illustrator 30.3, single page, 836.221 × 297.638 pts = **295×105 mm**).
+  Actual artwork content inside is 289.8 × 57.0 mm.
+- **Bug history:** May 2026 (reported the day after the teddy fix). On the
+  CTCC295 "Cut 295×100mm" template, the Roadstone logo appears scaled down on
+  page 1 of the output PDF and clipped on the canvas screenshot page. Almost
+  certainly the same family as #1/#2/#10: source page (295×105mm) is within
+  tolerance of the template (295×100mm), so the full-page-match detector
+  embeds the *entire source page* at the canvas element's coordinates, but
+  the canvas element was sized for the actual 289.8×57mm content — not the
+  full page — so the content shrinks to fit.
+- **Recommended template:** Cut 295×100mm (CTCC295)
+- **Expected output:** Page 1 artwork must render at ~289.8×57mm at the
+  canvas-positioned location (full width of template, top portion). Canvas
+  screenshot page must show the artwork unclipped.
+
 ---
 
 ## Fixtures NOT included in this folder (too large)
