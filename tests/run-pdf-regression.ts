@@ -70,6 +70,13 @@ interface Fixture {
   garmentColor: string;
   place: PlaceMode;
   enabled: boolean;
+  /**
+   * If true, after upload the runner POSTs to
+   * `/api/logos/:id/outline-fonts` to convert text→paths in the SVG before
+   * placing on canvas. Only meaningful when the upload was converted to SVG;
+   * silently skipped otherwise (logged so failures are visible).
+   */
+  outlineFonts?: boolean;
   assertions: Assertions;
 }
 
@@ -148,6 +155,33 @@ async function uploadLogo(projectId: string, filePath: string, fileName: string)
   const arr: Logo[] = Array.isArray(data) ? data : data.logos || [];
   if (arr.length === 0) throw new Error('upload returned empty logo list');
   return arr[0];
+}
+
+/**
+ * Trigger the manual font-outline pass on a freshly uploaded logo. Mirrors
+ * the customer-facing "Outline Fonts" button. The endpoint only operates on
+ * SVG mime types, so for raster/PNG-fallback uploads we surface a
+ * 'not-applicable' note instead of failing.
+ *
+ * Returns a short status string for the test log.
+ */
+async function outlineLogoFonts(logoId: string): Promise<string> {
+  const resp = await fetch(`${BASE_URL}/api/logos/${logoId}/outline-fonts`, { method: 'POST' });
+  const text = await resp.text().catch(() => '');
+  if (resp.ok) {
+    try {
+      const j = JSON.parse(text);
+      return `outline-fonts ok (${j.message || j.fontsOutlined ? 'outlined' : 'no text'})`;
+    } catch {
+      return 'outline-fonts ok';
+    }
+  }
+  // Non-2xx: treat 'only available for SVG' as a soft skip so a PNG-fallback
+  // upload doesn't fail the whole fixture.
+  if (resp.status === 400 && /only available for SVG/i.test(text)) {
+    return 'outline-fonts skipped (logo is not SVG — likely PNG-fallback after complex-vector detection)';
+  }
+  throw new Error(`POST /api/logos/${logoId}/outline-fonts -> ${resp.status} ${text.slice(0, 300)}`);
 }
 
 async function placeElement(projectId: string, logo: Logo, fixture: Fixture, template: TemplateSize) {
@@ -307,6 +341,11 @@ async function runFixture(f: Fixture): Promise<Result> {
 
     const logo = await uploadLogo(project.id, fixturePath, f.file);
     messages.push(`logo: ${logo.id} (originalWxH=${logo.originalWidth ?? '?'}x${logo.originalHeight ?? '?'}mm, normalised=${logo.width ?? '?'}x${logo.height ?? '?'}mm)`);
+
+    if (f.outlineFonts) {
+      const outlineStatus = await outlineLogoFonts(logo.id);
+      messages.push(outlineStatus);
+    }
 
     const placement = await placeElement(project.id, logo, f, template);
     messages.push(`placed: ${placement.widthMm.toFixed(1)}x${placement.heightMm.toFixed(1)}mm at canvas (${placement.x.toFixed(0)}, ${placement.y.toFixed(0)})pt rotation=${placement.rotation}°`);

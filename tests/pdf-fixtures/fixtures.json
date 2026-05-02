@@ -73,10 +73,14 @@
       "file": "03_true-fullpage-landscape_MTSG-GRADIENT.pdf",
       "templateId": "template-A3",
       "garmentColor": "#FFFFFF",
-      "place": "fit-to-template",
-      "enabled": false,
+      "place": "fit-to-content",
+      "enabled": true,
       "assertions": {
-        "note": "Disabled in v1: requires landscape-variant switch prompt (UI interaction). Counter-test for teddy fix — must NOT regress legitimate full-page landscape designs."
+        "minPages": 1,
+        "page1WidthPt": 842,
+        "page1HeightPt": 1191,
+        "tolerancePt": 4,
+        "note": "Smoke test: a true full-page landscape A3 design with gradients must round-trip through Ghostscript / pdf2svg / pdf-lib without crashing. Page output stays portrait A3 (the customer-facing landscape-variant switch is a UI step we do not exercise here). This is a counter-test for the teddy/waterford fix — must not regress legitimate full-page artwork."
       }
     },
     {
@@ -87,7 +91,7 @@
       "place": "fit-to-content",
       "enabled": false,
       "assertions": {
-        "note": "Disabled in v1: requires landscape-variant switch prompt (UI interaction)."
+        "note": "Disabled: customer flow involves the UI landscape-variant switch prompt; without that the test is essentially a duplicate of fixture 03. Re-enable if/when the runner gains UI-flow simulation."
       }
     },
     {
@@ -96,9 +100,14 @@
       "templateId": "template-A3",
       "garmentColor": "#FFFFFF",
       "place": "fit-to-content",
-      "enabled": false,
+      "enabled": true,
+      "outlineFonts": true,
       "assertions": {
-        "note": "Disabled in v1: requires the Outline Fonts button to be triggered — needs separate POST /api/logos/:id/outline-fonts call."
+        "minPages": 1,
+        "page1WidthPt": 842,
+        "page1HeightPt": 1191,
+        "tolerancePt": 4,
+        "note": "Smoke test for the manual Outline Fonts button. Runner POSTs /api/logos/:id/outline-fonts after upload (text→paths) then generates the PDF. The endpoint silently no-ops on PNG-fallback uploads, so this primarily catches regressions in the SVG outlining + downstream PDF path. Output stays portrait A3."
       }
     },
     {
@@ -107,9 +116,13 @@
       "templateId": "template-A3",
       "garmentColor": "#FFFFFF",
       "place": "fit-to-content",
-      "enabled": false,
+      "enabled": true,
       "assertions": {
-        "note": "Disabled in v1: requires garmentColors array setup (multi-color order)."
+        "minPages": 1,
+        "page1WidthPt": 842,
+        "page1HeightPt": 1191,
+        "tolerancePt": 4,
+        "note": "Single-colour smoke test for the same 7.9 MB fixture used by the in-process stress probe. The end-to-end HTTP path here is independent of the in-process probe — both must work. Multi-colour-order behaviour (garmentColors array, repeated per-colour pages) is not exercised; that needs separate fixture + runner support."
       }
     },
     {
@@ -120,7 +133,7 @@
       "place": "fit-to-content",
       "enabled": false,
       "assertions": {
-        "note": "Disabled in v1: requires Imposition tool (POST /api/canvas-elements/:id/imposition)."
+        "note": "Disabled: requires Imposition tool (POST /api/canvas-elements/:id/imposition) to replicate the logo into a grid before generation. Runner extension needed."
       }
     },
     {
@@ -131,7 +144,7 @@
       "place": "fit-to-content",
       "enabled": false,
       "assertions": {
-        "note": "Disabled in v1: requires dual-canvas + appliqueBadgesForm data."
+        "note": "Disabled: requires dual-canvas + appliqueBadgesForm data. Runner extension needed."
       }
     },
     {
@@ -142,7 +155,7 @@
       "place": "fit-to-content",
       "enabled": false,
       "assertions": {
-        "note": "Disabled in v1: requires embroidery preview generation."
+        "note": "Disabled: requires embroidery preview generation. Runner extension needed."
       }
     },
     {
@@ -153,7 +166,7 @@
       "place": "fit-to-content",
       "enabled": false,
       "assertions": {
-        "note": "Disabled in v1: applique form. Should be enabled once applique fixture template id is verified."
+        "note": "Disabled: applique form. Runner extension needed."
       }
     },
     {
@@ -164,7 +177,7 @@
       "place": "fit-to-content",
       "enabled": false,
       "assertions": {
-        "note": "Disabled in v1: DTF passthrough mode hits a different code path; needs dedicated assertions for canvas-screenshot tail page."
+        "note": "Disabled: DTF passthrough hits a different code path; needs dedicated assertions for canvas-screenshot tail page."
       }
     },
     {
@@ -175,7 +188,7 @@
       "place": "fit-to-content",
       "enabled": false,
       "assertions": {
-        "note": "Disabled in v1: 35MB upload; runs slow in dev sandbox. Enable for production smoke tests only."
+        "note": "Disabled: 35MB upload runs slow in dev sandbox. Enable selectively for production smoke tests via PDF_REGRESSION_BASE_URL."
       }
     }
   ]

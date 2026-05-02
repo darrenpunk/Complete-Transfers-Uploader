@@ -296,28 +296,43 @@ export function registerAnalyticsRoutes(app: Express, storage: IStorage) {
     }
   });
 
-  // PDF health monitor — manual trigger. Runs the same end-to-end probe the
-  // scheduler runs but does NOT send an alert email (so admins can poke at it
-  // freely without spamming themselves). Result is still persisted to crashLogs.
+  // PDF health monitor — manual trigger for the LIGHT probe (small A6
+  // placeholder). Runs the same end-to-end probe the scheduler runs but does
+  // NOT send an alert email (so admins can poke at it freely without spamming
+  // themselves). Result is still persisted to crashLogs.
   app.get("/api/admin/health/pdf", adminAuth, async (_req, res) => {
     try {
       const { runPdfHealthCheck, getLastSuccessAt } = await import("./health-monitor");
       const result = await runPdfHealthCheck({ sendAlertOnFailure: false });
-      res.json({ ...result, lastSuccessAt: getLastSuccessAt() });
+      res.json({ ...result, lastSuccessAt: getLastSuccessAt('light') });
     } catch (error: any) {
       console.error("PDF health check error:", error);
       res.status(500).json({ ok: false, error: error?.message || String(error) });
     }
   });
 
+  // PDF health monitor — manual trigger for the STRESS probe (Rainbow Dog
+  // 7.9 MB on A3). Same semantics as the light trigger above but exercises
+  // the large-input / OOM / Ghostscript-timeout failure surface.
+  app.get("/api/admin/health/pdf/stress", adminAuth, async (_req, res) => {
+    try {
+      const { runPdfStressCheck, getLastSuccessAt } = await import("./health-monitor");
+      const result = await runPdfStressCheck({ sendAlertOnFailure: false });
+      res.json({ ...result, lastSuccessAt: getLastSuccessAt('stress') });
+    } catch (error: any) {
+      console.error("PDF stress check error:", error);
+      res.status(500).json({ ok: false, error: error?.message || String(error) });
+    }
+  });
+
   // PDF health monitor — recent history (pulls from crashLogs, filtered to the
-  // pdf-health-* event types).
+  // pdf-health-* and pdf-stress-* event types).
   app.get("/api/admin/health/pdf/history", adminAuth, async (req, res) => {
     try {
       const limit = Math.min(500, parseInt(req.query.limit as string) || 100);
       const allLogs = await storage.getCrashLogs(limit * 4); // overfetch then filter
       const healthLogs = allLogs
-        .filter((l) => l.eventType?.startsWith("pdf-health"))
+        .filter((l) => l.eventType?.startsWith("pdf-health") || l.eventType?.startsWith("pdf-stress"))
         .slice(0, limit);
       res.json(healthLogs);
     } catch (error: any) {
