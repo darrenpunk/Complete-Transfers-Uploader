@@ -12,3 +12,81 @@ id = "RMSU3eYFJazABvJXGzlK1"
 uri = "file://ODOO_AUTH_FIX.md"
 type = "text"
 title = "Fix: Login Required for Logged-In Users"
+
+[[outputs]]
+id = "j4sIHIQ7gI-xGmkqfMJH_"
+uri = "file://tests/pdf-fixtures/README.md"
+type = "text"
+title = "PDF Regression Test Suite — Fixture Catalogue"
+
+[[outputs]]
+id = "4_H0HNRyQEx5NyJRrO3rh"
+uri = "file://tests/pdf-fixtures/01_landscape-page-portrait-content_TEDDY.pdf"
+type = "pdf"
+title = "01 — Teddy (today's bug: landscape page, portrait content)"
+
+[[outputs]]
+id = "AcW0m4bCYkCY2A6HM1b8p"
+uri = "file://tests/pdf-fixtures/02_small-crest-on-landscape-page_WATERFORD.pdf"
+type = "pdf"
+title = "02 — Waterford crest (small inset on landscape page)"
+
+[[outputs]]
+id = "-2Nk2qupO75iUaOOkCyAW"
+uri = "file://tests/pdf-fixtures/03_true-fullpage-landscape_MTSG-GRADIENT.pdf"
+type = "pdf"
+title = "03 — MTSG gradient (legitimate full-page landscape)"
+
+[[outputs]]
+id = "cJEhMwXZSeW8pdphyKj6Z"
+uri = "file://tests/pdf-fixtures/04_landscape-A4-on-portrait-template_INTERSPORT.pdf"
+type = "pdf"
+title = "04 — Intersport (landscape A4 on portrait template)"
+
+[[outputs]]
+id = "7ZIQX4KXUPncMqHpNcmRo"
+uri = "file://tests/pdf-fixtures/05_outlined-fonts_ILLUSTRATION-BROWN.pdf"
+type = "pdf"
+title = "05 — Illustration Brown (outlined fonts case)"
+
+[[outputs]]
+id = "qLxOaqFh3ZomhWqoRhDls"
+uri = "file://tests/pdf-fixtures/06_multi-color-order_RAINBOW-DOG-6UP.pdf"
+type = "pdf"
+title = "06 — Rainbow dog (multi-color order, CMYK)"
+
+[[outputs]]
+id = "X4Wm6hNYUTeha3BUKV-3h"
+uri = "file://tests/pdf-fixtures/07_grid-imposition-source_RAINBOW-DOG-SOURCE.pdf"
+type = "pdf"
+title = "07 — Rainbow dog source (grid imposition)"
+
+[[outputs]]
+id = "Ji9gZijIn6XFedFVrX553"
+uri = "file://tests/pdf-fixtures/08_applique-dual-canvas_ER-APPLIQUE.pdf"
+type = "pdf"
+title = "08 — ER applique (dual-canvas badge + embroidery)"
+
+[[outputs]]
+id = "HGNFaK2jurdhJ-w2IwP0o"
+uri = "file://tests/pdf-fixtures/09_applique-with-embroidery_GRUB-APPLIQUE.pdf"
+type = "pdf"
+title = "09 — Grub applique (with embroidery preview)"
+
+[[outputs]]
+id = "GFa8CSEWYR1sUhstu_wc8"
+uri = "file://tests/pdf-fixtures/10_applique-100x70_BUI-TESTER.pdf"
+type = "pdf"
+title = "10 — Bui tester (100x70mm applique badge)"
+
+[[outputs]]
+id = "BS4e9LU8A3iB1sca_IQG_"
+uri = "file://tests/pdf-fixtures/11_dtf-passthrough-SRA3_HAIR.pdf"
+type = "pdf"
+title = "11 — Hair DTF SRA3 (passthrough mode)"
+
+[[outputs]]
+id = "pShKTXJeSxd3mu-qKnEnp"
+uri = "file://tests/pdf-fixtures/12_dtf-large-art_SEACHTAIN-GAEILGE.pdf"
+type = "pdf"
+title = "12 — Seachtain Gaeilge (large DTF, 35MB)"
