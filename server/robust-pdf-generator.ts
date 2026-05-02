@@ -13,6 +13,7 @@ import path from 'path';
 import { promisify } from 'util';
 import { exec } from 'child_process';
 import { manufacturerColors } from '@shared/garment-colors';
+import { analyzeFullPageMatch } from './full-page-match';
 
 const execAsyncRaw = promisify(exec);
 const INKSCAPE_TIMEOUT = 30000;
@@ -378,6 +379,12 @@ grestore`;
     // PRE-DETECT LANDSCAPE ORIENTATION: Only switch output to landscape when there is
     // exactly ONE logo placed on the canvas and that logo is a landscape PDF matching the
     // rotated template dimensions. For multi-logo projects the template orientation always wins.
+    //
+    // The full-page decision is delegated to the shared `analyzeFullPageMatch` analyzer
+    // (server/full-page-match.ts) so this site stays in lockstep with the per-element
+    // check below and the upload-time check in routes.ts. The teddy/Waterford fix
+    // (require >85% coverage AND <5% margin on every side before flipping) lives in
+    // the analyzer.
     let isLandscapeOutput = false;
     const isSingleLogoProject = data.logos.length === 1 && data.canvasElements.length === 1;
     if (isSingleLogoProject) {
@@ -390,58 +397,27 @@ grestore`;
             const origPdfDoc = await PDFDocument.load(origPdfBytes, { ignoreEncryption: true });
             const [firstPage] = origPdfDoc.getPages();
             const origSize = firstPage.getSize();
-            const templateWPts = data.templateSize.width * MM_TO_POINTS;
-            const templateHPts = data.templateSize.height * MM_TO_POINTS;
-            const isRotatedMatch = Math.abs(origSize.width - templateHPts) < 10 &&
-                                   Math.abs(origSize.height - templateWPts) < 10;
             const hasElementRotation = data.canvasElements.some(
               el => el.logoId === logo.id && el.rotation && el.rotation !== 0
             );
-            if (isRotatedMatch && origSize.width > origSize.height && !hasElementRotation) {
-              // CONTENT-AWARE LANDSCAPE GUARD: A landscape A3 PDF page does NOT necessarily
-              // mean the artwork is landscape — many users export a small/centered crest on a
-              // landscape A3 sheet. Switching output to landscape in that case clips the
-              // canvas-positioned artwork (teddy.pdf bug), because element placement still
-              // uses the portrait template coordinate frame.
-              //
-              // Only flip orientation when the source PDF is unambiguously a full-page
-              // landscape design: high content coverage AND small margins on every side
-              // (mirrors the per-element full-page check at ~line 1218). Anything else
-              // keeps the template (portrait) orientation so canvas placement stays valid.
-              const bounds = (logo as any).originalPdfBounds;
-              let isTrueFullPageLandscape = false;
-              let contentCoverage = 0;
-              let maxMarginPct = 1;
-              if (bounds && typeof bounds.xMin === 'number') {
-                const cw = bounds.width || (bounds.xMax - bounds.xMin);
-                const ch = bounds.height || (bounds.yMax - bounds.yMin);
-                if (cw > 0 && ch > 0) {
-                  contentCoverage = (cw * ch) / (origSize.width * origSize.height);
-                  const marginLeft = bounds.xMin;
-                  const marginRight = origSize.width - bounds.xMax;
-                  const marginBottom = bounds.yMin;
-                  const marginTop = origSize.height - bounds.yMax;
-                  const maxMarginXPct = Math.max(marginLeft, marginRight) / origSize.width;
-                  const maxMarginYPct = Math.max(marginTop, marginBottom) / origSize.height;
-                  maxMarginPct = Math.max(maxMarginXPct, maxMarginYPct);
-                  isTrueFullPageLandscape = contentCoverage > 0.85 && maxMarginPct < 0.05;
-                }
-              } else {
-                // No bounds available — be conservative and KEEP template orientation.
-                // (Old behaviour was to flip; that caused the teddy.pdf bug.)
-                isTrueFullPageLandscape = false;
-              }
-              if (isTrueFullPageLandscape) {
-                console.log(`📄 LANDSCAPE PDF DETECTED (single-logo, full-page): ${logo.originalFilename} (${origSize.width.toFixed(1)}×${origSize.height.toFixed(1)}pts, coverage ${(contentCoverage*100).toFixed(0)}%, max margin ${(maxMarginPct*100).toFixed(1)}%)`);
-                console.log(`📄 Switching output to landscape orientation`);
-                pageWidth = origSize.width;
-                pageHeight = origSize.height;
-                isLandscapeOutput = true;
-              } else {
-                console.log(`📄 Landscape PDF page detected but content is not full-page (coverage ${(contentCoverage*100).toFixed(0)}%, max margin ${(maxMarginPct*100).toFixed(1)}%) — keeping template orientation so canvas placement stays valid`);
-              }
-            } else if (isRotatedMatch && hasElementRotation) {
+
+            const fpa = analyzeFullPageMatch(
+              { widthPt: origSize.width, heightPt: origSize.height },
+              { widthPt: data.templateSize.width * MM_TO_POINTS, heightPt: data.templateSize.height * MM_TO_POINTS },
+              (logo as any).originalPdfBounds,
+            );
+
+            if (fpa.dimensionalMatch === 'rotated' && fpa.isLandscapeSource && !hasElementRotation && fpa.shouldFlipToLandscape) {
+              console.log(`📄 LANDSCAPE PDF DETECTED (single-logo, full-page): ${logo.originalFilename} — ${fpa.reasoning}`);
+              console.log(`📄 Switching output to landscape orientation`);
+              pageWidth = origSize.width;
+              pageHeight = origSize.height;
+              isLandscapeOutput = true;
+            } else if (fpa.dimensionalMatch === 'rotated' && fpa.isLandscapeSource && hasElementRotation) {
               console.log(`📄 LANDSCAPE PDF DETECTED but element has manual rotation - keeping template orientation`);
+            } else if (fpa.dimensionalMatch === 'rotated' && fpa.isLandscapeSource) {
+              // Dimensional rotated match but content isn't full-page (teddy / Waterford guard)
+              console.log(`📄 Landscape PDF page detected but ${fpa.reasoning} — keeping template orientation so canvas placement stays valid`);
             }
           } catch (e) {
             console.warn(`⚠️ Failed to pre-scan PDF orientation: ${e}`);
@@ -1234,10 +1210,17 @@ grestore`;
             console.log(`📋 Original PDF bounds: (${originalPdfBounds.xMin.toFixed(1)}, ${originalPdfBounds.yMin.toFixed(1)}) to (${originalPdfBounds.xMax.toFixed(1)}, ${originalPdfBounds.yMax.toFixed(1)})`);
             console.log(`📐 Content size: ${contentWidthPts.toFixed(1)}×${contentHeightPts.toFixed(1)}pts`);
             
-            // FULL-PAGE PDF DETECTION: If original PDF page size matches template size,
-            // skip all cropping and use the full page directly. This prevents clipping
-            // when artwork fills the entire template page (e.g., A3 PDF on A3 template)
-            // Also handles landscape orientation (width/height swapped vs template)
+            // FULL-PAGE PDF DETECTION: If original PDF page size matches template size
+            // AND the content actually fills that page (not just a small crest centred on
+            // a full-bleed sheet), embed the source PDF whole rather than cropping to
+            // content bounds. This prevents clipping when artwork fills the entire
+            // template page (e.g., A3 PDF on A3 template) while avoiding the Waterford /
+            // BEM regression where a small/inset crest got mis-classified as full-page
+            // and the entire empty sheet was embedded into the canvas element.
+            //
+            // Decision is delegated to the shared `analyzeFullPageMatch` analyzer
+            // (server/full-page-match.ts) so this site stays in lockstep with the
+            // pre-detect orientation flip above and the upload-time check in routes.ts.
             const { PDFDocument: PDFDocCheck } = await import('pdf-lib');
             const origPdfBytes = fs.readFileSync(originalPdfPath);
             const origPdfDoc = await PDFDocCheck.load(origPdfBytes);
@@ -1246,55 +1229,37 @@ grestore`;
             const MM_TO_PTS_CHECK = 2.834645669;
             const templateWPts = (templateSize?.width || 297) * MM_TO_PTS_CHECK;
             const templateHPts = (templateSize?.height || 420) * MM_TO_PTS_CHECK;
-            const isFullPageMatchDirect = Math.abs(origPageSize.width - templateWPts) < 10 && 
-                                     Math.abs(origPageSize.height - templateHPts) < 10;
-            const isFullPageMatchRotated = Math.abs(origPageSize.width - templateHPts) < 10 && 
-                                     Math.abs(origPageSize.height - templateWPts) < 10;
-            const isFullPageMatch = isFullPageMatchDirect || isFullPageMatchRotated;
-            
-            if (isFullPageMatch) {
-              const pageArea = origPageSize.width * origPageSize.height;
-              const contentArea = contentWidthPts * contentHeightPts;
-              const coverageRatio = contentArea / pageArea;
-              const hasUserRotation = element.rotation && element.rotation !== 0;
-              const orientationNote = isFullPageMatchRotated ? ' (LANDSCAPE - rotated orientation)' : '';
-              console.log(`📄 FULL-PAGE PDF CHECK${orientationNote}: PDF page (${origPageSize.width.toFixed(1)}×${origPageSize.height.toFixed(1)}pts) matches template (${templateWPts.toFixed(1)}×${templateHPts.toFixed(1)}pts)`);
-              console.log(`📄 Content coverage: ${(coverageRatio * 100).toFixed(1)}% (${contentWidthPts.toFixed(1)}×${contentHeightPts.toFixed(1)} content in ${origPageSize.width.toFixed(1)}×${origPageSize.height.toFixed(1)} page)`);
-              
-              // MARGIN CHECK: Compute padding on every side. Real "full-page" PDFs have
-              // artwork that extends close to all four edges. Centred artwork with 17mm
-              // padding (e.g. 64×65 crest in a 70×100 page) is NOT full-page — embedding
-              // the whole page on a rotated template clips the artwork (Waterford bug).
-              const marginLeft = originalPdfBounds.xMin;
-              const marginRight = origPageSize.width - originalPdfBounds.xMax;
-              const marginBottom = originalPdfBounds.yMin;
-              const marginTop = origPageSize.height - originalPdfBounds.yMax;
-              const maxMarginX = Math.max(marginLeft, marginRight);
-              const maxMarginY = Math.max(marginTop, marginBottom);
-              const maxMarginXPct = maxMarginX / origPageSize.width;
-              const maxMarginYPct = maxMarginY / origPageSize.height;
-              const FULLPAGE_MARGIN_PCT = 0.05; // each side must be within 5% of the page edge
-              const marginsLookFullPage = maxMarginXPct < FULLPAGE_MARGIN_PCT && maxMarginYPct < FULLPAGE_MARGIN_PCT;
-              console.log(`📐 Margins (pts): L=${marginLeft.toFixed(1)} R=${marginRight.toFixed(1)} T=${marginTop.toFixed(1)} B=${marginBottom.toFixed(1)} → maxX=${(maxMarginXPct*100).toFixed(1)}%, maxY=${(maxMarginYPct*100).toFixed(1)}% (full-page requires <${FULLPAGE_MARGIN_PCT*100}%)`);
-              
-              if (isFullPageMatchRotated && hasUserRotation) {
+
+            const fpaElement = analyzeFullPageMatch(
+              { widthPt: origPageSize.width, heightPt: origPageSize.height },
+              { widthPt: templateWPts, heightPt: templateHPts },
+              originalPdfBounds,
+            );
+            const hasUserRotation = !!(element.rotation && element.rotation !== 0);
+
+            if (fpaElement.dimensionalMatch !== 'none') {
+              const orientationNote = fpaElement.dimensionalMatch === 'rotated' ? ' (LANDSCAPE - rotated orientation)' : '';
+              console.log(`📄 FULL-PAGE PDF CHECK${orientationNote}: ${fpaElement.reasoning}`);
+              console.log(`📄 Content size: ${contentWidthPts.toFixed(1)}×${contentHeightPts.toFixed(1)}pts in ${origPageSize.width.toFixed(1)}×${origPageSize.height.toFixed(1)}pt page`);
+
+              if (fpaElement.dimensionalMatch === 'rotated' && hasUserRotation) {
                 console.log(`📄 LANDSCAPE PDF with user rotation (${element.rotation}°) - NOT treating as full-page landscape`);
                 console.log(`📄 User has manually rotated this element - will crop to content bounds then apply rotation`);
                 // DO NOT set logoPdfPath here - let the normal cropping flow handle it
                 // Setting logoPdfPath = originalPdfPath would embed the full 842×595 page
                 // but drawPage would force it into element dimensions (~737×312pts), squashing the content
-              } else if (coverageRatio > 0.85 && marginsLookFullPage) {
+              } else if (fpaElement.shouldEmbedFullPage) {
                 console.log(`📄 Content fills >85% of page AND extends to all edges - treating as full-page PDF`);
                 console.log(`📄 Skipping content-bounds cropping - embedding full page to prevent clipping`);
                 logoPdfPath = originalPdfPath;
                 (element as any)._isFullPagePdf = true;
-                if (isFullPageMatchRotated) {
+                if (fpaElement.dimensionalMatch === 'rotated') {
                   (element as any)._isLandscapePdf = true;
                   (element as any)._origPageWidth = origPageSize.width;
                   (element as any)._origPageHeight = origPageSize.height;
                 }
               } else {
-                console.log(`📄 Coverage ${(coverageRatio * 100).toFixed(1)}% / margins ${(maxMarginXPct*100).toFixed(1)}%×${(maxMarginYPct*100).toFixed(1)}% - artwork is inset, NOT treating as full-page PDF`);
+                console.log(`📄 Artwork is inset (coverage ${(fpaElement.contentCoverage * 100).toFixed(1)}%, max margin ${(fpaElement.maxMarginPct * 100).toFixed(1)}%) - NOT treating as full-page PDF`);
                 console.log(`📄 Will crop to content bounds so artwork fits the canvas element correctly`);
               }
             }
