@@ -190,6 +190,25 @@
       "assertions": {
         "note": "Disabled: 35MB upload runs slow in dev sandbox. Enable selectively for production smoke tests via PDF_REGRESSION_BASE_URL."
       }
+    },
+    {
+      "id": "15-a4-uploaded-to-dtf-large-scaled-up",
+      "file": "15_a4-uploaded-to-dtf-large_DOCUMENT-15.pdf",
+      "templateId": "dtf-large",
+      "garmentColor": "#FFFFFF",
+      "place": { "mode": "fit-to-content", "widthMm": 778.8, "heightMm": 548, "capToTemplate": true },
+      "enabled": true,
+      "assertions": {
+        "minPages": 1,
+        "page1WidthPt": 2834,
+        "page1HeightPt": 1559,
+        "tolerancePt": 8,
+        "contentBboxMm": {
+          "minWidthMm": 200,
+          "minHeightMm": 400,
+          "note": "Customer uploaded an A4 (210x297mm) source to the 1000x550mm DTF Large template, then scaled the canvas element up to 778.8x548mm. The PRIMARY regression guard is page1WidthPt/HeightPt above (page must be 1000x550mm ≈ 2834x1559pt, NOT A4 595x842pt). Secondary content guards (minWidthMm=200, minHeightMm=400): rendered artwork must occupy at least 200x400mm — proves the canvas scale-up was honored, not partially regressed. If DTF passthrough regresses and ships the source as-is, content would be capped near source A4 (~210x297mm) and fail minHeightMm. If the generator partially scales, the wider minWidthMm/minHeightMm pair catches it."
+        }
+      }
     }
   ]
 }

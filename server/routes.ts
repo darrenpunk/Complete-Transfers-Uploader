@@ -1375,9 +1375,18 @@ export async function registerRoutes(app: express.Application) {
       // DTF PASSTHROUGH: For DTF templates, serve the original artwork PDF directly without
       // re-embedding it via pdf-lib (which inflates 35MB → 42MB). Compress with Ghostscript
       // to bring it under the inline size threshold before returning.
-      // IMPORTANT: Only passthrough when the user hasn't done any canvas layout work —
-      // i.e. exactly one canvas element placed. If the user used the imposition tool or
-      // arranged multiple copies, we must run the full canvas-based PDF generator instead.
+      //
+      // Passthrough is ONLY safe when the source PDF is already a production-ready file at
+      // the template's intended dimensions AND the canvas element is placed at the source's
+      // natural size at the canonical (0,0) position with zero rotation. Passthrough emits
+      // the source bytes verbatim — it cannot scale, translate, or rotate — so any
+      // departure from canonical placement must fall through to the full canvas-based
+      // generator. All four conditions must hold (no W↔H swap, no rotation allowance):
+      //   1. Source page dims match template dims within ±3% (orientation-locked).
+      //   2. Canvas element width/height matches source's natural size within ±3%.
+      //   3. Canvas element is at the canonical origin (x≈0, y≈0) within ±3% of template.
+      //   4. Element rotation is exactly 0°.
+      // If any fails, fall through to the full canvas-based PDF generator.
       const isDtfGeneratePdf = templateSize.id?.toLowerCase().includes('dtf') ||
         (templateSize.width ?? 0) >= 1000 || (templateSize.height ?? 0) >= 500;
       const isSingleElementLayout = canvasElements.length === 1;
@@ -1388,7 +1397,54 @@ export async function registerRoutes(app: express.Application) {
           : Object.values(logosObject).find((logo: any) =>
               logo.originalFilename && logo.originalMimeType === 'application/pdf'
             ) as any;
+
+        // Gate: source ≈ template AND element ≈ source natural size AND element at origin AND rotation=0.
+        let passthroughSafe = false;
         if (dtfLogo) {
+          const PT_PER_MM = 2.834645669;
+          const srcWmm = typeof dtfLogo.originalWidth === 'number' ? dtfLogo.originalWidth : NaN;
+          const srcHmm = typeof dtfLogo.originalHeight === 'number' ? dtfLogo.originalHeight : NaN;
+          const tmplWmm = templateSize.width ?? 0;
+          const tmplHmm = templateSize.height ?? 0;
+          const elem = canvasElements[0];
+          const elemWmm = (elem?.width ?? 0) / PT_PER_MM;
+          const elemHmm = (elem?.height ?? 0) / PT_PER_MM;
+          const elemXmm = (elem?.x ?? 0) / PT_PER_MM;
+          const elemYmm = (elem?.y ?? 0) / PT_PER_MM;
+          const elemRot = ((elem?.rotation ?? 0) % 360 + 360) % 360;
+
+          // Orientation-locked: passthrough cannot rotate, so source orientation must
+          // match template orientation directly (no W↔H swap).
+          const dimTol = 0.03;
+          const sourceMatchesTemplate =
+            isFinite(srcWmm) && isFinite(srcHmm) && tmplWmm > 0 && tmplHmm > 0 &&
+            Math.abs(srcWmm - tmplWmm) <= tmplWmm * dimTol &&
+            Math.abs(srcHmm - tmplHmm) <= tmplHmm * dimTol;
+
+          const elemTol = 0.03;
+          const elementAtNaturalSize =
+            isFinite(srcWmm) && isFinite(srcHmm) && elemWmm > 0 && elemHmm > 0 &&
+            Math.abs(elemWmm - srcWmm) <= srcWmm * elemTol &&
+            Math.abs(elemHmm - srcHmm) <= srcHmm * elemTol;
+
+          // Element must be at canonical origin (top-left of template). Tolerance is
+          // ±3% of template dimensions, which on a 1000×550mm template is ±30/16.5mm —
+          // tight enough to catch any deliberate translation.
+          const posTol = 0.03;
+          const elementAtOrigin =
+            tmplWmm > 0 && tmplHmm > 0 &&
+            Math.abs(elemXmm) <= tmplWmm * posTol &&
+            Math.abs(elemYmm) <= tmplHmm * posTol;
+
+          // Passthrough cannot apply rotation; only exact 0° qualifies.
+          const rotationZero = Math.abs(elemRot) < 0.5;
+
+          passthroughSafe = sourceMatchesTemplate && elementAtNaturalSize && elementAtOrigin && rotationZero;
+          if (!passthroughSafe) {
+            console.log(`📄 DTF passthrough SKIPPED — source ${srcWmm}×${srcHmm}mm vs template ${tmplWmm}×${tmplHmm}mm (sizeOk=${sourceMatchesTemplate}), element ${elemWmm.toFixed(1)}×${elemHmm.toFixed(1)}mm at (${elemXmm.toFixed(1)},${elemYmm.toFixed(1)})mm rot=${elemRot}° (naturalSize=${elementAtNaturalSize}, origin=${elementAtOrigin}, rotZero=${rotationZero}). Falling through to canvas-based generator.`);
+          }
+        }
+        if (dtfLogo && passthroughSafe) {
           const origPath = path.join(process.cwd(), 'uploads', dtfLogo.originalFilename);
           if (fs.existsSync(origPath)) {
             console.log(`📄 DTF passthrough: compressing original artwork and serving directly`);
