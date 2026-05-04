@@ -170,15 +170,19 @@ export interface HealthCheckResult {
   errorMessage?: string;
   skipped?: boolean;
   skipReason?: string;
-  probe?: 'light' | 'stress';
+  probe?: 'light' | 'stress' | 'upload';
 }
 
+const DEFAULT_UPLOAD_INTERVAL_MIN = 30;
+
 const lastAlertSentAt = new Map<string, number>();
-const lastSuccessAt: Record<'light' | 'stress', number | null> = { light: null, stress: null };
+const lastSuccessAt: Record<'light' | 'stress' | 'upload', number | null> = { light: null, stress: null, upload: null };
 let lightTimer: NodeJS.Timeout | null = null;
 let stressTimer: NodeJS.Timeout | null = null;
+let uploadTimer: NodeJS.Timeout | null = null;
 let firstLightTimer: NodeJS.Timeout | null = null;
 let firstStressTimer: NodeJS.Timeout | null = null;
+let firstUploadTimer: NodeJS.Timeout | null = null;
 // Mutex per probe kind: collapse concurrent invocations onto a single in-flight
 // run so the scheduler firing while a slow check is running (or an admin
 // manually poking the endpoint mid-cycle) does not double-spend memory or —
@@ -186,7 +190,7 @@ let firstStressTimer: NodeJS.Timeout | null = null;
 // failures past the lastAlertSentAt check before either has updated it.
 // Light and stress have independent mutexes because they exercise different
 // code paths and there's no benefit to serializing them with each other.
-const inFlight: Record<'light' | 'stress', Promise<HealthCheckResult> | null> = { light: null, stress: null };
+const inFlight: Record<'light' | 'stress' | 'upload', Promise<HealthCheckResult> | null> = { light: null, stress: null, upload: null };
 
 /**
  * Run the small / fast light probe (A6 placeholder). Always persists a
@@ -205,6 +209,21 @@ export async function runPdfHealthCheck(opts: { sendAlertOnFailure?: boolean } =
  */
 export async function runPdfStressCheck(opts: { sendAlertOnFailure?: boolean } = {}): Promise<HealthCheckResult> {
   return runProbe(STRESS_FIXTURE, opts);
+}
+
+/**
+ * Run the upload pipeline probe. Makes an HTTP multipart POST to the real
+ * upload endpoint, exercising the full conversion pipeline:
+ *   multer → file I/O → Ghostscript bbox → pdf2svg/Inkscape → rsvg-convert PNG
+ * Catches binary dependency failures, filesystem permission issues, and
+ * conversion regressions that the in-process PDF generation probes miss.
+ */
+export async function runUploadHealthCheck(opts: { sendAlertOnFailure?: boolean } = {}): Promise<HealthCheckResult> {
+  const existing = inFlight.upload;
+  if (existing) return existing;
+  const promise = doRunUploadProbe(opts).finally(() => { inFlight.upload = null; });
+  inFlight.upload = promise;
+  return promise;
 }
 
 async function runProbe(fixture: ProbeFixture, opts: { sendAlertOnFailure?: boolean }): Promise<HealthCheckResult> {
@@ -316,13 +335,196 @@ async function doRunProbe(fixture: ProbeFixture, opts: { sendAlertOnFailure?: bo
   }
 }
 
+async function doRunUploadProbe(opts: { sendAlertOnFailure?: boolean }): Promise<HealthCheckResult> {
+  const sendAlertOnFailure = opts.sendAlertOnFailure ?? true;
+  const startedAt = Date.now();
+
+  const rssMb = Math.round(process.memoryUsage().rss / 1024 / 1024);
+  const defaultMaxRss = process.env.NODE_ENV === 'production' ? DEFAULT_MAX_RSS_MB_PROD : DEFAULT_MAX_RSS_MB_DEV;
+  const maxRss = parseInt(process.env.PDF_HEALTH_CHECK_MAX_RSS_MB || `${defaultMaxRss}`, 10);
+  if (rssMb >= maxRss) {
+    const skipReason = `RSS ${rssMb}MB ≥ ${maxRss}MB threshold — skipped to avoid adding load`;
+    await safeLog('upload-health-skip', skipReason, { rssMb, maxRss, probe: 'upload' });
+    return { ok: true, durationMs: Date.now() - startedAt, skipped: true, skipReason, probe: 'upload' };
+  }
+
+  let probeProjectId: string | null = null;
+  try {
+    const sourcePath = path.join(process.cwd(), 'server/placeholders/60X60 Placeholder.pdf');
+    if (!fs.existsSync(sourcePath)) {
+      throw new Error(`Upload probe source PDF missing at ${sourcePath}`);
+    }
+
+    const project = await storage.createProject({
+      name: 'Upload Health Probe',
+      templateSize: 'single-small',
+      garmentColor: '#ffffff',
+    } as any);
+    probeProjectId = project.id;
+
+    const pdfBuffer = fs.readFileSync(sourcePath);
+    const port = parseInt(process.env.PORT || '5000', 10);
+    const url = `http://localhost:${port}/api/projects/${probeProjectId}/logos`;
+
+    const formData = new FormData();
+    const blob = new Blob([pdfBuffer], { type: 'application/pdf' });
+    formData.append('files', blob, 'upload-probe-test.pdf');
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 45_000);
+    let response: Response;
+    try {
+      response = await fetch(url, {
+        method: 'POST',
+        body: formData,
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
+
+    if (!response.ok) {
+      const body = await response.text().catch(() => '(unreadable)');
+      throw new Error(`Upload endpoint returned HTTP ${response.status}: ${body.slice(0, 500)}`);
+    }
+
+    const logos = await response.json() as any[];
+    if (!Array.isArray(logos) || logos.length === 0) {
+      throw new Error('Upload endpoint returned empty or invalid logo array');
+    }
+
+    const logo = logos[0];
+    if (!logo.filename) {
+      throw new Error('Logo missing filename (file I/O failure)');
+    }
+    if (typeof logo.originalWidth !== 'number' || logo.originalWidth <= 0) {
+      throw new Error(`Logo missing valid originalWidth (bbox extraction failure): got ${logo.originalWidth}`);
+    }
+    if (typeof logo.originalHeight !== 'number' || logo.originalHeight <= 0) {
+      throw new Error(`Logo missing valid originalHeight (bbox extraction failure): got ${logo.originalHeight}`);
+    }
+    const hasConvertedFile = logo.filename &&
+      (logo.filename.endsWith('.svg') || logo.filename.endsWith('.png') ||
+       logo.previewFilename || logo.canvasFallbackFilename);
+    if (!hasConvertedFile) {
+      throw new Error('Logo has no converted SVG/PNG file (conversion pipeline failure)');
+    }
+
+    const durationMs = Date.now() - startedAt;
+    lastSuccessAt.upload = Date.now();
+    await safeLog('upload-health-ok', `OK in ${durationMs}ms`, {
+      durationMs, logoId: logo.id, filename: logo.filename,
+      originalWidth: logo.originalWidth, originalHeight: logo.originalHeight,
+      probe: 'upload',
+    });
+    return { ok: true, durationMs, probe: 'upload' };
+  } catch (err: any) {
+    const durationMs = Date.now() - startedAt;
+    const errorMessage = err?.message || String(err);
+    const failureKey = `upload-${classifyFailure(errorMessage)}`;
+    await safeLog('upload-health-fail', errorMessage, {
+      durationMs, failureKey, probe: 'upload',
+      stack: (err?.stack || '').toString().slice(0, 4000),
+    });
+
+    if (sendAlertOnFailure) {
+      await maybeSendUploadAlert(failureKey, errorMessage, durationMs);
+    }
+
+    return { ok: false, durationMs, failureKey, errorMessage, probe: 'upload' };
+  } finally {
+    if (probeProjectId) {
+      await cleanupProbeProject(probeProjectId);
+    }
+  }
+}
+
+async function cleanupProbeProject(projectId: string): Promise<void> {
+  try {
+    const uploadsDir = path.join(process.cwd(), 'uploads');
+    const logos = await storage.getLogosByProject(projectId);
+    for (const logo of logos) {
+      const filesToClean = [
+        logo.filename,
+        logo.originalFilename,
+        logo.previewFilename,
+        (logo as any).canvasFallbackFilename,
+      ].filter(Boolean);
+      for (const f of filesToClean) {
+        const filePath = path.join(uploadsDir, f!);
+        try { fs.unlinkSync(filePath); } catch { /* ignore */ }
+      }
+      const elements = await storage.getCanvasElementsByProject(projectId);
+      for (const el of elements) {
+        try { await storage.deleteCanvasElement(el.id); } catch { /* ignore */ }
+      }
+      try { await storage.deleteLogo(logo.id); } catch { /* ignore */ }
+    }
+    try { await storage.deleteProject(projectId); } catch { /* ignore */ }
+  } catch (e) {
+    console.warn(`[HEALTH] upload probe cleanup error (project ${projectId}):`, e);
+  }
+}
+
+async function maybeSendUploadAlert(failureKey: string, errorMessage: string, durationMs: number): Promise<void> {
+  const cooldownMin = Math.max(1, parseInt(process.env.PDF_HEALTH_ALERT_COOLDOWN_MIN || `${DEFAULT_COOLDOWN_MIN}`, 10));
+  const now = Date.now();
+  const last = lastAlertSentAt.get(failureKey) || 0;
+  if (now - last < cooldownMin * 60_000) {
+    console.log(`[HEALTH] upload alert suppressed (cooldown active for "${failureKey}", last sent ${Math.round((now - last) / 60_000)}min ago)`);
+    return;
+  }
+
+  const alertTo = process.env.PDF_HEALTH_ALERT_TO || DEFAULT_ALERT_TO;
+  const lastSuccess = lastSuccessAt.upload;
+  const lastSuccessText = lastSuccess
+    ? `${new Date(lastSuccess).toISOString()} (${Math.round((now - lastSuccess) / 60_000)} min ago)`
+    : 'no recorded success since server start';
+
+  const subject = `[completetransfers.com] UPLOAD pipeline FAILED (${failureKey})`;
+  const text = [
+    `The automated upload pipeline probe just failed.`,
+    ``,
+    `Probe:          upload — PDF upload + conversion pipeline (Ghostscript, Inkscape, rsvg-convert)`,
+    `Failure type:   ${failureKey}`,
+    `Error message:  ${errorMessage}`,
+    `Check duration: ${durationMs}ms`,
+    `Last success:   ${lastSuccessText}`,
+    `Server time:    ${new Date(now).toISOString()}`,
+    ``,
+    `What this means:`,
+    `The upload conversion pipeline (multer → Ghostscript bbox → pdf2svg/Inkscape → PNG thumbnail)`,
+    `returned an error or invalid output. Customers may be unable to upload files at all right now.`,
+    `PDF generation may still work for already-uploaded files — check the light/stress probe results.`,
+    ``,
+    `Recommended next steps:`,
+    `  1. Check the deployment logs for ERROR lines around the timestamp above.`,
+    `  2. Hit the manual trigger to confirm:`,
+    `       GET /api/admin/health/upload`,
+    `  3. Review recent failures: GET /api/admin/health/upload/history`,
+    `  4. Check binary availability: gs --version, inkscape --version, rsvg-convert --version`,
+    ``,
+    `Further alerts for this same failure type are suppressed for ${cooldownMin} minutes.`,
+  ].join('\n');
+  const html = `<pre style="font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;line-height:1.5">${escapeHtml(text)}</pre>`;
+
+  const result = await sendMail({ to: alertTo, subject, text, html });
+  if (result.ok) {
+    lastAlertSentAt.set(failureKey, now);
+    console.log(`[HEALTH] upload alert email sent to ${alertTo} (${result.durationMs}ms, msgId=${result.messageId || 'n/a'})`);
+  } else {
+    console.error(`[HEALTH] upload alert email FAILED: ${result.error}`);
+    await safeLog('upload-health-alert-send-fail', result.error || 'unknown', { failureKey, mailerSendStatus: result.status });
+  }
+}
+
 /**
- * Start the periodic health-check schedulers (both light and stress probes).
+ * Start the periodic health-check schedulers (light, stress, and upload probes).
  * Idempotent — safe to call multiple times. Returns a stop function. In dev
  * the schedulers are no-ops unless PDF_HEALTH_CHECK_ENABLED=1.
  */
 export function startPdfHealthMonitor(): () => void {
-  if (lightTimer || stressTimer) return () => stopPdfHealthMonitor();
+  if (lightTimer || stressTimer || uploadTimer) return () => stopPdfHealthMonitor();
   const enabled = process.env.NODE_ENV === 'production' || process.env.PDF_HEALTH_CHECK_ENABLED === '1';
   if (!enabled) {
     console.log('[HEALTH] PDF health monitor disabled (NODE_ENV !== production and PDF_HEALTH_CHECK_ENABLED != 1)');
@@ -331,8 +533,9 @@ export function startPdfHealthMonitor(): () => void {
 
   const lightMin = Math.max(1, parseInt(process.env.PDF_HEALTH_CHECK_INTERVAL_MIN || `${DEFAULT_LIGHT_INTERVAL_MIN}`, 10));
   const stressMin = Math.max(1, parseInt(process.env.PDF_STRESS_CHECK_INTERVAL_MIN || `${DEFAULT_STRESS_INTERVAL_MIN}`, 10));
+  const uploadMin = Math.max(1, parseInt(process.env.UPLOAD_HEALTH_CHECK_INTERVAL_MIN || `${DEFAULT_UPLOAD_INTERVAL_MIN}`, 10));
   const alertTo = process.env.PDF_HEALTH_ALERT_TO || DEFAULT_ALERT_TO;
-  console.log(`[HEALTH] PDF health monitor starting — light every ${lightMin}min, stress every ${stressMin}min, alerts to ${alertTo}`);
+  console.log(`[HEALTH] PDF health monitor starting — light every ${lightMin}min, stress every ${stressMin}min, upload every ${uploadMin}min, alerts to ${alertTo}`);
 
   // First light check after 60s (give server time to warm up).
   firstLightTimer = setTimeout(() => {
@@ -348,6 +551,12 @@ export function startPdfHealthMonitor(): () => void {
   }, 5 * 60_000);
   if (firstStressTimer.unref) firstStressTimer.unref();
 
+  // First upload check after 2min — staggered between light (60s) and stress (5min).
+  firstUploadTimer = setTimeout(() => {
+    runUploadHealthCheck().catch((e) => console.error('[HEALTH] upload check threw:', e));
+  }, 2 * 60_000);
+  if (firstUploadTimer.unref) firstUploadTimer.unref();
+
   lightTimer = setInterval(() => {
     runPdfHealthCheck().catch((e) => console.error('[HEALTH] light check threw:', e));
   }, lightMin * 60_000);
@@ -358,24 +567,31 @@ export function startPdfHealthMonitor(): () => void {
   }, stressMin * 60_000);
   if (stressTimer.unref) stressTimer.unref();
 
+  uploadTimer = setInterval(() => {
+    runUploadHealthCheck().catch((e) => console.error('[HEALTH] upload check threw:', e));
+  }, uploadMin * 60_000);
+  if (uploadTimer.unref) uploadTimer.unref();
+
   return stopPdfHealthMonitor;
 }
 
 export function stopPdfHealthMonitor(): void {
-  for (const t of [firstLightTimer, firstStressTimer]) {
+  for (const t of [firstLightTimer, firstStressTimer, firstUploadTimer]) {
     if (t) clearTimeout(t);
   }
   firstLightTimer = null;
   firstStressTimer = null;
-  for (const t of [lightTimer, stressTimer]) {
+  firstUploadTimer = null;
+  for (const t of [lightTimer, stressTimer, uploadTimer]) {
     if (t) clearInterval(t);
   }
   lightTimer = null;
   stressTimer = null;
+  uploadTimer = null;
   console.log('[HEALTH] PDF health monitor stopped');
 }
 
-export function getLastSuccessAt(probe: 'light' | 'stress' = 'light'): number | null {
+export function getLastSuccessAt(probe: 'light' | 'stress' | 'upload' = 'light'): number | null {
   return lastSuccessAt[probe];
 }
 
