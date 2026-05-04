@@ -356,7 +356,7 @@ async function doRunUploadProbe(opts: { sendAlertOnFailure?: boolean }): Promise
     }
 
     const project = await storage.createProject({
-      name: 'Upload Health Probe',
+      name: '__HEALTH_PROBE__Upload Pipeline Check',
       templateSize: 'single-small',
       garmentColor: '#ffffff',
     } as any);
@@ -385,6 +385,11 @@ async function doRunUploadProbe(opts: { sendAlertOnFailure?: boolean }): Promise
 
     if (!response.ok) {
       const body = await response.text().catch(() => '(unreadable)');
+      if (response.status === 503 || response.status === 429) {
+        const skipReason = `Upload endpoint returned HTTP ${response.status} (server busy/at capacity) — skipped`;
+        await safeLog('upload-health-skip', skipReason, { status: response.status, probe: 'upload' });
+        return { ok: true, durationMs: Date.now() - startedAt, skipped: true, skipReason, probe: 'upload' };
+      }
       throw new Error(`Upload endpoint returned HTTP ${response.status}: ${body.slice(0, 500)}`);
     }
 

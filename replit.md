@@ -30,8 +30,9 @@ Current focus: Core functionality over complex color management features.
 - **Operation Guard**: Concurrency limiter with queueing and memory-based rejection for heavy operations (PDF generation, file uploads, SVG extraction), using container-level cgroup memory monitoring.
 - **Smart DPI System**: Dynamically selects Ghostscript rendering DPI based on PDF file size and memory pressure.
 - **Crash Logging System**: Persistent PostgreSQL table records server lifecycle events.
-- **PDF Health Monitor**: `server/health-monitor.ts` runs end-to-end PDF probes with email alerts for failures, using both light and stress probes to catch various issues.
+- **PDF Health Monitor**: `server/health-monitor.ts` runs end-to-end probes with email alerts for failures. Three probe types: light (A6 placeholder every 15min), stress (Rainbow Dog 7.9MB on A3 every 60min), and upload pipeline (HTTP multipart POST every 30min testing multer → Ghostscript bbox → pdf2svg/Inkscape → PNG thumbnail). Upload probe creates a real project, uploads a test PDF via the actual HTTP endpoint, verifies the conversion pipeline produced valid SVG/PNG with correct dimensions, then cleans up all artifacts.
 - **Concurrent User Metrics**: `/api/admin/analytics/concurrent` provides time-bucketed distinct-session counts and current/peak active users for the Admin Dashboard.
+- **Upload Health Endpoints**: `GET /api/admin/health/upload` (manual trigger, no alert email) and `GET /api/admin/health/upload/history` (recent upload-health-* logs). Configured via `UPLOAD_HEALTH_CHECK_INTERVAL_MIN` env var (default 30).
 - **Color Workflow Isolation**: `ColorWorkflowManager` for robust vector/raster color handling and CMYK preservation.
 - **Mixed Content Detection**: `MixedContentDetector` identifies mixed raster/vector content in uploaded files.
 - **Raster Upload Sizing**: Automatic scaling of direct PNG/JPEG uploads.

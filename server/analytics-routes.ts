@@ -340,4 +340,33 @@ export function registerAnalyticsRoutes(app: Express, storage: IStorage) {
       res.status(500).json({ error: "Failed to fetch health history" });
     }
   });
+
+  // Upload pipeline health probe — manual trigger. Exercises the full upload
+  // conversion pipeline (multer → Ghostscript → pdf2svg/Inkscape → PNG) via
+  // HTTP, catching binary dependency failures the in-process PDF probes miss.
+  app.get("/api/admin/health/upload", adminAuth, async (_req, res) => {
+    try {
+      const { runUploadHealthCheck, getLastSuccessAt } = await import("./health-monitor");
+      const result = await runUploadHealthCheck({ sendAlertOnFailure: false });
+      res.json({ ...result, lastSuccessAt: getLastSuccessAt('upload') });
+    } catch (error: any) {
+      console.error("Upload health check error:", error);
+      res.status(500).json({ ok: false, error: error?.message || String(error) });
+    }
+  });
+
+  // Upload pipeline health probe — recent history.
+  app.get("/api/admin/health/upload/history", adminAuth, async (req, res) => {
+    try {
+      const limit = Math.min(500, parseInt(req.query.limit as string) || 100);
+      const allLogs = await storage.getCrashLogs(limit * 4);
+      const uploadLogs = allLogs
+        .filter((l) => l.eventType?.startsWith("upload-health"))
+        .slice(0, limit);
+      res.json(uploadLogs);
+    } catch (error: any) {
+      console.error("Upload health history error:", error);
+      res.status(500).json({ error: "Failed to fetch upload health history" });
+    }
+  });
 }
