@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Lock, Users, Activity, BarChart3, RefreshCw, Search, X, Upload, ShoppingCart, LayoutTemplate, Plus, Trash2, Zap, TrendingUp, FileText, Eye, HeartPulse, Cpu, HardDrive, Clock, AlertTriangle, CheckCircle, Bug } from "lucide-react";
+import { Lock, Users, Activity, BarChart3, RefreshCw, Search, X, Upload, ShoppingCart, LayoutTemplate, Plus, Trash2, Zap, TrendingUp, FileText, Eye, HeartPulse, Cpu, HardDrive, Clock, AlertTriangle, CheckCircle, Bug, Stethoscope, Play, Loader2 } from "lucide-react";
 import { queryClient } from "@/lib/queryClient";
 import type { TemplateSize } from "@shared/schema";
 import {
@@ -1078,6 +1078,214 @@ function CrashLogsTab() {
   );
 }
 
+function HealthProbesTab() {
+  const [runningProbe, setRunningProbe] = useState<string | null>(null);
+
+  const { data: pdfHistory, refetch: refetchPdf } = useQuery<any[]>({
+    queryKey: ["admin-health-pdf-history"],
+    queryFn: () => adminFetch("/api/admin/health/pdf/history?limit=50"),
+    refetchInterval: 60000,
+  });
+
+  const { data: uploadHistory, refetch: refetchUpload } = useQuery<any[]>({
+    queryKey: ["admin-health-upload-history"],
+    queryFn: () => adminFetch("/api/admin/health/upload/history?limit=50"),
+    refetchInterval: 60000,
+  });
+
+  const refetchAll = () => { refetchPdf(); refetchUpload(); };
+
+  const allHistory = useMemo(() => {
+    const items: any[] = [];
+    if (pdfHistory) items.push(...pdfHistory);
+    if (uploadHistory) items.push(...uploadHistory);
+    items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return items;
+  }, [pdfHistory, uploadHistory]);
+
+  const isRunResult = (t: string) => t.endsWith("-ok") || t.endsWith("-fail") || t.endsWith("-skip");
+
+  const getLatest = (prefix: string) => {
+    return allHistory.find(h => h.eventType.startsWith(prefix) && isRunResult(h.eventType));
+  };
+
+  const latestLight = getLatest("pdf-health-");
+  const latestStress = getLatest("pdf-stress-");
+  const latestUpload = getLatest("upload-health-");
+
+  const [probeError, setProbeError] = useState<string | null>(null);
+
+  const triggerProbe = async (type: "light" | "stress" | "upload") => {
+    setRunningProbe(type);
+    setProbeError(null);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 120000);
+    try {
+      const endpoint = type === "light" ? "/api/admin/health/pdf"
+        : type === "stress" ? "/api/admin/health/pdf/stress"
+        : "/api/admin/health/upload";
+      const token = getAdminToken();
+      const res = await fetch(endpoint, {
+        headers: { Authorization: `Bearer ${token}` },
+        signal: controller.signal,
+      });
+      if (!res.ok) {
+        const body = await res.text().catch(() => "");
+        setProbeError(`${type} probe returned HTTP ${res.status}: ${body.slice(0, 200)}`);
+      }
+      refetchAll();
+    } catch (e: any) {
+      setProbeError(e.name === "AbortError" ? `${type} probe timed out after 2 minutes` : `${type} probe failed: ${e.message}`);
+    } finally {
+      clearTimeout(timeout);
+      setRunningProbe(null);
+    }
+  };
+
+  const probeStatus = (entry: any) => {
+    if (!entry) return { label: "No data", color: "text-muted-foreground", bg: "bg-muted" };
+    const t = entry.eventType;
+    if (t.endsWith("-ok")) return { label: "OK", color: "text-green-400", bg: "bg-green-500/20 border-green-500/30" };
+    if (t.endsWith("-skip")) return { label: "Skipped", color: "text-yellow-400", bg: "bg-yellow-500/20 border-yellow-500/30" };
+    return { label: "Failed", color: "text-red-400", bg: "bg-red-500/20 border-red-500/30" };
+  };
+
+  const probeDuration = (entry: any) => {
+    if (!entry?.details?.durationMs) return "—";
+    const ms = entry.details.durationMs;
+    return ms >= 1000 ? `${(ms / 1000).toFixed(1)}s` : `${ms}ms`;
+  };
+
+  const probeCards = [
+    { key: "light", title: "Light Probe", desc: "A6 placeholder PDF generation", interval: "Every 15 min", latest: latestLight },
+    { key: "stress", title: "Stress Probe", desc: "7.9MB Rainbow Dog on A3", interval: "Every 60 min", latest: latestStress },
+    { key: "upload", title: "Upload Pipeline", desc: "Full upload → convert → thumbnail", interval: "Every 30 min", latest: latestUpload },
+  ] as const;
+
+  const eventTypeLabel = (t: string) => {
+    if (t.startsWith("pdf-health-")) return "Light";
+    if (t.startsWith("pdf-stress-")) return "Stress";
+    if (t.startsWith("upload-health-")) return "Upload";
+    return t;
+  };
+
+  const eventStatusBadge = (t: string) => {
+    if (t.endsWith("-ok")) return <Badge variant="outline" className="bg-green-500/20 text-green-400 border-green-500/30 text-xs">OK</Badge>;
+    if (t.endsWith("-skip")) return <Badge variant="outline" className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 text-xs">Skip</Badge>;
+    return <Badge variant="destructive" className="text-xs">Fail</Badge>;
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Stethoscope className="h-5 w-5 text-primary" />
+          <h2 className="text-lg font-semibold">Health Probes</h2>
+        </div>
+        <Button variant="outline" size="sm" onClick={refetchAll}>
+          <RefreshCw className="h-4 w-4 mr-2" />Refresh
+        </Button>
+      </div>
+
+      {probeError && (
+        <div className="bg-red-500/10 border border-red-500/30 rounded-lg px-4 py-3 flex items-center justify-between">
+          <span className="text-sm text-red-400">{probeError}</span>
+          <button onClick={() => setProbeError(null)} className="text-red-400 hover:text-red-300"><X className="h-4 w-4" /></button>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        {probeCards.map(({ key, title, desc, interval, latest }) => {
+          const status = probeStatus(latest);
+          const isRunning = runningProbe === key;
+          return (
+            <Card key={key}>
+              <CardContent className="p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm font-medium">{title}</div>
+                  <Badge variant="outline" className={`${status.bg} ${status.color} text-xs`}>{status.label}</Badge>
+                </div>
+                <p className="text-xs text-muted-foreground">{desc}</p>
+                <div className="space-y-1 text-xs">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Schedule</span>
+                    <span>{interval}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Last run</span>
+                    <span>{latest ? timeSince(latest.createdAt) : "Never"}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Duration</span>
+                    <span>{probeDuration(latest)}</span>
+                  </div>
+                  {latest?.memoryRssMb && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">RSS at run</span>
+                      <span>{latest.memoryRssMb}MB</span>
+                    </div>
+                  )}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full h-8 text-xs"
+                  disabled={!!runningProbe}
+                  onClick={() => triggerProbe(key)}
+                >
+                  {isRunning ? (
+                    <><Loader2 className="h-3 w-3 mr-1.5 animate-spin" />Running...</>
+                  ) : (
+                    <><Play className="h-3 w-3 mr-1.5" />Run Now</>
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm">Probe History (last 50 per type)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {allHistory.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-4 text-center">No probe history yet.</p>
+          ) : (
+            <div className="max-h-[400px] overflow-y-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[100px]">Type</TableHead>
+                    <TableHead className="w-[70px]">Status</TableHead>
+                    <TableHead>Message</TableHead>
+                    <TableHead className="w-[80px] text-right">Duration</TableHead>
+                    <TableHead className="w-[80px] text-right">RSS</TableHead>
+                    <TableHead className="w-[140px] text-right">Time</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {allHistory.slice(0, 100).map((entry: any) => (
+                    <TableRow key={entry.id}>
+                      <TableCell className="text-xs font-medium">{eventTypeLabel(entry.eventType)}</TableCell>
+                      <TableCell>{eventStatusBadge(entry.eventType)}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground max-w-[300px] truncate">{entry.message}</TableCell>
+                      <TableCell className="text-xs text-right">{entry.details?.durationMs ? `${(entry.details.durationMs / 1000).toFixed(1)}s` : "—"}</TableCell>
+                      <TableCell className="text-xs text-right">{entry.memoryRssMb ? `${entry.memoryRssMb}MB` : "—"}</TableCell>
+                      <TableCell className="text-xs text-right text-muted-foreground">{timeSince(entry.createdAt)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 function ServerHealthTab() {
   const { data: health, isLoading, refetch } = useQuery({
     queryKey: ["admin-health"],
@@ -1253,7 +1461,7 @@ function ServerHealthTab() {
 }
 
 function Dashboard() {
-  const [activeTab, setActiveTab] = useState<"analytics" | "customer-templates" | "server-health" | "crash-logs">("analytics");
+  const [activeTab, setActiveTab] = useState<"analytics" | "customer-templates" | "server-health" | "health-probes" | "crash-logs">("analytics");
   const [userFilter, setUserFilter] = useState("");
   const [eventFilter, setEventFilter] = useState("all");
   const [timeFilter, setTimeFilter] = useState("all");
@@ -1289,6 +1497,10 @@ function Dashboard() {
     refetchEvents();
     refetchStats();
     refetchConcurrent();
+    if (activeTab === "health-probes") {
+      queryClient.invalidateQueries({ queryKey: ["admin-health-pdf-history"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-health-upload-history"] });
+    }
   };
 
   const visibleEvents = useMemo(() => {
@@ -1367,6 +1579,13 @@ function Dashboard() {
                 Server Health
               </button>
               <button
+                onClick={() => setActiveTab("health-probes")}
+                className={`px-3 py-1.5 text-sm font-medium transition-colors ${activeTab === "health-probes" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"}`}
+              >
+                <Stethoscope className="h-4 w-4 inline mr-1.5" />
+                Health Probes
+              </button>
+              <button
                 onClick={() => setActiveTab("crash-logs")}
                 className={`px-3 py-1.5 text-sm font-medium transition-colors ${activeTab === "crash-logs" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"}`}
               >
@@ -1374,7 +1593,7 @@ function Dashboard() {
                 Crash Logs
               </button>
             </div>
-            {(activeTab === "analytics" || activeTab === "server-health" || activeTab === "crash-logs") && (
+            {(activeTab === "analytics" || activeTab === "server-health" || activeTab === "crash-logs" || activeTab === "health-probes") && (
               <Button variant="outline" size="sm" onClick={handleRefresh}>
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Refresh
@@ -1392,6 +1611,10 @@ function Dashboard() {
 
         {activeTab === "server-health" && (
           <ServerHealthTab />
+        )}
+
+        {activeTab === "health-probes" && (
+          <HealthProbesTab />
         )}
 
         {activeTab === "crash-logs" && (

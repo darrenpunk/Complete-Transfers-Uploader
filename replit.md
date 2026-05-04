@@ -33,6 +33,8 @@ Current focus: Core functionality over complex color management features.
 - **PDF Health Monitor**: `server/health-monitor.ts` runs end-to-end probes with email alerts for failures. Three probe types: light (A6 placeholder every 15min), stress (Rainbow Dog 7.9MB on A3 every 60min), and upload pipeline (HTTP multipart POST every 30min testing multer → Ghostscript bbox → pdf2svg/Inkscape → PNG thumbnail). Upload probe creates a real project, uploads a test PDF via the actual HTTP endpoint, verifies the conversion pipeline produced valid SVG/PNG with correct dimensions, then cleans up all artifacts.
 - **Concurrent User Metrics**: `/api/admin/analytics/concurrent` provides time-bucketed distinct-session counts and current/peak active users for the Admin Dashboard.
 - **Upload Health Endpoints**: `GET /api/admin/health/upload` (manual trigger, no alert email) and `GET /api/admin/health/upload/history` (recent upload-health-* logs). Configured via `UPLOAD_HEALTH_CHECK_INTERVAL_MIN` env var (default 30).
+- **Health Probes Dashboard**: Admin dashboard "Health Probes" tab showing status cards for all three probe types (Light, Stress, Upload) with last result, duration, schedule, memory usage, and "Run Now" buttons. Combined probe history table with type/status/message/duration columns.
+- **PDF Regression Validation**: `npx tsx tests/run-pdf-regression.ts` registered as a `pdf-regression` validation command for CI-style repeatable checks.
 - **Color Workflow Isolation**: `ColorWorkflowManager` for robust vector/raster color handling and CMYK preservation.
 - **Mixed Content Detection**: `MixedContentDetector` identifies mixed raster/vector content in uploaded files.
 - **Raster Upload Sizing**: Automatic scaling of direct PNG/JPEG uploads.
