@@ -6578,15 +6578,32 @@ export async function registerRoutes(app: express.Application) {
       }
 
       const includeLandscape = req.query.includeLandscape === 'true';
+      // For auto-generated `-landscape` orientation flips, check the customer's
+      // assignment against EITHER the variant id OR its base portrait id, so a
+      // single assignment unlocks both orientations (matches how non-exclusive
+      // templates already behave — the landscape flip rides along with the base).
+      const isAllowedById = (id: string): boolean => {
+        if (customerAllowedIds.has(id)) return true;
+        if (id.endsWith('-landscape')) {
+          const baseId = id.slice(0, -'-landscape'.length);
+          if (customerAllowedIds.has(baseId)) return true;
+        }
+        return false;
+      };
       const filtered = templateSizes.filter(t => {
         if (!includeLandscape && t.id.endsWith('-landscape')) return false;
         // customerExclusive templates are hidden by default — only visible if the
-        // requesting customer has an explicit assignment for them.
+        // requesting customer has an explicit assignment for them (or for the
+        // base id of an auto-generated landscape flip).
         if ((t as any).customerExclusive) {
-          return !!(customerCode && customerAllowedIds.has(t.id));
+          return !!(customerCode && isAllowedById(t.id));
         }
-        if (!restrictedTemplateIds.has(t.id)) return true;
-        if (customerCode && customerAllowedIds.has(t.id)) return true;
+        // Also honor the same base-id rule for restricted (non-exclusive) templates.
+        const baseId = t.id.endsWith('-landscape')
+          ? t.id.slice(0, -'-landscape'.length)
+          : t.id;
+        if (!restrictedTemplateIds.has(t.id) && !restrictedTemplateIds.has(baseId)) return true;
+        if (customerCode && isAllowedById(t.id)) return true;
         return false;
       });
 
