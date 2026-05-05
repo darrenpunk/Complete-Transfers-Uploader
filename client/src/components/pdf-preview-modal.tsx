@@ -582,7 +582,7 @@ export default function PDFPreviewModal({
                       <div 
                         className="relative border border-dashed border-gray-300 shadow-sm overflow-hidden"
                         style={{
-                          backgroundColor: displayGarmentColor(project?.garmentColor, '#d7da14'),
+                          backgroundColor: displayGarmentColor(project?.garmentColor, '#d7da14', !!template?.id?.startsWith('reflective-')),
                           aspectRatio: template ? `${template.width}/${template.height}` : '297/420',
                           ...(template && template.width > template.height
                             ? { width: '95%', maxHeight: '90%' }
@@ -614,7 +614,7 @@ export default function PDFPreviewModal({
                             imageUrl = `${imageUrl}${sep}inkColor=${encodeURIComponent(project.inkColor)}&recolor=true&t=${Date.now()}`;
                           }
 
-                          const elBgColor = displayGarmentColor(element.garmentColor || project?.garmentColor, '#d7da14');
+                          const elBgColor = displayGarmentColor(element.garmentColor || project?.garmentColor, '#d7da14', !!template?.id?.startsWith('reflective-'));
 
                           return (
                             <div

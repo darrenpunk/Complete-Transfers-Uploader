@@ -2606,7 +2606,7 @@ const CanvasWorkspace = forwardRef(function CanvasWorkspace({
               style={{
                 width: canvasWidth,
                 height: canvasHeight,
-                backgroundColor: bleedMarginMm > 0 ? '#808080' : displayGarmentColor(project.garmentColor)
+                backgroundColor: bleedMarginMm > 0 ? '#808080' : displayGarmentColor(project.garmentColor, undefined, !!template?.id?.startsWith('reflective-'))
               }}
               onClick={handleCanvasClick}
             >
@@ -2619,7 +2619,7 @@ const CanvasWorkspace = forwardRef(function CanvasWorkspace({
                   top: bleedInPixels,
                   width: innerCanvasWidth,
                   height: innerCanvasHeight,
-                  backgroundColor: displayGarmentColor(project.garmentColor),
+                  backgroundColor: displayGarmentColor(project.garmentColor, undefined, !!template?.id?.startsWith('reflective-')),
                   border: '2px dashed rgba(0, 0, 0, 0.3)'
                 }}
               >
