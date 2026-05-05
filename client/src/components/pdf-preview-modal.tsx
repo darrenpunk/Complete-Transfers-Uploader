@@ -184,7 +184,7 @@ export default function PDFPreviewModal({
   const isSingleColourTemplate = useMemo(() => {
     if (!template) return false;
     return template.group === "Screen Printed Transfers" && 
-      (template.label?.includes("Single Colour") || template.label?.includes("Zero"));
+      (template.label?.includes("Single Colour") || template.label?.includes("Zero") || template.label?.includes("Reflective"));
   }, [template]);
 
   const shouldRecolorForInk = isSingleColourTemplate && !!project?.inkColor;

@@ -2727,7 +2727,7 @@ export async function registerRoutes(app: express.Application) {
       const templateSizes = await storage.getTemplateSizes();
       const templateSize = templateSizes.find(t => t.id === project.templateSize);
       const isSingleColourTemplate = templateSize?.group === "Screen Printed Transfers" && 
-        templateSize?.label?.includes("Single Colour");
+        (templateSize?.label?.includes("Single Colour") || templateSize?.label?.includes("Zero") || templateSize?.label?.includes("Reflective"));
       
       // Large format DTF (1000x550mm or any template ≥1000mm wide) — skip pdf2svg entirely for PDF
       // uploads and use PNG for canvas display. The original PDF is always kept for production output.

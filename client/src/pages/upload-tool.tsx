@@ -1271,9 +1271,9 @@ export default function UploadTool() {
       sessionStorage.removeItem('hasSeenUploadGuidance');
       
       const isFullColourTemplate = selectedTemplate.group === "Screen Printed Transfers" && 
-        !selectedTemplate.label?.includes("Single Colour") && !selectedTemplate.label?.includes("Zero");
+        !selectedTemplate.label?.includes("Single Colour") && !selectedTemplate.label?.includes("Zero") && !selectedTemplate.label?.includes("Reflective");
       const isSingleColourTemplate = selectedTemplate.group === "Screen Printed Transfers" && 
-        (selectedTemplate.label?.includes("Single Colour") || selectedTemplate.label?.includes("Zero"));
+        (selectedTemplate.label?.includes("Single Colour") || selectedTemplate.label?.includes("Zero") || selectedTemplate.label?.includes("Reflective"));
       const isCustomBadgesTemplate = selectedTemplate.group === "Digital Transfers" && 
         selectedTemplate.label?.includes("Applique");
       const isDTFTemplate = selectedTemplate.group === "Digital Transfers" && (selectedTemplate.id?.startsWith("dtf-") || selectedTemplate.label?.includes("DTF"));
@@ -1342,9 +1342,9 @@ export default function UploadTool() {
     if (currentProject && logos.length === 0 && hasInitialized && !uploadGuidanceTriggered) {
       const currentTemplate = templateSizes.find(t => t.id === currentProject.templateSize);
       const isFullColourTemplate = currentTemplate?.group === "Screen Printed Transfers" && 
-        !currentTemplate?.label?.includes("Single Colour") && !currentTemplate?.label?.includes("Zero");
+        !currentTemplate?.label?.includes("Single Colour") && !currentTemplate?.label?.includes("Zero") && !currentTemplate?.label?.includes("Reflective");
       const isSingleColourTemplate = currentTemplate?.group === "Screen Printed Transfers" && 
-        (currentTemplate?.label?.includes("Single Colour") || currentTemplate?.label?.includes("Zero"));
+        (currentTemplate?.label?.includes("Single Colour") || currentTemplate?.label?.includes("Zero") || currentTemplate?.label?.includes("Reflective"));
       
       // Initialize prev values if this is first run (prevGarmentColor === null means not initialized)
       if (prevGarmentColor === null) {

@@ -318,7 +318,7 @@ export class EnhancedCMYKGenerator {
     const project = await storage.getProject(projectId);
     const template = project?.templateSize ? await storage.getTemplateSize(project.templateSize) : null;
     const isSingleColourTransfer = template?.group === 'Screen Printed Transfers' && 
-      template?.label?.includes('Single Colour');
+      (template?.label?.includes('Single Colour') || template?.label?.includes('Zero') || template?.label?.includes('Reflective'));
     const inkColor = project?.inkColor;
     
     const isAppliqueTemplate = project?.templateSize?.includes('applique') || !!appliqueBadgesForm;

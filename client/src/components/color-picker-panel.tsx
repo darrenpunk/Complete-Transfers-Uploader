@@ -165,7 +165,8 @@ export default function ColorPickerPanel({ selectedElement, logo }: ColorPickerP
   const isSingleColourTemplate = templateSizes && project 
     ? templateSizes.find(t => t.id === project.templateSize)?.group === "Screen Printed Transfers" && 
       (templateSizes.find(t => t.id === project.templateSize)?.label?.includes("Single Colour") || 
-       templateSizes.find(t => t.id === project.templateSize)?.label?.includes("Zero"))
+       templateSizes.find(t => t.id === project.templateSize)?.label?.includes("Zero") ||
+       templateSizes.find(t => t.id === project.templateSize)?.label?.includes("Reflective"))
     : false;
 
   // Only show for SVG logos with detected colors

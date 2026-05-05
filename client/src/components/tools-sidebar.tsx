@@ -686,7 +686,7 @@ export default function ToolsSidebar({
       {(() => {
         const selectedTemplate = templateSizes.find(template => template.id === project.templateSize);
         const isFullColourTemplate = selectedTemplate?.group === "Screen Printed Transfers" && 
-          !selectedTemplate?.label?.includes("Single Colour") && !selectedTemplate?.label?.includes("Zero");
+          !selectedTemplate?.label?.includes("Single Colour") && !selectedTemplate?.label?.includes("Zero") && !selectedTemplate?.label?.includes("Reflective");
         return isFullColourTemplate ? (
           <Collapsible open={!productSelectorCollapsed} onOpenChange={(open) => setProductSelectorCollapsed(!open)}>
             <div className="border-b border-gray-200">
@@ -762,7 +762,7 @@ export default function ToolsSidebar({
       {(() => {
         const selectedTemplate = templateSizes.find(template => template.id === project.templateSize);
         const isSingleColourTemplate = selectedTemplate?.group === "Screen Printed Transfers" && 
-          (selectedTemplate?.label?.includes("Single Colour") || selectedTemplate?.label?.includes("Zero"));
+          (selectedTemplate?.label?.includes("Single Colour") || selectedTemplate?.label?.includes("Zero") || selectedTemplate?.label?.includes("Reflective"));
         return isSingleColourTemplate ? (
           <Collapsible open={!productSelectorCollapsed} onOpenChange={(open) => setProductSelectorCollapsed(!open)}>
             <div className="border-b border-gray-200">
@@ -848,7 +848,7 @@ export default function ToolsSidebar({
       {(() => {
         const selectedTemplate = templateSizes.find(template => template.id === project.templateSize);
         const isSingleColourTemplate = selectedTemplate?.group === "Screen Printed Transfers" && 
-          (selectedTemplate?.label?.includes("Single Colour") || selectedTemplate?.label?.includes("Zero"));
+          (selectedTemplate?.label?.includes("Single Colour") || selectedTemplate?.label?.includes("Zero") || selectedTemplate?.label?.includes("Reflective"));
         if (!isSingleColourTemplate) return null;
         
         const hasRealGarmentColor = project.garmentColor && project.garmentColor !== "#929292";
