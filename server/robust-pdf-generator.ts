@@ -744,43 +744,78 @@ grestore`;
       }
     }
     
-    // Add project labels to each garment color page AFTER logo embedding (so labels appear on top)
+    // Add project labels to each garment color page AFTER logo embedding (so labels appear on top).
+    // SAFETY: On small templates (e.g. 100×70mm badges) the artwork can extend down to within
+    // a few pt of the page bottom. A fixed 60pt band painted in the garment colour will repaint
+    // the bottom of the artwork in solid colour, hiding part of the design. So we:
+    //   1. Compute the lowest artwork edge in PDF-y across all elements (worst-case, ignoring rotation).
+    //   2. Scale the band to fit the available bottom margin, capped at 60pt.
+    //   3. Only draw the contrast rectangle when the bg is white-ish (where a 0.9-grey strip
+    //      actually adds visibility); on coloured backgrounds the strip is the same colour as
+    //      the bg so it adds nothing visually but still overpaints artwork — skip it.
+    //   4. If there's literally no room (margin < ~10pt), skip the labels entirely rather
+    //      than overdraw the artwork. Production specs are still available in the order.
     console.log(`📝 Adding labels to ${garmentColorPages.length} garment color pages`);
+    const templateHeightMMforLabels = data.templateSize?.height || 420;
+    const templateCenterYMMforLabels = templateHeightMMforLabels / 2;
+    let lowestArtworkPdfYpts = pageHeight; // start at top, walk downward
+    for (const el of data.canvasElements as any[]) {
+      if (el.isVisible === false) continue;
+      // Use a non-zero fallback so degenerate shapes (lines, zero-height) still contribute
+      // to the safety calculation rather than being silently skipped.
+      const wMM = Math.max(el.width || 0, 0.5);
+      const hMM = Math.max(el.height || 0, 0.5);
+      // Rotation-aware AABB half-height: for any rotation θ the axis-aligned bounding box
+      // half-height is |w·sinθ|/2 + |h·cosθ|/2. Covers 0/90/180/270 and arbitrary angles.
+      const rotRad = ((el.rotation || 0) * Math.PI) / 180;
+      const halfHeightMM = (Math.abs(wMM * Math.sin(rotRad)) + Math.abs(hMM * Math.cos(rotRad))) / 2;
+      const elBottomCanvasMM = templateCenterYMMforLabels + (el.y || 0) + halfHeightMM;
+      const pdfYofBottom = (templateHeightMMforLabels - elBottomCanvasMM) * MM_TO_POINTS;
+      if (pdfYofBottom < lowestArtworkPdfYpts) lowestArtworkPdfYpts = pdfYofBottom;
+    }
+    const STANDARD_BAND_HEIGHT = 60;
+    const MIN_LABEL_BAND_HEIGHT = 24; // enough for two stacked text lines
+    const availableBottomPts = Math.max(0, lowestArtworkPdfYpts);
+    const bandHeightPts = Math.min(STANDARD_BAND_HEIGHT, availableBottomPts);
+    const labelsCanFit = bandHeightPts >= MIN_LABEL_BAND_HEIGHT;
+    if (!labelsCanFit) {
+      console.log(`⚠️ Garment-page labels skipped: bottom margin only ${availableBottomPts.toFixed(1)}pt — labels would cover artwork`);
+    } else if (bandHeightPts < STANDARD_BAND_HEIGHT) {
+      console.log(`📐 Garment-page label band shrunk from ${STANDARD_BAND_HEIGHT}pt to ${bandHeightPts.toFixed(1)}pt to clear artwork`);
+    }
     for (const gcPage of garmentColorPages) {
-      // Determine text color based on background brightness
       const bgColor = gcPage.color.toLowerCase();
-      const textColor = (bgColor === '#ffffff' || bgColor === '#f3f590' || bgColor === '#d9d2ab' || 
-                         bgColor === '#b9dbea' || bgColor === '#b5d55e' || bgColor === '#e7bbd0' ||
-                         bgColor === '#bcbfbb' || bgColor === '#a6a9a2' || bgColor === '#919393') 
-                        ? rgb(0, 0, 0) : rgb(1, 1, 1);
-      
-      // Draw a footer background strip for better label visibility
-      gcPage.page.drawRectangle({
-        x: 0,
-        y: 0,
-        width: pageWidth,
-        height: 60,
-        color: gcPage.color.toLowerCase() === '#ffffff' ? rgb(0.9, 0.9, 0.9) : await this.parseGarmentColor(gcPage.color),
-      });
-      
+      const lightBgs = new Set([
+        '#ffffff','#f3f590','#d9d2ab','#b9dbea','#b5d55e','#e7bbd0',
+        '#bcbfbb','#a6a9a2','#919393',
+      ]);
+      const textColor = lightBgs.has(bgColor) ? rgb(0, 0, 0) : rgb(1, 1, 1);
+
+      if (!labelsCanFit) {
+        console.log(`✅ ${gcPage.colorName} page: labels omitted (no clear bottom margin)`);
+        continue;
+      }
+
+      // Only draw a contrast strip on white backgrounds — on coloured bgs it would be the
+      // same colour as the bg and would only serve to overpaint the artwork.
+      if (bgColor === '#ffffff') {
+        gcPage.page.drawRectangle({
+          x: 0, y: 0, width: pageWidth, height: bandHeightPts,
+          color: rgb(0.9, 0.9, 0.9),
+        });
+      }
+
       const labelText = `Project: ${data.projectName}`;
       const colorText = `Garment Color: ${gcPage.colorName} (CMYK: ${getGarmentColorCmyk(gcPage.color)})   Quantity: ${gcPage.quantity}`;
-      
-      gcPage.page.drawText(labelText, {
-        x: 20,
-        y: 40,
-        size: 12,
-        color: textColor,
-      });
-      
-      gcPage.page.drawText(colorText, {
-        x: 20,
-        y: 22,
-        size: 10,
-        color: textColor,
-      });
-      
-      console.log(`✅ Added labels to ${gcPage.colorName} page`);
+      const largeSize = bandHeightPts >= STANDARD_BAND_HEIGHT ? 12 : 10;
+      const smallSize = bandHeightPts >= STANDARD_BAND_HEIGHT ? 10 : 8;
+      const largeY = bandHeightPts >= STANDARD_BAND_HEIGHT ? 40 : (bandHeightPts - largeSize - 2);
+      const smallY = bandHeightPts >= STANDARD_BAND_HEIGHT ? 22 : 4;
+
+      gcPage.page.drawText(labelText, { x: 20, y: largeY, size: largeSize, color: textColor });
+      gcPage.page.drawText(colorText, { x: 20, y: smallY, size: smallSize, color: textColor });
+
+      console.log(`✅ Added labels to ${gcPage.colorName} page (band=${bandHeightPts.toFixed(0)}pt, drawStrip=${bgColor === '#ffffff'})`);
     }
     
     // PASS-THROUGH MODE: Append original PDF pages 2+ from customer's file
