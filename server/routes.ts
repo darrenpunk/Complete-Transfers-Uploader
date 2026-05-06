@@ -52,6 +52,7 @@ import { detectDimensionsFromSVG, validateDimensionAccuracy } from './dimension-
 import { adobeRgbToCmyk } from './adobe-cmyk-profile';
 import { UniversalColorExtractor } from './universal-color-extractor';
 import { setupImpositionRoutes } from './imposition-routes';
+import { sendMail } from './mailersend-client';
 import { manufacturerColors, type ManufacturerColorGroup } from '@shared/garment-colors';
 import { PDFBoundsExtractor } from './pdf-bounds-extractor';
 import { SVGBoundsAnalyzer } from './svg-bounds-analyzer';
@@ -757,6 +758,67 @@ setInterval(() => {
     }
   }
 }, 5 * 60 * 1000);
+
+// Cooldown-throttled ops alert for attach-pdf exhaustion. Mirrors the
+// health-monitor pattern (lastAlertSentAt map, env-tunable cooldown).
+// Default cooldown 30 min so a stuck failure mode emails ops once, not
+// once-per-customer.
+const attachPdfAlertSentAt = new Map<string, number>();
+async function alertAttachPdfExhausted(args: {
+  orderLineId: number | string | undefined;
+  filename: string | undefined;
+  finalBase64Mb: number;
+  attempts: { label: string; err?: string }[];
+  partnerEmail?: string | undefined;
+  projectName?: string | undefined;
+}): Promise<void> {
+  try {
+    const cooldownMin = Math.max(1, parseInt(process.env.ATTACH_PDF_ALERT_COOLDOWN_MIN || '30', 10));
+    const lastErr = args.attempts.filter(a => a.err).slice(-1)[0]?.err || 'unknown';
+    const failureKey = `attach-pdf-exhausted::${(lastErr || 'unknown').slice(0, 80)}`;
+    const now = Date.now();
+    const last = attachPdfAlertSentAt.get(failureKey) || 0;
+    if (now - last < cooldownMin * 60_000) {
+      console.log(`[ATTACH-PDF-ALERT] suppressed (cooldown active for "${failureKey}", last ${Math.round((now - last) / 60_000)}min ago)`);
+      return;
+    }
+    const alertTo = process.env.PDF_HEALTH_ALERT_TO || process.env.ATTACH_PDF_ALERT_TO;
+    if (!alertTo) {
+      console.warn('[ATTACH-PDF-ALERT] no recipient configured (PDF_HEALTH_ALERT_TO unset) — skipping email');
+      return;
+    }
+    const text = [
+      `Order created in Odoo with NO artwork attached after exhausting all retries.`,
+      ``,
+      `Order line:    ${args.orderLineId ?? '?'}`,
+      `Customer:      ${args.partnerEmail || 'unknown'}`,
+      `Project:       ${args.projectName || 'unknown'}`,
+      `Filename:      ${args.filename || 'unknown'}`,
+      `Final size:    ${args.finalBase64Mb.toFixed(1)} MB (base64) after compression escalation`,
+      `Server time:   ${new Date(now).toISOString()}`,
+      ``,
+      `Attempts:`,
+      ...args.attempts.map((a, i) => `  ${i + 1}. ${a.label} — ${a.err ? `FAIL: ${a.err}` : 'OK'}`),
+      ``,
+      `Action: manually attach the artwork in Odoo from the project's stored PDF, or contact the customer to re-place the order.`,
+      ``,
+      `Further alerts for this failure type are suppressed for ${cooldownMin} minutes.`,
+    ].join('\n');
+    const result = await sendMail({
+      to: alertTo,
+      subject: `[completetransfers.com] Order ${args.orderLineId ?? '?'} created without artwork (attach-pdf exhausted)`,
+      text,
+    });
+    if (result.ok) {
+      attachPdfAlertSentAt.set(failureKey, now);
+      console.log(`[ATTACH-PDF-ALERT] email sent to ${alertTo} (${result.durationMs}ms)`);
+    } else {
+      console.error(`[ATTACH-PDF-ALERT] email FAILED: ${result.error}`);
+    }
+  } catch (e: any) {
+    console.error('[ATTACH-PDF-ALERT] handler error (non-fatal):', e?.message || e);
+  }
+}
 
 export async function registerRoutes(app: express.Application) {
   const { storage } = await import('./storage');
@@ -8134,16 +8196,25 @@ export async function registerRoutes(app: express.Application) {
       let offloadedPdfBase64: string | undefined;
       let offloadedPdfFilename: string | undefined;
 
-      // Compress a PDF buffer using Ghostscript /prepress settings (high quality, smaller file).
-      // Returns a smaller buffer or the original if compression fails or doesn't help.
-      const compressPdfBuffer = async (buf: Buffer): Promise<Buffer> => {
-        const tmpIn  = `/tmp/compress_in_${Date.now()}.pdf`;
-        const tmpOut = `/tmp/compress_out_${Date.now()}.pdf`;
+      // Compress a PDF buffer using Ghostscript. Defaults to /prepress (high quality, no
+      // downsampling, safest for production print). Pass mode='ebook' or 'screen' as an
+      // escalating fallback when the /prepress output is still too large for downstream
+      // body limits (Odoo nginx ~40 MB) — these tiers permit raster downsampling and
+      // shrink the file dramatically while still being acceptable for production proof.
+      const compressPdfBuffer = async (
+        buf: Buffer,
+        mode: 'prepress' | 'ebook' | 'screen' = 'prepress',
+      ): Promise<Buffer> => {
+        const tmpIn  = `/tmp/compress_in_${Date.now()}_${mode}.pdf`;
+        const tmpOut = `/tmp/compress_out_${Date.now()}_${mode}.pdf`;
+        const noDownsample = mode === 'prepress'
+          ? '-dDownsampleColorImages=false -dDownsampleGrayImages=false -dDownsampleMonoImages=false'
+          : ''; // ebook/screen: let GS downsample images per its built-in defaults
         try {
           fs.writeFileSync(tmpIn, buf);
           await new Promise<void>((resolve, reject) => {
             exec(
-              `gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/prepress -dColorConversionStrategy=/LeaveColorUnchanged -dDownsampleColorImages=false -dDownsampleGrayImages=false -dDownsampleMonoImages=false -sOutputFile=${tmpOut} ${tmpIn}`,
+              `gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/${mode} -dColorConversionStrategy=/LeaveColorUnchanged ${noDownsample} -sOutputFile=${tmpOut} ${tmpIn}`,
               { timeout: 60000 },
               (err: Error | null) => { if (err) reject(err); else resolve(); }
             );
@@ -8151,11 +8222,11 @@ export async function registerRoutes(app: express.Application) {
           if (fs.existsSync(tmpOut)) {
             const compressed = fs.readFileSync(tmpOut);
             const ratio = ((1 - compressed.length / buf.length) * 100).toFixed(0);
-            console.log(`🗜️ GS compression: ${(buf.length/1024/1024).toFixed(1)}MB → ${(compressed.length/1024/1024).toFixed(1)}MB (${ratio}% reduction)`);
+            console.log(`🗜️ GS compression (/${mode}): ${(buf.length/1024/1024).toFixed(1)}MB → ${(compressed.length/1024/1024).toFixed(1)}MB (${ratio}% reduction)`);
             return compressed.length < buf.length ? compressed : buf;
           }
         } catch (e: any) {
-          console.warn(`⚠️ GS compression failed (using original):`, e.message);
+          console.warn(`⚠️ GS compression /${mode} failed (using original):`, e.message);
         } finally {
           try { fs.unlinkSync(tmpIn); } catch {}
           try { fs.unlinkSync(tmpOut); } catch {}
@@ -8296,34 +8367,99 @@ export async function registerRoutes(app: express.Application) {
       // --- Follow-up: attach large PDF via /artwork/api/attach-pdf ---
       // This sets artwork_files_datas on the order line (not just an ir.attachment),
       // which triggers the write hook that syncs artwork_image to the task.
+      //
+      // ROBUSTNESS: Odoo's nginx rejects bodies above ~40 MB (ECONNRESET). The primary
+      // defence is the embedPdf dedup in robust-pdf-generator.ts which keeps imposition
+      // outputs small. As belt-and-braces, we ALSO escalate compression here on failure:
+      //  attempt 1: payload as built upstream (already /prepress compressed if it came
+      //             through the offload path)
+      //  attempt 2: same payload after a 1.5 s wait (covers transient ECONNRESET)
+      //  attempt 3: re-compress with /ebook (allows raster downsampling) and retry
+      //  attempt 4: re-compress with /screen (most aggressive) and retry
+      // We never surface the failure to the customer — if every attempt fails we log
+      // loudly so it shows up in monitoring, but the user just sees "Added to Cart"
+      // (the cart line itself succeeded; warning the user would risk them re-adding
+      // the item and producing a duplicate Odoo order).
       if (offloadedPdfBase64 && offloadedPdfFilename && data?.order_line_id) {
         const attachPdfUrl = `${odooBaseUrl}/artwork/api/attach-pdf`;
-        console.log(`📄 Sending large PDF to /artwork/api/attach-pdf for order_line #${data.order_line_id} (${offloadedPdfFilename})`);
-        try {
-          const pdfResponse = await fetch(attachPdfUrl, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Cookie': clientCookies,
-            },
-            body: JSON.stringify({
-              order_line_id: data.order_line_id,
-              sale_order_id: data.website_sale_order,
-              pdf_base64: offloadedPdfBase64,
-              pdf_filename: offloadedPdfFilename,
-            }),
-          });
-          const pdfResult = await pdfResponse.json().catch(() => ({}));
-          if (pdfResponse.ok) {
-            console.log(`✅ Large PDF attached via /artwork/api/attach-pdf:`, pdfResult.attached_to);
-          } else {
-            console.warn(`⚠️ attach-pdf call failed (${pdfResponse.status}):`, pdfResult);
+        let currentBase64 = offloadedPdfBase64;
+        const buildPayload = (b64: string) => JSON.stringify({
+          order_line_id: data.order_line_id,
+          sale_order_id: data.website_sale_order,
+          pdf_base64: b64,
+          pdf_filename: offloadedPdfFilename,
+        });
+        const tryAttach = async (label: string): Promise<{ ok: boolean; status: number; body: any; err?: string }> => {
+          const payload = buildPayload(currentBase64);
+          console.log(`📄 attach-pdf [${label}] for order_line #${data.order_line_id} (${(payload.length / 1024 / 1024).toFixed(1)}MB body, ${(currentBase64.length / 1024 / 1024).toFixed(1)}MB pdf base64)`);
+          try {
+            const r = await fetch(attachPdfUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Cookie': clientCookies },
+              body: payload,
+            });
+            const body = await r.json().catch(() => ({}));
+            if (r.ok) {
+              console.log(`✅ attach-pdf [${label}] succeeded:`, body.attached_to);
+              return { ok: true, status: r.status, body };
+            }
+            const err = `HTTP ${r.status}: ${JSON.stringify(body).substring(0, 200)}`;
+            console.warn(`⚠️ attach-pdf [${label}] failed: ${err}`);
+            return { ok: false, status: r.status, body, err };
+          } catch (e: any) {
+            const err = `Network: ${e?.message || String(e)}`;
+            console.warn(`⚠️ attach-pdf [${label}] network error: ${err}`);
+            return { ok: false, status: 0, body: null, err };
           }
-        } catch (pdfErr) {
-          console.warn(`⚠️ attach-pdf request error (non-critical):`, pdfErr);
+        };
+        const recompress = async (mode: 'ebook' | 'screen'): Promise<boolean> => {
+          try {
+            const buf = Buffer.from(currentBase64, 'base64');
+            const out = await compressPdfBuffer(buf, mode);
+            if (out.length < buf.length) {
+              currentBase64 = out.toString('base64');
+              return true;
+            }
+            console.log(`ℹ️ /${mode} did not shrink payload — skipping retry at this tier`);
+            return false;
+          } catch (e: any) {
+            console.warn(`⚠️ recompress /${mode} failed:`, e?.message || e);
+            return false;
+          }
+        };
+        const attempts: { label: string; err?: string }[] = [];
+        const recordAttempt = (label: string, r: { ok: boolean; err?: string }) => {
+          attempts.push({ label, err: r.ok ? undefined : r.err });
+          return r.ok;
+        };
+        let attached = recordAttempt('attempt-1', await tryAttach('attempt-1'));
+        if (!attached) {
+          await new Promise(r => setTimeout(r, 1500));
+          attached = recordAttempt('attempt-2-retry', await tryAttach('attempt-2-retry'));
+        }
+        if (!attached && await recompress('ebook')) {
+          attached = recordAttempt('attempt-3-ebook', await tryAttach('attempt-3-ebook'));
+        }
+        if (!attached && await recompress('screen')) {
+          attached = recordAttempt('attempt-4-screen', await tryAttach('attempt-4-screen'));
+        }
+        if (!attached) {
+          // Last-ditch: order is in Odoo without artwork. Log loud + email ops (with
+          // cooldown) so a stuck failure mode is visible. Do NOT surface to the user
+          // (warning would tempt re-adding and produce a duplicate Odoo order).
+          console.error(`❌❌❌ ATTACH-PDF EXHAUSTED for order_line #${data.order_line_id} — order in Odoo with NO artwork. Filename=${offloadedPdfFilename}, finalBase64=${(currentBase64.length / 1024 / 1024).toFixed(1)}MB`);
+          // Fire-and-forget — don't block the response on the email; cooldown is per-process.
+          alertAttachPdfExhausted({
+            orderLineId: data.order_line_id,
+            filename: offloadedPdfFilename,
+            finalBase64Mb: currentBase64.length / 1024 / 1024,
+            attempts,
+            partnerEmail: (projectData as any)?.partnerEmail,
+            projectName: (projectData as any)?.name,
+          }).catch(e => console.error('[ATTACH-PDF-ALERT] dispatch failed:', e?.message || e));
         }
       } else if (offloadedPdfBase64 && !data?.order_line_id) {
-        console.warn(`⚠️ Large PDF ready but no order_line_id in response — PDF not attached. Keys:`, Object.keys(data || {}));
+        console.error(`❌ Large PDF ready but no order_line_id from Odoo — PDF not attached. Keys: ${Object.keys(data || {}).join(',')}`);
       }
 
       console.log(`✅ Successfully added to cart:`, { ...data, order_line_id: data?.order_line_id });

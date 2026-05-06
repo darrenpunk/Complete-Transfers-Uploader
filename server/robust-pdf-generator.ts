@@ -10,6 +10,7 @@
 
 import fs from 'fs';
 import path from 'path';
+import crypto from 'crypto';
 import { promisify } from 'util';
 import { exec } from 'child_process';
 import { manufacturerColors } from '@shared/garment-colors';
@@ -1515,10 +1516,28 @@ grestore`;
         }
       }
       
-      // Read and embed the PDF
+      // Read and embed the PDF.
+      // IMPORTANT: pdf-lib's embedPdf does NOT deduplicate identical inputs — calling it
+      // N times for the same source bytes produces N independent XObjects in the output,
+      // bloating the file linearly with the number of canvas elements. The imposition tool
+      // (and any layout that reuses the same logo) regularly produces 20-40 elements pointing
+      // at the same source PDF, which can push the final output past Odoo's ~40MB nginx
+      // body limit and cause /artwork/api/attach-pdf to fail (ECONNRESET). We cache the
+      // embedded page per (pdfDoc × content-hash) so identical sources are embedded once
+      // and reused for every placement.
       const logoPdfBytes = fs.readFileSync(logoPdfPath);
-      const logoDoc = await pdfDoc.embedPdf(logoPdfBytes);
-      const [logoPage] = logoDoc;
+      const embedCache: Map<string, any> = ((pdfDoc as any).__embeddedPdfCache ||= new Map());
+      const cacheKey = crypto.createHash('sha1').update(logoPdfBytes).digest('hex');
+      let logoPage: any;
+      if (embedCache.has(cacheKey)) {
+        logoPage = embedCache.get(cacheKey);
+        console.log(`♻️ Reusing cached embedded PDF (sha1=${cacheKey.slice(0, 8)}, ${(logoPdfBytes.length / 1024).toFixed(1)} KB) — saved one full embed`);
+      } else {
+        const logoDoc = await pdfDoc.embedPdf(logoPdfBytes);
+        logoPage = logoDoc[0];
+        embedCache.set(cacheKey, logoPage);
+        console.log(`📥 Embedded new PDF source (sha1=${cacheKey.slice(0, 8)}, ${(logoPdfBytes.length / 1024).toFixed(1)} KB) — cached for reuse`);
+      }
       
       // Get the actual embedded PDF page dimensions
       const actualPdfWidth = logoPage.width;

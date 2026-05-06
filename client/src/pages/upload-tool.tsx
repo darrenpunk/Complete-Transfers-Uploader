@@ -761,7 +761,7 @@ export default function UploadTool() {
       const { data, action } = result as { data: any; action: 'new-project' | 'view-cart' | undefined };
       console.log('✅ Added to cart successfully:', data);
       try { trackEvent('add_to_cart', { project: currentProject?.name, template: currentProject?.templateSize }); } catch {}
-      
+
       if (action === 'new-project') {
         toast({
           title: "Added to Cart",

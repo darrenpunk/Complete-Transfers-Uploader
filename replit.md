@@ -1,83 +1,62 @@
 # Logo Upload and Design Tool
+A full-stack web application for designing and generating production-ready vector graphics of logos on garment templates.
 
-## Overview
-This full-stack web application provides a professional and intuitive design experience for positioning logos on various garment templates and generating production-ready vector graphics, primarily for the custom apparel industry. It streamlines logo uploads, layout creation, precise logo placement, scaling, and color management. The project includes a standalone application and an integrated Odoo 16 module. The business vision is to offer a robust, scalable, and cost-effective solution for garment design, aiming for a significant market share in custom apparel.
+## Run & Operate
+- **Run Dev**: `npm run dev`
+- **Build**: `npm run build`
+- **Typecheck**: `npm run typecheck`
+- **Codegen**: `npm run codegen`
+- **DB Push**: `npm run db:push`
+- **Required Env Vars**: `DATABASE_URL`, `FRONTEND_URL`, `SESSION_SECRET`, `ODOO_URL`, `ODOO_DB`, `ODOO_UID`, `ODOO_PASSWORD`, `GHOSTSCRIPT_PATH`, `INKSCAPE_PATH`, `RSVG_CONVERT_PATH`
 
-## User Preferences
+## Stack
+- **Frontend**: React 18, TypeScript, Wouter, TanStack Query, shadcn/ui, Radix UI, Tailwind CSS
+- **Backend**: Express.js, TypeScript
+- **ORM**: Drizzle ORM (PostgreSQL dialect)
+- **Database**: PostgreSQL (Neon Serverless Driver)
+- **Validation**: Zod
+- **Build Tool**: Vite
+
+## Where things live
+- `client/`: Frontend React application.
+- `server/`: Backend Express.js application.
+- `server/db/schema.ts`: Database schema definition (source of truth for DB).
+- `server/routes.ts`: API endpoint definitions.
+- `client/src/theme/`: Frontend theme configuration.
+- `tests/`: End-to-end and regression tests.
+- `server/health-monitor.ts`: PDF generation health probes.
+- `server/robust-pdf-generator.ts`: Core PDF generation logic.
+
+## Architecture decisions
+- **Monorepo Structure**: Shared TypeScript types between frontend and backend for consistency.
+- **Robust PDF Generation**: Employs Ghostscript, ImageMagick, `rsvg-convert`, and `pdf-lib` for multi-tier PDF conversion, CMYK output, and vector preservation.
+- **Dynamic Concurrency Management**: `OperationGuard` limits concurrent heavy operations (PDF generation, file uploads) using cgroup memory monitoring to prevent server overload.
+- **Comprehensive Health Monitoring**: End-to-end probes (Light, Stress, Upload) with email alerts and an Admin Dashboard for real-time status.
+- **Embedded-PDF Deduplication**: Caches `pdfDoc.embedPdf` results during imposition to drastically reduce output PDF size and avoid Odoo API limits.
+
+## Product
+- Logo upload, precise placement, scaling, rotation, and color management on garment templates.
+- Multi-page PDF output for single and multi-color orders, CMYK, and applique forms.
+- Interactive canvas with multi-select, grouping, shape tools, and dual-canvas mode.
+- Preflight checks for print readiness (CMYK analysis, font detection, bounding box accuracy).
+- Customer-facing order history, reorder functionality, and support ticket system.
+- Integration with Odoo 16 for order management and PDF processing.
+
+## User preferences
 Preferred communication style: Simple, everyday language.
 Current focus: Core functionality over complex color management features.
 
-## System Architecture
+## Gotchas
+- **Embedded-PDF Dedup for Imposition** (`server/robust-pdf-generator.ts:~1531`): pdf-lib's `embedPdf` does NOT deduplicate — calling it once per canvas element creates N independent XObjects. With the imposition tool replicating a logo 20-40 times this used to bloat the output PDF past Odoo's nginx ~40 MB limit (silent ECONNRESET on `/artwork/api/attach-pdf` → order with no artwork, e.g. SO89283 / gemma@portwest.ie / CBRE Front Logo). Cache key = `(pdfDoc × sha1(logoPdfBytes))` via a `__embeddedPdfCache` Map stashed on the pdfDoc. Identical sources are embedded once and reused for every placement.
+- **Attach-PDF Resilience Ladder** (`server/routes.ts:~8324`): never warns the customer (which would tempt re-adding and duplicate the order). 4-attempt escalation: original payload → 1.5 s wait + retry → re-compress with Ghostscript `/ebook` (raster downsampling) → re-compress with `/screen` (most aggressive). `compressPdfBuffer(buf, mode)` accepts `'prepress'|'ebook'|'screen'`. Last-ditch failure logs `❌❌❌ ATTACH-PDF EXHAUSTED` for monitoring only.
+- **Add-to-Cart Body Size Alignment**: Client-side `pdfBase64` inline cap (190MB) is strictly below the server's `express.json` limit (200MB) to prevent 413 errors before handler execution. The `PDF_INLINE_MAX_CHARS` (40MB) dictates when PDFs are offloaded via `attach-pdf` due to Odoo's ~40MB body limit.
+- **DTF Passthrough Safety Gate**: Fast passthrough (serving original PDF directly) only occurs if source dimensions, canvas element size, position, and rotation precisely match the template and source, otherwise full canvas generation is used.
+- **Single Colour Reflective Templates**: These templates (e.g., `reflective-tshirt`) automatically recolor uploaded artwork to silver and use a default grey garment color, with ink panel restricted to silver options.
 
-### Frontend Architecture
-- **Framework**: React 18 with TypeScript, Wouter for routing, and TanStack Query for state management.
-- **UI Framework**: shadcn/ui on Radix UI, styled with Tailwind CSS.
-- **UI/UX Decisions**: Workflow-based 5-step progress, dark mode, professional color palettes, template grouping, smart zoom, collapsible interfaces, individual garment color assignment, project naming, PDF preview & approval, content-based bounding boxes, safety margins, "Fit to Bounds," 90° rotation, "Center Logo," eyedropper, canvas rotation, upload progress, collapsible garment brands, fixed PDF generation footer, rotated element visual dimension display, dual-canvas system for applique templates, and comprehensive shape tools.
-
-### Backend Architecture
-- **Framework**: Express.js with TypeScript.
-- **API Design**: RESTful JSON endpoints.
-- **File Handling**: Multer for multipart uploads.
-- **Error Handling**: Centralized middleware.
-
-### Database Strategy
-- **ORM**: Drizzle ORM with PostgreSQL dialect.
-- **Database**: PostgreSQL (via `DATABASE_URL`) with Neon Database serverless driver.
-- **Migrations**: Drizzle Kit.
-
-### System Design Choices
-- **Storage Management**: Single `DatabaseStorage` instance backed by PostgreSQL for all persistent data.
-- **Operation Guard**: Concurrency limiter with queueing and memory-based rejection for heavy operations (PDF generation, file uploads, SVG extraction), using container-level cgroup memory monitoring.
-- **Smart DPI System**: Dynamically selects Ghostscript rendering DPI based on PDF file size and memory pressure.
-- **Crash Logging System**: Persistent PostgreSQL table records server lifecycle events.
-- **PDF Health Monitor**: `server/health-monitor.ts` runs end-to-end probes with email alerts for failures. Three probe types: light (A6 placeholder every 15min), stress (Rainbow Dog 7.9MB on A3 every 60min), and upload pipeline (HTTP multipart POST every 30min testing multer → Ghostscript bbox → pdf2svg/Inkscape → PNG thumbnail). Upload probe creates a real project, uploads a test PDF via the actual HTTP endpoint, verifies the conversion pipeline produced valid SVG/PNG with correct dimensions, then cleans up all artifacts.
-- **Concurrent User Metrics**: `/api/admin/analytics/concurrent` provides time-bucketed distinct-session counts and current/peak active users for the Admin Dashboard.
-- **Upload Health Endpoints**: `GET /api/admin/health/upload` (manual trigger, no alert email) and `GET /api/admin/health/upload/history` (recent upload-health-* logs). Configured via `UPLOAD_HEALTH_CHECK_INTERVAL_MIN` env var (default 30).
-- **Health Probes Dashboard**: Admin dashboard "Health Probes" tab showing status cards for all three probe types (Light, Stress, Upload) with last result, duration, schedule, memory usage, and "Run Now" buttons. Combined probe history table with type/status/message/duration columns.
-- **PDF Regression Validation**: `npx tsx tests/run-pdf-regression.ts` registered as a `pdf-regression` validation command for CI-style repeatable checks.
-- **Color Workflow Isolation**: `ColorWorkflowManager` for robust vector/raster color handling and CMYK preservation.
-- **Single Colour Reflective Templates**: Reflective templates (id prefix `reflective-`, labels suffixed "Reflective") behave identically to Single Colour and Zero templates — default grey garment colour (#929292), ink panel visible with silver-only options (Silver Reflective filtered via `templateId.includes('reflective')` in `ink-color-modal.tsx`), and uploaded artwork auto-recoloured to silver. Single-colour classification is checked across 11 sites in `server/storage.ts`, `server/routes.ts`, `server/enhanced-cmyk-generator.ts`, `client/src/pages/upload-tool.tsx`, `client/src/components/canvas-workspace.tsx`, `client/src/components/pdf-preview-modal.tsx`, `client/src/components/tools-sidebar.tsx`, and `client/src/components/color-picker-panel.tsx`, all using the pattern `template.group === "Screen Printed Transfers" && (label.includes("Single Colour") || label.includes("Zero") || label.includes("Reflective"))`.
-- **Mixed Content Detection**: `MixedContentDetector` identifies mixed raster/vector content in uploaded files.
-- **Raster Upload Sizing**: Automatic scaling of direct PNG/JPEG uploads.
-- **Raster Ink Recoloring**: Supports transparent and opaque PNGs with ink fills.
-- **File Upload System**: Local filesystem storage, chunked uploads, multi-tier PDF conversion, PNG thumbnail generation, and automated complex vector file detection with PNG fallback.
-- **Landscape Template Auto-Detection**: Automatically detects landscape PDFs on portrait templates and suggests switching.
-- **Canvas System**: Interactive workspace with multi-select, group move, resize, rotation, comprehensive shape tools, and dual-canvas mode.
-- **Vector Bounds Extraction**: Two-phase content bounding box detection using Ghostscript and Inkscape.
-- **Vectorization Services**: Detection of raster files with options for photographic approval and professional vectorization service requests.
-- **Onboarding Tutorial System**: Comprehensive 6-step interactive tutorial.
-- **Imposition Tool**: Grid replication system for logos.
-- **Alignment Tools**: "Select All," "Center All," and alignment to safety margins.
-- **PDF Generation**: Multi-page PDF output supporting single and multi-color garment orders, CMYK output with ICC profiles, vector preservation, ink recoloring, and applique forms.
-- **Preflight Checks**: Help guides, required project naming, CMYK analysis, color standardization, font detection, bounding box accuracy, typography, duplicate color detection, line thickness, Pantone detection, oversized logo detection, and Canvas-PDF matching.
-- **Embed Button Widget**: JavaScript widget for embedding "Order Transfers" functionality.
-- **Support System**: Integrated contact support form storing tickets in PostgreSQL.
-- **Order History**: Customer-facing page displaying past artwork orders with PDF downloads and reorder functionality.
-- **Cart-Integration Resilience**: `safeReadFile` helper and in-memory blank A3 PDF fallback for placeholder PDFs prevent data loss during I/O errors.
-- **Full-Page Match Analyzer**: `server/full-page-match.ts` provides a consolidated decision-making function for determining if a source PDF is a full-page match for a template, resolving previous bug families.
-- **Monorepo Structure**: Shared TypeScript types between frontend and backend.
-- **Customer Template Assignments**: Admin-managed system for assigning exclusive templates to specific customers. The `/api/template-sizes` filter (`server/routes.ts:6588`) treats an `-landscape` id as unlocked when the customer has either the variant id or its base portrait id assigned, so a single assignment surfaces both auto-generated orientation flips. Applies to both `customerExclusive` templates (e.g. Next-Day DTF) and ordinary restricted assignments. Currently surfaces auto-generated landscape flips for `dtf-SRA3-next-day` (320×450 → `dtf-SRA3-next-day-landscape` 450×320, label "SRA3 Next DAY Landscape") and `dtf-large-next-day` (1000×550 → `dtf-large-next-day-landscape` 550×1000, label "1000x550mm Next Day Portrait" — naming inherited from the existing `dtf-large-landscape` auto-flip behaviour).
-- **Customer Features System**: Extends customer_templates to flag per-customer feature access via magic template IDs.
-- **Odoo Module Enhancements**: Automatic project comments, garment color inclusion in sales orders, hot deployment, robust error handling, and integrated PDF processing.
-- **PDF Regression Test Suite**: `tests/run-pdf-regression.ts` runs end-to-end tests against a live server for critical PDF generation paths. Drives 15 fixtures in `tests/pdf-fixtures/fixtures.json`; **8 currently enabled** covering the orientation guards (teddy/waterford), narrow-template scaling (roadstone), rotated full-page-match (BEM), legitimate full-page landscape with gradients (MTSG, counter-test for the teddy fix), the manual Outline Fonts button (illustration-brown — runner POSTs `/api/logos/:id/outline-fonts` between upload and placement, controlled by `outlineFonts: true` flag in the fixture JSON; gracefully no-ops on PNG-fallback uploads via the 400 'only available for SVG' soft skip), a 7.9 MB complex multi-color file (rainbow-dog — single-colour smoke test that exercises the full HTTP path independent of the in-process stress probe), and the **DTF passthrough scale-up guard** (fixture 15: A4 source uploaded to `dtf-large` 1000×550mm template, canvas element scaled to 778.8×548mm; output page must be template-sized not A4). The remaining 7 fixtures are disabled with explicit notes documenting what runner extension each needs (UI variant-switch simulation, imposition route, applique form data, dedicated DTF-passthrough-natural-size assertions, or 35MB upload that's intentionally too slow for dev sandbox). Run via `npx tsx tests/run-pdf-regression.ts` (all enabled) or `--only=<id-substring>` for targeted runs; set `PDF_REGRESSION_BASE_URL` to point at staging/production.
-- **Garment-Page Label Band Safety**: `server/robust-pdf-generator.ts:749` adapts the project-info band on garment colour pages so it never overpaints artwork on small templates. Computes the lowest artwork edge in PDF-y across all canvas elements, scales the band height to fit the available bottom margin (capped at 60pt, min 24pt for two text lines), only paints a contrast strip when bg is `#ffffff` (on coloured bgs the strip is the same colour as the bg so it adds no contrast and only hides art), and skips labels entirely when the bottom margin is < 24pt. Fixes badge-template (e.g. 100×70mm Hi Viz) bug where the fixed 60pt = 21mm band repainted the bottom 30% of a 70mm page in solid garment colour, hiding artwork like the lower portion of the source design.
-- **Add-to-Cart Body Size Alignment**: Three thresholds must remain coordinated. (1) `server/index.ts:277` `express.json({ limit: '200mb' })` — sized for production's 4GB heap (`--max-old-space-size=4096` in `.replit`); accommodates raw source PDFs up to ~150MB (200MB base64). (2) Client `pdfBase64` inline cap in `client/src/pages/upload-tool.tsx:726` is **190MB**, strictly below the server limit so body-parser never 413s before the route handler runs. (3) Server route handler `PDF_INLINE_MAX_CHARS = 40MB` (`server/routes.ts:8133`) is the threshold for "regenerate via Ghostscript `/prepress` and offload via `/artwork/api/attach-pdf`" — Odoo's nginx rejects bodies above ~40MB so anything larger after compression must go via attach-pdf. Friendly 413 handler at `server/index.ts:283` converts any future PayloadTooLargeError into actionable JSON (`hint: refresh + auto-offload`) instead of an opaque socket failure for stale cached clients. Bug example fixed: banamansales LidlTribeFyffes.pdf 41MB raw → 58MB base64 → exceeded the previous 50MB server limit → 413 fired before route handler → "Add to Cart" silently failed.
-- **DTF Passthrough Safety Gate**: `server/routes.ts:1378` only takes the fast passthrough path (serve original PDF directly, append canvas screenshot) when ALL of: source page dimensions match the template within ±3% (orientation-locked, no W↔H swap), canvas element matches source's natural size within ±3%, element is at the canonical origin (x,y≈0) within ±3% of template, and rotation is exactly 0°. Otherwise falls through to the full canvas-based generator so user scaling/positioning/rotation is honored. Passthrough emits source bytes verbatim and cannot apply any transform, so the gate is intentionally conservative. Fixes the bug where any single-element DTF layout was treated as production-ready, shipping the source as-is regardless of canvas scale.
-
-## External Dependencies
-
-### Frontend Dependencies
-- **UI Components**: Radix UI.
-- **Form Handling**: React Hook Form with Zod validation.
-- **File Upload**: React Dropzone.
-- **Utilities**: `date-fns`, `clsx`.
-
-### Backend Dependencies
-- **Database**: `@neondatabase/serverless` (PostgreSQL connections).
-- **ORM**: `drizzle-orm` with `drizzle-zod`.
-- **File Upload**: `multer`.
-- **Session Management**: `connect-pg-simple` (PostgreSQL session storage).
-- **Image Processing**: Ghostscript, ImageMagick, `rsvg-convert`.
-- **PDF Manipulation**: `pdf-lib`.
-- **Support Tickets**: PostgreSQL database.
-- **Odoo Module Specific**: ReportLab (for PDF generation).
+## Pointers
+- **Odoo Module**: Refer to Odoo 16 documentation for integrated module details.
+- **Drizzle ORM**: [https://orm.drizzle.team/](https://orm.drizzle.team/)
+- **React Hook Form**: [https://react-hook-form.com/](https://react-hook-form.com/)
+- **TanStack Query**: [https://tanstack.com/query/latest](https://tanstack.com/query/latest)
+- **Tailwind CSS**: [https://tailwindcss.com/](https://tailwindcss.com/)
+- **PDF-LIB**: [https://pdf-lib.js.org/](https://pdf-lib.js.org/)
