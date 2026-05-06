@@ -52,6 +52,7 @@ Current focus: Core functionality over complex color management features.
 - **Add-to-Cart Body Size Alignment**: Client-side `pdfBase64` inline cap (190MB) is strictly below the server's `express.json` limit (200MB) to prevent 413 errors before handler execution. The `PDF_INLINE_MAX_CHARS` (40MB) dictates when PDFs are offloaded via `attach-pdf` due to Odoo's ~40MB body limit.
 - **DTF Passthrough Safety Gate**: Fast passthrough (serving original PDF directly) only occurs if source dimensions, canvas element size, position, and rotation precisely match the template and source, otherwise full canvas generation is used.
 - **Single Colour Reflective Templates**: These templates (e.g., `reflective-tshirt`) automatically recolor uploaded artwork to silver and use a default grey garment color, with ink panel restricted to silver options.
+- **Canvas Preview Rasterizer** (`server/routes.ts:~1037` `generateCanvasPreviewPng`): `logo.filename` may be a PNG preview (PDF uploads), an SVG, or an image. Always pick the source by extension and only invoke `rsvg-convert` on `.svg`. Feeding PNG to rsvg silently fails per element (e.g. 144× on imposition), wasting ~5s and flooding logs. Also: skip preview entirely when `canvasElements.length > 40` (canvas screenshot already covers it). Per-call rasterization is cached by source path to deduplicate repeated logos in a layout.
 
 ## Pointers
 - **Odoo Module**: Refer to Odoo 16 documentation for integrated module details.

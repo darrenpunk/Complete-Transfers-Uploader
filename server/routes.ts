@@ -1033,6 +1033,15 @@ export async function registerRoutes(app: express.Application) {
 
   async function generateCanvasPreviewPng(canvasElements: any[], logos: any[], templateSize: any): Promise<Buffer | null> {
     try {
+      // Skip preview for very large imposition jobs — wastes seconds and floods
+      // logs with no real visual benefit (the canvas screenshot already covers it,
+      // and nginx body-size pressure dominates response time at this scale).
+      const MAX_PREVIEW_ELEMENTS = 40;
+      if (canvasElements.length > MAX_PREVIEW_ELEMENTS) {
+        console.log(`📸 Canvas preview SKIPPED — ${canvasElements.length} elements (> ${MAX_PREVIEW_ELEMENTS}). Using canvas screenshot only.`);
+        return null;
+      }
+
       const templateW = templateSize.width;
       const templateH = templateSize.height;
       const pxPerMm = 4;
@@ -1041,14 +1050,27 @@ export async function registerRoutes(app: express.Application) {
       const centerXmm = templateW / 2;
       const centerYmm = templateH / 2;
 
+      // Per-source rasterization cache (path → base64 png). For repeated logos in
+      // an imposition layout this turns N rasterize calls into 1.
+      const rasterCache = new Map<string, string>();
+
       const elementSvgs: string[] = [];
 
       for (const element of canvasElements) {
         const logo = logos.find((l: any) => l.id === element.logoId);
         if (!logo) continue;
 
-        const svgPath = path.join(process.cwd(), 'uploads', logo.filename);
-        if (!fs.existsSync(svgPath)) continue;
+        // Pick the best on-disk source for rasterization. The DB's logo.filename
+        // can be a PNG preview (for PDF uploads), an SVG, or the rasterized image
+        // itself — picking by extension avoids feeding PNGs to rsvg-convert (which
+        // is an SVG renderer and silently fails 144 times on imposition jobs).
+        const candidates: { rel: string; ext: string }[] = [];
+        if (logo.filename) candidates.push({ rel: logo.filename, ext: logo.filename.split('.').pop()?.toLowerCase() || '' });
+        if (logo.originalFilename) candidates.push({ rel: logo.originalFilename, ext: logo.originalFilename.split('.').pop()?.toLowerCase() || '' });
+        const pickable = candidates.find(c => ['png', 'jpg', 'jpeg', 'svg'].includes(c.ext));
+        if (!pickable) continue;
+        const sourcePath = path.join(process.cwd(), 'uploads', pickable.rel);
+        if (!fs.existsSync(sourcePath)) continue;
 
         const elWmm = element.width || 100;
         const elHmm = element.height || 100;
@@ -1062,39 +1084,48 @@ export async function registerRoutes(app: express.Application) {
         const wPx = elWmm * pxPerMm;
         const hPx = elHmm * pxPerMm;
 
-        const tmpPng = `/tmp/canvas_el_${Date.now()}_${Math.random().toString(36).slice(2)}.png`;
         try {
-          await new Promise<void>((resolve, reject) => {
-            exec(
-              `rsvg-convert -w ${Math.round(wPx * 2)} -h ${Math.round(hPx * 2)} --keep-aspect-ratio -o "${tmpPng}" "${svgPath}"`,
-              { timeout: 15000 },
-              (err) => { if (err) reject(err); else resolve(); }
-            );
-          });
-
-          if (!fs.existsSync(tmpPng)) continue;
-
-          const pngData = fs.readFileSync(tmpPng);
-          const pngBase64 = pngData.toString('base64');
-          try { fs.unlinkSync(tmpPng); } catch {}
+          let pngBase64 = rasterCache.get(sourcePath);
+          if (!pngBase64) {
+            if (pickable.ext === 'svg') {
+              const tmpPng = `/tmp/canvas_el_${Date.now()}_${Math.random().toString(36).slice(2)}.png`;
+              try {
+                await new Promise<void>((resolve, reject) => {
+                  exec(
+                    `rsvg-convert -w ${Math.round(wPx * 2)} -h ${Math.round(hPx * 2)} --keep-aspect-ratio -o "${tmpPng}" "${sourcePath}"`,
+                    { timeout: 15000 },
+                    (err) => { if (err) reject(err); else resolve(); }
+                  );
+                });
+                if (!fs.existsSync(tmpPng)) continue;
+                pngBase64 = fs.readFileSync(tmpPng).toString('base64');
+              } finally {
+                try { fs.unlinkSync(tmpPng); } catch {}
+              }
+            } else {
+              // PNG/JPG — embed bytes directly. No rsvg-convert needed.
+              pngBase64 = fs.readFileSync(sourcePath).toString('base64');
+            }
+            rasterCache.set(sourcePath, pngBase64);
+          }
 
           const rotation = element.rotation || 0;
           const centerPx_X = leftPx + wPx / 2;
           const centerPx_Y = topPx + hPx / 2;
-
           const opacity = element.opacity !== undefined ? element.opacity : 1;
+          const mime = pickable.ext === 'jpg' || pickable.ext === 'jpeg' ? 'image/jpeg' : 'image/png';
 
           elementSvgs.push(
             `<g transform="translate(${centerPx_X}, ${centerPx_Y}) rotate(${rotation}) translate(${-wPx / 2}, ${-hPx / 2})" opacity="${opacity}">` +
-            `<image href="data:image/png;base64,${pngBase64}" x="0" y="0" width="${wPx}" height="${hPx}" preserveAspectRatio="xMidYMid meet"/>` +
+            `<image href="data:${mime};base64,${pngBase64}" x="0" y="0" width="${wPx}" height="${hPx}" preserveAspectRatio="xMidYMid meet"/>` +
             `</g>`
           );
-
-          console.log(`📸 Preview: ${logo.filename} at (${leftMm.toFixed(1)},${topMm.toFixed(1)})mm ${elWmm.toFixed(0)}x${elHmm.toFixed(0)}mm rot=${rotation}°`);
         } catch (err: any) {
-          try { fs.unlinkSync(tmpPng); } catch {}
-          console.error(`⚠️ Preview element failed:`, err.message);
+          console.error(`⚠️ Preview element failed (${pickable.rel}):`, err.message);
         }
+      }
+      if (rasterCache.size > 0) {
+        console.log(`📸 Preview rasterizer cache: ${rasterCache.size} unique source(s) for ${canvasElements.length} element(s)`);
       }
 
       if (elementSvgs.length === 0) return null;
