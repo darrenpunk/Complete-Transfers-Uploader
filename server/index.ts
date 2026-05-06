@@ -267,8 +267,28 @@ app.get('/health', async (_req, res) => {
   });
 });
 
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: false, limit: '50mb' }));
+// JSON body limit sized for inline add-to-cart pdfBase64 payloads.
+// Production heap is --max-old-space-size=4096 (.replit), so 200MB JSON parses
+// safely. Keep the client threshold in client/src/pages/upload-tool.tsx strictly
+// below this so the route handler's offload logic gets a chance to run on overflow.
+app.use(express.json({ limit: '200mb' }));
+app.use(express.urlencoded({ extended: false, limit: '200mb' }));
+
+// Friendly 413 handler — converts body-parser PayloadTooLargeError into a JSON
+// response with actionable guidance, so a stale cached client (still using the
+// old 100MB threshold) gets a clear message instead of an opaque socket error.
+app.use((err: any, req: any, res: any, next: any) => {
+  if (err && (err.type === 'entity.too.large' || err.status === 413)) {
+    console.warn(`⚠️ 413 PayloadTooLarge on ${req.method} ${req.path} (limit: ${err.limit}, received: ${err.length})`);
+    return res.status(413).json({
+      error: 'Request body too large',
+      hint: 'Please refresh the page (Ctrl+Shift+R) to load the latest version, then retry. If the file is very large the app will offload it automatically.',
+      limitBytes: err.limit,
+      receivedBytes: err.length,
+    });
+  }
+  return next(err);
+});
 
 
 app.get('/uploads/:filename', async (req, res, next) => {

@@ -715,7 +715,12 @@ export default function UploadTool() {
         totalQuantity: currentProject.quantity, // Use regular quantity as fallback
         comments: currentProject.comments || '', // Send user comments from modal
         partnerEmail: partnerEmail || (() => { try { return localStorage.getItem('partner_email') || sessionStorage.getItem('partner_email') || undefined; } catch { return undefined; } })(), // Send partner email if available (for iframe session workaround)
-        pdfBase64: pdfBase64 && pdfBase64.length < 100 * 1024 * 1024 ? pdfBase64 : undefined, // Skip sending PDF if >100MB base64 — backend will regenerate
+        // Server's express.json limit is 200MB (server/index.ts). Stay safely under
+        // that so body-parser doesn't 413 before the route handler's offload logic
+        // can run. When the PDF would exceed this cap (huge artwork ~150MB+ raw),
+        // skip inlining and let the backend regenerate via Ghostscript and offload
+        // via /artwork/api/attach-pdf if the compressed result is still too large.
+        pdfBase64: pdfBase64 && pdfBase64.length < 190 * 1024 * 1024 ? pdfBase64 : undefined,
         odooBaseUrl: dynamicOdooUrl, // Send Odoo URL so backend knows which server to call
         ...(reorderLineId && { reorderLineId }), // For applique reorders: tells Odoo to copy ZIP from source line
       };
