@@ -31,7 +31,7 @@ export class RasterCMYKConverter {
       }
 
       // Get the ICC profile path
-      const iccProfilePath = path.join(process.cwd(), 'attached_assets', 'PSO Coated FOGRA51 (EFI)_1753573621935.icc');
+      const iccProfilePath = path.join(process.cwd(), 'server', 'assets', 'PSO_Coated_FOGRA51.icc');
       
       if (!fs.existsSync(iccProfilePath)) {
         console.error('❌ ICC profile not found, cannot convert to CMYK');

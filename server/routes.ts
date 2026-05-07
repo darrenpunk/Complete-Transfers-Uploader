@@ -8463,6 +8463,35 @@ export async function registerRoutes(app: express.Application) {
           attempts.push({ label, err: r.ok ? undefined : r.err });
           return r.ok;
         };
+
+        // Pre-emptive shrink: if the offloaded payload is already known to
+        // approach Odoo's nginx body limit (~40 MB), do NOT burn attempts on
+        // it. Observed in production (SO89393 / b34f2eee, MMC DTF 122 MB
+        // source): attempts 1+2 with a 164 MB body got ECONNRESET at the
+        // nginx layer, and that nginx-level drop INVALIDATED the Odoo
+        // session — attempts 3+4 with a re-compressed 0.5 MB body then
+        // returned HTTP 404 from `/artwork/api/attach-pdf` and the order
+        // ended up with no artwork. Compressing up-front keeps the first
+        // request landing with a payload nginx will forward, preserving
+        // the authenticated session.
+        //
+        // Target ~32 MB base64 (well below the ~40 MB nginx cap) so the
+        // JSON envelope (order_line_id, sale_order_id, pdf_filename,
+        // quoting overhead) can never push us over. PDF_INLINE_MAX_CHARS
+        // is at the cap and unsafe as a pre-shrink target.
+        const ATTACH_PDF_SAFE_BASE64 = 32 * 1024 * 1024;
+        if (currentBase64.length > ATTACH_PDF_SAFE_BASE64) {
+          console.log(`📄 attach-pdf pre-shrink: offloaded payload ${(currentBase64.length / 1024 / 1024).toFixed(1)}MB exceeds safe cap (${ATTACH_PDF_SAFE_BASE64 / 1024 / 1024}MB) — running /ebook before attempt-1 to avoid nginx-kill + session invalidation`);
+          await recompress('ebook');
+          if (currentBase64.length > ATTACH_PDF_SAFE_BASE64) {
+            console.log(`📄 attach-pdf pre-shrink: still ${(currentBase64.length / 1024 / 1024).toFixed(1)}MB after /ebook — escalating to /screen before attempt-1`);
+            await recompress('screen');
+          }
+          if (currentBase64.length > ATTACH_PDF_SAFE_BASE64) {
+            console.warn(`⚠️ attach-pdf pre-shrink: payload still ${(currentBase64.length / 1024 / 1024).toFixed(1)}MB after /ebook + /screen — proceeding anyway, but expect upstream rejection`);
+          }
+        }
+
         let attached = recordAttempt('attempt-1', await tryAttach('attempt-1'));
         if (!attached) {
           await new Promise(r => setTimeout(r, 1500));
@@ -9636,7 +9665,7 @@ ${svgClose}`;
               pageHeight = height;
               console.log(`📄 Loaded sized placeholder: ${path.basename(selectedPlaceholder!)} (${pageWidth}×${pageHeight}pts)`);
             } else {
-              const fallbackPath = path.join(process.cwd(), 'attached_assets', 'Vector_Service_1768292962486.pdf');
+              const fallbackPath = path.join(process.cwd(), 'server', 'assets', 'Vector_Service.pdf');
               const fallbackBytes = safeReadFile(fallbackPath);
               if (fallbackBytes) {
                 placeholderDoc = await PDFDocument.load(fallbackBytes);

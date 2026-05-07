@@ -11,7 +11,7 @@ export class ColorManagement {
   static getICCProfilePath(): string | null {
     if (!this.iccProfilePath) {
       // Check for uploaded ICC profile first
-      const uploadedICCPath = path.join(process.cwd(), 'attached_assets', 'PSO Coated FOGRA51 (EFI)_1753573621935.icc');
+      const uploadedICCPath = path.join(process.cwd(), 'server', 'assets', 'PSO_Coated_FOGRA51.icc');
       const fallbackICCPath = path.join(process.cwd(), 'server', 'fogra51.icc');
       
       if (fs.existsSync(uploadedICCPath)) {

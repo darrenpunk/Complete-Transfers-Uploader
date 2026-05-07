@@ -282,7 +282,7 @@ export class EnhancedCMYKGenerator {
     
     try {
       // Use uploaded ICC profile from attached_assets
-      const uploadedICCPath = path.join(process.cwd(), 'attached_assets', 'PSO Coated FOGRA51 (EFI)_1753573621935.icc');
+      const uploadedICCPath = path.join(process.cwd(), 'server', 'assets', 'PSO_Coated_FOGRA51.icc');
       const fallbackICCPath = path.join(process.cwd(), 'server', 'fogra51.icc');
       
       let iccProfilePath = uploadedICCPath;
@@ -334,7 +334,7 @@ export class EnhancedCMYKGenerator {
     }
     
     // Get ICC profile info
-    const uploadedICCPath = path.join(process.cwd(), 'attached_assets', 'PSO Coated FOGRA51 (EFI)_1753573621935.icc');
+    const uploadedICCPath = path.join(process.cwd(), 'server', 'assets', 'PSO_Coated_FOGRA51.icc');
     const fallbackICCPath = path.join(process.cwd(), 'server', 'fogra51.icc');
     
     let iccProfilePath = uploadedICCPath;
@@ -762,7 +762,7 @@ export class EnhancedCMYKGenerator {
         // Step 1: Convert original PDF to CMYK color space
         
         // Get ICC profile path for proper color conversion
-        const uploadedICCPath = path.join(process.cwd(), 'attached_assets', 'PSO Coated FOGRA51 (EFI)_1753573621935.icc');
+        const uploadedICCPath = path.join(process.cwd(), 'server', 'assets', 'PSO_Coated_FOGRA51.icc');
         const fallbackICCPath = path.join(process.cwd(), 'server', 'fogra51.icc');
         
         let iccProfilePath = uploadedICCPath;
@@ -1622,7 +1622,7 @@ export class EnhancedCMYKGenerator {
           console.log(`Enhanced CMYK: File has existing CMYK colors, embedding ICC profile only`);
           
           try {
-            const iccProfilePath = path.join(process.cwd(), "attached_assets", "PSO Coated FOGRA51 (EFI)_1753573621935.icc");
+            const iccProfilePath = path.join(process.cwd(), "server", "assets", "PSO_Coated_FOGRA51.icc");
             
             if (fs.existsSync(iccProfilePath)) {
               const success = await this.embedICCProfileOnly(rgbPdfPath, iccProfilePath);

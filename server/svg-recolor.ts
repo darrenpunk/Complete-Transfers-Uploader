@@ -1,21 +1,17 @@
 // SVG recoloring utility for Single Colour Transfer templates
 
-const isWhiteOrSkip = (color: string): boolean => {
+// Only skip true "non-colors" — anything that isn't an actual paint:
+//   - none / transparent          → element is intentionally invisible
+//   - currentColor                → inherits from CSS (let cascade handle it)
+//   - url(#…)                     → gradient / pattern reference
+// White fills are NOT skipped: many uploaded vector logos are reverse-out
+// designs (white-on-dark) and the user expects them to recolour to the
+// chosen ink on a single-colour transfer (printing white-on-grey would
+// be invisible). If a customer genuinely wants a white "knock-out" area
+// they can use opacity:0 / fill:none instead.
+const isNonPaintSkip = (color: string): boolean => {
   const c = color.trim().toLowerCase().replace(/\s+/g, '');
   if (c === 'none' || c === 'transparent' || c === 'currentcolor' || c.startsWith('url(')) return true;
-  if (c === 'white' || c === '#fff' || c === '#ffffff') return true;
-  // rgb(255,255,255) or rgb(100%,100%,100%)
-  const rgbMatch = c.match(/^rgb\(([^)]+)\)$/);
-  if (rgbMatch) {
-    const parts = rgbMatch[1].split(',').map(s => s.trim());
-    if (parts.length === 3) {
-      const isWhite = parts.every(p => {
-        if (p.endsWith('%')) return parseFloat(p) >= 99;
-        return parseInt(p, 10) >= 250;
-      });
-      if (isWhite) return true;
-    }
-  }
   return false;
 };
 
@@ -44,7 +40,7 @@ export function recolorSVG(svgContent: string, inkColor: string): string {
     let newCss = css;
     // fill: <color>;  and  stroke: <color>;
     newCss = newCss.replace(/(fill|stroke)\s*:\s*([^;}\s]+)/gi, (m: string, prop: string, color: string) => {
-      if (isWhiteOrSkip(color)) return m;
+      if (isNonPaintSkip(color)) return m;
       return `${prop}:${inkColor}`;
     });
     return match.replace(css, newCss);
@@ -52,20 +48,20 @@ export function recolorSVG(svgContent: string, inkColor: string): string {
 
   // 2. Replace fill="..." attributes
   recoloredContent = recoloredContent.replace(/fill="([^"]+)"/g, (match, color) => {
-    if (isWhiteOrSkip(color)) return match;
+    if (isNonPaintSkip(color)) return match;
     return `fill="${inkColor}"`;
   });
 
   // 3. Replace stroke="..." attributes
   recoloredContent = recoloredContent.replace(/stroke="([^"]+)"/g, (match, color) => {
-    if (isWhiteOrSkip(color)) return match;
+    if (isNonPaintSkip(color)) return match;
     return `stroke="${inkColor}"`;
   });
 
   // 4. Replace fill/stroke inside style="..." attributes
   recoloredContent = recoloredContent.replace(/style="([^"]*)"/g, (match, styleContent) => {
     let newStyle = styleContent.replace(/(fill|stroke)\s*:\s*([^;]+)/gi, (m: string, prop: string, color: string) => {
-      if (isWhiteOrSkip(color)) return m;
+      if (isNonPaintSkip(color)) return m;
       return `${prop}:${inkColor}`;
     });
     return `style="${newStyle}"`;

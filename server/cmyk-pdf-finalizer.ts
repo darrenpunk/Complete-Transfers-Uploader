@@ -27,7 +27,7 @@ export class CMYKPDFFinalizer {
     } = options;
 
     // Use the uploaded FOGRA51 profile or fallback
-    const uploadedICCPath = path.join(process.cwd(), 'attached_assets', 'PSO Coated FOGRA51 (EFI)_1753573621935.icc');
+    const uploadedICCPath = path.join(process.cwd(), 'server', 'assets', 'PSO_Coated_FOGRA51.icc');
     const fallbackICCPath = path.join(process.cwd(), 'server', 'fogra51.icc');
     
     const finalICCPath = iccProfilePath || (fs.existsSync(uploadedICCPath) ? uploadedICCPath : fallbackICCPath);
