@@ -8426,7 +8426,17 @@ export async function registerRoutes(app: express.Application) {
           try {
             const r = await fetch(attachPdfUrl, {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json', 'Cookie': clientCookies },
+              headers: {
+                'Content-Type': 'application/json',
+                'Cookie': clientCookies,
+                // Mirror add-to-cart: iframe sessions can't propagate cookies
+                // cross-origin, so the partner email header is the only signal
+                // Odoo has to identify the user/website. Observed in production
+                // (SO89393 / teemaster@serigraf.com / MMC DTF): without this
+                // header the route 404s with empty body even for tiny payloads,
+                // because website/dispatch can't resolve the request context.
+                ...((requestBody as any)?.partnerEmail && { 'X-Partner-Email': (requestBody as any).partnerEmail }),
+              },
               body: payload,
             });
             const body = await r.json().catch(() => ({}));
