@@ -8273,11 +8273,38 @@ export async function registerRoutes(app: express.Application) {
         console.log(`📦 Repeat order with ZIP — skipping server-side PDF generation`);
       }
 
+      // Escalating in-line compression: /prepress → /ebook → /screen, returning
+      // the smallest base64 string that fits under PDF_INLINE_MAX_CHARS, or the
+      // smallest available payload if even /screen can't fit. Keeps the PDF in
+      // the add-to-cart body whenever possible so we DON'T have to fall back
+      // on /artwork/api/attach-pdf — observed in production (SO89393 / MMC DTF
+      // / teemaster@serigraf.com) that attach-pdf 404s for some
+      // iframe/customer combinations regardless of payload size, leaving the
+      // order with no artwork. /ebook + /screen permit raster downsampling and
+      // typically shrink DTF raster files by >99% (e.g. 123 MB → 0.4 MB),
+      // which fits inline trivially.
+      const compressUntilFits = async (buf: Buffer, label: string): Promise<{ b64: string; fits: boolean }> => {
+        const tiers: Array<'prepress' | 'ebook' | 'screen'> = ['prepress', 'ebook', 'screen'];
+        let best = buf;
+        for (const tier of tiers) {
+          const out = await compressPdfBuffer(best, tier);
+          if (out.length < best.length) best = out;
+          const b64 = best.toString('base64');
+          if (b64.length <= PDF_INLINE_MAX_CHARS) {
+            console.log(`✅ ${label} fits inline after /${tier}: ${(b64.length/1024/1024).toFixed(1)}MB base64`);
+            return { b64, fits: true };
+          }
+          console.log(`📦 ${label} after /${tier}: ${(b64.length/1024/1024).toFixed(1)}MB base64 — still over inline cap, escalating`);
+        }
+        return { b64: best.toString('base64'), fits: false };
+      };
+
       if (needsServerPdf) {
         const reason = projectData.pdfBase64
           ? `Client PDF too large (${(projectData.pdfBase64.length / 1024 / 1024).toFixed(1)}MB base64)`
           : 'No PDF sent by client (skipped large PDF)';
         console.log(`📦 ${reason} — generating server-side`);
+        let serverPdfBuf: Buffer | undefined;
         try {
           const selfBase = `http://localhost:${process.env.PORT || 5000}`;
           const pdfGenController = new AbortController();
@@ -8288,32 +8315,28 @@ export async function registerRoutes(app: express.Application) {
           });
           clearTimeout(pdfGenTimeout);
           if (genRes.ok) {
-            let pdfBuf = Buffer.from(await genRes.arrayBuffer());
-            const rawSizeMB = (pdfBuf.length / 1024 / 1024).toFixed(1);
-            console.log(`✅ Server PDF generated: ${rawSizeMB}MB raw`);
-            pdfBuf = await compressPdfBuffer(pdfBuf);
-            const serverPdfBase64 = pdfBuf.toString('base64');
-            const serverSizeMB = (serverPdfBase64.length / 1024 / 1024).toFixed(1);
-            console.log(`📄 Server PDF (after compression): ${serverSizeMB}MB base64`);
-            if (serverPdfBase64.length <= PDF_INLINE_MAX_CHARS) {
-              projectData.pdfBase64 = serverPdfBase64;
-              console.log(`✅ Compressed PDF fits inline — sending in add-to-cart body`);
-            } else {
-              console.warn(`⚠️ Server PDF still large after compression (${serverSizeMB}MB) — will attach separately`);
-              offloadedPdfBase64 = serverPdfBase64;
-              offloadedPdfFilename = artworkFilename;
-            }
+            serverPdfBuf = Buffer.from(await genRes.arrayBuffer());
+            console.log(`✅ Server PDF generated: ${(serverPdfBuf.length/1024/1024).toFixed(1)}MB raw`);
           } else {
-            console.warn(`⚠️ Server PDF generation failed (${genRes.status}) — will attach client PDF separately`);
-            if (projectData.pdfBase64) {
-              offloadedPdfBase64 = projectData.pdfBase64;
-              offloadedPdfFilename = artworkFilename;
-            }
+            console.warn(`⚠️ Server PDF generation failed (${genRes.status}) — will fall back to client PDF`);
           }
         } catch (genErr) {
-          console.warn(`⚠️ Server PDF generation error — will attach client PDF separately:`, genErr);
-          if (projectData.pdfBase64) {
-            offloadedPdfBase64 = projectData.pdfBase64;
+          console.warn(`⚠️ Server PDF generation error — will fall back to client PDF:`, genErr);
+        }
+
+        // Choose source: server PDF preferred (smaller layout), fall back to client PDF.
+        // Then escalate compression until it fits inline; only offload if even /screen
+        // can't get below the cap.
+        const sourceBuf = serverPdfBuf
+          ?? (projectData.pdfBase64 ? Buffer.from(projectData.pdfBase64, 'base64') : undefined);
+        const sourceLabel = serverPdfBuf ? 'Server PDF' : 'Client PDF (fallback)';
+        if (sourceBuf) {
+          const { b64, fits } = await compressUntilFits(sourceBuf, sourceLabel);
+          if (fits) {
+            projectData.pdfBase64 = b64;
+          } else {
+            console.warn(`⚠️ ${sourceLabel} still ${(b64.length/1024/1024).toFixed(1)}MB after /screen — falling back to attach-pdf offload`);
+            offloadedPdfBase64 = b64;
             offloadedPdfFilename = artworkFilename;
           }
         }
