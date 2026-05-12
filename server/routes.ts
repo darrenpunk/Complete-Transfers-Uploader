@@ -10436,7 +10436,8 @@ ${svgClose}`;
   // Bypasses the canvas and adds a customer-supplied PDF directly to Odoo cart
   app.post('/api/quick-upload-dtf', guardRoute('quick-dtf'), async (req, res) => {
     try {
-      const { pdfBase64, quantity, partnerEmail, projectName } = req.body;
+      let { pdfBase64 } = req.body as { pdfBase64?: string };
+      const { quantity, partnerEmail, projectName } = req.body;
       if (!pdfBase64) return res.status(400).json({ error: 'PDF is required' });
       if (!quantity || quantity < 1) return res.status(400).json({ error: 'Valid quantity is required' });
 
@@ -10449,35 +10450,81 @@ ${svgClose}`;
       const artworkFilename = `${name} qty${quantity}.pdf`;
       const ctWebsiteId = process.env.VITE_ODOO_CT_WEBSITE_ID || '2';
 
-      // Compress the PDF with Ghostscript if it's large (>30MB decoded ≈ >40MB base64)
+      // Compress the PDF with Ghostscript if it's large (>30MB decoded ≈ >40MB base64).
+      // Escalating compression /prepress → /ebook → /screen — same logic the
+      // canvas-based add-to-cart flow uses. Production case (enda@tees.ie /
+      // AFRICA DAY CT DTF ART.pdf, ~105MB raw / ~140MB base64): the OLD
+      // single-tier /prepress with downsampling disabled barely reduced
+      // raster-heavy DTF files, so the giant base64 string stayed in memory
+      // through JSON.stringify (which makes another full copy) and pushed RSS
+      // past the 400MB watchdog → graceful restart killed the in-flight
+      // request → no order. /ebook + /screen permit raster downsampling and
+      // typically shrink raster DTF >99% (e.g. 123MB → 0.4MB), which fits the
+      // Odoo 40MB body limit trivially. Once compressed, we drop the
+      // reference to the original `pdfBase64` so GC can reclaim it before
+      // JSON.stringify doubles the live buffer again.
       const DTF_MAX_BASE64 = 40 * 1024 * 1024;
       let finalPdfBase64 = pdfBase64;
       if (pdfBase64.length > DTF_MAX_BASE64) {
-        const rawMB = (pdfBase64.length / 1024 / 1024).toFixed(1);
-        console.log(`📦 DTF Quick Upload PDF large (${rawMB}MB base64) — compressing with Ghostscript`);
-        const tmpIn  = `/tmp/dtf_in_${Date.now()}.pdf`;
-        const tmpOut = `/tmp/dtf_out_${Date.now()}.pdf`;
+        const origLen = pdfBase64.length;
+        const rawMB = (origLen / 1024 / 1024).toFixed(1);
+        console.log(`📦 DTF Quick Upload PDF large (${rawMB}MB base64) — escalating Ghostscript compression`);
+        const stamp = `${Date.now()}_${process.pid}_${Math.random().toString(36).slice(2, 8)}`;
+        const tmpIn  = `/tmp/dtf_gen_in_${stamp}.pdf`;
+        const tmpOut = `/tmp/dtf_gen_out_${stamp}.pdf`;
         try {
           fs.writeFileSync(tmpIn, Buffer.from(pdfBase64, 'base64'));
-          await new Promise<void>((resolve, reject) => {
-            exec(
-              `gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/prepress -dColorConversionStrategy=/LeaveColorUnchanged -dDownsampleColorImages=false -dDownsampleGrayImages=false -dDownsampleMonoImages=false -sOutputFile=${tmpOut} ${tmpIn}`,
-              { timeout: 60000 },
-              (err: Error | null) => { if (err) reject(err); else resolve(); }
-            );
-          });
-          if (fs.existsSync(tmpOut)) {
-            const compressed = fs.readFileSync(tmpOut);
-            const compressedB64 = compressed.toString('base64');
-            const newMB = (compressedB64.length / 1024 / 1024).toFixed(1);
-            console.log(`🗜️ DTF GS compression: ${rawMB}MB → ${newMB}MB base64`);
-            if (compressedB64.length < pdfBase64.length) finalPdfBase64 = compressedB64;
+          const tiers: Array<{ name: 'prepress' | 'ebook' | 'screen'; flags: string }> = [
+            { name: 'prepress', flags: '-dDownsampleColorImages=false -dDownsampleGrayImages=false -dDownsampleMonoImages=false' },
+            { name: 'ebook',    flags: '' },
+            { name: 'screen',   flags: '' },
+          ];
+          let bestB64Len = origLen;
+          for (const tier of tiers) {
+            try {
+              try { fs.unlinkSync(tmpOut); } catch {}
+              await new Promise<void>((resolve, reject) => {
+                exec(
+                  `gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/${tier.name} -dColorConversionStrategy=/LeaveColorUnchanged ${tier.flags} -sOutputFile=${tmpOut} ${tmpIn}`,
+                  { timeout: 60000 },
+                  (err: Error | null) => { if (err) reject(err); else resolve(); }
+                );
+              });
+              if (fs.existsSync(tmpOut)) {
+                const compressed = fs.readFileSync(tmpOut);
+                const compressedB64 = compressed.toString('base64');
+                if (compressedB64.length > 0 && compressedB64.length < bestB64Len) {
+                  finalPdfBase64 = compressedB64;
+                  bestB64Len = compressedB64.length;
+                  const newMB = (compressedB64.length / 1024 / 1024).toFixed(1);
+                  console.log(`🗜️ DTF GS /${tier.name}: ${rawMB}MB → ${newMB}MB base64`);
+                }
+              }
+              if (bestB64Len <= DTF_MAX_BASE64) {
+                console.log(`✅ DTF Quick Upload fits inline after /${tier.name}`);
+                break;
+              }
+              console.log(`📦 DTF Quick Upload still over ${(DTF_MAX_BASE64/1024/1024).toFixed(0)}MB after /${tier.name} — escalating`);
+            } catch (e: any) {
+              console.warn(`⚠️ DTF GS /${tier.name} failed:`, e?.message);
+            }
           }
         } catch (e: any) {
-          console.warn(`⚠️ DTF GS compression failed (using original):`, e.message);
+          console.warn(`⚠️ DTF GS compression setup failed (using original):`, e?.message);
         } finally {
           try { fs.unlinkSync(tmpIn); } catch {}
           try { fs.unlinkSync(tmpOut); } catch {}
+        }
+        // Free the original 100MB+ base64 reference if we successfully shrank
+        // it, then hint GC so JSON.stringify below doesn't double the LIVE
+        // buffer. The caller's `req.body.pdfBase64` reference will also be
+        // released once this request completes.
+        if (finalPdfBase64 !== pdfBase64) {
+          (req.body as any).pdfBase64 = undefined;
+          pdfBase64 = undefined;
+          if (typeof global.gc === 'function') {
+            try { global.gc(); } catch {}
+          }
         }
       }
 
