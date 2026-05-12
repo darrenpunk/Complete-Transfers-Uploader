@@ -8308,7 +8308,14 @@ export async function registerRoutes(app: express.Application) {
         try {
           const selfBase = `http://localhost:${process.env.PORT || 5000}`;
           const pdfGenController = new AbortController();
-          const pdfGenTimeout = setTimeout(() => pdfGenController.abort(), 60000);
+          // Generous timeout: 180 s. Large-format DTF imposition with 100+ elements
+          // (e.g. SO89576 / Mayo co co — 180 elements × `dtf_next_day`) can take
+          // ~60-65 s end-to-end. The previous 60 s cap aborted just as the render
+          // was finishing — sourceBuf then ended up undefined and the order was
+          // created with no artwork (silent failure: no attach-pdf attempted, no
+          // EXHAUSTED warning). 180 s leaves comfortable headroom and is still
+          // shorter than the customer-perceivable "stuck" threshold.
+          const pdfGenTimeout = setTimeout(() => pdfGenController.abort(), 180000);
           const genRes = await fetch(`${selfBase}/api/projects/${projectId}/generate-pdf`, {
             headers: { cookie: req.headers.cookie || '' },
             signal: pdfGenController.signal,
@@ -8339,6 +8346,14 @@ export async function registerRoutes(app: express.Application) {
             offloadedPdfBase64 = b64;
             offloadedPdfFilename = artworkFilename;
           }
+        } else {
+          // Defensive: should not happen now that the timeout is generous, but if
+          // both server PDF gen and the client fallback are missing we'd otherwise
+          // silently send an artwork-less add-to-cart (observed in production with
+          // the previous 60 s abort: SO89576 / Mayo co co — order created with no
+          // PDF, no attach-pdf attempted, no EXHAUSTED warning). Logging loudly so
+          // the next regression is at least visible in deployment logs.
+          console.error(`❌❌❌ NO PDF SOURCE for project ${projectId} (server gen failed AND no client PDF) — order will be created WITHOUT artwork. Project: "${projectName}", template: ${projectData.templateSize}, elements: ${projectData.canvasElements?.length ?? 'unknown'}`);
         }
       }
 
