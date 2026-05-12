@@ -12,7 +12,7 @@ import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 import { promisify } from 'util';
-import { exec } from 'child_process';
+import { exec, execSync } from 'child_process';
 import { manufacturerColors } from '@shared/garment-colors';
 import { analyzeFullPageMatch } from './full-page-match';
 
@@ -1533,26 +1533,81 @@ grestore`;
           console.log(`⚠️ ASPECT RATIO MISMATCH: PDF page ${pdfW.toFixed(1)}×${pdfH.toFixed(1)}pts (${pdfAspect.toFixed(2)}) vs element ${elemWPts.toFixed(1)}×${elemHPts.toFixed(1)}pts (${elemAspect.toFixed(2)})`);
           console.log(`📐 Difference: ${aspectDiff.toFixed(3)} - PDF page is larger than element in at least one dimension, needs cropping`);
           
+          // Per-pdfDoc cache for the final cropped/letter-boxed PDF path keyed by source
+          // logoPdfPath. Imposition can call this hot loop 20-40 times for the same source
+          // — without caching we'd run a fresh `gs -sDEVICE=bbox` AND a fresh
+          // `cropPdfToContentBounds` (another GS pass) for every tile, blowing the
+          // 180s pdfGenController timeout.
+          type AutoCropCacheEntry = { croppedPath: string | null };
+          const autoCropCache: Map<string, AutoCropCacheEntry> =
+            ((pdfDoc as any).__autoCropCache ||= new Map());
+          const cropCacheKey = `${logoPdfPath}|${elemWPts.toFixed(2)}x${elemHPts.toFixed(2)}`;
+          const cachedCrop = autoCropCache.get(cropCacheKey);
+          if (cachedCrop) {
+            if (cachedCrop.croppedPath && cachedCrop.croppedPath !== logoPdfPath) {
+              if (shouldCleanup && logoPdfPath) {
+                try { fs.unlinkSync(logoPdfPath); } catch (e) {}
+              }
+              logoPdfPath = cachedCrop.croppedPath;
+              shouldCleanup = false; // Cached path is shared — never unlink
+              console.log(`♻️ Reusing cached auto-cropped PDF for ${cropCacheKey.slice(0, 80)}`);
+            } else {
+              console.log(`♻️ Reusing cached auto-crop decision (skip) for ${cropCacheKey.slice(0, 80)}`);
+            }
+          } else {
           const originalPdfBounds = logo.originalPdfBounds as any;
           let boundsForCrop = null;
           if (originalPdfBounds && originalPdfBounds.width > 1 && originalPdfBounds.height > 1) {
             boundsForCrop = originalPdfBounds;
           } else {
-            // No stored content bounds — derive crop from element vs PDF page size.
-            // Assume content starts at top-left of the PDF page (most common case).
-            // Crop to element dimensions, anchored to the top-left of the page.
-            // In Ghostscript coords (bottom-left origin): content occupies the top elemH pts.
-            console.log(`⚠️ No originalPdfBounds — deriving crop from element vs PDF page size`);
-            boundsForCrop = {
-              xMin: 0,
-              yMin: pdfH - elemHPts,   // Bottom of content area in PDF coords
-              xMax: elemWPts,
-              yMax: pdfH,              // Top of page in PDF coords
-              width: elemWPts,
-              height: elemHPts,
-            };
-            console.log(`📐 Derived crop bounds: ${boundsForCrop.xMin}×${boundsForCrop.yMin} → ${boundsForCrop.xMax}×${boundsForCrop.yMax} (${boundsForCrop.width.toFixed(1)}×${boundsForCrop.height.toFixed(1)}pts)`);
+            // No stored content bounds (e.g. multi-page reorder PDFs in pass-through mode
+            // skip upload-time bbox detection). The OLD behaviour here assumed content
+            // started at the top-left of the page and cropped to element dimensions —
+            // which silently dropped any content outside that top-left rectangle.
+            // Production case: SO89526 / Wilton Orange Hi Vis Back / SRA3 — source PDF
+            // had blue WILTON square on the LEFT and orange rectangle extending to the
+            // RIGHT; the top-left crop took only the blue portion, dropping orange in
+            // every imposition tile while the canvas screenshot showed the full design.
+            // Now: run Ghostscript bbox live to detect ACTUAL content position. Only
+            // crop when detection gives reasonable bounds. Otherwise SKIP cropping and
+            // embed the full page — letter-boxing inside the element is far better
+            // than silently dropping artwork.
+            console.log(`⚠️ No originalPdfBounds — running live Ghostscript bbox detection on ${logoPdfPath}`);
+            try {
+              const bboxOut = execSync(
+                `gs -o /dev/null -sDEVICE=bbox -dNOPAUSE -dBATCH -dQUIET "${logoPdfPath}" 2>&1`,
+                { encoding: 'utf8', timeout: 15000 }
+              );
+              const hiRes = bboxOut.match(/%%HiResBoundingBox:\s*([\d.-]+)\s+([\d.-]+)\s+([\d.-]+)\s+([\d.-]+)/);
+              const intRes = bboxOut.match(/%%BoundingBox:\s*([\d.-]+)\s+([\d.-]+)\s+([\d.-]+)\s+([\d.-]+)/);
+              const m = hiRes || intRes;
+              if (m) {
+                const xMin = parseFloat(m[1]);
+                const yMin = parseFloat(m[2]);
+                const xMax = parseFloat(m[3]);
+                const yMax = parseFloat(m[4]);
+                const w = xMax - xMin;
+                const h = yMax - yMin;
+                // Sanity check: bounds must be positive, fit within the page, and cover
+                // at least 5% of the page area (anything smaller is almost certainly a
+                // GS bbox failure on white/transparent content — safer to skip cropping).
+                const pageArea = pdfW * pdfH;
+                const bboxArea = w * h;
+                const fits = xMin >= -1 && yMin >= -1 && xMax <= pdfW + 1 && yMax <= pdfH + 1;
+                if (w > 1 && h > 1 && fits && bboxArea / pageArea > 0.05) {
+                  boundsForCrop = { xMin, yMin, xMax, yMax, width: w, height: h };
+                  console.log(`✅ Live GS bbox: (${xMin.toFixed(1)},${yMin.toFixed(1)})→(${xMax.toFixed(1)},${yMax.toFixed(1)}) = ${w.toFixed(1)}×${h.toFixed(1)}pts (${(bboxArea / pageArea * 100).toFixed(0)}% of page)`);
+                } else {
+                  console.log(`❌❌❌ AUTO-CROP SKIPPED — live GS bbox unreasonable: (${xMin.toFixed(1)},${yMin.toFixed(1)})→(${xMax.toFixed(1)},${yMax.toFixed(1)}) on page ${pdfW.toFixed(1)}×${pdfH.toFixed(1)} — embedding full page (letter-boxed) to avoid silent content loss`);
+                }
+              } else {
+                console.log(`❌❌❌ AUTO-CROP SKIPPED — live GS bbox returned no BoundingBox line — embedding full page (letter-boxed) to avoid silent content loss. logoPdfPath=${logoPdfPath} element=${element.id} logo=${logo.id}`);
+              }
+            } catch (bboxErr: any) {
+              console.log(`❌❌❌ AUTO-CROP SKIPPED — live GS bbox threw: ${bboxErr?.message || bboxErr} — embedding full page (letter-boxed) to avoid silent content loss. logoPdfPath=${logoPdfPath} element=${element.id} logo=${logo.id}`);
+            }
           }
+          let resolvedCroppedPath: string | null = null;
           if (boundsForCrop) {
             console.log(`🔪 Auto-cropping PDF to content bounds to prevent distortion`);
             const croppedPath = await this.cropPdfToContentBounds(logoPdfPath, boundsForCrop);
@@ -1561,10 +1616,15 @@ grestore`;
                 try { fs.unlinkSync(logoPdfPath); } catch (e) {}
               }
               logoPdfPath = croppedPath;
-              shouldCleanup = true;
+              shouldCleanup = false; // Cached & shared across imposition tiles — never unlink
+              resolvedCroppedPath = croppedPath;
               console.log(`✅ Auto-cropped PDF to prevent squashing`);
             }
           }
+          // Record the decision (cropped path OR skip) so subsequent imposition tiles
+          // for the same source skip the GS bbox + crop work entirely.
+          autoCropCache.set(cropCacheKey, { croppedPath: resolvedCroppedPath });
+          } // end "else" (no cache hit)
         }
       }
       
