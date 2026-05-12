@@ -400,36 +400,54 @@ export default function UploadTool() {
       return;
     }
     
-    // Wait until ALL pending logos have canvas elements with measured dimensions before
-    // making the orientation decision; otherwise we may consume the pending IDs prematurely
-    // and skip auto-switch even when it should fire.
+    // Wait until ALL pending logos have either a sized canvas element OR a logo record with
+    // natural dimensions before deciding; otherwise we may consume the pending IDs prematurely.
     const allElementsReady = pendingOrientationCheckLogoIds.every(logoId => {
+      const logo = logos.find(l => l.id?.toString() === logoId.toString());
+      if (logo && (logo.originalWidth || logo.width) && (logo.originalHeight || logo.height)) return true;
       const el = canvasElements.find(e => e.logoId?.toString() === logoId.toString());
-      return el && el.width && el.height;
+      return !!(el && el.width && el.height);
     });
     if (!allElementsReady) return;
     
     let needsSwitch = false;
     for (const logoId of pendingOrientationCheckLogoIds) {
-      const element = canvasElements.find(el => el.logoId?.toString() === logoId.toString());
-      if (element && element.width && element.height) {
-        const elW = element.width;
-        const elH = element.height;
-        if (Math.abs(elW - elH) < 5) continue;
-        
-        const logoIsLandscape = elW > elH;
-        if (logoIsLandscape !== templateIsLandscape) {
-          const logoFitsAsIs = elW <= template.width && elH <= template.height;
-          const wouldFitRotated = elH <= template.width && elW <= template.height;
-          if (logoFitsAsIs) continue;
-          if (!wouldFitRotated && Math.max(elW, elH) / Math.min(elW, elH) < 1.1) continue;
-
-          const logoOrientation = logoIsLandscape ? 'landscape' : 'portrait';
-          const templateOrientation = templateIsLandscape ? 'landscape' : 'portrait';
-          console.log(`📐 Auto-switching orientation: logo is ${logoOrientation} (${elW.toFixed(0)}×${elH.toFixed(0)}mm), template is ${templateOrientation} (${template.width}×${template.height}mm)`);
-          needsSwitch = true;
-          break;
+      // Prefer the LOGO's natural source dimensions (in mm, pre-scaling) over the canvas
+      // element's dimensions — fit-to-bounds may have already scaled a landscape PDF down to
+      // fit a portrait template, which would mask the orientation mismatch.
+      const logo = logos.find(l => l.id?.toString() === logoId.toString());
+      let srcW: number | undefined = (logo?.originalWidth as any) || undefined;
+      let srcH: number | undefined = (logo?.originalHeight as any) || undefined;
+      if (!srcW || !srcH) {
+        const element = canvasElements.find(el => el.logoId?.toString() === logoId.toString());
+        if (element && element.width && element.height) {
+          srcW = element.width;
+          srcH = element.height;
         }
+      }
+      if (!srcW || !srcH) continue;
+      if (Math.abs(srcW - srcH) < 5) continue;
+
+      const logoIsLandscape = srcW > srcH;
+      if (logoIsLandscape !== templateIsLandscape) {
+        // Only switch when the source artwork is large enough that orientation actually matters.
+        // For a tiny logo (e.g. 50×80mm portrait) on an A3 landscape canvas the orientation of
+        // the canvas is irrelevant — don't churn the template. Trigger a switch when either
+        // source dimension is ≥60% of the template's longer side OR the source clearly does
+        // not fit in the current orientation but would fit rotated.
+        const longTemplateSide = Math.max(template.width, template.height);
+        const longSourceSide = Math.max(srcW, srcH);
+        const sourceIsLargeForTemplate = longSourceSide >= longTemplateSide * 0.6;
+        const fitsAsIs = srcW <= template.width && srcH <= template.height;
+        const fitsRotated = srcH <= template.width && srcW <= template.height;
+        if (!sourceIsLargeForTemplate && fitsAsIs) continue;
+        if (!sourceIsLargeForTemplate && !fitsRotated) continue;
+
+        const logoOrientation = logoIsLandscape ? 'landscape' : 'portrait';
+        const templateOrientation = templateIsLandscape ? 'landscape' : 'portrait';
+        console.log(`📐 Auto-switching orientation: logo is ${logoOrientation} (${srcW.toFixed(0)}×${srcH.toFixed(0)}mm), template is ${templateOrientation} (${template.width}×${template.height}mm)`);
+        needsSwitch = true;
+        break;
       }
     }
     
@@ -488,7 +506,7 @@ export default function UploadTool() {
         console.error('Failed to auto-switch template orientation:', err);
       }
     })();
-  }, [canvasElements, pendingOrientationCheckLogoIds, currentProject?.templateSize, currentProject?.id, templateSizes, partnerEmail]);
+  }, [canvasElements, logos, pendingOrientationCheckLogoIds, currentProject?.templateSize, currentProject?.id, templateSizes, partnerEmail]);
 
   // Auto-select newly uploaded logos after their canvas elements appear
   useEffect(() => {
