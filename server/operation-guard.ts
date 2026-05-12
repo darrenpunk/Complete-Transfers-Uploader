@@ -299,6 +299,16 @@ export function getOperationStats() {
   };
 }
 
+export function getActiveOpsDetail() {
+  const now = Date.now();
+  return activeOps.map(op => ({
+    id: op.id,
+    label: op.label,
+    runningSeconds: Math.round((now - op.startedAt) / 1000),
+    memAtStartMb: op.memAtStart,
+  }));
+}
+
 setInterval(cleanStaleOps, 30_000);
 
 setInterval(() => {

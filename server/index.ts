@@ -6,8 +6,17 @@ import dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { getOperationStats } from "./operation-guard";
+import { getOperationStats, getActiveOpsDetail } from "./operation-guard";
 import { storage } from "./storage";
+import { requestTracker, getRecentRequests, getInFlightRequests } from "./request-tracker";
+
+const FORENSIC_EVENT_TYPES = new Set([
+  'memory_critical',
+  'memory_warning',
+  'uncaught_exception',
+  'unhandled_rejection',
+  'suspected_crash',
+]);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -28,11 +37,27 @@ function getUptimeSeconds() {
   return Math.round((Date.now() - serverStartTime) / 1000);
 }
 
-function persistCrashLog(eventType: string, message: string, details?: any) {
+function persistCrashLog(eventType: string, message: string, details?: any): Promise<void> {
   const { rssMb, heapMb } = getMemSnapshot();
   let activeOps = 0, queuedOps = 0;
   try { const s = getOperationStats(); activeOps = s.active; queuedOps = s.queued; } catch {}
-  storage.createCrashLog({
+  // For watchdog/exception events attach a forensic snapshot so the next-startup
+  // suspected_crash detector (or admin grepping the table) can see exactly which
+  // requests were in flight when the process tipped over.
+  let mergedDetails = details || null;
+  if (FORENSIC_EVENT_TYPES.has(eventType)) {
+    try {
+      const forensics = {
+        recentRequests: getRecentRequests(20),
+        inFlightRequests: getInFlightRequests(),
+        activeOpsDetail: getActiveOpsDetail(),
+      };
+      mergedDetails = mergedDetails ? { ...mergedDetails, forensics } : { forensics };
+    } catch (err: any) {
+      console.error('[CRASH LOG] Failed to capture forensics:', err?.message);
+    }
+  }
+  return storage.createCrashLog({
     eventType,
     message,
     memoryRssMb: rssMb,
@@ -40,15 +65,19 @@ function persistCrashLog(eventType: string, message: string, details?: any) {
     uptimeSeconds: getUptimeSeconds(),
     activeOps,
     queuedOps,
-    details: details || null,
-  }).catch(err => console.error('[CRASH LOG] Failed to persist:', err.message));
+    details: mergedDetails,
+  }).then(() => undefined).catch(err => {
+    console.error('[CRASH LOG] Failed to persist:', err.message);
+  });
 }
 
-persistCrashLog('server_start', `Server process started (PID ${process.pid})`);
+const serverStartPersist = persistCrashLog('server_start', `Server process started (PID ${process.pid})`);
 
-// Detect suspected crashes (OOM kills, SIGKILL, etc.) by checking if previous shutdown was clean
+// Detect suspected crashes (OOM kills, SIGKILL, etc.) by checking if previous shutdown was clean.
+// Awaits the server_start write first so getCrashLogs definitely sees this instance's row at index 0.
 (async () => {
   try {
+    await serverStartPersist;
     const recentLogs = await storage.getCrashLogs(10);
     // Skip the server_start we just logged (recentLogs[0])
     const previousEvents = recentLogs.slice(1);
@@ -66,6 +95,27 @@ persistCrashLog('server_start', `Server process started (PID ${process.pid})`);
         // Only flag as suspected crash if previous server ran for some time
         // (gap > 30s means it wasn't just a quick dev restart)
         if (gapSeconds > 30) {
+          // Hunt for a memory_critical / uncaught_exception / unhandled_rejection
+          // event from the dying process so we can lift its in-flight requests +
+          // recent-request ringbuffer + active-op snapshot into the suspected_crash
+          // record. Makes "what crashed it" answerable from a single DB row.
+          let priorForensics: any = null;
+          let priorEventType: string | null = null;
+          for (const ev of recentLogs) {
+            if (ev.eventType === 'server_start') continue;
+            if (FORENSIC_EVENT_TYPES.has(ev.eventType) && ev.eventType !== 'suspected_crash') {
+              const evTime = new Date(ev.createdAt).getTime();
+              // Only consider events from the previous server instance window.
+              if (evTime > lastStartTime && evTime < now) {
+                const det: any = ev.details;
+                if (det && det.forensics) {
+                  priorForensics = det.forensics;
+                  priorEventType = ev.eventType;
+                  break;
+                }
+              }
+            }
+          }
           persistCrashLog('suspected_crash', 
             `Previous server instance (PID from ${new Date(lastStartTime).toLocaleTimeString()}, RSS: ${lastEvent.memoryRssMb || '?'}MB) terminated without clean shutdown after ~${Math.round(gapSeconds / 60)}min — likely OOM kill or SIGKILL`,
             { 
@@ -75,9 +125,18 @@ persistCrashLog('server_start', `Server process started (PID ${process.pid})`);
               timeSinceLastStart: gapSeconds,
               previousActiveOps: lastEvent.activeOps,
               previousQueuedOps: lastEvent.queuedOps,
+              priorEventType,
+              priorForensics,
             }
           );
-          console.log(`[CRASH DETECTION] ⚠️ Suspected unclean shutdown detected — previous server started ${gapSeconds}s ago with no clean shutdown logged`);
+          if (priorForensics) {
+            const inFlightSummary = (priorForensics.inFlightRequests || [])
+              .map((r: any) => `${r.method} ${r.path} (email=${r.email || 'n/a'}, ${(r.bytesIn/1024/1024).toFixed(1)}MB in, ${r.durationMs}ms)`)
+              .join(' | ');
+            console.log(`[CRASH DETECTION] ⚠️ Suspected unclean shutdown — prior ${priorEventType} captured ${priorForensics.inFlightRequests?.length || 0} in-flight requests: ${inFlightSummary || '(none)'}`);
+          } else {
+            console.log(`[CRASH DETECTION] ⚠️ Suspected unclean shutdown detected — previous server started ${gapSeconds}s ago with no clean shutdown logged (no forensics captured)`);
+          }
         }
       } else if (!cleanShutdownTypes.includes(lastEvent.eventType) && 
                  lastEvent.eventType !== 'uncaught_exception' && 
@@ -205,11 +264,19 @@ if (process.env.NODE_ENV === 'production') {
     if (rssMB > MEMORY_RESTART_MB && !restartScheduled) {
       restartScheduled = true;
       console.error(`[MEMORY CRITICAL] RSS: ${rssMB}MB — graceful restart in 3s to avoid OOM kill`);
-      persistCrashLog('memory_critical', `RSS: ${rssMB}MB — scheduling graceful restart`);
-      setTimeout(() => {
-        console.error('[MEMORY CRITICAL] Exiting for graceful restart');
-        process.exit(1);
-      }, 3000);
+      // CRITICAL: await the forensic write before scheduling exit. Otherwise the
+      // 3s timer can fire before Neon commits the row (especially when DB is
+      // under load, which is common when we're tipping over) and we lose the
+      // very evidence this whole system exists to capture.
+      const writePromise = persistCrashLog('memory_critical', `RSS: ${rssMB}MB — scheduling graceful restart`);
+      const writeDeadline = new Promise<void>((r) => setTimeout(r, 2500));
+      Promise.race([writePromise, writeDeadline]).then(() => {
+        const remaining = Math.max(500, 3000 - 2500);
+        setTimeout(() => {
+          console.error('[MEMORY CRITICAL] Exiting for graceful restart');
+          process.exit(1);
+        }, remaining);
+      });
     }
   }, MEMORY_CHECK_INTERVAL);
 }
@@ -268,6 +335,12 @@ app.get('/health', async (_req, res) => {
     operations: ops,
   });
 });
+
+// Forensic request tracker — MUST be mounted BEFORE body parsers so it captures
+// even requests that fail body parsing (e.g. 413 PayloadTooLarge). Email
+// extraction re-runs at response finalize, by which time the body parser will
+// have populated req.body for successful parses.
+app.use(requestTracker);
 
 // JSON body limit sized for inline add-to-cart pdfBase64 payloads.
 // Production heap is --max-old-space-size=4096 (.replit), so 200MB JSON parses
