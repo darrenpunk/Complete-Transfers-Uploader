@@ -668,6 +668,18 @@ grestore`;
         (el as any)._multipleElements = true;
       }
     }
+    // SO89550 INSTRUMENTATION: track silent-skip paths so we can detect when canvas
+    // elements never made it onto page 1 of the production PDF. Two known silent paths:
+    //   (a) `data.logos.find(...)` returns undefined → element dropped without log
+    //   (b) `embedLogoInPages` throws inside its catch → swallowed, element dropped
+    // Counters are read after the loop; if attempted > succeeded we log loudly so the
+    // missing-artwork condition is visible in deployment logs (no customer warning).
+    const allShapeTypesForCount = ['rectangle', 'ellipse', 'circle', 'line', 'shield', 'star', 'hexagon', 'pentagon', 'triangle', 'diamond', 'banner', 'cross', 'oval', 'heart', 'octagon', 'arch', 'malteseCross', 'chevron', 'arrow', 'ribbon'];
+    const elementsAttempted = data.canvasElements.filter(
+      e => !allShapeTypesForCount.includes((e as any).elementType || '')
+    ).length;
+    let logoElementsEmbeddedOnPage1 = 0;
+    const skippedElements: Array<{ i: number; reason: string; logoId: string }> = [];
     for (let i = 0; i < data.canvasElements.length; i++) {
       const element = data.canvasElements[i];
       console.log(`🔍 DEBUG: Processing element ${i}: logoId=${element.logoId}, position=(${element.x}, ${element.y}), size=${element.width}x${element.height}, garmentColor=${element.garmentColor || 'default'}`);
@@ -692,7 +704,27 @@ grestore`;
         
         // Embed logo on page 1 (transparent background) - ALL elements go on page 1
         console.log(`🎯 Embedding logo on page 1: ${logo.filename}`);
+        const beforeCount = (pdfDoc as any).__embedSuccessCount || 0;
         await this.embedLogoInPages(pdfDoc, page1, null, logo, element, data.templateSize);
+        let afterCount = (pdfDoc as any).__embedSuccessCount || 0;
+        if (afterCount === beforeCount) {
+          // SILENT EMBED FAILURE on page 1 — the embed function's try/catch swallowed
+          // an exception (corrupt cropped PDF, embedPdf failure, drawPage failure, etc).
+          // Try ONCE more before giving up. The cropping/embed pipeline has transient
+          // failure modes (Ghostscript flakes, fs races on the temp dir) and a single
+          // retry routinely succeeds. If it fails again we record the skip for the
+          // post-loop summary.
+          console.error(`⚠️⚠️⚠️ SILENT EMBED FAILURE on page 1 for element ${i} (logo=${logo.filename}) — retrying once`);
+          await this.embedLogoInPages(pdfDoc, page1, null, logo, element, data.templateSize);
+          afterCount = (pdfDoc as any).__embedSuccessCount || 0;
+          if (afterCount === beforeCount) {
+            console.error(`❌❌❌ EMBED FAILED AFTER RETRY: element ${i}, logoId=${element.logoId}, filename=${logo.filename}, size=${element.width}×${element.height}mm — element WILL BE MISSING from page 1`);
+            skippedElements.push({ i, reason: 'embed-threw-twice', logoId: element.logoId || '<none>' });
+          } else {
+            console.log(`✅ RETRY SUCCEEDED: element ${i} embedded on second attempt`);
+          }
+        }
+        if (afterCount > beforeCount) logoElementsEmbeddedOnPage1++;
         
         // For element-level colors, draw background rectangle THEN embed logo on page 2
         // For project-level multi-color orders, embed on ALL garment color pages
@@ -742,9 +774,29 @@ grestore`;
         }
         
         console.log(`✅ Completed embedding logo: ${logo.filename}`);
+      } else {
+        // SO89550 SILENT-SKIP PATH (a): canvas element references a logoId that isn't
+        // in data.logos. Previously this only logged "Logo not found" once via the
+        // generic DEBUG line above and silently fell off the end of the loop body —
+        // the element vanished from page 1 with no other signal. Now we log loudly
+        // with the full context needed to diagnose (element index, missing logoId,
+        // and the logoIds we DO have so it's obvious if there's a stale reference,
+        // a deleted-logo race, or a logos-array truncation upstream).
+        const availableLogoIds = data.logos.map(l => `${(l.id || '').slice(0, 8)}(${l.filename || '?'})`);
+        console.error(`❌❌❌ ELEMENT DROPPED — logoId not in project logos: element ${i}, logoId=${element.logoId}, size=${element.width}×${element.height}mm @ (${element.x},${element.y}). Available logos (${data.logos.length}): [${availableLogoIds.join(', ')}]`);
+        skippedElements.push({ i, reason: 'logo-not-found', logoId: element.logoId || '<none>' });
       }
     }
-    
+
+    // SO89550 POST-LOOP SUMMARY: surface partial/complete embedding failures loudly.
+    // If a customer's order ships with fewer logos on page 1 than they placed on the
+    // canvas we want it visible in deployment logs (no customer-facing warning per
+    // user preference — warning would tempt re-add → duplicate orders).
+    console.log(`📊 EMBED SUMMARY: page1 attempted=${elementsAttempted} embedded=${logoElementsEmbeddedOnPage1} skipped=${skippedElements.length}`);
+    if (logoElementsEmbeddedOnPage1 < elementsAttempted) {
+      console.error(`❌❌❌ PAGE-1 EMBED INCOMPLETE: only ${logoElementsEmbeddedOnPage1}/${elementsAttempted} logo elements made it onto page 1 (project="${data.projectName}", template="${data.templateSize?.name || data.templateSize?.id || '?'}"). Skipped: ${JSON.stringify(skippedElements)}`);
+    }
+
     // Add project labels to each garment color page AFTER logo embedding (so labels appear on top).
     // SAFETY: On small templates (e.g. 100×70mm badges) the artwork can extend down to within
     // a few pt of the page bottom. A fixed 60pt band painted in the garment colour will repaint
@@ -1786,6 +1838,13 @@ grestore`;
       if (page2) {
         page2.drawPage(logoPage, drawOptions);
       }
+      // SO89550 INSTRUMENTATION: bump the per-pdfDoc success counter the outer loop
+      // reads to detect silent embed failures. We only count when something was
+      // actually painted onto a page — null page1+page2 means nothing was drawn and
+      // the counter must NOT advance, otherwise the outer retry would never trigger.
+      if (page1 || page2) {
+        (pdfDoc as any).__embedSuccessCount = ((pdfDoc as any).__embedSuccessCount || 0) + 1;
+      }
       
       console.log(`✅ Logo embedded successfully with exact dimensions`);
       
@@ -1795,7 +1854,15 @@ grestore`;
       }
       
     } catch (error) {
-      console.error(`❌ Failed to embed logo:`, error);
+      // SO89550 SILENT-SKIP PATH (b): any throw inside the embed pipeline
+      // (cropPdfToContentBounds, fs.readFileSync, embedPdf, drawPage, etc.) is caught
+      // here and the outer loop continues to the next element with no other signal.
+      // Log loudly with element + logo context so the lost-artwork condition is
+      // visible in deployment logs. The outer loop checks __embedSuccessCount and
+      // retries once before giving up.
+      const err: any = error;
+      console.error(`❌❌❌ EMBED THREW for logo ${logo?.filename || '?'} (logoId=${logo?.id?.slice(0, 8) || '?'}, element ${element.width}×${element.height}mm @ (${element.x},${element.y})): ${err?.message || err}`);
+      if (err?.stack) console.error(err.stack);
     }
   }
   
@@ -1974,6 +2041,12 @@ grestore`;
     if (page2) {
       page2.drawImage(embeddedImage, drawOptions);
       console.log(`✅ Raster image drawn on page 2`);
+    }
+    // SO89550 INSTRUMENTATION: bump shared success counter so the outer loop's
+    // silent-failure detector also accounts for raster (PNG/JPG) elements that took
+    // the embedRasterImage early-return branch in embedLogoInPages.
+    if (page1 || page2) {
+      (pdfDoc as any).__embedSuccessCount = ((pdfDoc as any).__embedSuccessCount || 0) + 1;
     }
     
     // Clean up temporary recolored file
