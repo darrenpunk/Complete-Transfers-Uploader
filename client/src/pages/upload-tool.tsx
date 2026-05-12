@@ -95,6 +95,8 @@ export default function UploadTool() {
   const [detectedReorderColors, setDetectedReorderColors] = useState<Array<{color: string; colorName: string; quantity: number}>>([]);
   const [reorderLineId, setReorderLineId] = useState<number | null>(null);
   const [pendingOrientationCheckLogoIds, setPendingOrientationCheckLogoIds] = useState<string[]>([]);
+  const [orientationCheckTick, setOrientationCheckTick] = useState(0);
+  const pendingOrientationCheckStartedAtRef = useRef<number | null>(null);
   const [pendingAutoSelectLogoIds, setPendingAutoSelectLogoIds] = useState<string[]>([]);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const autoFullscreen = false;
@@ -386,9 +388,16 @@ export default function UploadTool() {
     enabled: !!currentProject?.id,
   });
 
+  // Reset orientation-check pending state when the project changes — prevents stale pending
+  // IDs from a previous project from being applied to a freshly opened one.
+  useEffect(() => {
+    setPendingOrientationCheckLogoIds([]);
+    pendingOrientationCheckStartedAtRef.current = null;
+  }, [currentProject?.id]);
+
   // Orientation mismatch detection: automatically switches to landscape/portrait variant
   useEffect(() => {
-    if (pendingOrientationCheckLogoIds.length === 0 || canvasElements.length === 0 || !currentProject?.templateSize || !currentProject?.id) return;
+    if (pendingOrientationCheckLogoIds.length === 0 || !currentProject?.templateSize || !currentProject?.id) return;
     
     const template = templateSizes.find(t => t.id === currentProject.templateSize);
     if (!template) return;
@@ -397,35 +406,52 @@ export default function UploadTool() {
     const templateIsSquare = Math.abs(template.width - template.height) < 5;
     if (templateIsSquare) {
       setPendingOrientationCheckLogoIds([]);
+      pendingOrientationCheckStartedAtRef.current = null;
       return;
     }
     
-    // Wait until ALL pending logos have either a sized canvas element OR a logo record with
-    // natural dimensions before deciding; otherwise we may consume the pending IDs prematurely.
-    const allElementsReady = pendingOrientationCheckLogoIds.every(logoId => {
+    // Wait until ALL pending logos have a logo record with NATURAL source dimensions
+    // (originalWidth/originalHeight, in mm, set at upload time from the PDF MediaBox).
+    // We deliberately do NOT accept canvas-element dimensions as "ready" — fit-to-bounds
+    // has already scaled a landscape PDF down so it looks portrait on a portrait template
+    // (e.g. 420×297mm landscape A3 fits as 217×228mm), which masks the orientation mismatch
+    // and makes the auto-switch silently fail.
+    // We also need at least ONE canvas element so we know upload processing is underway,
+    // but we MUST evaluate the timeout/retry path even when canvasElements is still empty —
+    // otherwise a slow canvas-element creation can wedge the pending list forever.
+    const allLogosHaveNaturalDims = pendingOrientationCheckLogoIds.every(logoId => {
       const logo = logos.find(l => l.id?.toString() === logoId.toString());
-      if (logo && (logo.originalWidth || logo.width) && (logo.originalHeight || logo.height)) return true;
-      const el = canvasElements.find(e => e.logoId?.toString() === logoId.toString());
-      return !!(el && el.width && el.height);
+      return !!(logo && logo.originalWidth && logo.originalHeight);
     });
-    if (!allElementsReady) return;
+    const canvasElementsReady = canvasElements.length > 0;
+    
+    if (!allLogosHaveNaturalDims || !canvasElementsReady) {
+      // Seed start timestamp on first incomplete check so we can time-out eventually.
+      if (pendingOrientationCheckStartedAtRef.current === null) {
+        pendingOrientationCheckStartedAtRef.current = Date.now();
+      }
+      const elapsed = Date.now() - pendingOrientationCheckStartedAtRef.current;
+      if (elapsed > 6000) {
+        console.log(`📐 Orientation auto-switch: gave up after 6s (logoDimsReady=${allLogosHaveNaturalDims}, canvasElementsReady=${canvasElementsReady})`);
+        setPendingOrientationCheckLogoIds([]);
+        pendingOrientationCheckStartedAtRef.current = null;
+        return;
+      }
+      // Re-trigger this effect in 400ms in case the logos / canvas-elements query refetch
+      // hasn't fired yet (e.g. server is still persisting originalWidth/Height via the
+      // deferred storage.updateLogo call after PDF MediaBox extraction).
+      const t = setTimeout(() => setOrientationCheckTick(n => n + 1), 400);
+      return () => clearTimeout(t);
+    }
+    // Got dims — reset start timestamp for the next batch.
+    pendingOrientationCheckStartedAtRef.current = null;
     
     let needsSwitch = false;
     for (const logoId of pendingOrientationCheckLogoIds) {
-      // Prefer the LOGO's natural source dimensions (in mm, pre-scaling) over the canvas
-      // element's dimensions — fit-to-bounds may have already scaled a landscape PDF down to
-      // fit a portrait template, which would mask the orientation mismatch.
+      // Use the LOGO's natural source dimensions (mm, pre-scaling) — verified non-null above.
       const logo = logos.find(l => l.id?.toString() === logoId.toString());
-      let srcW: number | undefined = (logo?.originalWidth as any) || undefined;
-      let srcH: number | undefined = (logo?.originalHeight as any) || undefined;
-      if (!srcW || !srcH) {
-        const element = canvasElements.find(el => el.logoId?.toString() === logoId.toString());
-        if (element && element.width && element.height) {
-          srcW = element.width;
-          srcH = element.height;
-        }
-      }
-      if (!srcW || !srcH) continue;
+      const srcW = logo!.originalWidth as number;
+      const srcH = logo!.originalHeight as number;
       if (Math.abs(srcW - srcH) < 5) continue;
 
       const logoIsLandscape = srcW > srcH;
@@ -506,7 +532,7 @@ export default function UploadTool() {
         console.error('Failed to auto-switch template orientation:', err);
       }
     })();
-  }, [canvasElements, logos, pendingOrientationCheckLogoIds, currentProject?.templateSize, currentProject?.id, templateSizes, partnerEmail]);
+  }, [canvasElements, logos, pendingOrientationCheckLogoIds, currentProject?.templateSize, currentProject?.id, templateSizes, partnerEmail, orientationCheckTick]);
 
   // Auto-select newly uploaded logos after their canvas elements appear
   useEffect(() => {
@@ -2443,6 +2469,7 @@ export default function UploadTool() {
               
               if (!templateIsSquare) {
                 // Store newly uploaded logo IDs for orientation check after canvas elements refetch
+                pendingOrientationCheckStartedAtRef.current = Date.now();
                 setPendingOrientationCheckLogoIds(newLogos.map((l: any) => l.id));
                 console.log(`📐 Will check orientation for logos: ${newLogos.map((l: any) => l.id).join(', ')}`);
               }
