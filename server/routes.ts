@@ -1600,6 +1600,69 @@ export async function registerRoutes(app: express.Application) {
           
           console.log(`✅ Robust PDF generated with original CMYK colors: ${pdfBuffer.length} bytes`);
           
+          // EARLY OOM-GUARD COMPRESSION (shared helper used by both robust + applique
+          // branches). See the larger comment block on the main robust path for why
+          // this exists. Returns the (possibly smaller) buffer; never throws.
+          const PRESHIP_COMPRESS_THRESHOLD = 30 * 1024 * 1024; // 30 MB
+          const preShipCompress = async (buf: Buffer, label: string): Promise<Buffer> => {
+            if (buf.length <= PRESHIP_COMPRESS_THRESHOLD) return buf;
+            console.log(`🛟 Pre-ship compression (${label}): ${(buf.length/1024/1024).toFixed(1)}MB > 30MB threshold — running /ebook to avoid OOM watchdog`);
+            const stamp = `${Date.now()}_${process.pid}_${Math.random().toString(36).slice(2, 8)}`;
+            const tmpIn  = `/tmp/preship_in_${stamp}.pdf`;
+            const tmpOut = `/tmp/preship_out_${stamp}.pdf`;
+            const tmpOut2 = `/tmp/preship_out2_${stamp}.pdf`;
+            let result = buf;
+            try {
+              fs.writeFileSync(tmpIn, buf);
+              await new Promise<void>((resolve, reject) => {
+                exec(
+                  `gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/ebook -dColorConversionStrategy=/LeaveColorUnchanged -sOutputFile=${tmpOut} ${tmpIn}`,
+                  { timeout: 60000 },
+                  (err: Error | null) => { if (err) reject(err); else resolve(); }
+                );
+              });
+              if (fs.existsSync(tmpOut)) {
+                const compressed = fs.readFileSync(tmpOut);
+                if (compressed.length > 0 && compressed.length < result.length) {
+                  const ratio = ((1 - compressed.length / result.length) * 100).toFixed(0);
+                  console.log(`🛟 Pre-ship (${label}) /ebook: ${(result.length/1024/1024).toFixed(1)}MB → ${(compressed.length/1024/1024).toFixed(1)}MB (${ratio}% reduction)`);
+                  result = compressed;
+                }
+              }
+              if (result.length > PRESHIP_COMPRESS_THRESHOLD) {
+                try {
+                  fs.writeFileSync(tmpIn, result);
+                  await new Promise<void>((resolve, reject) => {
+                    exec(
+                      `gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/screen -dColorConversionStrategy=/LeaveColorUnchanged -sOutputFile=${tmpOut2} ${tmpIn}`,
+                      { timeout: 60000 },
+                      (err: Error | null) => { if (err) reject(err); else resolve(); }
+                    );
+                  });
+                  if (fs.existsSync(tmpOut2)) {
+                    const screenBuf = fs.readFileSync(tmpOut2);
+                    if (screenBuf.length > 0 && screenBuf.length < result.length) {
+                      console.log(`🛟 Pre-ship (${label}) /screen escalation: → ${(screenBuf.length/1024/1024).toFixed(1)}MB`);
+                      result = screenBuf;
+                    }
+                  }
+                } catch (e: any) {
+                  console.warn(`⚠️ Pre-ship (${label}) /screen escalation failed: ${e?.message}`);
+                }
+              }
+            } catch (e: any) {
+              console.warn(`⚠️ Pre-ship (${label}) /ebook failed (using uncompressed): ${e?.message}`);
+            } finally {
+              try { fs.unlinkSync(tmpIn); } catch {}
+              try { fs.unlinkSync(tmpOut); } catch {}
+              try { fs.unlinkSync(tmpOut2); } catch {}
+            }
+            if (result !== buf && typeof global.gc === 'function') {
+              try { global.gc(); } catch {}
+            }
+            return result;
+          };
+
           // Check if this is an applique badges project - need to add form page
           const isAppliqueBadges = project.templateSize?.includes('applique');
           
@@ -1624,8 +1687,12 @@ export async function registerRoutes(app: express.Application) {
               });
               
               console.log(`✅ Applique Badges PDF with form page: ${appliquePdfBytes.length} bytes`);
-              
-              const appliqueWithScreenshot = await appendCanvasScreenshotPage(appliquePdfBytes, projectId, canvasElements, logos, templateSize);
+
+              // Same OOM-watchdog protection as main path; applique adds a form
+              // page on top of the already-large generator output and would
+              // otherwise hit the same RSS ceiling on big DTF jobs.
+              const appliqueCompressed = await preShipCompress(Buffer.from(appliquePdfBytes), 'applique');
+              const appliqueWithScreenshot = await appendCanvasScreenshotPage(appliqueCompressed, projectId, canvasElements, logos, templateSize);
               clearTimeout(pdfGenSafetyTimer);
               res.setHeader('Content-Type', 'application/pdf');
               res.setHeader('Content-Disposition', `attachment; filename="${buildPdfFilename(project.name, project.quantity || 1, templateSize.productCode, 'applique')}"`);
@@ -1637,7 +1704,24 @@ export async function registerRoutes(app: express.Application) {
             }
           }
           
-          const robustWithScreenshot = await appendCanvasScreenshotPage(pdfBuffer, projectId, canvasElements, logos, templateSize);
+          // EARLY OOM-GUARD COMPRESSION: when the generated PDF is large
+          // (raster-heavy DTF, large-format), the next two steps double our
+          // memory footprint:
+          //   1. appendCanvasScreenshotPage re-loads the buffer into pdf-lib
+          //      and copies all XObjects → ~2× peak.
+          //   2. res.send() queues a Buffer copy in the response stream.
+          // Production crash signature (enda@tees.ie / AFRICA DAY CT DTF ART /
+          // large_dtf, daragh@hairybaby.com / large_dtf): 105 MB raw PDF
+          // pushed RSS to 507 MB, the watchdog at index.ts MEMORY_RESTART_MB=400
+          // triggered a graceful restart 3 s later, killing the in-flight
+          // request before add-to-cart's compressUntilFits could run. Customer
+          // gets nothing, no error, no fallback. /ebook + /screen on raster
+          // DTF routinely shrink >99 % (e.g. 123 MB → 0.4 MB), so a one-shot
+          // compression here keeps RSS well under the watchdog ceiling for
+          // all downstream work. (Helper defined above; also used by applique branch.)
+          const bufferForScreenshot = await preShipCompress(pdfBuffer, 'robust');
+
+          const robustWithScreenshot = await appendCanvasScreenshotPage(bufferForScreenshot, projectId, canvasElements, logos, templateSize);
           clearTimeout(pdfGenSafetyTimer);
           res.setHeader('Content-Type', 'application/pdf');
           res.setHeader('Content-Disposition', `attachment; filename="${buildPdfFilename(project.name, project.quantity || 1, templateSize.productCode)}"`);

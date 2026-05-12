@@ -162,7 +162,9 @@ if (process.env.NODE_ENV === 'production') {
         const files = fs.readdirSync(sysTmp);
         for (const f of files) {
           const isSysTemp = f.startsWith('gs_') || f.startsWith('magick-') ||
-            f.startsWith('tmp_') || f.endsWith('.tmp');
+            f.startsWith('tmp_') || f.endsWith('.tmp') ||
+            f.startsWith('preship_') || f.startsWith('compress_') ||
+            f.startsWith('dtf_gen_');
           if (isSysTemp) {
             try {
               const fPath = `${sysTmp}/${f}`;
