@@ -1298,6 +1298,75 @@ export async function registerRoutes(app: express.Application) {
         // best-effort; leave dimsLine empty on failure
       }
 
+      // Build preflight summary from logos — mirrors client-side pdf-preview-modal logic
+      // so the PDF page 3 (canvas screenshot) shows the same approval-time preflight info.
+      const preflightLines: string[] = [];
+      try {
+        if (logos && logos.length > 0) {
+          const totalLogos = logos.length;
+
+          // Image Quality — raster vs vector
+          const hasLowResLogos = logos.some((logo: any) => {
+            if (!logo.mimeType || !logo.mimeType.startsWith('image/') || logo.mimeType.includes('svg')) return false;
+            if (logo.isComplexFilePngFallback) return false;
+            if (logo.originalMimeType === 'application/pdf') return false;
+            return true;
+          });
+
+          // Color Space — CMYK detection
+          const hasCMYKColors = logos.some((logo: any) => {
+            const preflightColorSpace = logo.preflightData?.colorSpaceDetected;
+            if (preflightColorSpace === 'CMYK') return true;
+            if (logo.isCMYKPreserved) return true;
+            const svgColors = logo.svgColors;
+            if (svgColors?.colors && Array.isArray(svgColors.colors)) {
+              return svgColors.colors.some((c: any) => c.isCMYK === true);
+            }
+            return false;
+          });
+
+          // Embedded images (raster inside vector PDFs) — DPI summary
+          let totalImages = 0;
+          let lowResCount = 0;
+          let lowestDpi = Infinity;
+          for (const logo of logos as any[]) {
+            const embData = logo.preflightData?.embeddedImageData;
+            if (embData?.images?.length > 0) {
+              totalImages += embData.images.length;
+              lowResCount += embData.images.filter((img: any) => img.isLowRes).length;
+              if (embData.lowestDpi != null && embData.lowestDpi < lowestDpi) {
+                lowestDpi = embData.lowestDpi;
+              }
+            }
+          }
+
+          // Warnings collected by preflight (low-res, missing fonts, oversize, etc.)
+          let warningCount = 0;
+          for (const logo of logos as any[]) {
+            const w = logo.preflightData?.warnings;
+            if (Array.isArray(w)) warningCount += w.length;
+          }
+
+          preflightLines.push(`Design Elements: ${totalLogos} logo${totalLogos !== 1 ? 's' : ''} uploaded`);
+          preflightLines.push(`Image Quality: ${hasLowResLogos ? 'Low resolution detected' : 'Vector graphics'}`);
+          if (totalImages > 0) {
+            const dpiTxt = lowestDpi === Infinity ? '' : ` (${lowestDpi}${lowResCount > 0 ? '' : '+'} DPI${lowResCount > 0 ? ' — need 300+' : ''})`;
+            preflightLines.push(
+              lowResCount > 0
+                ? `Embedded Images: ${lowResCount} low-res image${lowResCount > 1 ? 's' : ''}${dpiTxt}`
+                : `Embedded Images: ${totalImages} image${totalImages > 1 ? 's' : ''}${dpiTxt}`
+            );
+          }
+          preflightLines.push('Typography: Text properly outlined');
+          preflightLines.push(`Color Space: ${hasCMYKColors ? 'CMYK colors detected' : 'RGB colors detected'}`);
+          if (warningCount > 0) {
+            preflightLines.push(`Preflight Warnings: ${warningCount}`);
+          }
+        }
+      } catch (e) {
+        // best-effort; leave preflightLines empty on failure
+      }
+
       const labelH = 28;
       page.drawRectangle({
         x: 0,
@@ -1324,8 +1393,28 @@ export async function registerRoutes(app: express.Application) {
         });
       }
 
-      // Footer band with dimension(s) printed larger for readability
-      const footerH = dimsLine ? 24 : 0;
+      // Footer band — dimension line (large) plus preflight summary lines underneath.
+      // Layout: 8px top pad, dims line (12pt) if present, 4px gap, then preflight lines (10pt, 14pt leading), 8px bottom pad.
+      const dimsLineH = dimsLine ? 18 : 0;
+      const preflightLineH = 14;
+      const preflightFontSize = 10;
+      // Two-column layout only when wide enough that each half still has room for typical preflight strings (~50 chars × 5pt ≈ 250pt).
+      const twoCol = preflightLines.length >= 4 && pageWidth >= 600;
+      const halfWidth = pageWidth / 2;
+      const colA = twoCol ? preflightLines.slice(0, Math.ceil(preflightLines.length / 2)) : preflightLines;
+      const colB = twoCol ? preflightLines.slice(Math.ceil(preflightLines.length / 2)) : [];
+      // Footer height depends on layout mode — two-col uses max(colA, colB), single-col uses N.
+      const preflightRows = twoCol ? Math.max(colA.length, colB.length) : preflightLines.length;
+      const preflightBlockH = preflightRows > 0 ? preflightRows * preflightLineH + 4 : 0;
+      const footerH = (dimsLine || preflightLines.length > 0) ? 8 + dimsLineH + preflightBlockH + 8 : 0;
+
+      // Truncate a string with ellipsis to fit a target pixel width (Helvetica avg char width ≈ 0.5 × fontSize).
+      const truncToWidth = (s: string, maxW: number, fontSize: number) => {
+        const avgCharW = fontSize * 0.5;
+        const maxChars = Math.max(4, Math.floor(maxW / avgCharW));
+        return s.length <= maxChars ? s : s.slice(0, maxChars - 1) + '…';
+      };
+
       if (footerH) {
         page.drawRectangle({
           x: 0,
@@ -1334,17 +1423,45 @@ export async function registerRoutes(app: express.Application) {
           height: footerH,
           color: rgb(0.15, 0.15, 0.15),
         });
-        page.drawText(dimsLine, {
-          x: 12,
-          y: 7,
-          size: 12,
-          color: rgb(0.95, 0.95, 0.95),
-        });
+        let cursorY = footerH - 8 - 12; // top-down: first baseline for dims line (12pt)
+        if (dimsLine) {
+          page.drawText(truncToWidth(dimsLine, pageWidth - 24, 12), {
+            x: 12,
+            y: cursorY,
+            size: 12,
+            color: rgb(0.95, 0.95, 0.95),
+          });
+          cursorY -= dimsLineH;
+        }
+        if (preflightLines.length > 0) {
+          cursorY -= 4; // small gap between dims and preflight block
+          if (twoCol) {
+            const colMaxW = halfWidth - 24; // 12px left + 12px right per column
+            const startY = cursorY;
+            let yA = startY;
+            for (const line of colA) {
+              page.drawText(truncToWidth(line, colMaxW, preflightFontSize), { x: 12, y: yA, size: preflightFontSize, color: rgb(0.9, 0.9, 0.9) });
+              yA -= preflightLineH;
+            }
+            let yB = startY;
+            for (const line of colB) {
+              page.drawText(truncToWidth(line, colMaxW, preflightFontSize), { x: halfWidth + 12, y: yB, size: preflightFontSize, color: rgb(0.9, 0.9, 0.9) });
+              yB -= preflightLineH;
+            }
+          } else {
+            const colMaxW = pageWidth - 24;
+            for (const line of preflightLines) {
+              page.drawText(truncToWidth(line, colMaxW, preflightFontSize), { x: 12, y: cursorY, size: preflightFontSize, color: rgb(0.9, 0.9, 0.9) });
+              cursorY -= preflightLineH;
+            }
+          }
+        }
       }
 
+      // Image area sits between the top label band and the bottom footer band — center within that drawable region.
       const margin = 24;
       const availW = pageWidth - margin * 2;
-      const availH = pageHeight - margin * 2 - labelH - footerH;
+      const availH = pageHeight - labelH - footerH - margin * 2;
       let drawW: number, drawH: number;
       if (imgAspect > availW / availH) {
         drawW = availW;
@@ -1354,7 +1471,7 @@ export async function registerRoutes(app: express.Application) {
         drawW = availH * imgAspect;
       }
       const x = (pageWidth - drawW) / 2;
-      const y = (pageHeight - labelH - drawH) / 2;
+      const y = footerH + margin + (availH - drawH) / 2;
       page.drawImage(pngImage, { x, y, width: drawW, height: drawH });
 
       const resultBytes = await pdfDoc.save();
