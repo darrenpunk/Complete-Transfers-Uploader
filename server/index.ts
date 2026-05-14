@@ -252,28 +252,55 @@ if (process.env.NODE_ENV === 'production') {
     const mem = process.memoryUsage();
     const rssMB = Math.round(mem.rss / 1024 / 1024);
     const heapMB = Math.round(mem.heapUsed / 1024 / 1024);
+    // Post-GC value drives the restart decision: if GC reclaims memory below
+    // the threshold the spike was transient (large Buffer in-flight) and a
+    // restart would needlessly kill the request that allocated it. Production
+    // case 2026-05-14: banamansales@gmail.com large_dtf — pre-GC RSS=494MB,
+    // post-GC RSS=270MB, but old code used the pre-GC reading and committed
+    // to exit 3s later, killing the process AFTER pre-ship compression had
+    // already shrunk the PDF (63.3MB → 1.7MB) and the canvas screenshot had
+    // been appended — order died on the way to res.send().
+    let effectiveRssMB = rssMB;
     if (rssMB > MEMORY_WARN_MB) {
       if (typeof global.gc === 'function') {
         global.gc();
         cleanTempFiles();
       }
-      const after = Math.round(process.memoryUsage().rss / 1024 / 1024);
-      console.warn(`[MEMORY WARNING] RSS: ${rssMB}MB → ${after}MB after GC, Heap: ${heapMB}MB`);
-      persistCrashLog('memory_warning', `RSS: ${rssMB}MB, Heap: ${heapMB}MB`);
+      effectiveRssMB = Math.round(process.memoryUsage().rss / 1024 / 1024);
+      console.warn(`[MEMORY WARNING] RSS: ${rssMB}MB → ${effectiveRssMB}MB after GC, Heap: ${heapMB}MB`);
+      persistCrashLog('memory_warning', `RSS: ${rssMB}MB → ${effectiveRssMB}MB after GC, Heap: ${heapMB}MB`);
     }
-    if (rssMB > MEMORY_RESTART_MB && !restartScheduled) {
+    if (effectiveRssMB > MEMORY_RESTART_MB && !restartScheduled) {
       restartScheduled = true;
-      console.error(`[MEMORY CRITICAL] RSS: ${rssMB}MB — graceful restart in 3s to avoid OOM kill`);
+      console.error(`[MEMORY CRITICAL] RSS: ${effectiveRssMB}MB (post-GC) — graceful restart in 3s to avoid OOM kill`);
       // CRITICAL: await the forensic write before scheduling exit. Otherwise the
       // 3s timer can fire before Neon commits the row (especially when DB is
       // under load, which is common when we're tipping over) and we lose the
       // very evidence this whole system exists to capture.
-      const writePromise = persistCrashLog('memory_critical', `RSS: ${rssMB}MB — scheduling graceful restart`);
+      const startedAt = Date.now();
+      const writePromise = persistCrashLog('memory_critical', `RSS: ${effectiveRssMB}MB (post-GC) — scheduling graceful restart`);
       const writeDeadline = new Promise<void>((r) => setTimeout(r, 2500));
       Promise.race([writePromise, writeDeadline]).then(() => {
-        const remaining = Math.max(500, 3000 - 2500);
+        // Honor the full 3s recovery window regardless of how fast the DB
+        // write resolved. OLD code used `Math.max(500, 3000 - 2500)` which
+        // always evaluated to 500ms, so a fast Neon write collapsed the
+        // window from 3s → ~0.6s and the final-RSS recheck barely had time
+        // to see recovery.
+        const elapsed = Date.now() - startedAt;
+        const remaining = Math.max(0, 3000 - elapsed);
         setTimeout(() => {
-          console.error('[MEMORY CRITICAL] Exiting for graceful restart');
+          // Final pre-exit check: if RSS has dropped back under the warn line
+          // during the 3s window (e.g. a big response Buffer was flushed and
+          // freed), abort the exit. Without this the watchdog still kills
+          // requests whose own response delivery would have cleared memory.
+          const finalRssMB = Math.round(process.memoryUsage().rss / 1024 / 1024);
+          if (finalRssMB < MEMORY_WARN_MB) {
+            console.warn(`[MEMORY CRITICAL] Aborted graceful restart — RSS recovered to ${finalRssMB}MB (< ${MEMORY_WARN_MB}MB warn line)`);
+            persistCrashLog('memory_recovered', `RSS recovered to ${finalRssMB}MB during 3s exit window — restart cancelled`);
+            restartScheduled = false;
+            return;
+          }
+          console.error(`[MEMORY CRITICAL] Exiting for graceful restart (final RSS: ${finalRssMB}MB)`);
           process.exit(1);
         }, remaining);
       });
