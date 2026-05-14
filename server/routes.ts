@@ -3823,6 +3823,53 @@ export async function registerRoutes(app: express.Application) {
                     finalUrl = `/uploads/${finalFilename}`;
                     
                     console.log(`Created SVG preview for CMYK PDF: ${svgFilename}`);
+
+                    // Browser-risk PNG fallback: SVG passed the hard 15k-paths / 20MB complexity gate
+                    // but is still heavy enough to choke inline rendering on the canvas. Customer impact
+                    // 2026-05-13: info@esw.ie / 97fab2bf "uv sticker mirror" — 1 MB CMYK PDF → 9.1 MB SVG /
+                    // 2425 paths / 2837 elements. SvgInlineRenderer's dangerouslySetInnerHTML collapsed
+                    // the iframe to the browser's broken-image placeholder, cart stayed at 0, no
+                    // /add-to-cart request ever reached the server.
+                    try {
+                      const svgBytes = fs.statSync(svgPath).size;
+                      const SVG_BROWSER_RISK_BYTES = 2 * 1024 * 1024;
+                      const PATH_BROWSER_RISK = 1500;
+                      const ELEMENT_BROWSER_RISK = 2000;
+                      const isBrowserRiskSvg =
+                        svgBytes > SVG_BROWSER_RISK_BYTES ||
+                        complexityCheck.estimatedPathCount > PATH_BROWSER_RISK ||
+                        complexityCheck.estimatedElementCount > ELEMENT_BROWSER_RISK;
+
+                      if (isBrowserRiskSvg) {
+                        const svgSizeMB = (svgBytes / 1024 / 1024).toFixed(1);
+                        const pngFilename = `${file.filename}_canvas_fallback.png`;
+                        const pngPath = path.join(uploadDir, pngFilename);
+                        console.log(`🛟 Browser-risk SVG (${svgSizeMB}MB, ${complexityCheck.estimatedPathCount} paths, ${complexityCheck.estimatedElementCount} elements) — generating PNG canvas fallback`);
+
+                        const smartDPI = getSmartPreviewDPI(pdfPath);
+                        const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r${smartDPI} -dMaxBitmap=80000000 -dAlignToPixels=0 -dGridFitTT=2 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`;
+                        await execAsyncRaw(gsCommand, { timeout: 60000, maxBuffer: 1024 * 1024 * 50 });
+
+                        if (fs.existsSync(pngPath) && fs.statSync(pngPath).size > 0) {
+                          (file as any).canvasFallbackFilename = pngFilename;
+                          (file as any).isComplexVector = true;
+                          (file as any).vectorComplexityMetrics = {
+                            pathCount: complexityCheck.estimatedPathCount,
+                            elementCount: complexityCheck.estimatedElementCount,
+                            hasSafariIncompatibleFeatures: false,
+                            safariIssues: [],
+                            hasUnrenderableContent: true,
+                            hasUnrenderableContentReason: `Heavy SVG (${svgSizeMB}MB, ${complexityCheck.estimatedPathCount} paths) — would hang browser inline render`,
+                            detectedAt: new Date().toISOString()
+                          };
+                          console.log(`✅ PNG canvas-fallback ready for heavy CMYK SVG: ${pngFilename}`);
+                        } else {
+                          console.log(`❌❌❌ PNG canvas-fallback EMPTY for heavy CMYK SVG ${file.filename} — browser may hang on inline render`);
+                        }
+                      }
+                    } catch (fallbackErr: any) {
+                      console.log(`❌❌❌ PNG canvas-fallback FAILED for heavy CMYK SVG ${file.filename}:`, fallbackErr?.message || fallbackErr);
+                    }
                   }
                 } else {
                   // SVG missing or empty (pdf2svg was killed/failed) — render PNG directly from PDF
@@ -4083,6 +4130,49 @@ export async function registerRoutes(app: express.Application) {
                   finalFilename = svgFilename;
                   finalMimeType = 'image/svg+xml';
                   finalUrl = `/uploads/${finalFilename}`;
+
+                  // Browser-risk PNG fallback (RGB twin of the CMYK branch above).
+                  // See `Browser-risk PNG fallback` in replit.md gotchas for context.
+                  try {
+                    const svgBytes = fs.statSync(svgPath).size;
+                    const SVG_BROWSER_RISK_BYTES = 2 * 1024 * 1024;
+                    const PATH_BROWSER_RISK = 1500;
+                    const ELEMENT_BROWSER_RISK = 2000;
+                    const isBrowserRiskSvg =
+                      svgBytes > SVG_BROWSER_RISK_BYTES ||
+                      complexityCheck.estimatedPathCount > PATH_BROWSER_RISK ||
+                      complexityCheck.estimatedElementCount > ELEMENT_BROWSER_RISK;
+
+                    if (isBrowserRiskSvg) {
+                      const svgSizeMB = (svgBytes / 1024 / 1024).toFixed(1);
+                      const pngFilename = `${file.filename}_canvas_fallback.png`;
+                      const pngPath = path.join(uploadDir, pngFilename);
+                      console.log(`🛟 Browser-risk SVG (RGB) (${svgSizeMB}MB, ${complexityCheck.estimatedPathCount} paths, ${complexityCheck.estimatedElementCount} elements) — generating PNG canvas fallback`);
+
+                      const smartDPI = getSmartPreviewDPI(pdfPath);
+                      const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r${smartDPI} -dMaxBitmap=80000000 -dAlignToPixels=0 -dGridFitTT=2 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${pngPath}" "${pdfPath}"`;
+                      await execAsyncRaw(gsCommand, { timeout: 60000, maxBuffer: 1024 * 1024 * 50 });
+
+                      if (fs.existsSync(pngPath) && fs.statSync(pngPath).size > 0) {
+                        (file as any).canvasFallbackFilename = pngFilename;
+                        (file as any).isComplexVector = true;
+                        (file as any).vectorComplexityMetrics = {
+                          pathCount: complexityCheck.estimatedPathCount,
+                          elementCount: complexityCheck.estimatedElementCount,
+                          hasSafariIncompatibleFeatures: false,
+                          safariIssues: [],
+                          hasUnrenderableContent: true,
+                          hasUnrenderableContentReason: `Heavy SVG (${svgSizeMB}MB, ${complexityCheck.estimatedPathCount} paths) — would hang browser inline render`,
+                          detectedAt: new Date().toISOString()
+                        };
+                        console.log(`✅ PNG canvas-fallback ready for heavy RGB SVG: ${pngFilename}`);
+                      } else {
+                        console.log(`❌❌❌ PNG canvas-fallback EMPTY for heavy RGB SVG ${file.filename} — browser may hang on inline render`);
+                      }
+                    }
+                  } catch (fallbackErr: any) {
+                    console.log(`❌❌❌ PNG canvas-fallback FAILED for heavy RGB SVG ${file.filename}:`, fallbackErr?.message || fallbackErr);
+                  }
                 }
               } else {
                 // SVG missing/empty after pdf2svg failure — render PNG fallback directly
