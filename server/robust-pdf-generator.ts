@@ -680,6 +680,42 @@ grestore`;
     ).length;
     let logoElementsEmbeddedOnPage1 = 0;
     const skippedElements: Array<{ i: number; reason: string; logoId: string }> = [];
+
+    // SO89778 PRE-FLIGHT SOURCE-FILE SCAN: before any embed attempt, check whether
+    // each referenced logo's source file(s) still exist on disk. The Replit Reserved
+    // VM has an ephemeral ./uploads directory and Dropbox backup was removed (see
+    // routes.ts:6863 — `/dropbox-upload` returns 410 Gone), so a customer uploading
+    // a PNG that vanishes before PDF generation has NO recovery path. The embed
+    // pipeline will still throw ENOENT, retry, fail the raster fallback (PNG has
+    // no PDF source to rasterize), and skip — i.e. existing behavior is unchanged.
+    // What this scan adds is an EXPLICIT, parseable list of missing source files
+    // that gets attached to the post-loop `pdf_embed_incomplete` crash_log row,
+    // so the next "missing artwork" incident is answerable from one SQL query
+    // (`SELECT details->'sourceFileIssues' FROM crash_logs WHERE event_type='pdf_embed_incomplete'`)
+    // instead of having to grep the __embedErrors[] stack-trace blob.
+    const sourceFileIssues: Array<{ logoId: string; filename: string | null; originalFilename: string | null; filenameExists: boolean; originalExists: boolean }> = [];
+    const referencedLogoIds = new Set<string>();
+    for (const el of data.canvasElements) {
+      if ((el as any).logoId) referencedLogoIds.add((el as any).logoId);
+    }
+    for (const logoId of Array.from(referencedLogoIds)) {
+      const logo = data.logos.find(l => l.id === logoId);
+      if (!logo) continue; // 'logo-not-found' is already detected inside the loop
+      const filename = (logo as any).filename || null;
+      const originalFilename = (logo as any).originalFilename || null;
+      const filenameExists = filename ? fs.existsSync(path.join(process.cwd(), 'uploads', filename)) : false;
+      const originalExists = originalFilename ? fs.existsSync(path.join(process.cwd(), 'uploads', originalFilename)) : false;
+      // Only flag if NEITHER source exists — embedRasterImage already falls back
+      // from filename → originalFilename, so a single missing file is not a problem.
+      if (!filenameExists && !originalExists) {
+        sourceFileIssues.push({ logoId, filename, originalFilename, filenameExists, originalExists });
+        console.error(`❌❌❌ SOURCE FILES MISSING for logo=${logoId.slice(0, 8)}: filename="${filename}" exists=${filenameExists}, originalFilename="${originalFilename}" exists=${originalExists} — embed WILL fail and forensics will be in pdf_embed_incomplete`);
+      }
+    }
+    if (sourceFileIssues.length > 0) {
+      (pdfDoc as any).__sourceFileIssues = sourceFileIssues;
+    }
+
     for (let i = 0; i < data.canvasElements.length; i++) {
       const element = data.canvasElements[i];
       console.log(`🔍 DEBUG: Processing element ${i}: logoId=${element.logoId}, position=(${element.x}, ${element.y}), size=${element.width}x${element.height}, garmentColor=${element.garmentColor || 'default'}`);
@@ -805,10 +841,12 @@ grestore`;
     const page1Skips = skippedElements.filter(s => !s.reason.startsWith('page2/')).length;
     const page2Skips = skippedElements.filter(s => s.reason.startsWith('page2/')).length;
     console.log(`📊 EMBED SUMMARY: page1 attempted=${elementsAttempted} embedded=${logoElementsEmbeddedOnPage1} skipped(page1)=${page1Skips} skipped(page2)=${page2Skips}`);
-    if (logoElementsEmbeddedOnPage1 < elementsAttempted || skippedElements.length > 0) {
+    const sourceFileIssuesForLog = (pdfDoc as any).__sourceFileIssues as typeof sourceFileIssues | undefined;
+    if (logoElementsEmbeddedOnPage1 < elementsAttempted || skippedElements.length > 0 || (sourceFileIssuesForLog && sourceFileIssuesForLog.length > 0)) {
       const which: string[] = [];
       if (logoElementsEmbeddedOnPage1 < elementsAttempted) which.push(`page1 incomplete (${logoElementsEmbeddedOnPage1}/${elementsAttempted})`);
       if (page2Skips > 0) which.push(`page2 skips=${page2Skips}`);
+      if (sourceFileIssuesForLog && sourceFileIssuesForLog.length > 0) which.push(`source files missing=${sourceFileIssuesForLog.length}`);
       console.error(`❌❌❌ EMBED INCOMPLETE: ${which.join(', ')} (project="${data.projectName}", template="${data.templateSize?.name || data.templateSize?.id || '?'}"). Skipped: ${JSON.stringify(skippedElements)}`);
       // SO89676 PERSISTENT FORENSICS: deployment logs are wiped on every republish,
       // so the loud-log lines above evaporate within hours of the incident. crash_logs
@@ -830,6 +868,7 @@ grestore`;
             elementsEmbedded: logoElementsEmbeddedOnPage1,
             skippedElements,
             embedErrors: embedErrors.slice(0, 20), // cap to keep row small
+            sourceFileIssues: sourceFileIssuesForLog || [], // SO89778: missing PNG/PDF sources
             logoCount: data.logos.length,
             canvasElementCount: data.canvasElements.length,
           }

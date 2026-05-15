@@ -8638,13 +8638,53 @@ export async function registerRoutes(app: express.Application) {
             offloadedPdfFilename = artworkFilename;
           }
         } else {
-          // Defensive: should not happen now that the timeout is generous, but if
-          // both server PDF gen and the client fallback are missing we'd otherwise
-          // silently send an artwork-less add-to-cart (observed in production with
-          // the previous 60 s abort: SO89576 / Mayo co co — order created with no
-          // PDF, no attach-pdf attempted, no EXHAUSTED warning). Logging loudly so
-          // the next regression is at least visible in deployment logs.
-          console.error(`❌❌❌ NO PDF SOURCE for project ${projectId} (server gen failed AND no client PDF) — order will be created WITHOUT artwork. Project: "${projectName}", template: ${projectData.templateSize}, elements: ${projectData.canvasElements?.length ?? 'unknown'}`);
+          // EMPTY-CART GUARD (2026-05-15 test by info@camdenclothing.ie, project
+          // "Explosion" / dtf-large): server `/generate-pdf` hit the in-handler
+          // 90 s safety timeout (server/routes.ts:~1488) and returned 504 — a
+          // Ghostscript /prepress child had received SIGTERM from somewhere
+          // upstream and the handler couldn't finish before the safety net
+          // fired. Client did NOT send `pdfBase64` (large-format DTF skips the
+          // client PDF), so both sources were undefined. The OLD code logged
+          // loudly and then PROCEEDED to add-to-cart anyway — Odoo happily
+          // returned 200 / order line 344145 with zero artwork attached, the
+          // customer sees the cart at checkout with no "Art Files" entry, and
+          // the order ships missing. This is qualitatively worse than the
+          // partial-artwork case the silent-recovery preference covers: a
+          // partial-artwork order at least HAS a PDF; we block here because
+          // attaching nothing is unrecoverable downstream. Refusing the
+          // add-to-cart returns a clean 503 to the client and surfaces the
+          // generic "failed to add" toast — no "incomplete artwork" warning
+          // text that would tempt the customer to re-click and create a
+          // duplicate order. The user retries the upload itself instead.
+          // `needsServerPdf` already excludes repeat-order/zip and
+          // vector-service flows (line 8559-8561), so we know a real artwork
+          // PDF was expected here. Surface a persistent forensics row so the
+          // next occurrence is answerable from `crash_logs`.
+          console.error(`❌❌❌ NO PDF SOURCE for project ${projectId} (server gen failed AND no client PDF) — REFUSING add-to-cart to avoid empty order. Project: "${projectName}", template: ${projectData.templateSize}, elements: ${projectData.canvasElements?.length ?? 'unknown'}`);
+          try {
+            const { persistCrashLog } = await import('./index');
+            await persistCrashLog(
+              'add_to_cart_no_pdf_source',
+              `add-to-cart aborted: server PDF generation failed and no client PDF fallback`,
+              undefined,
+              {
+                projectId,
+                projectName,
+                template: projectData.templateSize,
+                productCode: productCode || null,
+                canvasElementCount: projectData.canvasElements?.length ?? null,
+                logoCount: projectData.logos?.length ?? null,
+                partnerEmail: (projectData as any)?.partnerEmail || (projectData as any)?.userEmail || null,
+              }
+            );
+          } catch (e: any) {
+            console.error(`[CRASH LOG] persistCrashLog(add_to_cart_no_pdf_source) failed: ${e?.message || e}`);
+          }
+          return res.status(503).json({
+            error: 'Artwork generation failed',
+            details: 'Please try adding to cart again. If the problem persists, re-upload your artwork.',
+            code: 'NO_PDF_SOURCE',
+          });
         }
       }
 
