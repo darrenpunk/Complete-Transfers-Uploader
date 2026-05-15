@@ -718,8 +718,18 @@ grestore`;
           await this.embedLogoInPages(pdfDoc, page1, null, logo, element, data.templateSize);
           afterCount = (pdfDoc as any).__embedSuccessCount || 0;
           if (afterCount === beforeCount) {
-            console.error(`❌❌❌ EMBED FAILED AFTER RETRY: element ${i}, logoId=${element.logoId}, filename=${logo.filename}, size=${element.width}×${element.height}mm — element WILL BE MISSING from page 1`);
-            skippedElements.push({ i, reason: 'embed-threw-twice', logoId: element.logoId || '<none>' });
+            console.error(`❌❌❌ EMBED FAILED AFTER RETRY: element ${i}, logoId=${element.logoId}, filename=${logo.filename}, size=${element.width}×${element.height}mm — attempting raster fallback so page 1 doesn't ship blank`);
+            // SO89676 EMERGENCY RASTER FALLBACK: vector pipeline failed twice — rasterize
+            // source PDF via Ghostscript pngalpha and embed as a PNG. Quality is lower than
+            // the vector path but guarantees artwork on page 1 instead of a blank sheet.
+            const fallbackOk = await this.embedSourceAsRasterFallback(pdfDoc, page1, null, logo, element, data.templateSize);
+            afterCount = (pdfDoc as any).__embedSuccessCount || 0;
+            if (!fallbackOk || afterCount === beforeCount) {
+              console.error(`❌❌❌ RASTER FALLBACK ALSO FAILED: element ${i} WILL BE MISSING from page 1 (project="${data.projectName}", template="${data.templateSize?.name || data.templateSize?.id || '?'}")`);
+              skippedElements.push({ i, reason: 'embed-and-fallback-failed', logoId: element.logoId || '<none>' });
+            } else {
+              console.log(`🛟 RASTER FALLBACK RESCUED: element ${i} embedded as raster after vector pipeline failed twice`);
+            }
           } else {
             console.log(`✅ RETRY SUCCEEDED: element ${i} embedded on second attempt`);
           }
@@ -764,12 +774,12 @@ grestore`;
           
           // Now embed the logo on top of the background rectangle
           console.log(`🎯 Embedding logo on page 2 with ${elementColorName} background: ${logo.filename}`);
-          await this.embedLogoInPages(pdfDoc, null, page2Ref, logo, element, data.templateSize);
+          await this.embedWithRetryAndFallback(pdfDoc, null, page2Ref, logo, element, data.templateSize, i, skippedElements, `page2/${elementColorName}`);
         } else if (!hasElementLevelColors) {
           // Project-level multi-color or single color - embed on ALL garment color pages
           for (const gcPage of garmentColorPages) {
             console.log(`🎯 Embedding logo on ${gcPage.colorName} page: ${logo.filename}`);
-            await this.embedLogoInPages(pdfDoc, null, gcPage.page, logo, element, data.templateSize);
+            await this.embedWithRetryAndFallback(pdfDoc, null, gcPage.page, logo, element, data.templateSize, i, skippedElements, `page2/${gcPage.colorName}`);
           }
         }
         
@@ -792,9 +802,41 @@ grestore`;
     // If a customer's order ships with fewer logos on page 1 than they placed on the
     // canvas we want it visible in deployment logs (no customer-facing warning per
     // user preference — warning would tempt re-add → duplicate orders).
-    console.log(`📊 EMBED SUMMARY: page1 attempted=${elementsAttempted} embedded=${logoElementsEmbeddedOnPage1} skipped=${skippedElements.length}`);
-    if (logoElementsEmbeddedOnPage1 < elementsAttempted) {
-      console.error(`❌❌❌ PAGE-1 EMBED INCOMPLETE: only ${logoElementsEmbeddedOnPage1}/${elementsAttempted} logo elements made it onto page 1 (project="${data.projectName}", template="${data.templateSize?.name || data.templateSize?.id || '?'}"). Skipped: ${JSON.stringify(skippedElements)}`);
+    const page1Skips = skippedElements.filter(s => !s.reason.startsWith('page2/')).length;
+    const page2Skips = skippedElements.filter(s => s.reason.startsWith('page2/')).length;
+    console.log(`📊 EMBED SUMMARY: page1 attempted=${elementsAttempted} embedded=${logoElementsEmbeddedOnPage1} skipped(page1)=${page1Skips} skipped(page2)=${page2Skips}`);
+    if (logoElementsEmbeddedOnPage1 < elementsAttempted || skippedElements.length > 0) {
+      const which: string[] = [];
+      if (logoElementsEmbeddedOnPage1 < elementsAttempted) which.push(`page1 incomplete (${logoElementsEmbeddedOnPage1}/${elementsAttempted})`);
+      if (page2Skips > 0) which.push(`page2 skips=${page2Skips}`);
+      console.error(`❌❌❌ EMBED INCOMPLETE: ${which.join(', ')} (project="${data.projectName}", template="${data.templateSize?.name || data.templateSize?.id || '?'}"). Skipped: ${JSON.stringify(skippedElements)}`);
+      // SO89676 PERSISTENT FORENSICS: deployment logs are wiped on every republish,
+      // so the loud-log lines above evaporate within hours of the incident. crash_logs
+      // (DB) survives — persist a row with the full skipped-elements list AND the
+      // per-element error messages we stashed on pdfDoc.__embedErrors so the next
+      // SO89676 is answerable from a single SQL query without reproducing the issue.
+      try {
+        const { persistCrashLog } = await import('./index');
+        const embedErrors = (pdfDoc as any).__embedErrors || [];
+        await persistCrashLog('pdf_embed_incomplete',
+          `Page-1 embed incomplete: ${logoElementsEmbeddedOnPage1}/${elementsAttempted} embedded, ${skippedElements.length} skipped`,
+          {
+            projectName: data.projectName,
+            template: data.templateSize?.name || data.templateSize?.id || null,
+            templateGroup: data.templateSize?.group || null,
+            inkColor: (data as any).inkColor || null,
+            garmentColor: data.garmentColor || null,
+            elementsAttempted,
+            elementsEmbedded: logoElementsEmbeddedOnPage1,
+            skippedElements,
+            embedErrors: embedErrors.slice(0, 20), // cap to keep row small
+            logoCount: data.logos.length,
+            canvasElementCount: data.canvasElements.length,
+          }
+        );
+      } catch (e: any) {
+        console.error(`[CRASH LOG] persistCrashLog(pdf_embed_incomplete) failed: ${e?.message || e}`);
+      }
     }
 
     // Add project labels to each garment color page AFTER logo embedding (so labels appear on top).
@@ -1923,9 +1965,174 @@ grestore`;
       const err: any = error;
       console.error(`❌❌❌ EMBED THREW for logo ${logo?.filename || '?'} (logoId=${logo?.id?.slice(0, 8) || '?'}, element ${element.width}×${element.height}mm @ (${element.x},${element.y})): ${err?.message || err}`);
       if (err?.stack) console.error(err.stack);
+      // SO89676 INSTRUMENTATION: stash the error so the outer loop can include it in
+      // the persisted crash_logs row when EMBED INCOMPLETE fires. Deployment logs are
+      // wiped on every republish, but crash_logs survives — this is the only way to
+      // recover "why did page X ship blank?" from a later forensic query.
+      try {
+        const errors: Array<any> = ((pdfDoc as any).__embedErrors ||= []);
+        errors.push({
+          logoId: logo?.id?.slice(0, 8) || null,
+          filename: logo?.filename || null,
+          originalFilename: logo?.originalFilename || null,
+          mimeType: logo?.mimeType || logo?.originalMimeType || null,
+          elementId: (element as any)?.id?.slice(0, 8) || null,
+          elementSize: `${element?.width}×${element?.height}mm`,
+          elementPos: `(${element?.x},${element?.y})`,
+          rotation: element?.rotation || 0,
+          page: page1 ? 'page1' : (page2 ? 'page2' : 'none'),
+          errMessage: String(err?.message || err).slice(0, 500),
+          errStack: String(err?.stack || '').split('\n').slice(0, 6).join('\n'),
+        });
+      } catch {}
     }
   }
-  
+
+  /**
+   * SO89676 EMERGENCY RASTER FALLBACK: when the preferred vector embed pipeline
+   * (preserved-original / SVG-recolor → convertSVGToPDF → embedPdf → drawPage)
+   * throws TWICE for the same element, page 1 (and the matching garment-colour
+   * page) end up with NOTHING drawn — the customer ships a blank artwork page.
+   *
+   * This fallback rasterizes the source PDF via Ghostscript `pngalpha` and
+   * embeds the result through the existing raster path. Quality is lower than
+   * the vector path but it guarantees the artwork appears on the page instead
+   * of silently shipping blank. Per user preference NO customer-facing warning
+   * is added (would tempt re-add → duplicate orders) — production receives
+   * artwork; the incident is recorded server-side in deployment logs AND
+   * crash_logs for monitoring.
+   */
+  private async embedSourceAsRasterFallback(
+    pdfDoc: any,
+    page1: any | null,
+    page2: any | null,
+    logo: any,
+    element: any,
+    templateSize: any
+  ): Promise<boolean> {
+    try {
+      const originalPdfPath = logo.originalFilename
+        ? path.join(process.cwd(), 'uploads', logo.originalFilename)
+        : null;
+      const logoSvgPath = logo.filename
+        ? path.join(process.cwd(), 'uploads', logo.filename)
+        : null;
+
+      // Prefer rasterizing the source PDF (highest fidelity); fall back to the
+      // SVG if no preserved PDF exists.
+      let sourcePath: string | null = null;
+      if (originalPdfPath && fs.existsSync(originalPdfPath) && originalPdfPath.toLowerCase().endsWith('.pdf')) {
+        sourcePath = originalPdfPath;
+      } else if (logoSvgPath && fs.existsSync(logoSvgPath) && logoSvgPath.toLowerCase().endsWith('.pdf')) {
+        sourcePath = logoSvgPath;
+      }
+      if (!sourcePath) {
+        console.error(`❌❌❌ RASTER FALLBACK: no source PDF available for logo=${logo?.filename || '?'}`);
+        return false;
+      }
+
+      // Per-pdfDoc cache so imposition (20-40 copies of same logo) only rasterizes once.
+      type RasterCache = Map<string, string | null>;
+      const cache: RasterCache = ((pdfDoc as any).__rasterFallbackCache ||= new Map());
+      let pngPath = cache.get(sourcePath) ?? null;
+      if (pngPath === null && !cache.has(sourcePath)) {
+        const tmp = path.join(process.cwd(), 'uploads', `embed_fallback_${Date.now()}_${process.pid}_${Math.random().toString(36).slice(2, 8)}.png`);
+        // Target ~150 DPI — high enough for production print on garment-size elements,
+        // low enough to keep memory bounded for A3 source PDFs.
+        // -dFirstPage/-dLastPage pin to page 1 so multi-page source PDFs (e.g. reorder
+        // exports with metadata/screenshot pages) don't emit numbered files and leave
+        // `tmp` missing — fallback would then false-fail and we'd ship blank.
+        try {
+          execSync(
+            `gs -o "${tmp}" -sDEVICE=pngalpha -r150 -dFirstPage=1 -dLastPage=1 -dNOPAUSE -dBATCH -dQUIET "${sourcePath}"`,
+            { encoding: 'utf8', timeout: 60000, stdio: ['ignore', 'pipe', 'pipe'] }
+          );
+        } catch (gsErr: any) {
+          console.error(`❌❌❌ RASTER FALLBACK: gs pngalpha failed for ${sourcePath}: ${gsErr?.message || gsErr}`);
+          // Do NOT cache the failure — a transient GS flake on the first placement
+          // would otherwise poison every subsequent imposition tile with the same
+          // source. The cache exists to avoid re-rasterizing on SUCCESS; on failure
+          // we want the next tile (or the next request) to try again from scratch.
+          return false;
+        }
+        if (!fs.existsSync(tmp) || fs.statSync(tmp).size < 100) {
+          console.error(`❌❌❌ RASTER FALLBACK: gs produced empty/missing PNG at ${tmp}`);
+          return false;
+        }
+        pngPath = tmp;
+        cache.set(sourcePath, pngPath);
+        console.log(`🛟 RASTER FALLBACK: rasterized ${path.basename(sourcePath)} → ${path.basename(pngPath)} (${(fs.statSync(pngPath).size / 1024).toFixed(0)} KB)`);
+      }
+      if (!pngPath) return false;
+
+      // Swap the logo's filename to point at the PNG so embedRasterImage picks it up.
+      // Use a shallow clone so we don't mutate the original logo record (other
+      // call sites still need the original filename for the next element loop).
+      const logoForRaster = {
+        ...logo,
+        filename: path.basename(pngPath),
+        mimeType: 'image/png',
+        originalFilename: undefined, // force embedRasterImage to read the PNG path directly
+      };
+      const beforeCount = (pdfDoc as any).__embedSuccessCount || 0;
+      await this.embedRasterImage(pdfDoc, page1, page2, logoForRaster, element, templateSize);
+      const afterCount = (pdfDoc as any).__embedSuccessCount || 0;
+      const ok = afterCount > beforeCount;
+      if (ok) {
+        console.log(`✅ RASTER FALLBACK SUCCEEDED for logo=${logo?.filename || '?'} on ${page1 ? 'page1' : 'page2'}`);
+      } else {
+        console.error(`❌❌❌ RASTER FALLBACK: embedRasterImage did not increment success counter for ${logo?.filename || '?'}`);
+      }
+      return ok;
+    } catch (e: any) {
+      console.error(`❌❌❌ RASTER FALLBACK THREW: ${e?.message || e}`);
+      return false;
+    }
+  }
+
+  /**
+   * SO89676 RETRY+FALLBACK WRAPPER for page-2 / garment-colour embeds. Mirrors
+   * the inline page-1 logic so a garment-colour page can't ship blank when
+   * the vector embed pipeline throws. Updates `skippedElements` so the
+   * post-loop EMBED INCOMPLETE check and crash_logs forensics capture page-2
+   * failures the same way they capture page-1 ones.
+   */
+  private async embedWithRetryAndFallback(
+    pdfDoc: any,
+    page1: any | null,
+    page2: any | null,
+    logo: any,
+    element: any,
+    templateSize: any,
+    elementIndex: number,
+    skippedElements: Array<{ i: number; reason: string; logoId: string }>,
+    pageLabel: string
+  ): Promise<boolean> {
+    const beforeCount = (pdfDoc as any).__embedSuccessCount || 0;
+    await this.embedLogoInPages(pdfDoc, page1, page2, logo, element, templateSize);
+    let afterCount = (pdfDoc as any).__embedSuccessCount || 0;
+    if (afterCount > beforeCount) return true;
+
+    console.error(`⚠️⚠️⚠️ SILENT EMBED FAILURE on ${pageLabel} for element ${elementIndex} (logo=${logo?.filename}) — retrying once`);
+    await this.embedLogoInPages(pdfDoc, page1, page2, logo, element, templateSize);
+    afterCount = (pdfDoc as any).__embedSuccessCount || 0;
+    if (afterCount > beforeCount) {
+      console.log(`✅ RETRY SUCCEEDED: element ${elementIndex} embedded on ${pageLabel} (second attempt)`);
+      return true;
+    }
+
+    console.error(`❌❌❌ EMBED FAILED AFTER RETRY on ${pageLabel}: element ${elementIndex}, logo=${logo?.filename} — attempting raster fallback`);
+    const fallbackOk = await this.embedSourceAsRasterFallback(pdfDoc, page1, page2, logo, element, templateSize);
+    afterCount = (pdfDoc as any).__embedSuccessCount || 0;
+    if (fallbackOk && afterCount > beforeCount) {
+      console.log(`🛟 RASTER FALLBACK RESCUED: element ${elementIndex} embedded as raster on ${pageLabel}`);
+      return true;
+    }
+    console.error(`❌❌❌ RASTER FALLBACK ALSO FAILED on ${pageLabel}: element ${elementIndex} WILL BE MISSING`);
+    skippedElements.push({ i: elementIndex, reason: `${pageLabel}-embed-and-fallback-failed`, logoId: (element as any)?.logoId || '<none>' });
+    return false;
+  }
+
   /**
    * Embed a raster image (PNG/JPG) directly into the PDF pages
    * Uses pdf-lib's embedPng/embedJpg for proper raster image handling

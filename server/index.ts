@@ -37,7 +37,7 @@ function getUptimeSeconds() {
   return Math.round((Date.now() - serverStartTime) / 1000);
 }
 
-function persistCrashLog(eventType: string, message: string, details?: any): Promise<void> {
+export function persistCrashLog(eventType: string, message: string, details?: any): Promise<void> {
   const { rssMb, heapMb } = getMemSnapshot();
   let activeOps = 0, queuedOps = 0;
   try { const s = getOperationStats(); activeOps = s.active; queuedOps = s.queued; } catch {}
@@ -202,7 +202,7 @@ if (process.env.NODE_ENV === 'production') {
       if (fs.existsSync(uploadsDir)) {
         const files = fs.readdirSync(uploadsDir);
         for (const f of files) {
-          const isUploadsTemp = f.startsWith('chunk_') || f.startsWith('tmp_') || f.endsWith('.tmp');
+          const isUploadsTemp = f.startsWith('chunk_') || f.startsWith('tmp_') || f.endsWith('.tmp') || f.startsWith('embed_fallback_');
           if (isUploadsTemp) {
             try {
               const fPath = `${uploadsDir}/${f}`;
