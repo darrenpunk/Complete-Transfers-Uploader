@@ -1485,12 +1485,19 @@ export async function registerRoutes(app: express.Application) {
 
   // PDF Generation endpoint - Must be before other routes
   app.get('/api/projects/:projectId/generate-pdf', guardRoute('pdf-gen'), async (req, res) => {
+    // 180 s matches add-to-cart's internal fetch timeout at routes.ts:~8609. The OLD 90 s cap
+    // fired on PNG-on-DTF-Large (1000×550mm) jobs whose slow path is the GS /prepress CMYK
+    // conversion at ~2858 — production case 2026-05-17 teemaster@serigraf.com / Celtic Bag 1.png
+    // / dtf-large hit 504 at exactly 90 s and the empty-cart guard at ~8643 had to refuse the
+    // add-to-cart. The raster-only fast path below now skips that GS step entirely for PNG/JPG
+    // sources, but bumping the safety net also protects vector flows whose embed loop is
+    // legitimately long (large impositions). add-to-cart's 180 s ceiling is the real backstop.
     const pdfGenSafetyTimer = setTimeout(() => {
       if (!res.headersSent) {
-        console.error(`⏰ PDF generation safety timeout (90s) for project: ${req.params.projectId}`);
+        console.error(`⏰ PDF generation safety timeout (180s) for project: ${req.params.projectId}`);
         res.status(504).json({ error: 'PDF generation timed out' });
       }
-    }, 90000);
+    }, 180000);
     try {
       console.log(`📄 PDF Generation requested for project: ${req.params.projectId}`);
       const projectId = req.params.projectId;
@@ -2841,6 +2848,68 @@ export async function registerRoutes(app: express.Application) {
           }
         }
         
+        // RASTER-ONLY FAST PATH (2026-05-17 teemaster@serigraf.com / Celtic Bag 1.png /
+        // dtf-large): when every logo in the project is a raster source (PNG/JPG with no
+        // PDF original), the Ghostscript /prepress CMYK conversion below is wasted work
+        // and an OOM/timeout risk. The pdf-lib document already wraps the PNG bytes on
+        // template-sized pages — that's the "PDF wrapping the PNG" the customer expects.
+        // The GS step with `-dDownsampleColorImages=false` re-processes every embedded
+        // PNG pixel at native resolution and on a 1000×550mm DTF page with a ~10MP source
+        // it can comfortably exceed 60 s — the production case hit the in-handler 90 s
+        // safety timer, returned 504 to add-to-cart, and the empty-cart guard at ~8643
+        // refused the order. CMYK conversion is also semantically pointless here: the
+        // source pixels are RGB; downstream DTF print converts to CMYK at RIP time.
+        // Per user preference ("Core functionality over complex color management
+        // features") we skip the GS step entirely for raster-only projects and emit the
+        // pdf-lib bytes directly. Pre-ship `/ebook` compression is still applied via
+        // the existing append path's downstream compressUntilFits inside add-to-cart.
+        // NOTE on detection: must check BOTH `originalMimeType`/`originalFilename` AND
+        // `mimeType`/`filename` INDEPENDENTLY. AI/EPS uploads keep `originalFilename=*.ai`
+        // and `originalMimeType=application/postscript|illustrator` while the rendered
+        // asset on disk is SVG (`filename=*.svg`); a `originalMimeType || mimeType` /
+        // `originalFilename || filename` short-circuit would surface `.ai` +
+        // `application/postscript`, miss the PDF/SVG name check, and let a true vector
+        // project fall through into the raster fast path. Anything recognisably vector —
+        // PDF, SVG, AI, EPS, PostScript — disqualifies on ANY of the four fields.
+        let rasterOnlyDisqualifier: { logoId?: string; reason: string } | null = null;
+        const isVectorLogo = (logo: any): boolean => {
+          const fields = [logo.originalMimeType, logo.mimeType, logo.originalFilename, logo.filename]
+            .filter((v: any) => typeof v === 'string')
+            .map((v: string) => v.toLowerCase());
+          for (const v of fields) {
+            if (v.endsWith('.pdf') || v.endsWith('.svg') || v.endsWith('.ai') || v.endsWith('.eps') || v.endsWith('.ps')) return true;
+            if (v === 'application/pdf') return true;
+            if (v.includes('svg')) return true;
+            if (v.includes('postscript') || v.includes('illustrator')) return true;
+          }
+          return false;
+        };
+        const allRasterOnly = logos.length > 0 && logos.every((logo: any) => {
+          if (isVectorLogo(logo)) {
+            if (!rasterOnlyDisqualifier) {
+              rasterOnlyDisqualifier = {
+                logoId: logo.id,
+                reason: `mime=${logo.originalMimeType || logo.mimeType || '?'} file=${logo.originalFilename || logo.filename || '?'}`
+              };
+            }
+            return false;
+          }
+          return true;
+        });
+        if (!allRasterOnly && rasterOnlyDisqualifier) {
+          console.log(`ℹ️ Standard fallback: vector logo present (${rasterOnlyDisqualifier.reason}) — keeping GS /prepress CMYK conversion`);
+        }
+        if (allRasterOnly) {
+          console.log(`🛟 Raster-only project (${logos.length} logo${logos.length===1?'':'s'}) — skipping GS /prepress CMYK conversion (would waste 30-90s with no quality gain for RGB sources)`);
+          const rasterWithScreenshot = await appendCanvasScreenshotPage(Buffer.from(pdfBytes), projectId, canvasElements, logos, templateSize);
+          clearTimeout(pdfGenSafetyTimer);
+          console.log(`✅ Raster-only PDF ready: ${(rasterWithScreenshot.length/1024/1024).toFixed(2)}MB`);
+          res.setHeader('Content-Type', 'application/pdf');
+          res.setHeader('Content-Disposition', `attachment; filename="${buildPdfFilename(project.name, project.quantity || 1, templateSize?.productCode)}"`);
+          res.send(rasterWithScreenshot);
+          return;
+        }
+
         // CRITICAL: Convert PDF to proper CMYK colorspace with ICC profile for Illustrator
         console.log(`🎨 Converting PDF to CMYK with OutputIntent for Illustrator compatibility...`);
         
