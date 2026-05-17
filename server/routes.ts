@@ -8972,6 +8972,132 @@ export async function registerRoutes(app: express.Application) {
 
       console.log(`✅ Successfully added to cart:`, { ...data, order_line_id: data?.order_line_id });
       res.json(data);
+
+      // POST-ADD-TO-CART ARTWORK VERIFICATION (shipped 2026-05-17): fire-and-forget
+      // check that artwork was actually attached to the order line we just created.
+      // The empty-cart guard at ~8643 blocks the obvious case (no PDF source at all),
+      // but the harder failure mode is "Odoo returns 200 with order_line_id, yet
+      // artwork_files_datas was never written" — observed historically for
+      // order_line 344145 (info@camdenclothing.ie) and the suspected cause of
+      // teemaster@serigraf.com / Celtic Bag 1.png on dtf-large. We can't XML-RPC
+      // into Odoo from this env (no DB/UID/PASSWORD), so we use the public
+      // `/artwork/api/order-pdf/{lineId}` endpoint with the same customer session
+      // cookies the proxy already holds. If the response is missing or
+      // implausibly small, persist a `cart_artwork_missing` crash_log row with the
+      // order_line_id so a single SQL query answers "which orders shipped without
+      // artwork?". Wait ~2 s before checking — Odoo's write hooks (artwork_image
+      // sync to task etc.) take a moment to settle and an immediate check
+      // false-alarms. Silent to the customer per silent-recovery preference
+      // (warning would tempt re-add → duplicate orders). NEVER blocks the
+      // response; the cart line is already returned to the client above.
+      if (data?.order_line_id) {
+        const orderLineId = data.order_line_id;
+        const verifyCookies = clientCookies;
+        const verifyEmail = (projectData as any)?.partnerEmail || (projectData as any)?.userEmail || null;
+        const verifyProjectId = projectId;
+        const verifyProjectName = projectName;
+        const verifyTemplate = projectData.templateSize;
+        // "Expected artwork attempted" signal: any path that put real artwork on the
+        // wire. ZIP-repeat is included — it lands in `artwork_files_datas` via the
+        // same mechanism as DTF Quick Upload (see ~8649), so a missing/empty PDF
+        // response for a ZIP order is just as bad as for a regular PDF.
+        const verifyHadInlinePdf = !!projectData.pdfBase64 && !offloadedPdfBase64;
+        const verifyHadOffload = !!offloadedPdfBase64;
+        const verifyHadZip = !!zipBase64 && !!zipFileName;
+        const verifyHadAttachmentAttempt = verifyHadInlinePdf || verifyHadOffload || verifyHadZip;
+        const verifyOdooBase = odooBaseUrl;
+        // One-shot probe: returns {status, bytes} where bytes is the AUTHORITATIVE body
+        // length (drained from arrayBuffer). Trusting `Content-Length` alone would
+        // false-positive on chunked transfer (CL absent → 0) and flood crash_logs.
+        const probeOrderPdf = async (): Promise<{ status: number; bytes: number; error?: string }> => {
+          try {
+            const url = `${verifyOdooBase}/artwork/api/order-pdf/${orderLineId}${verifyEmail ? `?email=${encodeURIComponent(verifyEmail)}` : ''}`;
+            const resp = await fetch(url, { method: 'GET', headers: { 'Cookie': verifyCookies } });
+            let bytes = 0;
+            try {
+              const buf = await resp.arrayBuffer();
+              bytes = buf.byteLength;
+            } catch {
+              // Body drain failed — fall back to Content-Length so we at least have
+              // a signal, but mark it as the less-trustworthy source by accepting it.
+              bytes = parseInt(resp.headers.get('content-length') || '0', 10);
+            }
+            return { status: resp.status, bytes };
+          } catch (e: any) {
+            return { status: 0, bytes: 0, error: e?.message || String(e) };
+          }
+        };
+        (async () => {
+          // Two-phase probe: +2 s (let Odoo's write hooks settle), then on a
+          // suspicious result wait +8 s and re-probe before persisting. Single
+          // probes false-alarm during eventual-consistency windows.
+          await new Promise(r => setTimeout(r, 2000));
+          const first = await probeOrderPdf();
+          // 200 + ≥1 KB body = artwork is present. Done.
+          if (first.status === 200 && first.bytes > 1024) {
+            console.log(`🔍 Artwork verify OK for order_line #${orderLineId}: ${first.status} ${first.bytes}B`);
+            return;
+          }
+          // Auth context drift (common in iframe sessions): server-forwarded cookies
+          // may not carry an Odoo session at all. Can't tell — skip silently.
+          if (first.status === 401 || first.status === 403) {
+            console.log(`🔍 Artwork verify inconclusive for order_line #${orderLineId}: ${first.status} (auth context drift, skipping)`);
+            return;
+          }
+          // Pure transport failure (fetch threw) — Odoo may be flaky. Don't flood.
+          if (first.status === 0 && first.error) {
+            console.log(`🔍 Artwork verify probe-1 transport error for order_line #${orderLineId} (inconclusive): ${first.error}`);
+            return;
+          }
+          // No real attachment was ever sent (e.g. vector-service-only flow) — nothing
+          // to verify against. Stay silent.
+          if (!verifyHadAttachmentAttempt) return;
+          // Suspicious: 404, 200<1KB, or other status while we DID attempt to attach.
+          // Re-probe after +8 s before persisting — covers slower Odoo write hooks.
+          console.log(`🔍 Artwork verify probe-1 suspicious for order_line #${orderLineId}: ${first.status} ${first.bytes}B — re-probing in 8s`);
+          await new Promise(r => setTimeout(r, 8000));
+          const second = await probeOrderPdf();
+          if (second.status === 200 && second.bytes > 1024) {
+            console.log(`🔍 Artwork verify OK for order_line #${orderLineId} on probe-2: ${second.status} ${second.bytes}B`);
+            return;
+          }
+          if (second.status === 401 || second.status === 403) {
+            console.log(`🔍 Artwork verify inconclusive on probe-2 for order_line #${orderLineId}: ${second.status} (auth drift, skipping)`);
+            return;
+          }
+          if (second.status === 0 && second.error) {
+            console.log(`🔍 Artwork verify probe-2 transport error for order_line #${orderLineId} (inconclusive): ${second.error}`);
+            return;
+          }
+          console.error(`❌ Artwork verify FAILED for order_line #${orderLineId} after 2 probes: probe1=${first.status}/${first.bytes}B probe2=${second.status}/${second.bytes}B — persisting cart_artwork_missing`);
+          try {
+            const { persistCrashLog } = await import('./index');
+            await persistCrashLog(
+              'cart_artwork_missing',
+              `Post-add-to-cart verification: order-pdf returned probe1=${first.status}/${first.bytes}B probe2=${second.status}/${second.bytes}B for order_line #${orderLineId}`,
+              undefined,
+              {
+                orderLineId,
+                projectId: verifyProjectId,
+                projectName: verifyProjectName,
+                template: verifyTemplate,
+                partnerEmail: verifyEmail,
+                pdfPath: verifyHadOffload ? 'offload' : verifyHadZip ? 'zip' : 'inline',
+                probe1Status: first.status,
+                probe1Bytes: first.bytes,
+                probe2Status: second.status,
+                probe2Bytes: second.bytes,
+              }
+            );
+          } catch (logErr: any) {
+            console.error(`[CRASH LOG] persistCrashLog(cart_artwork_missing) failed: ${logErr?.message || logErr}`);
+          }
+        })().catch(outerErr => {
+          // Absolute belt-and-braces: the IIFE should never throw past its inner
+          // try/catch blocks, but if something does the worker MUST NOT crash on it.
+          console.error(`[ARTWORK VERIFY] unexpected error for order_line #${orderLineId}: ${outerErr?.message || outerErr}`);
+        });
+      }
     } catch (error) {
       console.error('❌ Add to cart API error:', error);
       res.status(500).json({ 
