@@ -348,6 +348,21 @@ async function doRunUploadProbe(opts: { sendAlertOnFailure?: boolean }): Promise
     return { ok: true, durationMs: Date.now() - startedAt, skipped: true, skipReason, probe: 'upload' };
   }
 
+  // Concurrency guard — if a real customer upload is already active, OperationGuard caps
+  // upload concurrency at 1, so the probe POST will queue behind it. Heavy uploads (e.g.
+  // 200+ MB PDFs) can take longer than the 45 s probe timeout, producing a false-positive
+  // "This operation was aborted" alert even though the pipeline is working as designed.
+  // Skip rather than alert when the slot is legitimately occupied.
+  try {
+    const { getActiveOpsDetail } = await import('./operation-guard');
+    const activeUploads = getActiveOpsDetail().filter(op => op.label.startsWith('upload:'));
+    if (activeUploads.length > 0) {
+      const skipReason = `Upload slot busy (${activeUploads.length} active: ${activeUploads.map(o => `${o.label}@${o.runningSeconds}s`).join(', ')}) — skipped to avoid queueing`;
+      await safeLog('upload-health-skip', skipReason, { activeUploads, probe: 'upload' });
+      return { ok: true, durationMs: Date.now() - startedAt, skipped: true, skipReason, probe: 'upload' };
+    }
+  } catch { /* if operation-guard is unavailable, fall through to the normal probe */ }
+
   let probeProjectId: string | null = null;
   try {
     const sourcePath = path.join(process.cwd(), 'server/placeholders/60X60 Placeholder.pdf');
