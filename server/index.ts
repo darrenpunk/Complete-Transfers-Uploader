@@ -153,6 +153,26 @@ const serverStartPersist = persistCrashLog('server_start', `Server process start
 })();
 
 process.on('uncaughtException', (err) => {
+  // EADDRINUSE port-race: Replit's platform occasionally spawns a duplicate
+  // Node process in the same container (observed ~every 6h in production —
+  // see gotcha). The duplicate loses the race for port 5000. On Node 20+,
+  // setupListenHandle throws this synchronously from inside a microtask
+  // (processTicksAndRejections) instead of emitting an 'error' event, so
+  // the existing retry loop's server.once('error', ...) listener never
+  // fires — it lands here. Letting it fall through to the default
+  // uncaught_exception branch leaves the process alive but with no
+  // listening socket → Replit health checks fail → ~60s of customer-visible
+  // white-screen before the platform finally kills the zombie. Exiting
+  // immediately collapses that window to seconds, and the orphan from the
+  // prior container is gone by the time the next start runs. Distinct
+  // event type so this doesn't pollute real crash forensics.
+  if ((err as any)?.code === 'EADDRINUSE') {
+    console.warn('[SERVER] EADDRINUSE — duplicate process lost port race, exiting cleanly for restart');
+    persistCrashLog('port_in_use_lost_race', err.message, { stack: err.stack })
+      .finally(() => process.exit(0));
+    return;
+  }
+
   const isNeonConnectionError = err.message?.includes('terminating connection due to administrator command') ||
     err.message?.includes('Connection terminated') ||
     err.message?.includes('connection was forcibly closed') ||
