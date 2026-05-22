@@ -962,6 +962,42 @@ export async function registerRoutes(app: express.Application) {
     res.json({ version: SERVER_BUILD_VERSION });
   });
 
+  app.get('/api/_debug/logo-source/:logoId', async (req, res) => {
+    try {
+      const token = String(req.query.token || '');
+      const expected = process.env.SESSION_SECRET || '';
+      if (!expected || token.length !== expected.length ||
+          !crypto.timingSafeEqual(Buffer.from(token), Buffer.from(expected))) {
+        return res.status(404).end();
+      }
+      const logoId = String(req.params.logoId);
+      const logo = await storage.getLogo(logoId);
+      if (!logo) return res.status(404).json({ error: 'logo not found' });
+      const candidates = [logo.filename, (logo as any).originalFilename].filter(Boolean) as string[];
+      const out: any = { id: logo.id, projectId: (logo as any).projectId, files: [] };
+      for (const fname of candidates) {
+        const p = path.join(process.cwd(), 'uploads', fname);
+        const exists = fs.existsSync(p);
+        const entry: any = { filename: fname, path: p, exists };
+        if (exists) {
+          const stat = fs.statSync(p);
+          entry.size = stat.size;
+          entry.mtime = stat.mtime.toISOString();
+          if (fname.toLowerCase().endsWith('.svg') && stat.size < 2_000_000) {
+            entry.content = fs.readFileSync(p, 'utf8');
+          } else {
+            entry.head = fs.readFileSync(p).slice(0, 256).toString('base64');
+          }
+        }
+        out.files.push(entry);
+      }
+      res.set('Cache-Control', 'no-store');
+      res.json(out);
+    } catch (e: any) {
+      res.status(500).json({ error: String(e?.message || e) });
+    }
+  });
+
   // Fetch current logged-in user from Odoo
   app.get('/api/user/current', async (req, res) => {
     try {
