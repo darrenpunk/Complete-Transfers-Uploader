@@ -5434,7 +5434,27 @@ export async function registerRoutes(app: express.Application) {
                         let globalXMin = Infinity, globalYMin = Infinity, globalXMax = -Infinity, globalYMax = -Infinity;
                         const verifyPageW = pdfPageDimensions?.widthPts ?? Infinity;
                         const verifyPageH = pdfPageDimensions?.heightPts ?? Infinity;
-                        for (const line of lines) {
+                        for (let lineIdx = 0; lineIdx < lines.length; lineIdx++) {
+                          // CRITICAL: Skip the root <svg> element (always the first line in --query-all
+                          // output, ID `svg<n>`). Its bbox is the geometric union of every descendant
+                          // — including invisible/clipped geometry — so including it inflates the
+                          // accumulated bbox toward full-page coverage and trips the
+                          // `inkscapeIsFullPage` heuristic below, which then discards Inkscape's
+                          // result and falls back to the GS-only bbox. For PDFs that pair a centered
+                          // embedded raster with surrounding vector text (e.g. header/footer captions
+                          // around a hero image), GS's bbox device misses the white/light text and
+                          // returns only the raster bounds — and the unioned-with-root Inkscape
+                          // result was the only signal that recovered the missing text. Skipping
+                          // root preserves that signal: the union of child elements still equals or
+                          // tightens the real content bbox, and the existing background-rect
+                          // safeguard further down handles the Corel-invisible-page-rect case.
+                          const line = lines[lineIdx];
+                          // Skip first line only (always the root <svg> in --query-all output).
+                          // Narrow defensively: do NOT match by ID pattern like /^svg\d*$/ — that
+                          // would also swallow user-authored elements named `svg1` etc. The
+                          // positional first-line skip is sufficient because Inkscape always emits
+                          // the root first and only once.
+                          if (lineIdx === 0) continue;
                           const parts = line.split(',');
                           if (parts.length >= 5) {
                             const elX = parseFloat(parts[1]) || 0;
