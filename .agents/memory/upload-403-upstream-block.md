@@ -61,3 +61,23 @@ domain — outside this codebase.
   a small in-flight semaphore (release on res `finish`+`close`). **Why:** architect failed the
   first cut precisely because the cap sat after the parser. **How to apply:** reuse this pattern
   for ANY new large-body JSON endpoint, not just uploads.
+
+- **The fallback must cover EVERY upload entry point, not just the main dropzone.** There are
+  3 client multipart upload XHR paths to `POST /logos`: the main dropzone, the sidebar
+  "add logo" mutation, and the embroidery-canvas upload. Only the dropzone originally had the
+  base64 fallback, so a customer uploading via the sidebar/embroidery hit the same WAF socket-
+  abort and got a bare "Upload failed" with NO retry — looking like "the file won't upload"
+  even though the dropzone path recovered fine. **Why:** prod deployment logs showed many
+  `[ERROR] 500: aborted` rows WITH a following `🔁 [BASE64 FALLBACK]` (dropzone, recovered) but
+  also several aborts with NO fallback (the unprotected paths). **How to apply:** all three now
+  share `client/src/lib/upload-with-fallback.ts` (`uploadLogosWithFallback`). Any NEW upload
+  entry point must use this helper, never a raw multipart XHR. The helper supports optional
+  `canvasIndex`; the server `/logos/base64` route forwards it into the internal replay so
+  embroidery uploads still land on canvas 1 through the fallback.
+
+- **Diagnosing "uploads work in dev but not deployed":** the smoking gun is `[ERROR] 500:
+  aborted` at Node `abortIncoming`/`socketOnClose` (peer closed the socket mid-upload) — that's
+  upstream, NOT the worker dying. Confirm the worker is healthy by querying prod `crash_logs`
+  (database skill, `environment:"production"`): if there are NO `memory_critical`/
+  `suspected_crash`/`uncaught_exception` rows in the window, it is definitively an upstream
+  WAF/proxy reset, not OOM.

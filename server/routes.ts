@@ -7099,6 +7099,13 @@ export async function registerRoutes(app: express.Application) {
         });
       }
 
+      // Forward optional canvasIndex (used by the embroidery-canvas upload path) so the
+      // base64 fallback assigns the file to the same canvas a direct multipart upload would.
+      const canvasIndexRaw = req.body?.canvasIndex;
+      if (canvasIndexRaw !== undefined && canvasIndexRaw !== null && `${canvasIndexRaw}`.trim() !== '') {
+        formData.append('canvasIndex', `${canvasIndexRaw}`);
+      }
+
       console.log(`🔁 [BASE64 FALLBACK] Replaying ${rawFiles.length} file(s) (${Math.round(totalDecodedBytes / 1024)}KB) into multipart handler for project ${projectId}`);
 
       const internalRes = await fetch(`http://localhost:${process.env.PORT || 5000}/api/projects/${projectId}/logos`, {

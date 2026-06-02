@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useParams, useLocation } from "wouter";
 import { queryClient, apiRequest } from "@/lib/queryClient";
+import { uploadLogosWithFallback } from "@/lib/upload-with-fallback";
 import { useToast } from "@/hooks/use-toast";
 import type { Project, Logo, CanvasElement, TemplateSize, GarmentColorItem } from "@shared/schema";
 import ToolsSidebar from "@/components/tools-sidebar";
@@ -1898,51 +1899,33 @@ export default function UploadTool() {
     setUploadProgress(0);
     setIsUploadProcessing(false);
 
-    const formData = new FormData();
-    formData.append('files', file);
-    formData.append('canvasIndex', '1');
-
-    const xhr = new XMLHttpRequest();
-    xhr.upload.addEventListener('progress', (event) => {
-      if (event.lengthComputable) {
-        const percentComplete = Math.round((event.loaded / event.total) * 100);
-        setUploadProgress(percentComplete);
-        if (percentComplete >= 100) {
-          setIsUploadProcessing(true);
-        }
-      }
-    });
-
-    xhr.addEventListener('load', () => {
-      if (xhr.status === 200 || xhr.status === 201) {
-        try {
-          const newLogos = JSON.parse(xhr.responseText);
-          queryClient.setQueryData(
-            ["/api/projects", currentProject.id, "logos"],
-            (oldLogos: any[] = []) => [...oldLogos, ...newLogos]
-          );
-          queryClient.invalidateQueries({ queryKey: ["/api/projects", currentProject.id, "canvas-elements"] });
-          setActiveCanvasIndex(1);
-          toast({
-            title: "Embroidery file uploaded",
-            description: `${file.name} has been added to the Embroidery Canvas.`,
-          });
-        } catch (e) {
-          console.error('Failed to parse upload response:', e);
-        }
-      }
-      setIsUploading(false);
-      setIsUploadProcessing(false);
-    });
-
-    xhr.addEventListener('error', () => {
-      toast({ title: "Upload failed", description: "Failed to upload embroidery file.", variant: "destructive" });
-      setIsUploading(false);
-      setIsUploadProcessing(false);
-    });
-
-    xhr.open('POST', `/api/projects/${currentProject.id}/logos`);
-    xhr.send(formData);
+    uploadLogosWithFallback({
+      projectId: currentProject.id,
+      files: [file],
+      canvasIndex: 1,
+      onProgress: (percent) => setUploadProgress(percent),
+      onProcessing: () => setIsUploadProcessing(true),
+    })
+      .then((newLogos) => {
+        queryClient.setQueryData(
+          ["/api/projects", currentProject.id, "logos"],
+          (oldLogos: any[] = []) => [...oldLogos, ...newLogos]
+        );
+        queryClient.invalidateQueries({ queryKey: ["/api/projects", currentProject.id, "canvas-elements"] });
+        setActiveCanvasIndex(1);
+        toast({
+          title: "Embroidery file uploaded",
+          description: `${file.name} has been added to the Embroidery Canvas.`,
+        });
+      })
+      .catch((err) => {
+        console.error('Failed to upload embroidery file:', err);
+        toast({ title: "Upload failed", description: "Failed to upload embroidery file.", variant: "destructive" });
+      })
+      .finally(() => {
+        setIsUploading(false);
+        setIsUploadProcessing(false);
+      });
   };
 
   // Handle applique badges form submission

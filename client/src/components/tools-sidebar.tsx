@@ -1,5 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
+import { uploadLogosWithFallback } from "@/lib/upload-with-fallback";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import type { Project, Logo, TemplateSize, CanvasElement } from "@shared/schema";
@@ -412,42 +413,11 @@ export default function ToolsSidebar({
       setIsUploadProcessing(false);
       setIsUploadModalOpen(true);
       
-      const formData = new FormData();
-      files.forEach(file => formData.append('files', file));
-      
-      return new Promise<any[]>((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        
-        xhr.upload.addEventListener('progress', (event) => {
-          if (event.lengthComputable) {
-            const percentComplete = Math.round((event.loaded / event.total) * 100);
-            setUploadProgress(percentComplete);
-            if (percentComplete >= 100) {
-              setIsUploadProcessing(true);
-            }
-          }
-        });
-        
-        xhr.addEventListener('load', () => {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            try {
-              const data = JSON.parse(xhr.responseText);
-              console.log('Upload response data:', data);
-              resolve(data);
-            } catch (e) {
-              reject(new Error('Failed to parse response'));
-            }
-          } else {
-            reject(new Error('Upload failed'));
-          }
-        });
-        
-        xhr.addEventListener('error', () => {
-          reject(new Error('Upload failed'));
-        });
-        
-        xhr.open('POST', `/api/projects/${project.id}/logos`);
-        xhr.send(formData);
+      return uploadLogosWithFallback({
+        projectId: project.id,
+        files,
+        onProgress: (percent) => setUploadProgress(percent),
+        onProcessing: () => setIsUploadProcessing(true),
       });
     },
     onSuccess: (newLogos) => {
