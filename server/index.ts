@@ -389,6 +389,35 @@ app.get('/health', async (_req, res) => {
 // have populated req.body for successful parses.
 app.use(requestTracker);
 
+// Pre-parse admission control for the base64 upload fallback
+// (POST /api/projects/:id/logos/base64). The global express.json() parser below
+// buffers the ENTIRE request body into memory before any route handler runs, so a
+// route-level concurrency cap cannot stop many large JSON bodies from being parsed
+// concurrently and exhausting the heap (→ OOM watchdog kill). body-parser already
+// rejects an oversized single request via Content-Length, but it does NOT bound
+// concurrency. This guard runs FIRST so it can reject (503) before the body is ever
+// buffered. The route handler keeps its own decoded-byte validation as defense in depth.
+const BASE64_FALLBACK_PATH = /^\/api\/projects\/[^/]+\/logos\/base64\/?$/;
+const BASE64_PREPARSE_MAX_CONCURRENT = 2;
+const BASE64_PREPARSE_MAX_BYTES = 200 * 1024 * 1024; // align with express.json limit below
+let base64PreparseInFlight = 0;
+app.use((req, res, next) => {
+  if (req.method !== 'POST' || !BASE64_FALLBACK_PATH.test(req.path)) return next();
+  const declaredLen = Number(req.headers['content-length'] || 0);
+  if (declaredLen > BASE64_PREPARSE_MAX_BYTES) {
+    return res.status(413).json({ error: 'Upload too large for the fallback path' });
+  }
+  if (base64PreparseInFlight >= BASE64_PREPARSE_MAX_CONCURRENT) {
+    return res.status(503).json({ error: 'Server busy, please try again in a moment' });
+  }
+  base64PreparseInFlight++;
+  let released = false;
+  const release = () => { if (!released) { released = true; base64PreparseInFlight--; } };
+  res.on('finish', release);
+  res.on('close', release);
+  next();
+});
+
 // JSON body limit sized for inline add-to-cart pdfBase64 payloads.
 // Production heap is --max-old-space-size=4096 (.replit), so 200MB JSON parses
 // safely. Keep the client threshold in client/src/pages/upload-tool.tsx strictly

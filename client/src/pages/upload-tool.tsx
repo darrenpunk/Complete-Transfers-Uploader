@@ -2295,8 +2295,48 @@ export default function UploadTool() {
     
     const formData = new FormData();
     files.forEach(file => formData.append('files', file));
-    
+
+    const SAFE_JSON_BYTES = 80 * 1024 * 1024; // base64 (~1.33x) stays well under the server's 200MB JSON limit and avoids browser OOM
+
+    // Encodes the file(s) as a base64 JSON body for the fallback upload path.
+    const buildBase64Body = async () => {
+      const encoded = await Promise.all(files.map(async (file) => {
+        const bytes = new Uint8Array(await file.arrayBuffer());
+        let binary = '';
+        const CHUNK = 0x8000;
+        for (let i = 0; i < bytes.length; i += CHUNK) {
+          binary += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + CHUNK)));
+        }
+        return { originalName: file.name, mimetype: file.type || 'application/pdf', dataBase64: btoa(binary) };
+      }));
+      return JSON.stringify({ files: encoded });
+    };
+
+    // Retries the upload as a base64-encoded JSON POST. Some corporate proxies/WAFs block
+    // multipart/form-data file uploads (returning 403 before the request reaches our server)
+    // while still allowing ordinary JSON POSTs through. The server decodes the payload and
+    // replays it into the real upload handler, so the response shape is identical.
+    const retryViaBase64 = async () => {
+      try {
+        setIsUploading(true);
+        setIsUploadProcessing(true);
+        setUploadProgress(0);
+        const body = await buildBase64Body();
+        sendUpload(`/api/projects/${currentProject!.id}/logos/base64`, body, 'application/json', true);
+      } catch (err) {
+        console.error('Failed to build base64 fallback body:', err);
+        setIsUploading(false);
+        setIsUploadProcessing(false);
+        toast({
+          title: "Error",
+          description: "Upload failed. Please check your connection and try again.",
+          variant: "destructive",
+        });
+      }
+    };
+
     // Create XMLHttpRequest for progress tracking
+    function sendUpload(uploadUrl: string, uploadBody: any, contentType: string | null, isFallback: boolean) {
     const xhr = new XMLHttpRequest();
     
     // Track upload progress
@@ -2526,20 +2566,36 @@ export default function UploadTool() {
           console.error('413 Payload Too Large - File exceeds server upload limit');
         }
       } else {
-        setIsUploading(false);
-        setIsUploadProcessing(false);
         console.error('Upload failed with status:', xhr.status);
         console.log('Response text:', xhr.responseText);
-        toast({
-          title: "Error", 
-          description: `Upload failed (${xhr.status}). Please try again.`,
-          variant: "destructive",
-        });
+        const totalBytes = files.reduce((sum, f) => sum + f.size, 0);
+        if (xhr.status === 403 && !isFallback && totalBytes <= SAFE_JSON_BYTES) {
+          console.warn('⚠️ Multipart upload blocked (403) — retrying via base64-JSON fallback');
+          retryViaBase64();
+        } else {
+          setIsUploading(false);
+          setIsUploadProcessing(false);
+          toast({
+            title: "Error", 
+            description: `Upload failed (${xhr.status}). Please try again.`,
+            variant: "destructive",
+          });
+        }
       }
     });
     
-    // Handle errors
+    // Handle errors. A reverse proxy / WAF that blocks multipart sometimes RESETS
+    // the connection rather than returning an explicit 403 — that surfaces here as
+    // the error event (status 0), not as a `load` with status 403. Treat it the same
+    // way: retry once via the base64-JSON fallback (guarded by !isFallback + size cap)
+    // before giving up, so both block signatures are covered.
     xhr.addEventListener('error', () => {
+      const totalBytes = files.reduce((sum, f) => sum + f.size, 0);
+      if (!isFallback && totalBytes <= SAFE_JSON_BYTES) {
+        console.warn('⚠️ Multipart upload connection error — retrying via base64-JSON fallback');
+        retryViaBase64();
+        return;
+      }
       setIsUploading(false);
       setIsUploadProcessing(false);
       console.error('XMLHttpRequest error event triggered');
@@ -2563,9 +2619,14 @@ export default function UploadTool() {
     });
     
     // Send the request
-    xhr.open('POST', `/api/projects/${currentProject.id}/logos`);
+    xhr.open('POST', uploadUrl);
+    if (contentType) xhr.setRequestHeader('Content-Type', contentType);
+    xhr.withCredentials = true;
     xhr.timeout = 120000; // 2 minute timeout for large files
-    xhr.send(formData);
+    xhr.send(uploadBody);
+    }
+
+    sendUpload(`/api/projects/${currentProject.id}/logos`, formData, null, false);
   };
 
   if (!currentProject) {

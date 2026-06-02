@@ -6984,6 +6984,113 @@ export async function registerRoutes(app: express.Application) {
     }
   });
 
+  // Base64-JSON upload fallback. Some corporate proxies / WAFs block multipart/form-data
+  // file uploads outright (returning 403 before the request ever reaches us) while letting
+  // ordinary application/json POSTs through. This endpoint accepts the same file(s) as a
+  // base64 JSON body, writes them to disk, and replays them into the real multipart handler
+  // over localhost (no external proxy in that hop), reusing the entire processing pipeline.
+  // NOTE: intentionally NO guardRoute here — the internal multipart call below already holds
+  // the upload op-guard slot; double-guarding would self-deadlock at concurrency 1.
+  // Lightweight admission control for the base64 fallback, kept SEPARATE from the upload
+  // op-guard so the re-entrant localhost call below cannot self-deadlock. The endpoint
+  // base64-decodes in-process before the inner guard applies, so this bounds how many
+  // large decodes can run concurrently (defends the worker against memory/CPU exhaustion).
+  const BASE64_FALLBACK_MAX_CONCURRENT = 2;
+  const BASE64_FALLBACK_MAX_FILES = 25;
+  const BASE64_FALLBACK_MAX_TOTAL_BYTES = 150 * 1024 * 1024; // total decoded bytes across all files
+  let base64FallbackInFlight = 0;
+
+  app.post('/api/projects/:projectId/logos/base64', async (req, res) => {
+    if (base64FallbackInFlight >= BASE64_FALLBACK_MAX_CONCURRENT) {
+      return res.status(503).json({ error: 'Server busy, please try again in a moment' });
+    }
+    base64FallbackInFlight++;
+    const tempPaths: string[] = [];
+    try {
+      const projectId = req.params.projectId;
+
+      const project = await storage.getProject(projectId);
+      if (!project) {
+        return res.status(404).json({ error: 'Project not found' });
+      }
+
+      const rawFiles = Array.isArray(req.body?.files) ? req.body.files : [];
+      if (rawFiles.length === 0) {
+        return res.status(400).json({ error: 'No files provided' });
+      }
+      if (rawFiles.length > BASE64_FALLBACK_MAX_FILES) {
+        return res.status(413).json({ error: 'Too many files' });
+      }
+
+      const allowedMimes = [
+        'image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml', 'application/pdf',
+        'application/postscript', 'application/illustrator', 'application/x-illustrator'
+      ];
+
+      const FormData = (await import('form-data')).default;
+      const formData = new FormData();
+
+      let totalDecodedBytes = 0;
+      for (const f of rawFiles) {
+        const originalName = typeof f?.originalName === 'string' && f.originalName.trim()
+          ? path.basename(f.originalName)
+          : 'upload';
+        const rawData = typeof f?.dataBase64 === 'string' ? f.dataBase64 : '';
+        if (!rawData) {
+          return res.status(400).json({ error: 'Missing file data' });
+        }
+        // Tolerate a data: URL prefix if the client ever sends one.
+        const commaIdx = rawData.indexOf(',');
+        const b64 = rawData.startsWith('data:') && commaIdx !== -1 ? rawData.slice(commaIdx + 1) : rawData;
+        // Bound memory BEFORE decoding: base64 inflates ~4/3, so decoded ≈ length * 3/4.
+        const estimatedBytes = Math.floor((b64.length * 3) / 4);
+        if (totalDecodedBytes + estimatedBytes > BASE64_FALLBACK_MAX_TOTAL_BYTES) {
+          return res.status(413).json({ error: 'Upload too large for the fallback path' });
+        }
+        const buf = Buffer.from(b64, 'base64');
+        if (!buf || buf.length === 0) {
+          return res.status(400).json({ error: 'Empty or invalid file data' });
+        }
+        totalDecodedBytes += buf.length;
+        if (totalDecodedBytes > BASE64_FALLBACK_MAX_TOTAL_BYTES) {
+          return res.status(413).json({ error: 'Upload too large for the fallback path' });
+        }
+        const safeMimetype = allowedMimes.includes(f?.mimetype) ? f.mimetype : 'application/pdf';
+        const tempPath = path.join(uploadDir, `b64_${crypto.randomBytes(8).toString('hex')}_${Date.now()}`);
+        await fs.promises.writeFile(tempPath, buf);
+        tempPaths.push(tempPath);
+        formData.append('files', fs.createReadStream(tempPath), {
+          filename: originalName,
+          contentType: safeMimetype,
+        });
+      }
+
+      console.log(`🔁 [BASE64 FALLBACK] Replaying ${rawFiles.length} file(s) (${Math.round(totalDecodedBytes / 1024)}KB) into multipart handler for project ${projectId}`);
+
+      const internalRes = await fetch(`http://localhost:${process.env.PORT || 5000}/api/projects/${projectId}/logos`, {
+        method: 'POST',
+        body: formData as any,
+        headers: {
+          ...formData.getHeaders(),
+          ...(req.headers.cookie ? { Cookie: req.headers.cookie } : {}),
+        },
+      });
+
+      const bodyText = await internalRes.text();
+      if (!internalRes.ok) {
+        console.error('[BASE64 FALLBACK] Internal logo processing failed:', internalRes.status, bodyText.slice(0, 500));
+        return res.status(internalRes.status).type('application/json').send(bodyText);
+      }
+      return res.status(200).type('application/json').send(bodyText);
+    } catch (error: any) {
+      console.error('[BASE64 FALLBACK] error:', error?.message);
+      return res.status(500).json({ error: 'Failed to process uploaded file' });
+    } finally {
+      base64FallbackInFlight--;
+      await Promise.all(tempPaths.map(p => fs.promises.unlink(p).catch(() => {})));
+    }
+  });
+
   // Dropbox upload endpoint (disabled - Dropbox integration removed)
   app.post('/api/projects/:projectId/logos/dropbox-upload', async (_req, res) => {
     res.status(410).json({ error: 'Dropbox upload is no longer available. Please upload files directly (up to 500MB).' });
