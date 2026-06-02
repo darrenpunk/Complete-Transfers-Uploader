@@ -5426,6 +5426,14 @@ export async function registerRoutes(app: express.Application) {
                       console.log(`⚠️ GS bbox covers ${(areaCoverage * 100).toFixed(0)}% of page - verifying with Inkscape for white content`);
                       
                       let inkscapeVerifyBounds: typeof gsBounds | null = null;
+                      // Track the largest SINGLE element (raw px²) and the root element's
+                      // area (raw px²) so we can tell a genuine invisible/background full-page
+                      // RECT (one element ≈ covers the page) apart from real distributed white
+                      // content (MANY small glyph/paths whose UNION is full-page but no single
+                      // element is). Both produce a near-full-page Inkscape union, so the union
+                      // alone cannot distinguish them — the per-element max can.
+                      let inkscapeMaxElementArea = 0;
+                      let inkscapeRootArea = 0;
                       try {
                         // CRITICAL: async exec — inkscape --query-all is the heaviest call in the
                         // pipeline and was repeatedly blocking the event loop, killing prod.
@@ -5454,7 +5462,15 @@ export async function registerRoutes(app: express.Application) {
                           // would also swallow user-authored elements named `svg1` etc. The
                           // positional first-line skip is sufficient because Inkscape always emits
                           // the root first and only once.
-                          if (lineIdx === 0) continue;
+                          if (lineIdx === 0) {
+                            const rootParts = line.split(',');
+                            if (rootParts.length >= 5) {
+                              const rW = parseFloat(rootParts[3]) || 0;
+                              const rH = parseFloat(rootParts[4]) || 0;
+                              if (rW > 0 && rH > 0) inkscapeRootArea = rW * rH;
+                            }
+                            continue;
+                          }
                           const parts = line.split(',');
                           if (parts.length >= 5) {
                             const elX = parseFloat(parts[1]) || 0;
@@ -5462,6 +5478,10 @@ export async function registerRoutes(app: express.Application) {
                             const elW = parseFloat(parts[3]) || 0;
                             const elH = parseFloat(parts[4]) || 0;
                             if (elW > 0.5 && elH > 0.5) {
+                              // Track the largest SINGLE element (RAW px², unclamped) — used below
+                              // to tell a full-page background rect (one dominant element) apart
+                              // from distributed white content (many small elements).
+                              inkscapeMaxElementArea = Math.max(inkscapeMaxElementArea, elW * elH);
                               // Clamp each element to page bounds before accumulating global bbox
                               const clampedX = Math.max(elX, 0);
                               const clampedY = Math.max(elY, 0);
@@ -5521,7 +5541,21 @@ export async function registerRoutes(app: express.Application) {
                           // while the actual artwork only covers a fraction of the page.
                           const inkscapeIsFullPage = inkPageCoverage > 0.85;
                           const gsBboxPageCoverage = gsArea / pageArea;
-                          const shouldTrustGSOverInkscape = inkscapeIsFullPage && gsBboxPageCoverage > 0.20;
+                          // Distinguish a real invisible/background full-page RECT from genuine
+                          // distributed white content. A background rect is ONE element that alone
+                          // ≈ covers the page (coverage ~1.0 vs the root). White text/art is MANY
+                          // small elements whose UNION is full-page but whose largest single member
+                          // is a small fraction of the page. Only suppress Inkscape (trust GS) when
+                          // the full-page-ness is attributable to a single dominant element.
+                          // Fall back to TRUE (old behaviour) if we couldn't measure the root area.
+                          const maxSingleElementCoverage = inkscapeRootArea > 0
+                            ? inkscapeMaxElementArea / inkscapeRootArea
+                            : 1;
+                          const dominatedBySingleElement = maxSingleElementCoverage > 0.85;
+                          const shouldTrustGSOverInkscape = inkscapeIsFullPage && gsBboxPageCoverage > 0.20 && dominatedBySingleElement;
+                          if (inkscapeIsFullPage && gsBboxPageCoverage > 0.20 && !dominatedBySingleElement) {
+                            console.log(`🧩 Inkscape full-page (${(inkPageCoverage * 100).toFixed(0)}%) but largest single element is only ${(maxSingleElementCoverage * 100).toFixed(0)}% of page — distributed white content, NOT a background rect. Trusting Inkscape.`);
+                          }
                           
                           if ((inkWidthBigger || inkHeightBigger) && !shouldTrustGSOverInkscape) {
                             const gsPageCov = (gsArea / pageArea * 100).toFixed(0);
