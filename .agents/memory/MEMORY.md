@@ -1,0 +1,1 @@
+- [Upload 403 = upstream block](upload-403-upstream-block.md) — "403 on upload" not in our logs + works locally = upstream WAF/proxy on the PDF bytes, not our code; re-encode via gs to unblock.

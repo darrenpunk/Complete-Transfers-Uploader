@@ -108,3 +108,9 @@ id = "-_nSF8P03e6TErWjraLk7"
 uri = "file://tests/pdf-fixtures/14_scaled-down-on-A5-cut_BEM.pdf"
 type = "pdf"
 title = "Fixture 14 — BEM source"
+
+[[outputs]]
+id = "GPtsxDN-QN2t0gtwZXWNy"
+uri = "file://attached_assets/TIDE_cleaned_for_upload.pdf"
+type = "pdf"
+title = "TIDE — re-saved for upload (content identical)"
