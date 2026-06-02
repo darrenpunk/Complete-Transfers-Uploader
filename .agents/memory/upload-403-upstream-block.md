@@ -81,3 +81,19 @@ domain — outside this codebase.
   (database skill, `environment:"production"`): if there are NO `memory_critical`/
   `suspected_crash`/`uncaught_exception` rows in the window, it is definitively an upstream
   WAF/proxy reset, not OOM.
+
+- **The blocking proxy has THREE signatures, not two — the third is a silent HANG.** A WAF/proxy
+  can (1) return 403, (2) RESET the socket (xhr `error`, status 0), OR (3) just **hang** the
+  multipart upload mid-stream: progress freezes (customer saw it stuck at 60%), NO `error` and NO
+  `load` event ever fires, and only the 2-min `xhr.timeout` eventually fires → a bare "Timeout"
+  toast with no retry. The 403+reset fallbacks do nothing for a hang. **Why:** customer
+  conor@hifiveclothing.ie / CenterSatge-LogoB(P)-A4.pdf — a file they'd uploaded fine before —
+  froze at 60% then errored after 2 min. **How to apply:** every XHR upload path needs a STALL
+  watchdog: a ~30s timer re-armed on each `xhr.upload` progress event while percent<100, cleared
+  at 100% (server-processing phase — NO more upload progress is expected, do NOT treat that wait
+  as a stall), and armed once right after `xhr.send()` (covers a hang before the first progress
+  event). On stall → abort + base64 fallback. Also make the `timeout` handler fall back. Guard
+  ALL terminal paths (load/error/timeout/stall) with one `handled` boolean so exactly one fires.
+  CRITICAL: gate the timeout fallback on `!reachedFullUpload` — once all bytes are sent, a
+  timeout means slow SERVER processing, and re-submitting would create a DUPLICATE
+  logo/order; only retry timeouts that happened mid-send.

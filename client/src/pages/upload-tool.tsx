@@ -2321,6 +2321,38 @@ export default function UploadTool() {
     // Create XMLHttpRequest for progress tracking
     function sendUpload(uploadUrl: string, uploadBody: any, contentType: string | null, isFallback: boolean) {
     const xhr = new XMLHttpRequest();
+
+    // A blocking proxy/WAF sometimes neither returns 403 nor resets the socket — it just
+    // HANGS the multipart upload mid-stream (progress freezes, e.g. at 60%) until the 2-min
+    // timeout finally fires. Detect that stall (no upload progress for STALL_MS while still
+    // sending) and switch to the base64-JSON fallback immediately instead of making the user
+    // wait out the full timeout. `handled` guards every terminal path so we act exactly once.
+    const STALL_MS = 30000;
+    const totalUploadBytes = files.reduce((sum, f) => sum + f.size, 0);
+    const canFallback = !isFallback && totalUploadBytes <= SAFE_JSON_BYTES;
+    let handled = false;
+    let reachedFullUpload = false; // true once all bytes are sent — past this point a timeout means slow SERVER processing, not a blocked upload, so we must NOT re-submit (would duplicate)
+    let stallTimer: ReturnType<typeof setTimeout> | null = null;
+    const clearStallTimer = () => { if (stallTimer) { clearTimeout(stallTimer); stallTimer = null; } };
+    function handleStall() {
+      if (handled) return;
+      handled = true;
+      clearStallTimer();
+      try { xhr.abort(); } catch {}
+      if (canFallback) {
+        console.warn('⚠️ Multipart upload stalled (no progress) — retrying via base64-JSON fallback');
+        retryViaBase64();
+        return;
+      }
+      setIsUploading(false);
+      setIsUploadProcessing(false);
+      toast({
+        title: "Upload stalled",
+        description: "The upload stopped responding. Please try again.",
+        variant: "destructive",
+      });
+    }
+    const armStallTimer = () => { clearStallTimer(); stallTimer = setTimeout(handleStall, STALL_MS); };
     
     // Track upload progress
     xhr.upload.addEventListener('progress', (event) => {
@@ -2329,12 +2361,19 @@ export default function UploadTool() {
         setUploadProgress(percentComplete);
         if (percentComplete >= 100) {
           setIsUploadProcessing(true);
+          reachedFullUpload = true;
+          clearStallTimer(); // fully sent — now waiting on the server, no more upload progress expected
+        } else {
+          armStallTimer(); // reset the stall watchdog on every chunk of real progress
         }
       }
     });
     
     // Handle completion
     xhr.addEventListener('load', () => {
+      if (handled) return;
+      handled = true;
+      clearStallTimer();
       if (xhr.status === 200 || xhr.status === 201) {
         try {
           const newLogos = JSON.parse(xhr.responseText);
@@ -2573,8 +2612,10 @@ export default function UploadTool() {
     // way: retry once via the base64-JSON fallback (guarded by !isFallback + size cap)
     // before giving up, so both block signatures are covered.
     xhr.addEventListener('error', () => {
-      const totalBytes = files.reduce((sum, f) => sum + f.size, 0);
-      if (!isFallback && totalBytes <= SAFE_JSON_BYTES) {
+      if (handled) return;
+      handled = true;
+      clearStallTimer();
+      if (canFallback) {
         console.warn('⚠️ Multipart upload connection error — retrying via base64-JSON fallback');
         retryViaBase64();
         return;
@@ -2589,8 +2630,17 @@ export default function UploadTool() {
       });
     });
     
-    // Handle timeout
+    // Handle timeout. A hung proxy can let progress freeze until the timeout fires; treat it
+    // the same as a stall/reset and fall back to base64-JSON before giving up.
     xhr.addEventListener('timeout', () => {
+      if (handled) return;
+      handled = true;
+      clearStallTimer();
+      if (canFallback && !reachedFullUpload) {
+        console.warn('⚠️ Multipart upload timed out before completing — retrying via base64-JSON fallback');
+        retryViaBase64();
+        return;
+      }
       setIsUploading(false);
       setIsUploadProcessing(false);
       console.error('XMLHttpRequest timeout');
@@ -2607,6 +2657,7 @@ export default function UploadTool() {
     xhr.withCredentials = true;
     xhr.timeout = 120000; // 2 minute timeout for large files
     xhr.send(uploadBody);
+    armStallTimer(); // start the stall watchdog in case the connection hangs before any progress
     }
 
     sendUpload(`/api/projects/${currentProject.id}/logos`, formData, null, false);
