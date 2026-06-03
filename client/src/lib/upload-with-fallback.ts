@@ -12,6 +12,7 @@
 
 const SAFE_JSON_BYTES = 80 * 1024 * 1024; // base64 (~1.33x) stays under the server's 200MB JSON limit and avoids browser OOM
 const STALL_MS = 30000; // no upload progress for this long (while still sending) ⇒ treat as a hung proxy
+const POST_UPLOAD_STALL_MS = 45000; // bytes fully sent but NO server response this long ⇒ hung proxy (a normal /logos upload responds in ~3s); fall back rather than waiting out the 2-min timeout. Logo upload only, so a rare duplicate logo is an acceptable tradeoff vs a hard failure.
 
 export interface UploadWithFallbackOptions {
   projectId: string;
@@ -45,7 +46,6 @@ export function uploadLogosWithFallback(opts: UploadWithFallbackOptions): Promis
       const xhr = new XMLHttpRequest();
       const canFallback = !isFallback && totalBytes <= SAFE_JSON_BYTES;
       let handled = false; // guards every terminal path (load / error / timeout / stall) so we act exactly once
-      let reachedFullUpload = false; // true once all bytes are sent — past this a timeout means slow SERVER processing, not a blocked upload, so we must NOT re-submit (would duplicate)
       let stallTimer: ReturnType<typeof setTimeout> | null = null;
       const clearStallTimer = () => { if (stallTimer) { clearTimeout(stallTimer); stallTimer = null; } };
 
@@ -72,7 +72,7 @@ export function uploadLogosWithFallback(opts: UploadWithFallbackOptions): Promis
         }
         reject(new Error('Upload stalled'));
       };
-      const armStallTimer = () => { clearStallTimer(); stallTimer = setTimeout(handleStall, STALL_MS); };
+      const armStallTimer = (ms: number = STALL_MS) => { clearStallTimer(); stallTimer = setTimeout(handleStall, ms); };
 
       xhr.upload.addEventListener('progress', (event) => {
         if (event.lengthComputable) {
@@ -80,8 +80,10 @@ export function uploadLogosWithFallback(opts: UploadWithFallbackOptions): Promis
           onProgress?.(percent);
           if (percent >= 100) {
             onProcessing?.();
-            reachedFullUpload = true;
-            clearStallTimer(); // fully sent — now waiting on the server, no more upload progress expected
+            // A hung proxy can withhold the server response even after all bytes are sent (small
+            // files hit 100% instantly, so the mid-send watchdog never fires). Keep a watchdog
+            // running so a post-send hang falls back instead of waiting out the 2-min timeout.
+            armStallTimer(POST_UPLOAD_STALL_MS);
           } else {
             armStallTimer(); // reset the stall watchdog on every chunk of real progress
           }
@@ -126,8 +128,8 @@ export function uploadLogosWithFallback(opts: UploadWithFallbackOptions): Promis
         if (handled) return;
         handled = true;
         clearStallTimer();
-        if (canFallback && !reachedFullUpload) {
-          console.warn('⚠️ Multipart upload timed out before completing — retrying via base64-JSON fallback');
+        if (canFallback) {
+          console.warn('⚠️ Multipart upload timed out — retrying via base64-JSON fallback');
           retryViaBase64();
           return;
         }

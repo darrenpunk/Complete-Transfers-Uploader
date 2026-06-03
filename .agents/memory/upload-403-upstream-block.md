@@ -94,6 +94,21 @@ domain — outside this codebase.
   as a stall), and armed once right after `xhr.send()` (covers a hang before the first progress
   event). On stall → abort + base64 fallback. Also make the `timeout` handler fall back. Guard
   ALL terminal paths (load/error/timeout/stall) with one `handled` boolean so exactly one fires.
-  CRITICAL: gate the timeout fallback on `!reachedFullUpload` — once all bytes are sent, a
-  timeout means slow SERVER processing, and re-submitting would create a DUPLICATE
-  logo/order; only retry timeouts that happened mid-send.
+
+- **Don't clear the stall watchdog at 100% — RE-ARM it (the hang can come AFTER the bytes are
+  sent).** First attempt gated the timeout fallback on `!reachedFullUpload` (idea: once all bytes
+  are sent a timeout = slow server, re-submitting would duplicate). That guard BROKE small uploads:
+  a tiny file (~387KB) reaches 100% instantly → `reachedFullUpload` true + stall timer cleared →
+  the proxy then HANGS while withholding the server response → no error, no stall, and the gated
+  timeout never retries → bare "Timeout", no recovery (customer sonia@punctualprint.com, repeated
+  `[ERROR] 500: aborted` ~2 min apart with NO base64 replay in prod logs). **Fix:** at 100% don't
+  clear the watchdog — re-arm it with a longer post-upload window (~45s) so a hang-after-send falls
+  back; make the 2-min timeout retry unconditionally too (backstop). **Why the duplicate fear was
+  overblown HERE:** this XHR posts ONLY to `/logos` (logo upload); add-to-cart is a SEPARATE
+  mutation (`addToCartMutation` → `/add-to-cart`), so a retry can at worst make a duplicate LOGO
+  (visible/deletable), never a duplicate ORDER. And a normal `/logos` POST finishes in ~3s in
+  prod, so a 45s post-send silence is unambiguously a hung proxy, not slow processing. User prefers
+  silent recovery over a hard failure, so the rare duplicate-logo tradeoff is accepted. **How to
+  apply:** make `armStallTimer(ms = STALL_MS)` take a duration; call `armStallTimer(45000)` at 100%
+  instead of clearing. If you ever route an ORDER-creating submit through this helper, restore an
+  idempotency guard (server-side key) — the duplicate tradeoff is only safe for logo uploads.
