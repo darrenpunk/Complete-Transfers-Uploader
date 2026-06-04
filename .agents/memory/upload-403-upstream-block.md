@@ -127,3 +127,25 @@ domain — outside this codebase.
   apply:** make `armStallTimer(ms = STALL_MS)` take a duration; call `armStallTimer(45000)` at 100%
   instead of clearing. If you ever route an ORDER-creating submit through this helper, restore an
   idempotency guard (server-side key) — the duplicate tradeoff is only safe for logo uploads.
+
+- **The order-creating path (add-to-cart) is now safe to retry through the WAF — via server-side
+  idempotency, not client cleverness.** This closes the loop on the repeated "restore an idempotency
+  guard before retrying order-creating submits" warnings above. The durable pattern: have the CLIENT
+  mint ONE idempotency key per click (UUID) and reuse it across that click's network retries; the
+  SERVER keeps a "settle exactly once" store keyed by it — the first request is the *leader* (runs the
+  single Odoo call), same-key retries either return the cached outcome or COALESCE as waiters onto the
+  leader and get its exact result, so a same-key retry can NEVER start a second Odoo call. **The two
+  load-bearing invariants that make it correct:** (1) every terminal exit (success AND all failures)
+  must call the single `settle(status, body)` (once-guarded) or a coalesced waiter parks forever; (2)
+  the upstream call MUST be time-bounded (an `AbortController` timeout — the add-to-cart Odoo fetch had
+  NONE) so the leader is guaranteed to settle, otherwise a hung upstream pins the entry and parks every
+  waiter forever (the architect failed the first cut on exactly this). Sweep only evicts SETTLED entries
+  so an in-flight leader is never deleted out from under its waiters. **Why client auto-retry alone is
+  NOT enough and is dangerous here:** a reset/hang can happen AFTER Odoo committed (only the response
+  lost), so a blind client retry duplicates the ORDER — the server key is what makes the retry a no-op.
+  Correspondingly the client must NOT auto-retry a 500 (only 403/502/503/504 + conn-errors/timeout), so
+  a leader that settles 500 (e.g. the 180s upstream abort) is a hard failure, not a duplicate trigger.
+  **Accepted residual:** if Odoo commits but the server aborts before reading the response, the key
+  settles 500 and a user *manually* re-clicking mints a NEW key → possible duplicate. Truly fixing that
+  needs idempotency at Odoo itself (key→order_line map) or a post-timeout reconciliation lookup — out of
+  scope until duplicate-order tickets actually appear.

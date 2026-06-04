@@ -785,22 +785,74 @@ export default function UploadTool() {
       // BOTH MODES: Use Replit backend proxy to add to cart
       // The backend proxy forwards the request to Odoo, avoiding CORS issues
       // This approach works reliably in both iframe and standalone modes
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(projectData),
-      });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Cart error: ${errorText}`);
+      //
+      // RESILIENT RETRY (shipped 2026-06-04): on certain customer networks an upstream
+      // WAF/proxy intermittently 403-blocks, resets, or silently hangs requests. For an
+      // ORDER-CREATING call like this, a naive retry would risk duplicate orders — so the
+      // server now dedupes by an idempotency key (X-Idempotency-Key). We generate ONE key
+      // per click and reuse it across retries, which makes retrying safe: a retry can only
+      // ever return the SAME order the first attempt created, never a second one. We retry
+      // on the three proxy signatures (403, connection error/reset, and hang via a timeout)
+      // plus the server's own "please retry" 503.
+      const idempotencyKey: string = (() => {
+        try {
+          if (typeof crypto !== 'undefined' && (crypto as any).randomUUID) return (crypto as any).randomUUID();
+        } catch {}
+        return `atc-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      })();
+      const ATTEMPT_TIMEOUT_MS = 60000; // a normal add-to-cart finishes in a few seconds; a 60s silence = hung proxy
+      const MAX_ATTEMPTS = 3;
+      const RETRYABLE_STATUS = new Set([403, 502, 503, 504]);
+      const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
+
+      let data: any;
+      let lastError: Error | null = null;
+      for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+        const ac = new AbortController();
+        const timer = setTimeout(() => ac.abort(), ATTEMPT_TIMEOUT_MS);
+        try {
+          const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Idempotency-Key': idempotencyKey,
+            },
+            credentials: 'include',
+            body: JSON.stringify(projectData),
+            signal: ac.signal,
+          });
+          clearTimeout(timer);
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            if (RETRYABLE_STATUS.has(response.status) && attempt < MAX_ATTEMPTS) {
+              console.warn(`⚠️ Add-to-cart attempt ${attempt} got ${response.status} — retrying (same idempotency key, no duplicate risk)`);
+              lastError = new Error(`Cart error: ${errorText}`);
+              await sleep(800 * attempt);
+              continue;
+            }
+            throw new Error(`Cart error: ${errorText}`);
+          }
+
+          data = await response.json();
+          return { data, action };
+        } catch (err: any) {
+          clearTimeout(timer);
+          const isAbort = err?.name === 'AbortError';
+          // A bare fetch rejection (TypeError "Failed to fetch") = connection reset by the
+          // proxy; an AbortError = our timeout fired because the proxy hung the request.
+          // Both are safe to retry thanks to the server-side idempotency key.
+          const isConnError = isAbort || err instanceof TypeError || /failed to fetch|network|load failed/i.test(err?.message || '');
+          if (isConnError && attempt < MAX_ATTEMPTS) {
+            console.warn(`⚠️ Add-to-cart attempt ${attempt} ${isAbort ? 'timed out (hung proxy)' : 'connection error'} — retrying (same idempotency key, no duplicate risk)`);
+            lastError = err instanceof Error ? err : new Error(String(err));
+            await sleep(800 * attempt);
+            continue;
+          }
+          throw err instanceof Error ? err : new Error(String(err));
+        }
       }
-      
-      const data = await response.json();
-      return { data, action };
+      throw lastError || new Error('Add to cart failed after retries');
     },
     onSuccess: (result) => {
       const { data, action } = result as { data: any; action: 'new-project' | 'view-cart' | undefined };

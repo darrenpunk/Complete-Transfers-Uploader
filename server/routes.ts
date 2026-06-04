@@ -7034,6 +7034,62 @@ export async function registerRoutes(app: express.Application) {
   const BASE64_FALLBACK_MAX_TOTAL_BYTES = 150 * 1024 * 1024; // total decoded bytes across all files
   let base64FallbackInFlight = 0;
 
+  // --- Add-to-cart idempotency (shipped 2026-06-04) ---
+  // add-to-cart is ORDER-CREATING, so the client could NOT safely retry it when the
+  // upstream WAF/proxy dropped the *response* of a request the server had already
+  // completed (real production case: order created in Odoo as SO90788, but the 200
+  // never reached the customer's browser → his on-screen cart stayed empty → he
+  // clicked 5×). Retrying blindly would create duplicate orders. This store keys each
+  // user "click" by an idempotency key the client generates once and reuses across its
+  // own retries.
+  //
+  // MODEL — "settle exactly once": the FIRST request for a key becomes the leader and
+  // runs the Odoo call. Every terminal outcome (success OR failure) is recorded ONCE
+  // via idemSettle(status, body): it caches {status, body} on the entry AND resolves
+  // every parked waiter with that same response. Retries with the same key either
+  // (a) return the cached result if the leader already settled, or (b) park as a
+  // waiter on the in-flight leader and receive the leader's eventual result — they
+  // NEVER start a second Odoo call. The same key is therefore computed exactly once,
+  // so a network-level retry can never create a duplicate order. (A fresh user click
+  // mints a NEW key, so legitimate re-attempts are unaffected.)
+  //
+  // INVARIANT (memory + liveness): the leader ALWAYS settles within a bounded time
+  // because the Odoo fetch has a hard 180s AbortController timeout, so (1) waiters are
+  // never parked forever and (2) every entry eventually gets a `result` and becomes
+  // sweep-eligible — there are no immortal entries. The sweep only evicts SETTLED
+  // entries (those with a `result`) past TTL, never an in-flight leader.
+  //
+  // In-memory only (a worker restart drops the cache, which is safe: a post-restart
+  // retry just creates the order it never managed to create). Bodies cached are tiny
+  // Odoo JSON (order ids) or small error objects, never PDFs.
+  type AddToCartIdemEntry = {
+    ts: number;
+    result?: { status: number; body: any };
+    waiters: Array<(r: { status: number; body: any }) => void>;
+  };
+  const addToCartIdempotency = new Map<string, AddToCartIdemEntry>();
+  const ADDTOCART_IDEM_TTL_MS = 10 * 60 * 1000; // 10 min — generous window for a customer's manual retries
+  const ADDTOCART_IDEM_MAX = 1000;
+  const sweepAddToCartIdem = () => {
+    const now = Date.now();
+    const expired: string[] = [];
+    addToCartIdempotency.forEach((v, k) => {
+      // Only evict SETTLED entries — never an in-flight leader (no result yet).
+      if (v.result && now - v.ts > ADDTOCART_IDEM_TTL_MS) expired.push(k);
+    });
+    for (const k of expired) addToCartIdempotency.delete(k);
+    // Hard cap (defensive): drop oldest settled entries if the map somehow grows.
+    if (addToCartIdempotency.size > ADDTOCART_IDEM_MAX) {
+      const settled: Array<[string, number]> = [];
+      addToCartIdempotency.forEach((v, k) => { if (v.result) settled.push([k, v.ts]); });
+      settled.sort((a, b) => a[1] - b[1]);
+      for (const [k] of settled) {
+        if (addToCartIdempotency.size <= ADDTOCART_IDEM_MAX) break;
+        addToCartIdempotency.delete(k);
+      }
+    }
+  };
+
   app.post('/api/projects/:projectId/logos/base64', async (req, res) => {
     if (base64FallbackInFlight >= BASE64_FALLBACK_MAX_CONCURRENT) {
       return res.status(503).json({ error: 'Server busy, please try again in a moment' });
@@ -8742,7 +8798,54 @@ export async function registerRoutes(app: express.Application) {
   app.post('/api/projects/:id/add-to-cart', async (req, res) => {
     let projectId = req.params.id;
     console.log('🛒 ADD TO CART ENDPOINT CALLED:', { projectId, body: { ...req.body, pdfBase64: req.body.pdfBase64 ? '...' : undefined } });
-    
+
+    // --- Idempotency guard (see addToCartIdempotency declaration above) ---
+    // Dedupe a customer's retries of the SAME click so a dropped response can never
+    // create a duplicate order. The client sends one stable key per click and reuses
+    // it across its own network retries.
+    const rawIdemKey = (req.headers['x-idempotency-key'] as string)
+      || (typeof req.body?.idempotencyKey === 'string' ? req.body.idempotencyKey : '');
+    // Bound the client-supplied key length so it can't be abused to bloat the Map.
+    const idemKey = (typeof rawIdemKey === 'string' && rawIdemKey.length > 0 && rawIdemKey.length <= 200)
+      ? rawIdemKey
+      : '';
+    sweepAddToCartIdem();
+    if (idemKey) {
+      const existing = addToCartIdempotency.get(idemKey);
+      if (existing) {
+        if (existing.result) {
+          console.log(`♻️ [IDEMPOTENT] add-to-cart key ${idemKey} already settled — returning cached result (no duplicate order)`);
+          return res.status(existing.result.status).json(existing.result.body);
+        }
+        // Leader is still running — park this retry on it instead of starting a 2nd Odoo order.
+        // The leader is guaranteed to settle (its Odoo fetch is time-bounded), so this never
+        // parks forever; the waiter receives the leader's exact outcome (success OR failure).
+        console.log(`⏳ [IDEMPOTENT] add-to-cart key ${idemKey} in flight — coalescing this retry onto the leader`);
+        const r = await new Promise<{ status: number; body: any }>((resolve) => {
+          existing.waiters.push(resolve);
+        });
+        return res.status(r.status).json(r.body);
+      }
+      addToCartIdempotency.set(idemKey, { ts: Date.now(), waiters: [] });
+    }
+
+    // Settle this key exactly once: cache the outcome AND hand it to every parked waiter.
+    // Used for BOTH success and every failure exit, so the same key is computed once and a
+    // network retry can never trigger a second Odoo order. Returns nothing — callers still
+    // send their own response; waiters receive the cached one.
+    let idemSettled = false;
+    const idemSettle = (status: number, body: any) => {
+      if (!idemKey || idemSettled) return;
+      idemSettled = true;
+      const entry = addToCartIdempotency.get(idemKey);
+      if (!entry) return;
+      entry.result = { status, body };
+      entry.ts = Date.now();
+      const waiters = entry.waiters;
+      entry.waiters = [];
+      for (const w of waiters) { try { w({ status, body }); } catch {} }
+    };
+
     try {
       // Map to Odoo vectorization product if it's a vectorization-only request
       // This handles cases where projectId is passed as 'vector-service' in the URL
@@ -8756,6 +8859,7 @@ export async function registerRoutes(app: express.Application) {
       
       if (!projectId || projectId === 'undefined') {
         console.error('❌ Missing project ID');
+        idemSettle(400, { error: 'Project ID is required' });
         return res.status(400).json({ error: 'Project ID is required' });
       }
 
@@ -9048,6 +9152,11 @@ export async function registerRoutes(app: express.Application) {
           } catch (e: any) {
             console.error(`[CRASH LOG] persistCrashLog(add_to_cart_no_pdf_source) failed: ${e?.message || e}`);
           }
+          idemSettle(503, {
+            error: 'Artwork generation failed',
+            details: 'Please try adding to cart again. If the problem persists, re-upload your artwork.',
+            code: 'NO_PDF_SOURCE',
+          });
           return res.status(503).json({
             error: 'Artwork generation failed',
             details: 'Please try adding to cart again. If the problem persists, re-upload your artwork.',
@@ -9089,15 +9198,25 @@ export async function registerRoutes(app: express.Application) {
       const isRetryable = (err: unknown) =>
         err instanceof Error && RETRYABLE.some(msg => err.message.toLowerCase().includes(msg.toLowerCase()));
 
-      const fetchOdoo = () => fetch(odooApiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Cookie': clientCookies,
-          ...(requestBody.partnerEmail && { 'X-Partner-Email': requestBody.partnerEmail }),
-        },
-        body: JSON.stringify(requestBody),
-      });
+      // Hard 180s ceiling per attempt. Without this, an upstream WAF/proxy that HANGS the
+      // server→Odoo socket would leave the idempotency leader unsettled forever (parking
+      // every coalesced retry and pinning the entry). The AbortController guarantees the
+      // leader always reaches a terminal exit → idemSettle always runs.
+      const ODOO_FETCH_TIMEOUT_MS = 180000;
+      const fetchOdoo = () => {
+        const ac = new AbortController();
+        const timer = setTimeout(() => ac.abort(), ODOO_FETCH_TIMEOUT_MS);
+        return fetch(odooApiUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Cookie': clientCookies,
+            ...(requestBody.partnerEmail && { 'X-Partner-Email': requestBody.partnerEmail }),
+          },
+          body: JSON.stringify(requestBody),
+          signal: ac.signal,
+        }).finally(() => clearTimeout(timer));
+      };
 
       let response: Awaited<ReturnType<typeof fetchOdoo>>;
       try {
@@ -9118,6 +9237,7 @@ export async function registerRoutes(app: express.Application) {
 
       if (!response.ok) {
         console.error('❌ Odoo add-to-cart error:', response.status, responseText);
+        idemSettle(response.status, { error: 'Failed to add to Odoo cart', details: responseText });
         return res.status(response.status).json({ 
           error: 'Failed to add to Odoo cart',
           details: responseText 
@@ -9270,6 +9390,7 @@ export async function registerRoutes(app: express.Application) {
       }
 
       console.log(`✅ Successfully added to cart:`, { ...data, order_line_id: data?.order_line_id });
+      idemSettle(200, data);
       res.json(data);
 
       // POST-ADD-TO-CART ARTWORK VERIFICATION (shipped 2026-05-17): fire-and-forget
@@ -9399,6 +9520,10 @@ export async function registerRoutes(app: express.Application) {
       }
     } catch (error) {
       console.error('❌ Add to cart API error:', error);
+      idemSettle(500, {
+        error: 'Failed to connect to Odoo. Please ensure Odoo is accessible.',
+        details: error instanceof Error ? error.message : String(error)
+      });
       res.status(500).json({ 
         error: 'Failed to connect to Odoo. Please ensure Odoo is accessible.',
         details: error instanceof Error ? error.message : String(error)

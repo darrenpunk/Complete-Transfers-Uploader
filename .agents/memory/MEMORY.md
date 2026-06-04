@@ -1,1 +1,2 @@
 - [Upload bounds GS-vs-Inkscape](inkscape-bounds-vs-gs-bbox.md) — white art on dark garment gets cropped+landscape-flipped; trust Inkscape unless ONE element dominates the page (>85%).
+- [Upstream WAF block + safe retry](upload-403-upstream-block.md) — 403/reset/HANG on deployed app is an upstream WAF, not our code; retry uploads via base64 fallback; retry order-creating add-to-cart only via server-side idempotency + time-bounded upstream call.
