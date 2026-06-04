@@ -62,6 +62,22 @@ domain — outside this codebase.
   first cut precisely because the cap sat after the parser. **How to apply:** reuse this pattern
   for ANY new large-body JSON endpoint, not just uploads.
 
+- **An ORDER-CREATING upload entry point may ONLY auto-retry on a 403 — not on reset/hang.**
+  The Vectorization Service form is a 4th upload path, but it POSTs multipart to
+  `/api/vectorization-requests`, which (unlike `/logos`) creates a DB row AND adds a line to the
+  Odoo cart in the same handler. It had no fallback, so a customer hit a bare "HTTP error!
+  status: 403". The fix mirrors `/logos/base64` (server `/api/vectorization-requests/base64`
+  decodes → temp file → internal localhost replay into the real multipart route; client retries
+  via FileReader→base64 JSON) AND extends the pre-`express.json` admission gate regex in
+  `server/index.ts` to cover the new path. **CRITICAL difference from the `/logos` paths:** the
+  client retries ONLY on a `403`, never on a connection reset or a hang/timeout. **Why:** a 403 is
+  the WAF rejecting at the edge → the request never reached Express → nothing committed → a replay
+  can't duplicate the order. A reset/hang can occur AFTER the handler already created the request +
+  added to cart (only the response was lost) → retrying would DUPLICATE the cart line. The
+  reset/hang recovery used on `/logos` is safe there only because a duplicate is at worst a
+  deletable LOGO, never an order. **How to apply:** before routing ANY order-/cart-creating submit
+  through a base64 fallback, either keep it 403-only or add a server-side idempotency key first.
+
 - **The fallback must cover EVERY upload entry point, not just the main dropzone.** There are
   3 client multipart upload XHR paths to `POST /logos`: the main dropzone, the sidebar
   "add logo" mutation, and the embroidery-canvas upload. Only the dropzone originally had the
@@ -86,9 +102,8 @@ domain — outside this codebase.
   can (1) return 403, (2) RESET the socket (xhr `error`, status 0), OR (3) just **hang** the
   multipart upload mid-stream: progress freezes (customer saw it stuck at 60%), NO `error` and NO
   `load` event ever fires, and only the 2-min `xhr.timeout` eventually fires → a bare "Timeout"
-  toast with no retry. The 403+reset fallbacks do nothing for a hang. **Why:** customer
-  conor@hifiveclothing.ie / CenterSatge-LogoB(P)-A4.pdf — a file they'd uploaded fine before —
-  froze at 60% then errored after 2 min. **How to apply:** every XHR upload path needs a STALL
+  toast with no retry. The 403+reset fallbacks do nothing for a hang. **Why:** a customer
+  uploading an A4 PDF they'd uploaded fine before — froze at 60% then errored after 2 min. **How to apply:** every XHR upload path needs a STALL
   watchdog: a ~30s timer re-armed on each `xhr.upload` progress event while percent<100, cleared
   at 100% (server-processing phase — NO more upload progress is expected, do NOT treat that wait
   as a stall), and armed once right after `xhr.send()` (covers a hang before the first progress
@@ -100,7 +115,7 @@ domain — outside this codebase.
   are sent a timeout = slow server, re-submitting would duplicate). That guard BROKE small uploads:
   a tiny file (~387KB) reaches 100% instantly → `reachedFullUpload` true + stall timer cleared →
   the proxy then HANGS while withholding the server response → no error, no stall, and the gated
-  timeout never retries → bare "Timeout", no recovery (customer sonia@punctualprint.com, repeated
+  timeout never retries → bare "Timeout", no recovery (a customer with a small ~387KB file, repeated
   `[ERROR] 500: aborted` ~2 min apart with NO base64 replay in prod logs). **Fix:** at 100% don't
   clear the watchdog — re-arm it with a longer post-upload window (~45s) so a hang-after-send falls
   back; make the 2-min timeout retry unconditionally too (backstop). **Why the duplicate fear was

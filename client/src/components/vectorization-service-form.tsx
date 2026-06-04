@@ -222,13 +222,69 @@ export function VectorizationServiceForm({ open, onOpenChange, partnerEmail, aut
       }
       formData.append('odooBaseUrl', odooBaseUrl);
 
-      const response = await fetch('/api/vectorization-requests', {
+      // In production an upstream WAF/proxy sometimes blocks binary multipart uploads with a 403.
+      // Retry ONCE through the base64-JSON fallback, which the server decodes and replays into the
+      // real multipart handler.
+      //
+      // SAFETY (this is an ORDER-CREATING endpoint — it adds a line to the Odoo cart): we retry
+      // ONLY on a 403. A 403 is the WAF rejecting the request at the edge, so it never reached our
+      // server — nothing was committed and a replay cannot duplicate the cart line. We deliberately
+      // do NOT retry on a generic network error (TCP/proxy reset) or a hang/timeout: a reset can
+      // arrive AFTER the server already created the request and added to cart (only the response was
+      // lost), so retrying it would duplicate the order. Adding reset/timeout retries here requires a
+      // server-side idempotency guard first.
+      const FALLBACK_MAX_BYTES = 80 * 1024 * 1024; // base64 (~1.33x) stays under the server's JSON limit
+      const canFallback = data.file.size <= FALLBACK_MAX_BYTES;
+
+      const buildBase64Body = async (): Promise<string> => {
+        const dataBase64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const result = reader.result as string;
+            const comma = result.indexOf(',');
+            resolve(comma !== -1 ? result.slice(comma + 1) : result);
+          };
+          reader.onerror = () => reject(reader.error || new Error('Failed to read file'));
+          reader.readAsDataURL(data.file);
+        });
+        const payload: Record<string, unknown> = {
+          file: { originalName: data.file.name, mimetype: data.file.type || 'application/pdf', dataBase64 },
+          comments: data.comments,
+          printSize: data.printSize,
+          serviceType: effectiveServiceType,
+          odooBaseUrl,
+        };
+        if (effectiveServiceType === 'vectorization-with-product') {
+          payload.transferProduct = data.transferProduct;
+          payload.quantity = (data.quantity || 1).toString();
+          if (data.garmentColor) payload.garmentColor = data.garmentColor;
+          if (data.inkColor) payload.inkColor = data.inkColor;
+        }
+        if (partnerEmail) payload.partnerEmail = partnerEmail;
+        return JSON.stringify(payload);
+      };
+
+      const retryViaBase64 = async (): Promise<Response> => {
+        console.warn('⚠️ Vectorization upload blocked (403) — retrying via base64-JSON fallback');
+        return fetch('/api/vectorization-requests/base64', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: await buildBase64Body(),
+        });
+      };
+
+      let response = await fetch('/api/vectorization-requests', {
         method: 'POST',
         body: formData,
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        if (response.status === 403 && canFallback) {
+          response = await retryViaBase64();
+        }
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
       }
 
       return response.json();

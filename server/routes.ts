@@ -7132,6 +7132,101 @@ export async function registerRoutes(app: express.Application) {
     }
   });
 
+  // Base64-JSON fallback for the Vectorization Service upload (mirrors /logos/base64).
+  // The vectorization form normally POSTs multipart/form-data to /api/vectorization-requests;
+  // in production an upstream WAF/proxy sometimes blocks binary multipart with a 403 or resets
+  // the socket. The client retries ONCE through this JSON endpoint, which decodes the file to a
+  // temp file and replays it into the real multipart handler.
+  //
+  // SAFETY (order-creating endpoint): /api/vectorization-requests ALSO adds an item to the Odoo
+  // cart, so a duplicate replay could duplicate a cart line. The client therefore retries ONLY on a
+  // 403 — the WAF rejecting the request at the edge, so it never reached the real handler (no DB
+  // row, no cart add) and a replay cannot duplicate the order. The client deliberately does NOT
+  // retry on a connection reset or a hang/timeout, because those can occur AFTER the handler already
+  // committed. If reset/timeout retries are ever added, add a server-side idempotency guard first.
+  app.post('/api/vectorization-requests/base64', async (req, res) => {
+    if (base64FallbackInFlight >= BASE64_FALLBACK_MAX_CONCURRENT) {
+      return res.status(503).json({ error: 'Server busy, please try again in a moment' });
+    }
+    base64FallbackInFlight++;
+    const tempPaths: string[] = [];
+    try {
+      const f = req.body?.file;
+      const rawData = typeof f?.dataBase64 === 'string' ? f.dataBase64 : '';
+      if (!f || !rawData) {
+        return res.status(400).json({ error: 'No file provided' });
+      }
+
+      const allowedMimes = [
+        'image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml', 'application/pdf',
+        'application/postscript', 'application/illustrator', 'application/x-illustrator'
+      ];
+
+      // Tolerate a data: URL prefix if the client ever sends one.
+      const commaIdx = rawData.indexOf(',');
+      const b64 = rawData.startsWith('data:') && commaIdx !== -1 ? rawData.slice(commaIdx + 1) : rawData;
+      // Bound memory BEFORE decoding: base64 inflates ~4/3, so decoded ≈ length * 3/4.
+      const estimatedBytes = Math.floor((b64.length * 3) / 4);
+      if (estimatedBytes > BASE64_FALLBACK_MAX_TOTAL_BYTES) {
+        return res.status(413).json({ error: 'Upload too large for the fallback path' });
+      }
+      const buf = Buffer.from(b64, 'base64');
+      if (!buf || buf.length === 0) {
+        return res.status(400).json({ error: 'Empty or invalid file data' });
+      }
+      if (buf.length > BASE64_FALLBACK_MAX_TOTAL_BYTES) {
+        return res.status(413).json({ error: 'Upload too large for the fallback path' });
+      }
+
+      const originalName = typeof f?.originalName === 'string' && f.originalName.trim()
+        ? path.basename(f.originalName)
+        : 'upload';
+      const safeMimetype = allowedMimes.includes(f?.mimetype) ? f.mimetype : 'application/pdf';
+      const tempPath = path.join(uploadDir, `b64vec_${crypto.randomBytes(8).toString('hex')}_${Date.now()}`);
+      await fs.promises.writeFile(tempPath, buf);
+      tempPaths.push(tempPath);
+
+      const FormData = (await import('form-data')).default;
+      const formData = new FormData();
+      formData.append('file', fs.createReadStream(tempPath), {
+        filename: originalName,
+        contentType: safeMimetype,
+      });
+
+      // Forward every text field the multipart handler understands.
+      const passthrough = ['comments', 'printSize', 'serviceType', 'transferProduct', 'quantity', 'garmentColor', 'inkColor', 'partnerEmail', 'odooBaseUrl', 'customerCode', 'email'];
+      for (const key of passthrough) {
+        const value = req.body?.[key];
+        if (value !== undefined && value !== null && `${value}`.trim() !== '') {
+          formData.append(key, `${value}`);
+        }
+      }
+
+      console.log(`🔁 [BASE64 FALLBACK] Replaying vectorization request (${Math.round(buf.length / 1024)}KB) into multipart handler`);
+
+      const internalRes = await fetch(`http://localhost:${process.env.PORT || 5000}/api/vectorization-requests`, {
+        method: 'POST',
+        body: formData as any,
+        headers: {
+          ...formData.getHeaders(),
+          ...(req.headers.cookie ? { Cookie: req.headers.cookie } : {}),
+        },
+      });
+
+      const bodyText = await internalRes.text();
+      if (!internalRes.ok) {
+        console.error('[BASE64 FALLBACK] Internal vectorization processing failed:', internalRes.status, bodyText.slice(0, 500));
+      }
+      return res.status(internalRes.status).type('application/json').send(bodyText);
+    } catch (error: any) {
+      console.error('[BASE64 FALLBACK] vectorization error:', error?.message);
+      return res.status(500).json({ error: 'Failed to process uploaded file' });
+    } finally {
+      base64FallbackInFlight--;
+      await Promise.all(tempPaths.map(p => fs.promises.unlink(p).catch(() => {})));
+    }
+  });
+
   // Dropbox upload endpoint (disabled - Dropbox integration removed)
   app.post('/api/projects/:projectId/logos/dropbox-upload', async (_req, res) => {
     res.status(410).json({ error: 'Dropbox upload is no longer available. Please upload files directly (up to 500MB).' });

@@ -397,7 +397,7 @@ app.use(requestTracker);
 // rejects an oversized single request via Content-Length, but it does NOT bound
 // concurrency. This guard runs FIRST so it can reject (503) before the body is ever
 // buffered. The route handler keeps its own decoded-byte validation as defense in depth.
-const BASE64_FALLBACK_PATH = /^\/api\/projects\/[^/]+\/logos\/base64\/?$/;
+const BASE64_FALLBACK_PATH = /^\/api\/projects\/[^/]+\/logos\/base64\/?$|^\/api\/vectorization-requests\/base64\/?$/;
 const BASE64_PREPARSE_MAX_CONCURRENT = 2;
 const BASE64_PREPARSE_MAX_BYTES = 200 * 1024 * 1024; // align with express.json limit below
 let base64PreparseInFlight = 0;
