@@ -9,6 +9,7 @@ import { exec, execSync, execFile } from 'child_process';
 import FormData from 'form-data';
 import fetch from 'node-fetch';
 import { IStorage } from './storage';
+import { withDbRetry } from './db';
 import { guardRoute, getOperationStats, isMemoryCritical, getMemoryUsage, shouldSkipNonEssential, getContainerMemoryMB } from './operation-guard';
 
 function getSmartPreviewDPI(pdfPath: string): number {
@@ -7366,10 +7367,10 @@ export async function registerRoutes(app: express.Application) {
 
   app.get('/api/template-sizes', async (req, res) => {
     try {
-      const templateSizes = await storage.getTemplateSizes();
+      const templateSizes = await withDbRetry(() => storage.getTemplateSizes());
       const rawCustomerCode = req.query.customerCode as string | undefined;
       const customerCode = rawCustomerCode?.trim().toLowerCase();
-      const allAssignments = await storage.getAllCustomerTemplates();
+      const allAssignments = await withDbRetry(() => storage.getAllCustomerTemplates());
 
       const restrictedTemplateIds = new Set<string>();
       for (const assignment of allAssignments) {
