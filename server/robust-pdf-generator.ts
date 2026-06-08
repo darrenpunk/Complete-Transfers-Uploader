@@ -1346,6 +1346,15 @@ grestore`;
       
       let logoPdfPath: string | null = null;
       let shouldCleanup = false;
+      // Tracks whether logoPdfPath is a DERIVED file (a freshly converted SVG→PDF, or an
+      // already-cropped copy of the original) rather than the pristine, untransformed
+      // original PDF. logo.originalPdfBounds are measured on the pristine original at upload
+      // time, so they describe ONLY that file's coordinate space. Applying them to any
+      // derived file (different page box / content already shifted to the origin) re-shifts
+      // content partly outside the crop box, and pdf-lib then bakes that box into the form
+      // XObject BBox → the artwork is clipped. The auto-crop block below only trusts stored
+      // bounds when this is false.
+      let logoPdfIsDerived = false;
       
       // PRIORITY 1: Use preserved original PDF if available to maintain exact CMYK colors and vectors
       if (logo.originalFilename && logo.originalMimeType === 'application/pdf') {
@@ -1497,6 +1506,7 @@ grestore`;
               if (resizedPdfPath) {
                 logoPdfPath = resizedPdfPath;
                 shouldCleanup = true;
+                logoPdfIsDerived = true; // already cropped to origin — bounds no longer apply
               } else {
                 console.log(`⚠️ Ghostscript crop failed, using original PDF as-is`);
                 logoPdfPath = originalPdfPath;
@@ -1572,6 +1582,7 @@ grestore`;
         console.log(`🔄 Converting SVG to PDF as fallback: ${logoPath}`);
         logoPdfPath = await this.convertSVGToPDF(logoPath);
         shouldCleanup = true; // Clean up converted PDF
+        logoPdfIsDerived = true; // converted file — coordinate space differs from original PDF
         
         if (!logoPdfPath) {
           console.warn(`⚠️ Failed to convert SVG to PDF`);
@@ -1638,9 +1649,21 @@ grestore`;
           } else {
           const originalPdfBounds = logo.originalPdfBounds as any;
           let boundsForCrop = null;
-          if (originalPdfBounds && originalPdfBounds.width > 1 && originalPdfBounds.height > 1) {
+          // CRITICAL: only trust stored originalPdfBounds when logoPdfPath is the PRISTINE
+          // original PDF. Those bounds are measured in the original PDF's coordinate space at
+          // upload time. If logoPdfPath is DERIVED — a freshly converted SVG→PDF (Inkscape
+          // --export-area-page, e.g. fonts outlined or colours overridden) OR an already-
+          // cropped copy whose content was shifted to the origin — its page box / content
+          // origin no longer matches those bounds, so applying them re-shifts content partly
+          // outside the crop box and the embedded form XObject BBox then clips the artwork
+          // (classic symptom: bottom of every imposition tile cut off). For derived files,
+          // fall through to a live Ghostscript bbox measured on the actual file.
+          if (!logoPdfIsDerived && originalPdfBounds && originalPdfBounds.width > 1 && originalPdfBounds.height > 1) {
             boundsForCrop = originalPdfBounds;
           } else {
+            if (logoPdfIsDerived && originalPdfBounds && originalPdfBounds.width > 1) {
+              console.log(`ℹ️ Ignoring stored originalPdfBounds for derived PDF (converted/already-cropped, different coordinate space) — measuring the actual file's own content bounds`);
+            }
             // No stored content bounds (e.g. multi-page reorder PDFs in pass-through mode
             // skip upload-time bbox detection). The OLD behaviour here assumed content
             // started at the top-left of the page and cropped to element dimensions —

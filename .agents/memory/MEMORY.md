@@ -1,3 +1,4 @@
 - [Upload bounds GS-vs-Inkscape](inkscape-bounds-vs-gs-bbox.md) — white art on dark garment gets cropped+landscape-flipped; trust Inkscape unless ONE element dominates the page (>85%).
+- [originalPdfBounds only for pristine original](originalpdfbounds-only-for-pristine-original.md) — never crop a derived (SVG-converted / already-cropped) logo PDF with upload-time bounds; it clips via the form XObject BBox.
 - [Prod crash_logs debugging](prod-crashlogs-debugging.md) — created_at is TEXT (use string compares, NOT NOW()/to_char/INTERVAL → silently empty); replica is ~live; user screenshot times are local UTC+1 vs UTC; how to read event types.
 - [Upstream WAF block + safe retry](upload-403-upstream-block.md) — 403/reset/HANG on deployed app is an upstream WAF, not our code; retry uploads via base64 fallback; retry order-creating add-to-cart only via server-side idempotency + time-bounded upstream call.
