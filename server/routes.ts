@@ -5382,6 +5382,15 @@ export async function registerRoutes(app: express.Application) {
                   console.log(`🎯 USING Ghostscript bbox for accurate content detection (most reliable)`);
                   
                   let gsBounds: { xMin: number; yMin: number; xMax: number; yMax: number; width: number; height: number } | null = null;
+
+                  // `inkscape --query-all` / `--query-*` report CSS px (1/96 inch), but every
+                  // consumer below works in PostScript points (1/72 inch): GS bbox is pt, the
+                  // page-dim clamps use pt, and pxToMm (1/2.8346) is really pt→mm. A px is always
+                  // 1/96" and a pt always 1/72", so the exact conversion is a constant 72/96.
+                  // Without it, Inkscape coords were ~1.333× too large: they got clamped to the
+                  // pt page size, silently chopping any content past ~75% width/height — e.g.
+                  // white text along the bottom that GS's ink-only bbox can't see → clipped.
+                  const INK_PX_TO_PT = 72 / 96;
                   
                   try {
                     const originalPdfPath = (file as any).originalPdfPath;
@@ -5466,20 +5475,20 @@ export async function registerRoutes(app: express.Application) {
                           if (lineIdx === 0) {
                             const rootParts = line.split(',');
                             if (rootParts.length >= 5) {
-                              const rW = parseFloat(rootParts[3]) || 0;
-                              const rH = parseFloat(rootParts[4]) || 0;
+                              const rW = (parseFloat(rootParts[3]) || 0) * INK_PX_TO_PT;
+                              const rH = (parseFloat(rootParts[4]) || 0) * INK_PX_TO_PT;
                               if (rW > 0 && rH > 0) inkscapeRootArea = rW * rH;
                             }
                             continue;
                           }
                           const parts = line.split(',');
                           if (parts.length >= 5) {
-                            const elX = parseFloat(parts[1]) || 0;
-                            const elY = parseFloat(parts[2]) || 0;
-                            const elW = parseFloat(parts[3]) || 0;
-                            const elH = parseFloat(parts[4]) || 0;
+                            const elX = (parseFloat(parts[1]) || 0) * INK_PX_TO_PT;
+                            const elY = (parseFloat(parts[2]) || 0) * INK_PX_TO_PT;
+                            const elW = (parseFloat(parts[3]) || 0) * INK_PX_TO_PT;
+                            const elH = (parseFloat(parts[4]) || 0) * INK_PX_TO_PT;
                             if (elW > 0.5 && elH > 0.5) {
-                              // Track the largest SINGLE element (RAW px², unclamped) — used below
+                              // Track the largest SINGLE element (pt², unclamped) — used below
                               // to tell a full-page background rect (one dominant element) apart
                               // from distributed white content (many small elements).
                               inkscapeMaxElementArea = Math.max(inkscapeMaxElementArea, elW * elH);
@@ -5709,10 +5718,12 @@ export async function registerRoutes(app: express.Application) {
                         const queryResult = execSyncBounds(`inkscape --query-all "${svgPath}" 2>/dev/null | head -1`, { encoding: 'utf8', timeout: 10000 });
                         const parts = queryResult.trim().split(',');
                         if (parts.length >= 5) {
-                          let inkX = parseFloat(parts[1]) || 0;
-                          let inkY = parseFloat(parts[2]) || 0;
-                          let inkXMax = inkX + (parseFloat(parts[3]) || 0);
-                          let inkYMax = inkY + (parseFloat(parts[4]) || 0);
+                          // query-all reports CSS px (1/96in); convert to pt (1/72in) for the
+                          // pt-based clamps and downstream math. See INK_PX_TO_PT note above.
+                          let inkX = (parseFloat(parts[1]) || 0) * INK_PX_TO_PT;
+                          let inkY = (parseFloat(parts[2]) || 0) * INK_PX_TO_PT;
+                          let inkXMax = inkX + (parseFloat(parts[3]) || 0) * INK_PX_TO_PT;
+                          let inkYMax = inkY + (parseFloat(parts[4]) || 0) * INK_PX_TO_PT;
                           // Clamp to PDF MediaBox — bleed/margin elements outside the page inflate bounds
                           if (pdfPageDimensions) {
                             inkX = Math.max(inkX, 0);
@@ -5855,8 +5866,8 @@ export async function registerRoutes(app: express.Application) {
                           
                           const rootParts = allLines[0]?.split(',');
                           if (rootParts && rootParts.length >= 5) {
-                            svgBoundsX = parseFloat(rootParts[1]) || 0;
-                            svgBoundsY = parseFloat(rootParts[2]) || 0;
+                            svgBoundsX = (parseFloat(rootParts[1]) || 0) * INK_PX_TO_PT;
+                            svgBoundsY = (parseFloat(rootParts[2]) || 0) * INK_PX_TO_PT;
                             if (pdfPageDimensions) {
                               svgBoundsX = Math.max(svgBoundsX, 0);
                               svgBoundsY = Math.max(svgBoundsY, 0);
@@ -5874,10 +5885,10 @@ export async function registerRoutes(app: express.Application) {
                               if (lineIdx === 0 || elId === 'svg1' || elId === 'svg' || elId.startsWith('svg:svg')) {
                                 continue;
                               }
-                              const elX = parseFloat(parts[1]) || 0;
-                              const elY = parseFloat(parts[2]) || 0;
-                              const elW = parseFloat(parts[3]) || 0;
-                              const elH = parseFloat(parts[4]) || 0;
+                              const elX = (parseFloat(parts[1]) || 0) * INK_PX_TO_PT;
+                              const elY = (parseFloat(parts[2]) || 0) * INK_PX_TO_PT;
+                              const elW = (parseFloat(parts[3]) || 0) * INK_PX_TO_PT;
+                              const elH = (parseFloat(parts[4]) || 0) * INK_PX_TO_PT;
                               if (elW > 0.5 && elH > 0.5) {
                                 const cx = Math.max(elX, 0);
                                 const cy = Math.max(elY, 0);

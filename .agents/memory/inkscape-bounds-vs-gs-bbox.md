@@ -49,3 +49,39 @@ portrait. Corel background-rect case still has a ~100% single element → still 
 **Watch for:** new tickets where uploaded canvas dimensions come back LARGER/portrait
 when they should be small/landscape — would mean a previously-correct GS strip is now
 being overridden by Inkscape when it shouldn't.
+
+---
+
+# Unit bug: `inkscape --query-*` returns CSS px (1/96in), the pipeline wants pt (1/72in)
+
+A second, deeper cause of the same clipping class. `inkscape --query-all` /
+`--query-width/height/x/y` (Inkscape 1.x, 1.3.2) report **CSS px (1/96 inch)**, but the
+bounds code works in **PostScript pt (1/72 inch)** everywhere: GS bbox is pt, the
+per-element clamps use `pdfPageDimensions.widthPts/heightPts`, and `pxToMm = 1/2.834645669`
+is really a **pt→mm** factor. So Inkscape values were ~1.333× too large.
+
+**Symptom:** logo with WHITE text along the BOTTOM (Kilkenny County Council crest) clipped
+the bottom line; identical BLACK-text logo was fine. GS misses white-on-transparent → crops
+the bottom band; the Inkscape rescue then had its px values **clamped down to the pt page
+size**, chopping exactly that bottom band, and the inflated px **areas** made the
+inkArea-vs-gsArea test misfire (Inkscape looked *smaller* after clamping → kept clipped GS).
+
+**Fix:** `INK_PX_TO_PT = 72/96` (exact, document-independent). Multiply every parsed
+`--query-all` coord (root + per-element x/y/w/h) at parse time in all pt-expecting parsing
+blocks in the GS-primary path (the area-coverage verification block, the SVG-normalization
+union block, and the GS-empty inkscape fallback). The maxElement/root RATIO is unchanged
+(both sides ×0.75, scale-invariant — see "the rule" above), so the background-rect heuristic
+is preserved. BLACK is untouched: content fills the page (`areaCoverage ≈ 1.0`) so the
+Inkscape verification is skipped entirely.
+
+**How to apply:** any NEW code parsing `inkscape --query-*` and feeding pt bounds math MUST
+apply ×72/96 first. Do NOT trust the old "SVG user units are pt at 72 DPI" comment — wrong
+for Inkscape's query output.
+
+**Known remaining (NOT converted; lower-risk, off the GS-primary path):** the
+direct-SVG-upload fallback (`if (!boundsResult)` path using `--query-x/y/width/height` with
+a pervasive `svgPxToMm = 25.4/72`) still treats query px as pt. Only hit when the whole
+GS-primary block yields nothing; its 25.4/72 convention threads through hundreds of
+downstream lines + a separate SVG-analyzer path, so a piecemeal fix risks divergence. If
+clipping reappears on direct-SVG uploads, fix that block holistically (px→pt, or switch to a
+true px→mm 25.4/96 with explicit units end-to-end).
