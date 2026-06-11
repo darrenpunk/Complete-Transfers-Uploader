@@ -2072,6 +2072,34 @@ grestore`;
     element: any,
     templateSize: any
   ): Promise<boolean> {
+    // Embed a PNG already sitting in uploads/ via the raster path. Returns true
+    // only if embedRasterImage actually incremented the success counter. Uses a
+    // shallow clone so we never mutate the shared logo record (the element loop
+    // still needs the original filename for the next placement).
+    const tryEmbedExistingPng = async (pngBasename: string, tier: string): Promise<boolean> => {
+      try {
+        const logoForRaster = {
+          ...logo,
+          filename: pngBasename,
+          mimeType: 'image/png',
+          originalFilename: undefined, // force embedRasterImage to read the PNG path directly
+        };
+        const beforeCount = (pdfDoc as any).__embedSuccessCount || 0;
+        await this.embedRasterImage(pdfDoc, page1, page2, logoForRaster, element, templateSize);
+        const afterCount = (pdfDoc as any).__embedSuccessCount || 0;
+        if (afterCount > beforeCount) {
+          console.log(`✅ RASTER FALLBACK SUCCEEDED (${tier}) for logo=${logo?.filename || '?'} on ${page1 ? 'page1' : 'page2'}`);
+          return true;
+        }
+        console.error(`❌❌❌ RASTER FALLBACK (${tier}): embedRasterImage did not increment success counter for ${logo?.filename || '?'}`);
+        return false;
+      } catch (e: any) {
+        console.error(`❌❌❌ RASTER FALLBACK (${tier}) THREW: ${e?.message || e}`);
+        return false;
+      }
+    };
+
+    // ── TIER 1: rasterize the source PDF via Ghostscript (highest fidelity) ──
     try {
       const originalPdfPath = logo.originalFilename
         ? path.join(process.cwd(), 'uploads', logo.originalFilename)
@@ -2081,75 +2109,105 @@ grestore`;
         : null;
 
       // Prefer rasterizing the source PDF (highest fidelity); fall back to the
-      // SVG if no preserved PDF exists.
+      // SVG-named slot only when it is actually a PDF.
       let sourcePath: string | null = null;
       if (originalPdfPath && fs.existsSync(originalPdfPath) && originalPdfPath.toLowerCase().endsWith('.pdf')) {
         sourcePath = originalPdfPath;
       } else if (logoSvgPath && fs.existsSync(logoSvgPath) && logoSvgPath.toLowerCase().endsWith('.pdf')) {
         sourcePath = logoSvgPath;
       }
-      if (!sourcePath) {
-        console.error(`❌❌❌ RASTER FALLBACK: no source PDF available for logo=${logo?.filename || '?'}`);
-        return false;
-      }
 
-      // Per-pdfDoc cache so imposition (20-40 copies of same logo) only rasterizes once.
-      type RasterCache = Map<string, string | null>;
-      const cache: RasterCache = ((pdfDoc as any).__rasterFallbackCache ||= new Map());
-      let pngPath = cache.get(sourcePath) ?? null;
-      if (pngPath === null && !cache.has(sourcePath)) {
-        const tmp = path.join(process.cwd(), 'uploads', `embed_fallback_${Date.now()}_${process.pid}_${Math.random().toString(36).slice(2, 8)}.png`);
-        // Target ~150 DPI — high enough for production print on garment-size elements,
-        // low enough to keep memory bounded for A3 source PDFs.
-        // -dFirstPage/-dLastPage pin to page 1 so multi-page source PDFs (e.g. reorder
-        // exports with metadata/screenshot pages) don't emit numbered files and leave
-        // `tmp` missing — fallback would then false-fail and we'd ship blank.
-        try {
-          execSync(
-            `gs -o "${tmp}" -sDEVICE=pngalpha -r150 -dFirstPage=1 -dLastPage=1 -dNOPAUSE -dBATCH -dQUIET "${sourcePath}"`,
-            { encoding: 'utf8', timeout: 60000, stdio: ['ignore', 'pipe', 'pipe'] }
-          );
-        } catch (gsErr: any) {
-          console.error(`❌❌❌ RASTER FALLBACK: gs pngalpha failed for ${sourcePath}: ${gsErr?.message || gsErr}`);
-          // Do NOT cache the failure — a transient GS flake on the first placement
-          // would otherwise poison every subsequent imposition tile with the same
-          // source. The cache exists to avoid re-rasterizing on SUCCESS; on failure
-          // we want the next tile (or the next request) to try again from scratch.
-          return false;
+      if (sourcePath) {
+        // Per-pdfDoc cache so imposition (20-40 copies of same logo) only rasterizes once.
+        type RasterCache = Map<string, string | null>;
+        const cache: RasterCache = ((pdfDoc as any).__rasterFallbackCache ||= new Map());
+        let pngPath = cache.get(sourcePath) ?? null;
+        if (pngPath === null && !cache.has(sourcePath)) {
+          const tmp = path.join(process.cwd(), 'uploads', `embed_fallback_${Date.now()}_${process.pid}_${Math.random().toString(36).slice(2, 8)}.png`);
+          // Target ~150 DPI — high enough for production print on garment-size elements,
+          // low enough to keep memory bounded for A3 source PDFs.
+          // -dFirstPage/-dLastPage pin to page 1 so multi-page source PDFs (e.g. reorder
+          // exports with metadata/screenshot pages) don't emit numbered files and leave
+          // `tmp` missing — fallback would then false-fail and we'd ship blank.
+          let gsOk = true;
+          try {
+            execSync(
+              `gs -o "${tmp}" -sDEVICE=pngalpha -r150 -dFirstPage=1 -dLastPage=1 -dNOPAUSE -dBATCH -dQUIET "${sourcePath}"`,
+              { encoding: 'utf8', timeout: 60000, stdio: ['ignore', 'pipe', 'pipe'] }
+            );
+          } catch (gsErr: any) {
+            // A malformed customer PDF makes gs bail ("Unrecoverable error") — don't
+            // give up, fall through to the pre-generated PNG tier below. Do NOT cache
+            // the failure: a transient GS flake on the first placement would otherwise
+            // poison every subsequent imposition tile with the same source.
+            console.error(`❌❌❌ RASTER FALLBACK: gs pngalpha failed for ${sourcePath}: ${gsErr?.message || gsErr} — trying pre-generated PNG next`);
+            gsOk = false;
+          }
+          if (gsOk) {
+            if (!fs.existsSync(tmp) || fs.statSync(tmp).size < 100) {
+              console.error(`❌❌❌ RASTER FALLBACK: gs produced empty/missing PNG at ${tmp} — trying pre-generated PNG next`);
+            } else {
+              pngPath = tmp;
+              cache.set(sourcePath, pngPath);
+              console.log(`🛟 RASTER FALLBACK: rasterized ${path.basename(sourcePath)} → ${path.basename(pngPath)} (${(fs.statSync(pngPath).size / 1024).toFixed(0)} KB)`);
+            }
+          }
         }
-        if (!fs.existsSync(tmp) || fs.statSync(tmp).size < 100) {
-          console.error(`❌❌❌ RASTER FALLBACK: gs produced empty/missing PNG at ${tmp}`);
-          return false;
+        if (pngPath && await tryEmbedExistingPng(path.basename(pngPath), 'gs-source-pdf')) {
+          return true;
         }
-        pngPath = tmp;
-        cache.set(sourcePath, pngPath);
-        console.log(`🛟 RASTER FALLBACK: rasterized ${path.basename(sourcePath)} → ${path.basename(pngPath)} (${(fs.statSync(pngPath).size / 1024).toFixed(0)} KB)`);
-      }
-      if (!pngPath) return false;
-
-      // Swap the logo's filename to point at the PNG so embedRasterImage picks it up.
-      // Use a shallow clone so we don't mutate the original logo record (other
-      // call sites still need the original filename for the next element loop).
-      const logoForRaster = {
-        ...logo,
-        filename: path.basename(pngPath),
-        mimeType: 'image/png',
-        originalFilename: undefined, // force embedRasterImage to read the PNG path directly
-      };
-      const beforeCount = (pdfDoc as any).__embedSuccessCount || 0;
-      await this.embedRasterImage(pdfDoc, page1, page2, logoForRaster, element, templateSize);
-      const afterCount = (pdfDoc as any).__embedSuccessCount || 0;
-      const ok = afterCount > beforeCount;
-      if (ok) {
-        console.log(`✅ RASTER FALLBACK SUCCEEDED for logo=${logo?.filename || '?'} on ${page1 ? 'page1' : 'page2'}`);
       } else {
-        console.error(`❌❌❌ RASTER FALLBACK: embedRasterImage did not increment success counter for ${logo?.filename || '?'}`);
+        console.error(`❌❌❌ RASTER FALLBACK: no source PDF available for logo=${logo?.filename || '?'} — trying pre-generated PNG`);
       }
-      return ok;
     } catch (e: any) {
-      console.error(`❌❌❌ RASTER FALLBACK THREW: ${e?.message || e}`);
-      return false;
+      console.error(`❌❌❌ RASTER FALLBACK (gs tier) THREW: ${e?.message || e} — trying pre-generated PNG`);
     }
+
+    // ── TIER 2: a PNG preview/canvas-fallback produced at upload time ──
+    // When Ghostscript chokes on a customer's PDF (malformed PDF → "Unrecoverable
+    // error") AND the processed file is an SVG (no source PDF to rasterize), every
+    // tier above fails and the print page would ship BLANK — the SO90850 symptom
+    // (page 1 empty, garment page showing only the backing rectangle). But upload
+    // already flattened this artwork to a PNG (previewFilename / canvasFallbackFilename
+    // — the very image the browser canvas renders), so embed THAT instead of leaving
+    // the page empty. Lower fidelity than vector, but present beats blank
+    // (user preference: silent recovery over hard failure).
+    const uploadsDir = path.join(process.cwd(), 'uploads');
+    const candidates: string[] = [];
+    if (logo.canvasFallbackFilename) candidates.push(logo.canvasFallbackFilename);
+    if (logo.previewFilename) candidates.push(logo.previewFilename);
+    const base: string = logo.filename || '';
+    if (base) {
+      // Naming conventions used by the upload pipeline (server/routes.ts).
+      candidates.push(`${base}_canvas_fallback.png`);
+      candidates.push(`${base}_preview.png`);
+      if (/\.svg$/i.test(base)) {
+        candidates.push(base.replace(/\.svg$/i, '-canvas-fallback.png'));
+        candidates.push(base.replace(/\.svg$/i, '_preview.png'));
+      }
+      if (/\.(png|jpe?g)$/i.test(base)) candidates.push(base); // already a raster
+    }
+    const seen = new Set<string>();
+    for (const rawCand of candidates) {
+      // Defensive: these come from DB fields / derived names — strip any path
+      // component so a join can never escape uploads/.
+      const cand = rawCand ? path.basename(rawCand) : '';
+      if (!cand || seen.has(cand)) continue;
+      seen.add(cand);
+      let exists = false;
+      try {
+        const p = path.join(uploadsDir, cand);
+        exists = fs.existsSync(p) && fs.statSync(p).size > 100;
+      } catch { exists = false; }
+      if (!exists) continue;
+      console.log(`🛟 RASTER FALLBACK: using pre-generated PNG "${cand}" for logo=${logo?.filename || '?'}`);
+      if (await tryEmbedExistingPng(cand, 'pre-generated-png')) {
+        return true;
+      }
+    }
+
+    console.error(`❌❌❌ RASTER FALLBACK: exhausted all tiers (gs source PDF + pre-generated PNG) for logo=${logo?.filename || '?'} — page WILL be blank`);
+    return false;
   }
 
   /**
