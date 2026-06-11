@@ -3639,16 +3639,29 @@ export async function registerRoutes(app: express.Application) {
                           const alphaW = trimW * scaleX;
                           const alphaH = trimH * scaleY;
                           const alphaYMinPdf = dtfPageHeightPts - alphaYMin - alphaH;
-                          const alphaArea = alphaW * alphaH;
-                          const gsBoundsArea = dtfBounds.width * dtfBounds.height;
-                          
+                          const alphaXMax = alphaXMin + alphaW;
+                          const alphaYMaxPdf = alphaYMinPdf + alphaH;
+
                           console.log(`🔍 DTF alpha-trim: ${(alphaW * 0.352778).toFixed(1)}×${(alphaH * 0.352778).toFixed(1)}mm vs GS bbox: ${dtfBounds.widthMm.toFixed(1)}×${dtfBounds.heightMm.toFixed(1)}mm`);
-                          
-                          if (alphaArea > gsBoundsArea * 1.15) {
+
+                          // GS -sDEVICE=bbox only sees INKED pixels, so white/light content (e.g.
+                          // reverse-out footer text on a transparent page) is invisible to it and
+                          // gets cropped off. The rendered PNG (pngalpha) DOES contain those pixels,
+                          // so its alpha-trim extent is the ground truth. Expand to the union whenever
+                          // the visible content extends beyond the GS bbox on ANY edge by more than a
+                          // small tolerance. (An area-ratio gate misses a thin band like a single line
+                          // of white text — only ~9% extra area but it's the whole bottom line.)
+                          const tolPt = 2; // ~0.7mm — ignore anti-alias fringe
+                          const alphaExtendsBeyondGs =
+                            alphaXMin < dtfBounds.xMin - tolPt ||
+                            alphaYMinPdf < dtfBounds.yMin - tolPt ||
+                            alphaXMax > dtfBounds.xMax + tolPt ||
+                            alphaYMaxPdf > dtfBounds.yMax + tolPt;
+                          if (alphaExtendsBeyondGs) {
                             const unionXMin = Math.min(dtfBounds.xMin, alphaXMin);
                             const unionYMin = Math.min(dtfBounds.yMin, alphaYMinPdf);
-                            const unionXMax = Math.max(dtfBounds.xMax, alphaXMin + alphaW);
-                            const unionYMax = Math.max(dtfBounds.yMax, alphaYMinPdf + alphaH);
+                            const unionXMax = Math.max(dtfBounds.xMax, alphaXMax);
+                            const unionYMax = Math.max(dtfBounds.yMax, alphaYMaxPdf);
                             const unionW = unionXMax - unionXMin;
                             const unionH = unionYMax - unionYMin;
                             (file as any).originalPdfBounds = {
@@ -3658,7 +3671,7 @@ export async function registerRoutes(app: express.Application) {
                               widthMm: unionW * 0.352778,
                               heightMm: unionH * 0.352778
                             };
-                            console.log(`⚠️ DTF GS bbox missed white content — expanded: ${(unionW * 0.352778).toFixed(1)}×${(unionH * 0.352778).toFixed(1)}mm`);
+                            console.log(`⚠️ DTF GS bbox missed light/white content — expanded to alpha union: ${(unionW * 0.352778).toFixed(1)}×${(unionH * 0.352778).toFixed(1)}mm (was ${dtfBounds.widthMm.toFixed(1)}×${dtfBounds.heightMm.toFixed(1)}mm)`);
                           }
                         }
                       }
@@ -3693,6 +3706,16 @@ export async function registerRoutes(app: express.Application) {
                           }
                         } else {
                           console.log(`📐 DTF content covers ${(contentPageRatio * 100).toFixed(0)}% of page — no crop needed`);
+                          // PNG was left full-page, so the element box must equal the full page too.
+                          // Otherwise the full-page PNG (which includes the white/light content) gets
+                          // squished into the slightly-smaller content box → distortion / edge clipping.
+                          (file as any).originalPdfBounds = {
+                            xMin: 0, yMin: 0,
+                            xMax: dtfPageWidthPts, yMax: dtfPageHeightPts,
+                            width: dtfPageWidthPts, height: dtfPageHeightPts,
+                            widthMm: dtfPageWidthPts * 0.352778,
+                            heightMm: dtfPageHeightPts * 0.352778
+                          };
                         }
                       }
                     } catch (cropErr) {
