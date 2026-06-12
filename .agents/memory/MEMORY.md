@@ -1,4 +1,5 @@
 - [Upload bounds GS-vs-Inkscape](inkscape-bounds-vs-gs-bbox.md) — white art on dark garment gets cropped+landscape-flipped; trust Inkscape unless ONE element dominates the page (>85%).
+- [SVG zero-origin normalization translation](svg-normalization-translation-source.md) — translate must use the SAME bounds source as viewBox size (GS origin), never Inkscape px root position, or artwork clips bottom-right.
 - [Raster fallback needs preview-PNG tier](raster-fallback-needs-preview-png-tier.md) — blank print page when GS chokes on malformed PDF + SVG-processed logo; fallback must drop to pre-generated preview PNG, never GS-only.
 - [originalPdfBounds only for pristine original](originalpdfbounds-only-for-pristine-original.md) — never crop a derived (SVG-converted / already-cropped) logo PDF with upload-time bounds; it clips via the form XObject BBox.
 - [Prod crash_logs debugging](prod-crashlogs-debugging.md) — created_at is TEXT (use string compares, NOT NOW()/to_char/INTERVAL → silently empty); replica is ~live; user screenshot times are local UTC+1 vs UTC; how to read event types.

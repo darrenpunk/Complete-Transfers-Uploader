@@ -5881,6 +5881,11 @@ export async function registerRoutes(app: express.Application) {
                       try {
                         let svgBoundsX = 0, svgBoundsY = 0;
                         let svgBoundsWidth = contentWidthPts, svgBoundsHeight = contentHeightPts;
+                        // When the Inkscape-union correction REPLACES the GS bounds, svgBoundsX/Y are
+                        // reset to the union origin (which matches the corrected size). Otherwise the
+                        // zero-origin translation must come from contentBoundsForNormalization (the
+                        // source of the kept size), NOT Inkscape's px-converted root position.
+                        let boundsWereInkscapeCorrected = false;
                         
                         try {
                           // CRITICAL: async exec — see notes above about inkscape blocking the event loop.
@@ -5955,6 +5960,7 @@ export async function registerRoutes(app: express.Application) {
                               
                               svgBoundsX = unionXMin;
                               svgBoundsY = unionYMin;
+                              boundsWereInkscapeCorrected = true;
                               
                               const pxToMm = 1 / 2.834645669;
                               displayWidth = contentWidthPts * pxToMm;
@@ -6013,23 +6019,24 @@ export async function registerRoutes(app: express.Application) {
                         let normTranslateX = svgBoundsX;
                         let normTranslateY = svgBoundsY;
                         
-                        // If root element is at (0,0) covering the full page but content is smaller,
-                        // we need to use GS/PDF bounds converted to SVG coordinates for the translation
-                        const rootIsFullPage = pdfPageDimensions && 
-                          Math.abs(svgBoundsX) < 1 && Math.abs(svgBoundsY) < 1 &&
-                          contentWidthPts < pdfPageDimensions.widthPts * 0.8 &&
-                          contentHeightPts < pdfPageDimensions.heightPts * 0.8;
-                        
-                        if (rootIsFullPage && contentBoundsForNormalization) {
+                        // The zero-origin translation MUST correspond to the SAME bounds that define
+                        // the viewBox size (contentWidthPts/HeightPts). Unless the Inkscape-union
+                        // correction replaced those bounds (in which case svgBoundsX/Y already hold the
+                        // matching union origin), the size came from contentBoundsForNormalization — so
+                        // the translation origin must too. Using Inkscape's root-element position here is
+                        // wrong: it is reported in CSS px and ×INK_PX_TO_PT-converted, so it does NOT
+                        // line up with the GS pt bounds and shifts the artwork (down-right), clipping it
+                        // on output. This was previously only corrected when the root sat at (0,0)
+                        // (rootIsFullPage); generalise it to every non-corrected case.
+                        if (!boundsWereInkscapeCorrected && contentBoundsForNormalization) {
                           if ((contentBoundsForNormalization as any).__fromSvgCoords) {
                             normTranslateX = contentBoundsForNormalization.xMin;
                             normTranslateY = contentBoundsForNormalization.yMin;
-                          } else {
+                          } else if (pdfPageDimensions) {
                             normTranslateX = contentBoundsForNormalization.xMin;
-                            normTranslateY = pdfPageDimensions!.heightPts - contentBoundsForNormalization.yMax;
+                            normTranslateY = pdfPageDimensions.heightPts - contentBoundsForNormalization.yMax;
                           }
-                          console.log(`📐 Root element is full page but content is small — using PDF bounds for SVG translation`);
-                          console.log(`   PDF bounds: (${contentBoundsForNormalization.xMin.toFixed(1)}, ${contentBoundsForNormalization.yMin.toFixed(1)}) → SVG translate: (${normTranslateX.toFixed(1)}, ${normTranslateY.toFixed(1)})`);
+                          console.log(`📐 Translating SVG by source content origin (matches kept size): (${normTranslateX.toFixed(1)}, ${normTranslateY.toFixed(1)})`);
                         }
                         
                         console.log(`🎯 NORMALIZING SVG to zero-origin:`);
