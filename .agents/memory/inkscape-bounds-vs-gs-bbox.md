@@ -88,6 +88,43 @@ true px→mm 25.4/96 with explicit units end-to-end).
 
 ---
 
+# CORRECTION: `INK_PX_TO_PT = 72/96` is NOT document-independent — the GS-empty fallback now self-calibrates
+
+The claim above that `INK_PX_TO_PT = 72/96` is "exact, document-independent" is WRONG. The
+px→pt factor depends on the **SVG header units the PDF→SVG converter emits**:
+- pt-unit header (`width="595pt"`): Inkscape renders at 96dpi → query px = pt×96/72, so
+  ×0.75 (=72/96) is correct.
+- unitless header (`width="595.276"` with matching `viewBox`): Inkscape user-unit == px == pt
+  1:1, so the correct factor is **1.0**, and ×0.75 wrongly shrinks everything to 75%.
+
+**Symptom (real customer file, A4 29er full-bleed colored design on black A4 template):** GS
+`-sDEVICE=bbox` returned EMPTY (the PDF uses radial/linear gradient patterns + compositing
+groups + clip masks GS's bbox device can't measure), so bounds fell to the **GS-empty inkscape
+fallback** (`inkscape --query-all … | head -1`, which returns the ROOT `<svg>` = whole page).
+That block applied ×0.75 to a unitless-header SVG → full A4 595.3×841.9pt reported as
+446.5×631.4pt = **157.5×222.75mm = exactly 75% of A4** → clipped on canvas.
+
+**Fix (in the GS-empty fallback block only):** self-calibrate the factor from the document
+itself. Because `head -1` is the root element, its raw px box maps exactly to the viewBox
+(= MediaBox in pt), so the true factor is `pxToPtFactor = pdfPageDimensions.widthPts / rawRootW`
+(rawRootW = `parseFloat(parts[3])`). Falls back to `INK_PX_TO_PT` only when page dims / root
+width are unavailable. Yields ≈1.0 for unitless headers, ≈0.75 for pt-unit headers — adapts
+automatically. Calibrate each axis independently (`widthPts/rawRootW`, `heightPts/rawRootH`)
+so a converter emitting non-uniform scaling can't skew one axis.
+
+**Why self-calibrate vs reading the SVG width unit:** the root-px-vs-known-page-pt ratio is
+exact regardless of header quirks, requires no SVG parsing, and degrades gracefully.
+
+**LATENT RISK (not yet hit, not changed):** the other two `INK_PX_TO_PT` blocks on the
+GS-PRIMARY path (the area-coverage verification block and the SVG-normalization union block)
+STILL use the hardcoded 0.75. They have not misfired because on the GS-primary path the SIZE
+comes from GS (pt) and Inkscape is only used for the max/root area RATIO (scale-invariant) and
+root translation origin. But if a unitless-header SVG ever drives bounds SIZE through those
+blocks, the same 75% shrink could reappear — convert them to the same self-calibrated factor
+if that surfaces.
+
+---
+
 # Large-format DTF uses a SEPARATE raster path — the px→pt fix above does NOT cover it
 
 The same white-bottom-text clipping (Kilkenny crest) ALSO reproduces on large-format DTF,

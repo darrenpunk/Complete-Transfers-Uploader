@@ -5741,12 +5741,27 @@ export async function registerRoutes(app: express.Application) {
                         const queryResult = execSyncBounds(`inkscape --query-all "${svgPath}" 2>/dev/null | head -1`, { encoding: 'utf8', timeout: 10000 });
                         const parts = queryResult.trim().split(',');
                         if (parts.length >= 5) {
-                          // query-all reports CSS px (1/96in); convert to pt (1/72in) for the
-                          // pt-based clamps and downstream math. See INK_PX_TO_PT note above.
-                          let inkX = (parseFloat(parts[1]) || 0) * INK_PX_TO_PT;
-                          let inkY = (parseFloat(parts[2]) || 0) * INK_PX_TO_PT;
-                          let inkXMax = inkX + (parseFloat(parts[3]) || 0) * INK_PX_TO_PT;
-                          let inkYMax = inkY + (parseFloat(parts[4]) || 0) * INK_PX_TO_PT;
+                          // `head -1` returns the ROOT <svg> element, whose px box maps exactly to
+                          // the viewBox (= PDF MediaBox in pt). The hardcoded INK_PX_TO_PT (72/96)
+                          // is only correct when the converter emits a pt-unit SVG header; some
+                          // converters emit unitless headers where Inkscape px already == pt (1:1),
+                          // and ×0.75 then wrongly shrinks a full-page design to 75% (e.g. a full A4
+                          // 595.3×841.9pt detected as 446.5×631.4pt = 157.5×222.75mm). Self-calibrate
+                          // the px→pt factor from this document's own root width vs the known page pt.
+                          const rawRootW = parseFloat(parts[3]) || 0;
+                          const rawRootH = parseFloat(parts[4]) || 0;
+                          // Calibrate each axis independently against the known page pt, so a
+                          // converter that ever emits non-uniform scaling can't skew one axis.
+                          const pxToPtX = (pdfPageDimensions && rawRootW > 0)
+                            ? pdfPageDimensions.widthPts / rawRootW
+                            : INK_PX_TO_PT;
+                          const pxToPtY = (pdfPageDimensions && rawRootH > 0)
+                            ? pdfPageDimensions.heightPts / rawRootH
+                            : INK_PX_TO_PT;
+                          let inkX = (parseFloat(parts[1]) || 0) * pxToPtX;
+                          let inkY = (parseFloat(parts[2]) || 0) * pxToPtY;
+                          let inkXMax = inkX + (parseFloat(parts[3]) || 0) * pxToPtX;
+                          let inkYMax = inkY + (parseFloat(parts[4]) || 0) * pxToPtY;
                           // Clamp to PDF MediaBox — bleed/margin elements outside the page inflate bounds
                           if (pdfPageDimensions) {
                             inkX = Math.max(inkX, 0);
