@@ -74,3 +74,7 @@ ADMIN_PASSWORD = "admin123"
 [userenv.production]
 NODE_ENV = "production"
 MALLOC_ARENA_MAX = "2"
+
+[postMerge]
+path = "scripts/post-merge.sh"
+timeoutMs = 20000

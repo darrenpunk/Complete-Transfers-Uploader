@@ -5443,6 +5443,9 @@ export async function registerRoutes(app: express.Application) {
                   let contentBoundsForNormalization: { xMin: number; yMin: number; xMax: number; yMax: number; width: number; height: number };
                   let boundsSourceIsArtBox = false; // True when ArtBox was the authoritative source — prevents secondary Inkscape check from overriding
                   let inkscapeVerified = false; // True when Inkscape verification ran (confirms or corrects GS bounds)
+                  // Hoisted to this scope so the pre-imposed-sheet check (further down) can reuse the
+                  // true vector bounds Inkscape computed, instead of re-running the heavy --query-all.
+                  let inkscapeVerifyBounds: { xMin: number; yMin: number; xMax: number; yMax: number; width: number; height: number } | null = null;
                   
                   // CRITICAL FIX: Ghostscript bbox misses white content on its default white background
                   // This causes partial bounds for files with mixed colored + white artwork
@@ -5458,7 +5461,7 @@ export async function registerRoutes(app: express.Application) {
                     if (areaCoverage < 0.92) {
                       console.log(`⚠️ GS bbox covers ${(areaCoverage * 100).toFixed(0)}% of page - verifying with Inkscape for white content`);
                       
-                      let inkscapeVerifyBounds: typeof gsBounds | null = null;
+                      inkscapeVerifyBounds = null;
                       // Track the largest SINGLE element (raw px²) and the root element's
                       // area (raw px²) so we can tell a genuine invisible/background full-page
                       // RECT (one element ≈ covers the page) apart from real distributed white
@@ -5689,6 +5692,95 @@ export async function registerRoutes(app: express.Application) {
                       };
                       usedMediaBoxFallback = true;
                       console.log(`📐 Falling back to MediaBox: ${pdfPageDimensions.widthMm.toFixed(1)}×${pdfPageDimensions.heightMm.toFixed(1)}mm`);
+                    }
+
+                    // PRE-IMPOSED FULL-PAGE SHEET: use the TRUE vector bounds, not the tight GS ink bbox.
+                    // A pre-imposed multi-up sheet (e.g. an A3 layout) has a PDF page that dimensionally
+                    // matches the template. GS `-sDEVICE=bbox` reports only the rasterised INK area, which
+                    // sits a few mm INSIDE the real artwork edges — so cropping the original PDF to GS
+                    // bounds shaves the outermost artwork off (this is the reported "clipping"). The full
+                    // page is NOT the answer either: it includes the empty margins and oversizes the
+                    // placement (the artwork is e.g. 400×290 inside a 420×297 A3 page). The correct size
+                    // is the artwork's geometric extent. NOTE: the `inkscapeVerifyBounds` computed above
+                    // queries the CONVERTED SVG, which for pre-imposed sheets can under-report (it returned
+                    // ~300×217mm here vs the true 400×290). So for a template-matching sheet we re-query
+                    // `inkscape --query-all` on the ORIGINAL PDF, which reports the true vector extent.
+                    // Adopt it when: the page matches the template (pre-imposed sheet), the PDF-vector bound
+                    // is larger than the GS ink bbox, and it is NOT covering ~the whole page (>97% ⇒ likely
+                    // an invisible background rect, which would just reproduce the over-sized full page).
+                    const originalPdfPathForBounds = (file as any).originalPdfPath as string | undefined;
+                    if (!boundsSourceIsArtBox && !usedMediaBoxFallback && originalPdfPathForBounds && pdfPageDimensions) {
+                      try {
+                        const { analyzeFullPageMatch } = await import('./full-page-match');
+                        const fpTemplate = templateSizes.find(t => t.id === project.templateSize);
+                        const mmToPt = 2.834645669;
+                        const fp = fpTemplate ? analyzeFullPageMatch(
+                          { widthPt: pdfPageDimensions.widthPts, heightPt: pdfPageDimensions.heightPts },
+                          { widthPt: fpTemplate.width * mmToPt, heightPt: fpTemplate.height * mmToPt },
+                          {
+                            xMin: gsBounds.xMin, yMin: gsBounds.yMin,
+                            xMax: gsBounds.xMax, yMax: gsBounds.yMax,
+                            width: gsBounds.width, height: gsBounds.height,
+                          },
+                        ) : null;
+
+                        if (fp && fp.dimensionalMatch !== 'none') {
+                          // Query the ORIGINAL PDF directly (not the converted SVG). Parse exactly like the
+                          // white-content verification: skip the root <svg> (line 0), clamp each element to
+                          // the page, union the rest. Output is CSS px@96, top-left origin → convert to pt
+                          // and flag `__fromSvgCoords` so downstream applies the SVG→PDF coordinate flip.
+                          const pageWPt = pdfPageDimensions.widthPts;
+                          const pageHPt = pdfPageDimensions.heightPts;
+                          // Inkscape picks its import filter by file EXTENSION, and the stored original PDF
+                          // has no `.pdf` suffix (it's a hash) — so querying it directly returns nothing.
+                          // GS sniffs content and works regardless; Inkscape does not. Copy to a temp
+                          // `.pdf` so the PDF import filter engages, then clean it up.
+                          const tmpPdfForQuery = path.join(os.tmpdir(), `preimposed_bounds_${Date.now()}_${Math.random().toString(36).slice(2)}.pdf`);
+                          let queryRaw = '';
+                          try {
+                            fs.copyFileSync(originalPdfPathForBounds, tmpPdfForQuery);
+                            queryRaw = (await execAsyncRaw(`inkscape --query-all "${tmpPdfForQuery}" 2>/dev/null`, { encoding: 'utf8' as any, timeout: 15000 })).stdout.toString();
+                          } finally {
+                            try { fs.unlinkSync(tmpPdfForQuery); } catch { /* best-effort cleanup */ }
+                          }
+                          const qLines = queryRaw.trim().split('\n');
+                          let gX0 = Infinity, gY0 = Infinity, gX1 = -Infinity, gY1 = -Infinity;
+                          for (let i = 1; i < qLines.length; i++) {
+                            const parts = qLines[i].split(',');
+                            if (parts.length < 5) continue;
+                            const ex = (parseFloat(parts[1]) || 0) * INK_PX_TO_PT;
+                            const ey = (parseFloat(parts[2]) || 0) * INK_PX_TO_PT;
+                            const ew = (parseFloat(parts[3]) || 0) * INK_PX_TO_PT;
+                            const eh = (parseFloat(parts[4]) || 0) * INK_PX_TO_PT;
+                            if (ew <= 0.5 || eh <= 0.5) continue;
+                            const cx0 = Math.max(ex, 0), cy0 = Math.max(ey, 0);
+                            const cx1 = Math.min(ex + ew, pageWPt), cy1 = Math.min(ey + eh, pageHPt);
+                            if (cx1 > cx0 && cy1 > cy0) {
+                              gX0 = Math.min(gX0, cx0); gY0 = Math.min(gY0, cy0);
+                              gX1 = Math.max(gX1, cx1); gY1 = Math.max(gY1, cy1);
+                            }
+                          }
+                          if (gX0 < Infinity) {
+                            const trueBounds = { xMin: gX0, yMin: gY0, xMax: gX1, yMax: gY1, width: gX1 - gX0, height: gY1 - gY0 };
+                            const inkCoverage = (trueBounds.width * trueBounds.height) / (pageWPt * pageHPt);
+                            const inkLargerThanGs =
+                              trueBounds.width >= gsBounds.width - 1 &&
+                              trueBounds.height >= gsBounds.height - 1 &&
+                              (trueBounds.width > gsBounds.width + 1 || trueBounds.height > gsBounds.height + 1);
+                            if (inkLargerThanGs && inkCoverage < 0.97) {
+                              console.log(`📄 PRE-IMPOSED SHEET (${fp.dimensionalMatch} match): using PDF vector bounds ${trueBounds.width.toFixed(1)}×${trueBounds.height.toFixed(1)}pt instead of tight GS ink bbox ${gsBounds.width.toFixed(1)}×${gsBounds.height.toFixed(1)}pt to avoid clipping artwork edges`);
+                              gsBounds = trueBounds;
+                              (gsBounds as any).__fromSvgCoords = true;
+                            } else {
+                              console.log(`📄 Pre-imposed sheet check: keeping GS bbox (PDF-vector ${trueBounds.width.toFixed(1)}×${trueBounds.height.toFixed(1)}pt, inkLarger=${inkLargerThanGs}, inkCoverage=${(inkCoverage * 100).toFixed(0)}%)`);
+                            }
+                          }
+                        } else if (fp) {
+                          console.log(`📄 Pre-imposed sheet check: page does not match template (dimMatch=none) — keeping GS bbox`);
+                        }
+                      } catch (fpErr) {
+                        console.log(`⚠️ Pre-imposed sheet check failed (non-critical):`, fpErr);
+                      }
                     }
 
                     contentBoundsForNormalization = gsBounds;

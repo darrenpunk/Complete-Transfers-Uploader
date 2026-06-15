@@ -163,3 +163,42 @@ GS-primary block yields nothing; its 25.4/72 convention threads through hundreds
 downstream lines + a separate SVG-analyzer path, so a piecemeal fix risks divergence. If
 clipping reappears on direct-SVG uploads, fix that block holistically (px→pt, or switch to a
 true px→mm 25.4/96 with explicit units end-to-end).
+
+---
+
+# Pre-imposed full-page sheet: GS tight ink bbox clips the outer artwork → use true vector bounds
+
+A NEW clipping class, distinct from the white-content trap above. When a customer uploads a
+**pre-imposed multi-up sheet** whose PDF page dimensionally matches the chosen template
+(e.g. an A3 landscape layout), the artwork fills most of the page but NOT to the paper edge
+(art ≈ 400×290mm inside a 420×297 A3 page). Two wrong answers and one right one:
+- **GS `-sDEVICE=bbox`** = tight INK bbox, sits a few mm INSIDE the true artwork edges →
+  cropping the original PDF to it shaves the outermost art off (the reported "clipping",
+  ~395×289 instead of 400×290).
+- **Full PDF page (MediaBox)** = includes empty margins → oversizes the placement (420×297).
+- **Right answer = the artwork's geometric extent** (~400×290) from `inkscape --query-all`
+  union of the elements.
+
+**The rule:** when `analyzeFullPageMatch` (server/full-page-match.ts, 10pt tol) returns a
+`direct`/`rotated` dimensional match, query the ORIGINAL PDF's true vector bounds and adopt
+them over the GS bbox — but ONLY when they are **strictly larger than GS** (width & height
+≥ GS−1, at least one > GS+1) AND **coverage < 0.97** (so genuinely tight content isn't
+oversized and a near-full-page background rect isn't promoted). Flag adopted bounds
+`__fromSvgCoords=true` so the downstream SVG→PDF coordinate flip applies. Parse like the
+white-content block: skip line 0 (root `<svg>`), clamp each element to the page, ×INK_PX_TO_PT.
+Failure is caught + logged non-critical → degrades to the prior GS path. Counter-tests that
+MUST stay tight/cropped: small content on a large page (teddy portrait-on-landscape, a
+64×65mm crest); full-page tests (mtsg, rotated bem) stay full-page.
+
+## The load-bearing sub-trap: Inkscape picks its import filter by FILE EXTENSION
+`inkscape --query-all` returned **0 lines** on the stored original PDF and the block silently
+fell through (gX0 stayed Infinity → no adoption). Reason: the stored original is a content
+hash with **NO `.pdf` extension** (e.g. `uploads/74732ea0…`). Inkscape chooses its importer
+by extension, so an extensionless file imports as nothing; **GS works on the same file
+because GS sniffs content, not extension** — which is why GS-based paths never hit this.
+
+**Fix / how to apply:** any code that runs `inkscape --query-*` on an uploaded original MUST
+first copy it to a temp file WITH a `.pdf` extension (e.g. `os.tmpdir()/preimposed_bounds_*.pdf`),
+query the temp copy, and `unlink` it in a `finally`. Never assume `originalPdfPath` ends in
+`.pdf`. (Also reuse the already-computed `inkscapeVerifyBounds` from the white-content block
+when available instead of re-running the heavy `--query-all`.)
