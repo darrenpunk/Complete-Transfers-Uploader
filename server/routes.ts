@@ -5363,8 +5363,12 @@ export async function registerRoutes(app: express.Application) {
                   const pageWidth = mediaBox.width;
                   const pageHeight = mediaBox.height;
                   
-                  // Check for ArtBox (Illustrator artboard) or TrimBox — these define intended output area
+                  // Check for ArtBox (Illustrator artboard) or TrimBox — these define intended output area.
+                  // Track WHICH box we took: a true ArtBox is an explicit designer artboard (trusted as the
+                  // intended graphic size); a TrimBox is often abused by Corel as the template size, so it
+                  // needs the content-fill gate below to avoid stretching a tiny logo to the whole template.
                   let artBoxPts: { x: number; y: number; width: number; height: number } | null = null;
+                  let artBoxSource: 'artbox' | 'trimbox' | null = null;
                   try {
                     const artBox = firstPage.getArtBox();
                     // Only use ArtBox if it's meaningfully smaller than MediaBox (not just a fallback copy)
@@ -5372,6 +5376,7 @@ export async function registerRoutes(app: express.Application) {
                     const hDiff = Math.abs(artBox.height - pageHeight);
                     if (artBox.width > 10 && artBox.height > 10 && (wDiff > 5 || hDiff > 5)) {
                       artBoxPts = artBox;
+                      artBoxSource = 'artbox';
                       const pxToMmArt = 1 / 2.834645669;
                       console.log(`🎨 ArtBox found: (${artBox.x.toFixed(1)}, ${artBox.y.toFixed(1)}) ${artBox.width.toFixed(1)}×${artBox.height.toFixed(1)}pts = ${(artBox.width * pxToMmArt).toFixed(1)}×${(artBox.height * pxToMmArt).toFixed(1)}mm`);
                     }
@@ -5382,6 +5387,7 @@ export async function registerRoutes(app: express.Application) {
                     const hDiff = Math.abs(trimBox.height - pageHeight);
                     if (!artBoxPts && trimBox.width > 10 && trimBox.height > 10 && (wDiff > 5 || hDiff > 5)) {
                       artBoxPts = trimBox;
+                      artBoxSource = 'trimbox';
                       const pxToMmTrim = 1 / 2.834645669;
                       console.log(`✂️ TrimBox found: (${trimBox.x.toFixed(1)}, ${trimBox.y.toFixed(1)}) ${trimBox.width.toFixed(1)}×${trimBox.height.toFixed(1)}pts = ${(trimBox.width * pxToMmTrim).toFixed(1)}×${(trimBox.height * pxToMmTrim).toFixed(1)}mm`);
                     }
@@ -5394,7 +5400,8 @@ export async function registerRoutes(app: express.Application) {
                     heightMm: pageHeight * pxToMm,
                     widthPts: pageWidth,
                     heightPts: pageHeight,
-                    artBoxPts: artBoxPts || undefined
+                    artBoxPts: artBoxPts || undefined,
+                    artBoxSource: artBoxSource || undefined
                   } as any;
                   
                   console.log(`✅ PDF PAGE DIMENSIONS EXTRACTED: ${pageWidth.toFixed(1)}×${pageHeight.toFixed(1)}pts (MediaBox)`);
@@ -5650,15 +5657,23 @@ export async function registerRoutes(app: express.Application) {
                     // Only honor ArtBox/TrimBox when the visible content fills a meaningful fraction of it
                     // (≥60% area coverage). Otherwise the artwork doesn't fill the artboard — use GS bounds.
                     const artBoxFromPdfGs = pdfPageDimensions && (pdfPageDimensions as any).artBoxPts;
+                    const artBoxSourceGs = pdfPageDimensions && (pdfPageDimensions as any).artBoxSource;
                     if (artBoxFromPdfGs && (artBoxFromPdfGs.width > gsBounds.width + 2 || artBoxFromPdfGs.height > gsBounds.height + 2)) {
                       const artBoxArea = artBoxFromPdfGs.width * artBoxFromPdfGs.height;
                       const gsAreaForArtCheck = gsBounds.width * gsBounds.height;
                       const gsToArtBoxCoverage = artBoxArea > 0 ? gsAreaForArtCheck / artBoxArea : 0;
 
-                      if (gsToArtBoxCoverage < 0.60) {
-                        console.log(`⚠️ GS content (${gsBounds.width.toFixed(1)}×${gsBounds.height.toFixed(1)}pts) only fills ${(gsToArtBoxCoverage * 100).toFixed(0)}% of ArtBox/TrimBox (${artBoxFromPdfGs.width.toFixed(1)}×${artBoxFromPdfGs.height.toFixed(1)}pts) — artwork doesn't fill artboard, keeping tight GS bounds`);
+                      // A true ArtBox (Illustrator artboard) is an EXPLICIT designer declaration of the
+                      // intended graphic size — honour it regardless of how much ink fills it (artwork
+                      // routinely has deliberate margins, e.g. a 165×97mm logo centred in a 220×130mm
+                      // artboard). The 60% content-fill gate only applies to a TrimBox, which Corel often
+                      // sets to the whole template size even when the real art is tiny inside it.
+                      const isTrueArtBox = artBoxSourceGs === 'artbox';
+                      if (!isTrueArtBox && gsToArtBoxCoverage < 0.60) {
+                        console.log(`⚠️ GS content (${gsBounds.width.toFixed(1)}×${gsBounds.height.toFixed(1)}pts) only fills ${(gsToArtBoxCoverage * 100).toFixed(0)}% of TrimBox (${artBoxFromPdfGs.width.toFixed(1)}×${artBoxFromPdfGs.height.toFixed(1)}pts) — artwork doesn't fill artboard, keeping tight GS bounds`);
                       } else {
-                        console.log(`🎨 ArtBox (${artBoxFromPdfGs.width.toFixed(1)}×${artBoxFromPdfGs.height.toFixed(1)}pts) is larger than GS bbox (${gsBounds.width.toFixed(1)}×${gsBounds.height.toFixed(1)}pts) and content fills ${(gsToArtBoxCoverage * 100).toFixed(0)}% of it — using ArtBox as intended print area`);
+                        const boxLabel = isTrueArtBox ? 'ArtBox' : 'TrimBox';
+                        console.log(`🎨 ${boxLabel} (${artBoxFromPdfGs.width.toFixed(1)}×${artBoxFromPdfGs.height.toFixed(1)}pts) is larger than GS bbox (${gsBounds.width.toFixed(1)}×${gsBounds.height.toFixed(1)}pts) and content fills ${(gsToArtBoxCoverage * 100).toFixed(0)}% of it — using ${boxLabel} as intended print area`);
                         gsBounds = {
                           xMin: artBoxFromPdfGs.x,
                           yMin: artBoxFromPdfGs.y,

@@ -202,3 +202,36 @@ first copy it to a temp file WITH a `.pdf` extension (e.g. `os.tmpdir()/preimpos
 query the temp copy, and `unlink` it in a `finally`. Never assume `originalPdfPath` ends in
 `.pdf`. (Also reuse the already-computed `inkscapeVerifyBounds` from the white-content block
 when available instead of re-running the heavy `--query-all`.)
+
+---
+
+# ArtBox = trusted graphic size; the 60% content-fill gate is for TrimBox (Corel) ONLY
+
+A SEPARATE bounds class from clipping: artwork uploaded SMALLER than its intended size when
+the design has deliberate whitespace margins. completetransfers artwork PDFs declare the
+intended **graphic size** via an **ArtBox** (e.g. ArtBox = 220×130mm, matching the printed
+"Graphic Size: 220mm x 130mm" label), with the actual ink (logo + text) sitting inside it at
+e.g. 165×97mm (~56% of the ArtBox area).
+
+**The bug:** the upload bounds path detected the ArtBox correctly but a safeguard required the
+GS ink to fill **≥60%** of the ArtBox/TrimBox before honouring it; at 56% it discarded the
+ArtBox and kept the tight 165×97 GS bbox → artwork uploaded too small.
+
+**The rule (durable):** an **ArtBox** is an EXPLICIT Illustrator artboard = the designer's
+declared graphic size → honour it regardless of ink-fill percentage (artwork routinely has
+intentional margins). The 60% content-fill gate exists ONLY to defend against **Corel abusing
+the TrimBox** (setting it to the whole template size while the real art is tiny inside, which
+would stretch a small logo to fill the template). So gate on SOURCE: keep the ≥60% gate for
+`trimbox`, bypass it for `artbox`.
+
+**Why it's safe to honour ArtBox with no fill floor:** adoption is already bounded on both
+sides — detection requires the box be meaningfully smaller than MediaBox (`wDiff>5||hDiff>5`,
+>10pt) AND the adoption block requires it be larger than the GS bbox (`> gsBounds + 2`). So
+the envelope is always `gsInk < ArtBox < MediaBox` — can't oversize past the page.
+
+**How to apply:** record `artBoxSource: 'artbox'|'trimbox'` at box detection (getArtBox vs
+getTrimBox fallback), carry it on `pdfPageDimensions`, and branch the fill gate on it.
+**Watch for:** small logos with a genuinely-set ArtBox now coming in LARGER (intended) — that
+is correct. **Known pre-existing (not changed):** the GS-empty fallback block adopts `artBoxPts`
+with no source check; the 60% gate doesn't translate there (no GS content to measure), and that
+path is white-on-white where the box is usually the right answer — leave it unless it surfaces.
