@@ -52,6 +52,7 @@ import fs from 'fs';
 import path from 'path';
 import { storage } from './storage';
 import { sendMail } from './mailersend-client';
+import { requestGracefulRestart } from './self-restart';
 
 const DEFAULT_LIGHT_INTERVAL_MIN = 15;
 const DEFAULT_STRESS_INTERVAL_MIN = 60;
@@ -177,6 +178,13 @@ const DEFAULT_UPLOAD_INTERVAL_MIN = 30;
 
 const lastAlertSentAt = new Map<string, number>();
 const lastSuccessAt: Record<'light' | 'stress' | 'upload', number | null> = { light: null, stress: null, upload: null };
+// Consecutive real failures per probe. When a probe fails N times in a row we
+// escalate beyond the email alert to a graceful self-restart — the same
+// "Connection Timeout" condition that previously only emailed now actually
+// recovers the process. A success resets the counter to 0; a skip is neutral
+// (leaves the counter untouched, counting as neither success nor failure).
+const consecutiveFailures: Record<'light' | 'stress' | 'upload', number> = { light: 0, stress: 0, upload: 0 };
+const DEFAULT_PROBE_RESTART_THRESHOLD = 3;
 let lightTimer: NodeJS.Timeout | null = null;
 let stressTimer: NodeJS.Timeout | null = null;
 let uploadTimer: NodeJS.Timeout | null = null;
@@ -221,7 +229,9 @@ export async function runPdfStressCheck(opts: { sendAlertOnFailure?: boolean } =
 export async function runUploadHealthCheck(opts: { sendAlertOnFailure?: boolean } = {}): Promise<HealthCheckResult> {
   const existing = inFlight.upload;
   if (existing) return existing;
-  const promise = doRunUploadProbe(opts).finally(() => { inFlight.upload = null; });
+  const promise = doRunUploadProbe(opts)
+    .then((result) => { maybeEscalateProbeRestart('upload', result, opts.sendAlertOnFailure); return result; })
+    .finally(() => { inFlight.upload = null; });
   inFlight.upload = promise;
   return promise;
 }
@@ -230,9 +240,59 @@ async function runProbe(fixture: ProbeFixture, opts: { sendAlertOnFailure?: bool
   // Collapse concurrent calls onto a single probe (per kind).
   const existing = inFlight[fixture.kind];
   if (existing) return existing;
-  const promise = doRunProbe(fixture, opts).finally(() => { inFlight[fixture.kind] = null; });
+  const promise = doRunProbe(fixture, opts)
+    .then((result) => { maybeEscalateProbeRestart(fixture.kind, result, opts.sendAlertOnFailure); return result; })
+    .finally(() => { inFlight[fixture.kind] = null; });
   inFlight[fixture.kind] = promise;
   return promise;
+}
+
+/**
+ * Escalate sustained probe failures to a graceful self-restart. The same
+ * repeated-timeout condition that previously only emailed a "Connection
+ * Timeout" alert now also recovers the process. Guard rails:
+ *   - Only the scheduler escalates (sendAlertOnFailure !== false). Manual admin
+ *     trigger endpoints pass false and must never restart the server.
+ *   - Skips count as neither success nor failure (don't touch the counter).
+ *   - A success resets the counter.
+ *   - Only escalates in production, and only after N consecutive real failures.
+ *   - requestGracefulRestart itself defers if a real customer op is in flight
+ *     and respects a cooldown, so this can't interrupt work or restart-loop.
+ */
+function maybeEscalateProbeRestart(
+  kind: 'light' | 'stress' | 'upload',
+  result: HealthCheckResult,
+  sendAlertOnFailure?: boolean,
+): void {
+  if (sendAlertOnFailure === false) return;
+  if (result.skipped) return;
+  if (result.ok) { consecutiveFailures[kind] = 0; return; }
+
+  consecutiveFailures[kind]++;
+  const threshold = Math.max(2, parseInt(process.env.HEALTH_PROBE_RESTART_THRESHOLD || `${DEFAULT_PROBE_RESTART_THRESHOLD}`, 10));
+  if (consecutiveFailures[kind] < threshold) return;
+
+  if (process.env.NODE_ENV !== 'production') {
+    console.warn(`[HEALTH] ${kind} probe failed ${consecutiveFailures[kind]}x consecutively — would self-restart, but not in production`);
+    return;
+  }
+
+  const reason = `Health probe '${kind}' failed ${consecutiveFailures[kind]} consecutive times (last: ${result.failureKey || 'unknown'} — ${result.errorMessage || 'n/a'})`;
+  const outcome = requestGracefulRestart({
+    eventType: 'health_probe_restart',
+    reason,
+    details: {
+      probe: kind,
+      consecutiveFailures: consecutiveFailures[kind],
+      failureKey: result.failureKey,
+      lastErrorMessage: result.errorMessage,
+      durationMs: result.durationMs,
+    },
+  });
+  console.error(`[HEALTH] ${kind} probe escalation → graceful restart outcome: ${outcome}`);
+  // On a committed restart the process is about to exit. If deferred (busy /
+  // cooldown), keep the counter so the next failed probe re-attempts.
+  if (outcome === 'restarting') consecutiveFailures[kind] = 0;
 }
 
 async function doRunProbe(fixture: ProbeFixture, opts: { sendAlertOnFailure?: boolean }): Promise<HealthCheckResult> {

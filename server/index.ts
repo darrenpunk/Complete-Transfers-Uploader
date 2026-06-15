@@ -8,7 +8,8 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { getOperationStats, getActiveOpsDetail } from "./operation-guard";
 import { storage } from "./storage";
-import { requestTracker, getRecentRequests, getInFlightRequests } from "./request-tracker";
+import { requestTracker, getRecentRequests, getInFlightRequests, getApiCounters } from "./request-tracker";
+import { registerRestartPersist, requestGracefulRestart } from "./self-restart";
 
 const FORENSIC_EVENT_TYPES = new Set([
   'memory_critical',
@@ -16,6 +17,11 @@ const FORENSIC_EVENT_TYPES = new Set([
   'uncaught_exception',
   'unhandled_rejection',
   'suspected_crash',
+  // Self-restart events: attach the request ring + in-flight snapshot so a
+  // post-incident query can see exactly what the process was (not) serving
+  // when the wedge watchdog / health-probe escalation pulled the trigger.
+  'liveness_restart',
+  'health_probe_restart',
 ]);
 
 const __filename = fileURLToPath(import.meta.url);
@@ -70,6 +76,11 @@ export function persistCrashLog(eventType: string, message: string, details?: an
     console.error('[CRASH LOG] Failed to persist:', err.message);
   });
 }
+
+// Let the self-restart module write its forensic crashLogs row through the same
+// path the memory watchdog uses (so liveness/probe restarts get the full
+// forensic ring + in-flight snapshot attached).
+registerRestartPersist(persistCrashLog);
 
 const serverStartPersist = persistCrashLog('server_start', `Server process started (PID ${process.pid})`);
 
@@ -143,7 +154,12 @@ const serverStartPersist = persistCrashLog('server_start', `Server process start
                  lastEvent.eventType !== 'unhandled_rejection' &&
                  lastEvent.eventType !== 'suspected_crash' &&
                  lastEvent.eventType !== 'memory_warning' &&
-                 lastEvent.eventType !== 'memory_critical') {
+                 lastEvent.eventType !== 'memory_critical' &&
+                 // Deliberate self-restarts (wedge watchdog / health-probe
+                 // escalation) write their own forensic row before exiting, so
+                 // they are clean shutdowns, not suspected crashes.
+                 lastEvent.eventType !== 'liveness_restart' &&
+                 lastEvent.eventType !== 'health_probe_restart') {
         console.log(`[CRASH DETECTION] Previous shutdown event: ${lastEvent.eventType} — "${lastEvent.message}"`);
       }
     }
@@ -326,6 +342,118 @@ if (process.env.NODE_ENV === 'production') {
       });
     }
   }, MEMORY_CHECK_INTERVAL);
+
+  // ---------------------------------------------------------------------------
+  // Liveness / wedge watchdog.
+  //
+  // The memory watchdog above only fires on RSS pressure. The 2026-06-15 outage
+  // was the opposite failure mode: the process stayed at ~178MB and the trivial
+  // GET /api/version kept answering in 1ms, but every REAL endpoint went silent
+  // for ~10 minutes — a wedge, not a crash or OOM. Nothing could recover it
+  // except a manual republish.
+  //
+  // This watchdog detects that state and triggers the same graceful exit so
+  // Replit relaunches us. It uses `/api/`-only counters (static assets and the
+  // /api/version keepalive are excluded) so that "the API layer is wedged" is
+  // not masked by traffic that keeps succeeding at the HTTP/static layer.
+  //
+  // Primary signal (false-positive resistant): over a rolling window, enough
+  // real API requests ARRIVED but ZERO of them succeeded (status < 500). A
+  // single slow op can't trigger it (needs many requests); an idle server can't
+  // trigger it (needs traffic); a busy-but-healthy server can't trigger it
+  // (something always succeeds — small GETs complete in ms even under upload
+  // load). The window sits comfortably above the longest legitimate request
+  // chain (OperationGuard queue 120s + op 180s), and the in-flight-work guard
+  // in self-restart defers if a real op is genuinely progressing.
+  const LIVENESS_CHECK_INTERVAL = 30_000;
+  const LIVENESS_WINDOW_MS = Math.max(2, parseInt(process.env.LIVENESS_NO_SUCCESS_MIN || '5', 10)) * 60_000;
+  const LIVENESS_MIN_REQUESTS = Math.max(2, parseInt(process.env.LIVENESS_MIN_REQUESTS || '5', 10));
+  // A single in-flight API request older than this is beyond every legitimate
+  // timeout (queue 120s + op 180s = 300s) → definitely stuck. Catch-all for the
+  // low-traffic case where the count-based signal can't reach its minimum.
+  const LIVENESS_STUCK_INFLIGHT_MS = Math.max(200, parseInt(process.env.LIVENESS_STUCK_INFLIGHT_SEC || '330', 10)) * 1000;
+  // Event-loop stall: if the loop is blocked this long, timers drift. Secondary
+  // signal (the 2026-06-15 wedge did NOT stall the loop). Still respects the
+  // in-flight-work guard so a legitimate heavy op is never interrupted.
+  const LIVENESS_LAG_STALL_MS = 30_000;
+  // Require two consecutive positive checks (~60s) before pulling the trigger.
+  const LIVENESS_CONFIRM_CHECKS = 2;
+
+  // Event-loop lag probe — measures timer drift. If the loop is blocked, this
+  // callback runs late and records how late.
+  let lagLastTick = Date.now();
+  let recentLagMs = 0;
+  const LAG_PROBE_MS = 2000;
+  const lagTimer = setInterval(() => {
+    const now = Date.now();
+    recentLagMs = Math.max(0, now - lagLastTick - LAG_PROBE_MS);
+    lagLastTick = now;
+  }, LAG_PROBE_MS);
+  if (lagTimer.unref) lagTimer.unref();
+
+  // Rolling samples of the monotonic API counters so we can compute windowed
+  // started/succeeded deltas without being affected by the bounded request ring.
+  const samples: Array<{ t: number; started: number; succeeded: number }> = [];
+  let consecutiveWedge = 0;
+
+  const livenessTimer = setInterval(() => {
+    try {
+      const now = Date.now();
+      const c = getApiCounters();
+      samples.push({ t: now, started: c.apiStartedTotal, succeeded: c.apiSuccessTotal });
+      while (samples.length > 1 && now - samples[0].t > LIVENESS_WINDOW_MS) samples.shift();
+      const oldest = samples[0];
+      const windowMs = now - oldest.t;
+      const startedInWindow = c.apiStartedTotal - oldest.started;
+      const succeededInWindow = c.apiSuccessTotal - oldest.succeeded;
+
+      // Only judge once we actually have ~a full window of history, so a fresh
+      // boot (or a just-cleared sample buffer) can't misfire.
+      const haveFullWindow = windowMs >= LIVENESS_WINDOW_MS * 0.9;
+
+      const wedgeNoSuccess = haveFullWindow && startedInWindow >= LIVENESS_MIN_REQUESTS && succeededInWindow === 0;
+      const wedgeStuck = c.oldestApiInFlightMs > LIVENESS_STUCK_INFLIGHT_MS;
+      const wedgeLag = recentLagMs > LIVENESS_LAG_STALL_MS;
+
+      if (wedgeNoSuccess || wedgeStuck || wedgeLag) {
+        consecutiveWedge++;
+        const bits: string[] = [];
+        if (wedgeNoSuccess) bits.push(`${startedInWindow} API requests over ${Math.round(windowMs / 1000)}s with 0 successes`);
+        if (wedgeStuck) bits.push(`oldest in-flight API request stuck ${Math.round(c.oldestApiInFlightMs / 1000)}s`);
+        if (wedgeLag) bits.push(`event-loop lag ${Math.round(recentLagMs / 1000)}s`);
+        const reason = `Liveness wedge detected (${bits.join('; ')}) [confirm ${consecutiveWedge}/${LIVENESS_CONFIRM_CHECKS}]`;
+        console.error(`[LIVENESS] ${reason}`);
+        if (consecutiveWedge >= LIVENESS_CONFIRM_CHECKS) {
+          const outcome = requestGracefulRestart({
+            eventType: 'liveness_restart',
+            reason,
+            details: {
+              startedInWindow,
+              succeededInWindow,
+              windowMs,
+              oldestApiInFlightMs: c.oldestApiInFlightMs,
+              apiInFlightCount: c.apiInFlightCount,
+              recentLagMs,
+              lastApiSuccessAt: c.lastApiSuccessAt,
+              signals: { wedgeNoSuccess, wedgeStuck, wedgeLag },
+            },
+          });
+          if (outcome !== 'restarting') {
+            console.warn(`[LIVENESS] restart not executed (${outcome}) — will re-evaluate next tick`);
+          }
+        }
+      } else {
+        if (consecutiveWedge > 0) {
+          console.log(`[LIVENESS] healthy again — clearing wedge counter (was ${consecutiveWedge})`);
+        }
+        consecutiveWedge = 0;
+      }
+    } catch (e: any) {
+      console.error('[LIVENESS] check error:', e?.message);
+    }
+  }, LIVENESS_CHECK_INTERVAL);
+  if (livenessTimer.unref) livenessTimer.unref();
+  console.log(`[SERVER] Liveness/wedge watchdog active (window ${LIVENESS_WINDOW_MS / 60000}min, min ${LIVENESS_MIN_REQUESTS} reqs)`);
 }
 
 const app = express();
