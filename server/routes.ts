@@ -57,6 +57,7 @@ import { sendMail } from './mailersend-client';
 import { manufacturerColors, type ManufacturerColorGroup } from '@shared/garment-colors';
 import { PDFBoundsExtractor } from './pdf-bounds-extractor';
 import { SVGBoundsAnalyzer } from './svg-bounds-analyzer';
+import { backupFilesNow } from './object-storage';
 
 const execAsyncRaw = promisify(exec);
 const INKSCAPE_TIMEOUT = 30000;
@@ -3138,6 +3139,9 @@ export async function registerRoutes(app: express.Application) {
       console.log(`📐 Template: ${templateSize?.name} (Group: ${templateSize?.group}), Single Colour: ${isSingleColourTemplate}, Ink Color: ${project.inkColor}, LargeFormatDTF: ${isLargeFormatDTF}`);
 
       const logos = [];
+      // Files to immediately mirror to Object Storage once all per-file processing
+      // (incl. in-place recolor) is done. Collected here, backed up after the loop.
+      const allFilesToBackup = new Set<string>();
       
       // Get existing canvas elements for proper z-index ordering (use max+1, not count, to avoid collisions after reordering)
       const existingCanvasElements = await storage.getCanvasElementsByProject(projectId);
@@ -5077,15 +5081,14 @@ export async function registerRoutes(app: express.Application) {
         // Add the logo to the logos array immediately after creation
         logos.push(logo);
 
-        // Fire-and-forget: back up all files created for this logo to Dropbox.
-        // This ensures files survive redeployment — they will be transparently
-        // restored from Dropbox if the local ./uploads directory is wiped.
-        const filesToBackup = new Set<string>();
-        if (file.filename) filesToBackup.add(file.filename);
-        if (finalFilename && finalFilename !== file.filename) filesToBackup.add(finalFilename);
-        if (logoData.originalFilename && logoData.originalFilename !== file.filename) filesToBackup.add(logoData.originalFilename);
-        if ((logoData as any).canvasFallbackFilename) filesToBackup.add((logoData as any).canvasFallbackFilename);
-        if ((file as any).extractedRasterPath) filesToBackup.add(path.basename((file as any).extractedRasterPath));
+        // Collect all files created for this logo so they can be mirrored to
+        // Object Storage after the loop (post-recolor). This ensures files survive
+        // redeployment — they are transparently restored if ./uploads is wiped.
+        if (file.filename) allFilesToBackup.add(file.filename);
+        if (finalFilename && finalFilename !== file.filename) allFilesToBackup.add(finalFilename);
+        if (logoData.originalFilename && logoData.originalFilename !== file.filename) allFilesToBackup.add(logoData.originalFilename);
+        if ((logoData as any).canvasFallbackFilename) allFilesToBackup.add((logoData as any).canvasFallbackFilename);
+        if ((file as any).extractedRasterPath) allFilesToBackup.add(path.basename((file as any).extractedRasterPath));
 
         // Auto-recolor for single colour templates with ink color
         if (isSingleColourTemplate && project.inkColor && (finalMimeType === 'image/svg+xml' || finalMimeType === 'application/pdf')) {
@@ -7026,6 +7029,16 @@ export async function registerRoutes(app: express.Application) {
         isCMYKPreserved: logo.isCMYKPreserved,
         mimeType: logo.mimeType
       })));
+
+      // Durability: immediately mirror this logo's files to Object Storage so a
+      // crash/redeploy in the background-sweep window cannot lose them. Fire-and-
+      // forget — never blocks the response and never throws.
+      if (allFilesToBackup.size > 0) {
+        backupFilesNow(Array.from(allFilesToBackup)).catch(err =>
+          console.warn('⚠️ [OBJECT STORAGE] Immediate logo backup failed (sweeper will retry):', err?.message || err)
+        );
+      }
+
       res.json(logos);
     } catch (error) {
       const ctxFiles = ((req.files as Express.Multer.File[]) || []).map(f => f.originalname).join(', ') || 'unknown';

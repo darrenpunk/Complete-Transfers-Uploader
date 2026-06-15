@@ -10,6 +10,7 @@ import { getOperationStats, getActiveOpsDetail } from "./operation-guard";
 import { storage } from "./storage";
 import { requestTracker, getRecentRequests, getInFlightRequests, getApiCounters } from "./request-tracker";
 import { registerRestartPersist, requestGracefulRestart } from "./self-restart";
+import { startStorageMaintenance, ensureLocal } from "./object-storage";
 
 const FORENSIC_EVENT_TYPES = new Set([
   'memory_critical',
@@ -586,6 +587,9 @@ app.get('/uploads/:filename', async (req, res, next) => {
   
   const filePath = path.join('./uploads', filename);
   
+  // Rehydrate from durable Object Storage if the local cache copy is missing
+  // (the VM uploads/ dir is ephemeral and pruned to stay under the image cap).
+  await ensureLocal(filename);
   if (!fs.existsSync(filePath)) {
     return next();
   }
@@ -675,6 +679,16 @@ app.use((req, res, next) => {
 });
 
 app.use(express.static('./public'));
+
+// Rehydrate a requested upload from durable Object Storage on a local cache miss
+// before express.static tries to serve it (VM uploads/ is ephemeral + pruned).
+app.use('/uploads', async (req, res, next) => {
+  try {
+    const rel = decodeURIComponent(req.path.replace(/^\/+/, ''));
+    if (rel && !rel.includes('..')) await ensureLocal(rel);
+  } catch {}
+  next();
+});
 
 app.use('/uploads', express.static('./uploads', {
   setHeaders: (res, filePath) => {
@@ -800,6 +814,9 @@ async function main() {
       log(`serving on port ${port}`);
       console.log(`[SERVER] Server fully initialized in ${elapsed}ms`);
     });
+    // The dev workspace IS the deployment image on Reserved VM, so keep its
+    // uploads/ cache mirrored + pruned here too, or the next publish bloats again.
+    startStorageMaintenance();
   } else {
     console.log('[SERVER] Configuring production static serving...');
     try {
@@ -813,6 +830,10 @@ async function main() {
     }
     const elapsed = Date.now() - startTime;
     console.log(`[SERVER] Server fully initialized in ${elapsed}ms`);
+
+    // Mirror local uploads/ to durable Object Storage and prune the local cache
+    // so the deployment image never grows back past the 8 GiB Reserved-VM cap.
+    startStorageMaintenance();
 
     const KEEP_ALIVE_INTERVAL = 4 * 60 * 1000;
     setInterval(() => {

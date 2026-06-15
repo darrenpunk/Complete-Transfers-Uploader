@@ -15,6 +15,7 @@ import { promisify } from 'util';
 import { exec, execSync } from 'child_process';
 import { manufacturerColors } from '@shared/garment-colors';
 import { analyzeFullPageMatch } from './full-page-match';
+import { ensureLocal, pin, unpin } from './object-storage';
 
 const execAsyncRaw = promisify(exec);
 const INKSCAPE_TIMEOUT = 30000;
@@ -105,6 +106,10 @@ function garmentColorRef(hex: string): string {
 export class RobustPDFGenerator {
   
   async generatePDF(data: ProjectData): Promise<Buffer> {
+    // Pin every source file this generation will read so the storage pruner can
+    // never evict one mid-request (the local uploads/ cache is pruned to budget).
+    const pinnedRels = data.logos.flatMap(l => [(l as any).filename, (l as any).originalFilename]);
+    pin(pinnedRels);
     try {
       console.log(`🎯 ROBUST PDF GENERATOR: Direct PDF approach with exact color and dimension preservation`);
       console.log(`📊 Project: ${data.projectName} (${data.canvasElements.length} elements)`);
@@ -123,6 +128,8 @@ export class RobustPDFGenerator {
       console.error('❌ Robust PDF generation failed:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       throw new Error(`Robust PDF generation failed: ${errorMessage}`);
+    } finally {
+      unpin(pinnedRels);
     }
   }
   
@@ -703,6 +710,12 @@ grestore`;
       if (!logo) continue; // 'logo-not-found' is already detected inside the loop
       const filename = (logo as any).filename || null;
       const originalFilename = (logo as any).originalFilename || null;
+      // Rehydrate from durable Object Storage before deciding a source is missing.
+      // The VM uploads/ dir is ephemeral + pruned to stay under the image cap, so
+      // a file absent locally may still live in the bucket. This restores the
+      // recovery path lost when Dropbox backup was removed.
+      if (filename) await ensureLocal(filename);
+      if (originalFilename) await ensureLocal(originalFilename);
       const filenameExists = filename ? fs.existsSync(path.join(process.cwd(), 'uploads', filename)) : false;
       const originalExists = originalFilename ? fs.existsSync(path.join(process.cwd(), 'uploads', originalFilename)) : false;
       // Only flag if NEITHER source exists — embedRasterImage already falls back

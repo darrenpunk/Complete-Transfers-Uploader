@@ -63,7 +63,7 @@ localPort = 5001
 externalPort = 3000
 
 [agent]
-integrations = ["dropbox:1.0.0", "github:1.0.0", "javascript_gemini_ai_integrations:2.0.0"]
+integrations = ["dropbox:1.0.0", "github:1.0.0", "javascript_gemini_ai_integrations:2.0.0", "javascript_object_storage:2.0.0"]
 
 [userenv]
 
