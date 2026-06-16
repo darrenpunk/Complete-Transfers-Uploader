@@ -5152,6 +5152,14 @@ export async function registerRoutes(app: express.Application) {
         // Track normalized content bounds (set during tight crop for raw SVGs) for saving to DB
         let normalizedBoundsForSave: { xMin: number; yMin: number; xMax: number; yMax: number; width: number; height: number; units: string } | null = null;
 
+        // PDF MediaBox page size hoisted to this (outer) scope so the final clamp below can
+        // bound the detected content dimensions to the REAL page. pdf2svg emits oversized
+        // <feImage> filter regions (≈1.2× the page, with a matching ±10% translate) that
+        // Inkscape/GS content-bounds queries pick up, inflating the detected size
+        // (e.g. an A3 297×420mm PDF is mis-detected as 356×504mm). Real artwork can never
+        // exceed the PDF page, so we clamp to this. Null for non-PDF (native SVG) uploads.
+        let pdfPageSizeForClamp: { widthMm: number; heightMm: number; widthPts: number; heightPts: number } | null = null;
+
         // CRITICAL: For complex file PNG fallbacks, use the pre-extracted PDF bounds
         if ((file as any).isComplexFilePngFallback && (file as any).originalPdfBounds) {
           const pdfBounds = (file as any).originalPdfBounds;
@@ -5406,6 +5414,14 @@ export async function registerRoutes(app: express.Application) {
                     artBoxPts: artBoxPts || undefined,
                     artBoxSource: artBoxSource || undefined
                   } as any;
+
+                  // Hoist to outer scope for the final clamp (defeats pdf2svg feImage inflation)
+                  pdfPageSizeForClamp = {
+                    widthMm: pageWidth * pxToMm,
+                    heightMm: pageHeight * pxToMm,
+                    widthPts: pageWidth,
+                    heightPts: pageHeight,
+                  };
                   
                   console.log(`✅ PDF PAGE DIMENSIONS EXTRACTED: ${pageWidth.toFixed(1)}×${pageHeight.toFixed(1)}pts (MediaBox)`);
                   console.log(`📄 Stored for fallback: ${pdfPageDimensions.widthMm.toFixed(1)}×${pdfPageDimensions.heightMm.toFixed(1)}mm`);
@@ -6902,7 +6918,48 @@ export async function registerRoutes(app: express.Application) {
           };
           analysisData = analysisData ? { ...analysisData, ...rasterMeta } : rasterMeta;
         }
-        
+
+        // ──────────────────────────────────────────────────────────────────
+        // CLAMP DETECTED DIMENSIONS TO THE PDF PAGE (MediaBox)
+        // pdf2svg emits <feImage> filter regions sized ≈1.2× the page (with a matching
+        // ±10% translate). Inkscape/GS content-bounds queries pick those up and inflate
+        // the detected size (e.g. an A3 297×420mm PDF → 356×504mm). Real artwork can never
+        // exceed the PDF page, so clamp the stored natural dimensions (originalWidth/Height,
+        // used by the client fit-to-bounds + orientation auto-switch) AND the px content
+        // bounds (which drive the "extends beyond canvas" position warning) to the MediaBox.
+        // Orientation-aware so /Rotate PDFs aren't mis-clamped. No-op for non-PDF uploads.
+        // ──────────────────────────────────────────────────────────────────
+        if (pdfPageSizeForClamp && displayWidth > 0 && displayHeight > 0) {
+          let pageWmm = pdfPageSizeForClamp.widthMm;
+          let pageHmm = pdfPageSizeForClamp.heightMm;
+          let pageWpts = pdfPageSizeForClamp.widthPts;
+          let pageHpts = pdfPageSizeForClamp.heightPts;
+          // Match page orientation to the measured content orientation (handles /Rotate)
+          if ((displayWidth >= displayHeight) !== (pageWmm >= pageHmm)) {
+            [pageWmm, pageHmm] = [pageHmm, pageWmm];
+            [pageWpts, pageHpts] = [pageHpts, pageWpts];
+          }
+          const CLAMP_TOL_MM = 1.0; // ignore sub-mm rounding differences
+          if (displayWidth > pageWmm + CLAMP_TOL_MM || displayHeight > pageHmm + CLAMP_TOL_MM) {
+            console.log(`📐 CLAMP TO PDF PAGE: detected ${displayWidth.toFixed(1)}×${displayHeight.toFixed(1)}mm exceeds MediaBox ${pageWmm.toFixed(1)}×${pageHmm.toFixed(1)}mm — clamping (pdf2svg feImage filter-region artifact)`);
+            displayWidth = Math.min(displayWidth, pageWmm);
+            displayHeight = Math.min(displayHeight, pageHmm);
+            // Keep the px content bounds (position warning + PDF crop source) consistent.
+            // SVG user units are points (1px = 1pt at 72 DPI), so page pts == page px here.
+            if (contentBoundsToSave) {
+              const cb: any = contentBoundsToSave;
+              if (typeof cb.width === 'number' && cb.width > pageWpts) {
+                cb.width = pageWpts;
+                cb.xMax = (cb.xMin ?? 0) + pageWpts;
+              }
+              if (typeof cb.height === 'number' && cb.height > pageHpts) {
+                cb.height = pageHpts;
+                cb.yMax = (cb.yMin ?? 0) + pageHpts;
+              }
+            }
+          }
+        }
+
         const updatedLogo = await storage.updateLogo(logo.id, {
           filename: finalFilename, // This will be the tight-content version if bounds extraction worked
           mimeType: finalMimeType,
