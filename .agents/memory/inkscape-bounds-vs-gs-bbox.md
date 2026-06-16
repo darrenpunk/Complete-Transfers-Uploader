@@ -115,13 +115,32 @@ so a converter emitting non-uniform scaling can't skew one axis.
 **Why self-calibrate vs reading the SVG width unit:** the root-px-vs-known-page-pt ratio is
 exact regardless of header quirks, requires no SVG parsing, and degrades gracefully.
 
-**LATENT RISK (not yet hit, not changed):** the other two `INK_PX_TO_PT` blocks on the
-GS-PRIMARY path (the area-coverage verification block and the SVG-normalization union block)
-STILL use the hardcoded 0.75. They have not misfired because on the GS-primary path the SIZE
-comes from GS (pt) and Inkscape is only used for the max/root area RATIO (scale-invariant) and
-root translation origin. But if a unitless-header SVG ever drives bounds SIZE through those
-blocks, the same 75% shrink could reappear — convert them to the same self-calibrated factor
-if that surfaces.
+**RESOLVED — the GS-primary blocks now self-calibrate too (the latent risk DID surface):** a
+customer file (Jones Eng Transfers, MediaBox 779.73×549.97pt = 275×194mm, white "UP" text near
+the right edge invisible to GS) hit exactly the predicted 75% shrink: GS ink bbox was only 27%
+of the page, the white-content verification + the SVG-normalization union (both GS-primary
+blocks) drove the SIZE, and their hardcoded 0.75 reported 583.30×410.98pt = 205.78×144.98mm =
+exactly 75% → clipped ~25% of the artwork. So Inkscape CAN drive bounds size on the GS-primary
+path whenever GS under-detects (white content) AND that path overrides GS.
+
+**Fix:** compute per-axis `inkToPtX/inkToPtY` ONCE near the top of the GS-primary bounds block
+by reading THIS document's SVG-header `viewBox` (`pdfPageDimensions.widthPts/vbW`,
+`heightPts/vbH`) and use it in place of the hardcoded `INK_PX_TO_PT` in all three GS-primary
+parsing blocks (white-content verify, pre-imposed-sheet check, all-elements union). pdf2svg
+emits a unitless header whose viewBox == MediaBox-in-pt, so the factor is ~1.0 (Jones → 1.0026,
+giving 274.37×193.31mm ✓). A px@96 converter gives 0.75. Falls back to the 72/96 constant only
+if the viewBox is unreadable.
+
+**Why viewBox, not the inkscape root bbox:** Inkscape's root `--query-all` line reports the
+CONTENT bounding box, NOT the canvas — for a small logo on a big page that would be far smaller
+than the page and calibrating `pageW/rootContentW` would massively over-inflate. The SVG-header
+viewBox is the true canvas coordinate space, so it calibrates correctly at any content size.
+(The GS-EMPTY fallback block still calibrates from its root line because there the content
+fills the page by definition — white-on-white full designs — so root≈page holds.)
+
+**Regression:** Jones 274×193 ✓; PDF regression unchanged 8 pass / 0 fail / 7 skip. Coexists
+with the prior A3 MediaBox clamp (which only caps OVERSIZED results DOWN to page) — this fix
+corrects UNDER-sizing earlier in the pipeline; the two are complementary, not conflicting.
 
 ---
 

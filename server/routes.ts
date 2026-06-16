@@ -5432,14 +5432,35 @@ export async function registerRoutes(app: express.Application) {
                   
                   let gsBounds: { xMin: number; yMin: number; xMax: number; yMax: number; width: number; height: number } | null = null;
 
-                  // `inkscape --query-all` / `--query-*` report CSS px (1/96 inch), but every
-                  // consumer below works in PostScript points (1/72 inch): GS bbox is pt, the
-                  // page-dim clamps use pt, and pxToMm (1/2.8346) is really pt→mm. A px is always
-                  // 1/96" and a pt always 1/72", so the exact conversion is a constant 72/96.
-                  // Without it, Inkscape coords were ~1.333× too large: they got clamped to the
-                  // pt page size, silently chopping any content past ~75% width/height — e.g.
-                  // white text along the bottom that GS's ink-only bbox can't see → clipped.
+                  // `inkscape --query-all` reports numbers in the SVG's OWN user-unit space (the
+                  // viewBox coordinate system), while every consumer below works in PostScript
+                  // points (GS bbox is pt, page-dim clamps are pt, pxToMm is pt→mm). The factor
+                  // that maps an Inkscape user-unit number to a pt number is therefore
+                  // page_pt / viewBox_units. pdf2svg emits a UNITLESS header whose viewBox == the
+                  // MediaBox in pt, so for our pipeline that factor is ~1.0 (Inkscape numbers ARE
+                  // pt). A px@96 converter emits a 1.333× larger viewBox, giving 72/96. The old
+                  // hardcoded 72/96 silently shrank every pdf2svg full-page design to 75%, clamping
+                  // off ~25% of the artwork — e.g. white text near the page edge that GS's ink-only
+                  // bbox can't see. Self-calibrate the factor PER AXIS from THIS document's viewBox
+                  // vs the known PDF page pt; fall back to 72/96 only if the viewBox is unreadable.
                   const INK_PX_TO_PT = 72 / 96;
+                  let inkToPtX = INK_PX_TO_PT;
+                  let inkToPtY = INK_PX_TO_PT;
+                  try {
+                    if (pdfPageDimensions && fs.existsSync(svgPath)) {
+                      const svgHeaderForCal = fs.readFileSync(svgPath, 'utf8').slice(0, 4000);
+                      const vbMatch = svgHeaderForCal.match(/viewBox\s*=\s*["']\s*[\d.eE+-]+\s+[\d.eE+-]+\s+([\d.eE+-]+)\s+([\d.eE+-]+)/);
+                      if (vbMatch) {
+                        const vbW = parseFloat(vbMatch[1]);
+                        const vbH = parseFloat(vbMatch[2]);
+                        if (vbW > 0 && vbH > 0) {
+                          inkToPtX = pdfPageDimensions.widthPts / vbW;
+                          inkToPtY = pdfPageDimensions.heightPts / vbH;
+                          console.log(`📐 Inkscape user-unit→pt self-calibrated: X=${inkToPtX.toFixed(4)} Y=${inkToPtY.toFixed(4)} (viewBox ${vbW.toFixed(1)}×${vbH.toFixed(1)} vs page ${pdfPageDimensions.widthPts.toFixed(1)}×${pdfPageDimensions.heightPts.toFixed(1)}pt)`);
+                        }
+                      }
+                    }
+                  } catch { /* keep 72/96 fallback */ }
                   
                   try {
                     const originalPdfPath = (file as any).originalPdfPath;
@@ -5527,18 +5548,18 @@ export async function registerRoutes(app: express.Application) {
                           if (lineIdx === 0) {
                             const rootParts = line.split(',');
                             if (rootParts.length >= 5) {
-                              const rW = (parseFloat(rootParts[3]) || 0) * INK_PX_TO_PT;
-                              const rH = (parseFloat(rootParts[4]) || 0) * INK_PX_TO_PT;
+                              const rW = (parseFloat(rootParts[3]) || 0) * inkToPtX;
+                              const rH = (parseFloat(rootParts[4]) || 0) * inkToPtY;
                               if (rW > 0 && rH > 0) inkscapeRootArea = rW * rH;
                             }
                             continue;
                           }
                           const parts = line.split(',');
                           if (parts.length >= 5) {
-                            const elX = (parseFloat(parts[1]) || 0) * INK_PX_TO_PT;
-                            const elY = (parseFloat(parts[2]) || 0) * INK_PX_TO_PT;
-                            const elW = (parseFloat(parts[3]) || 0) * INK_PX_TO_PT;
-                            const elH = (parseFloat(parts[4]) || 0) * INK_PX_TO_PT;
+                            const elX = (parseFloat(parts[1]) || 0) * inkToPtX;
+                            const elY = (parseFloat(parts[2]) || 0) * inkToPtY;
+                            const elW = (parseFloat(parts[3]) || 0) * inkToPtX;
+                            const elH = (parseFloat(parts[4]) || 0) * inkToPtY;
                             if (elW > 0.5 && elH > 0.5) {
                               // Track the largest SINGLE element (pt², unclamped) — used below
                               // to tell a full-page background rect (one dominant element) apart
@@ -5782,10 +5803,10 @@ export async function registerRoutes(app: express.Application) {
                           for (let i = 1; i < qLines.length; i++) {
                             const parts = qLines[i].split(',');
                             if (parts.length < 5) continue;
-                            const ex = (parseFloat(parts[1]) || 0) * INK_PX_TO_PT;
-                            const ey = (parseFloat(parts[2]) || 0) * INK_PX_TO_PT;
-                            const ew = (parseFloat(parts[3]) || 0) * INK_PX_TO_PT;
-                            const eh = (parseFloat(parts[4]) || 0) * INK_PX_TO_PT;
+                            const ex = (parseFloat(parts[1]) || 0) * inkToPtX;
+                            const ey = (parseFloat(parts[2]) || 0) * inkToPtY;
+                            const ew = (parseFloat(parts[3]) || 0) * inkToPtX;
+                            const eh = (parseFloat(parts[4]) || 0) * inkToPtY;
                             if (ew <= 0.5 || eh <= 0.5) continue;
                             const cx0 = Math.max(ex, 0), cy0 = Math.max(ey, 0);
                             const cx1 = Math.min(ex + ew, pageWPt), cy1 = Math.min(ey + eh, pageHPt);
@@ -6035,8 +6056,8 @@ export async function registerRoutes(app: express.Application) {
                           
                           const rootParts = allLines[0]?.split(',');
                           if (rootParts && rootParts.length >= 5) {
-                            svgBoundsX = (parseFloat(rootParts[1]) || 0) * INK_PX_TO_PT;
-                            svgBoundsY = (parseFloat(rootParts[2]) || 0) * INK_PX_TO_PT;
+                            svgBoundsX = (parseFloat(rootParts[1]) || 0) * inkToPtX;
+                            svgBoundsY = (parseFloat(rootParts[2]) || 0) * inkToPtY;
                             if (pdfPageDimensions) {
                               svgBoundsX = Math.max(svgBoundsX, 0);
                               svgBoundsY = Math.max(svgBoundsY, 0);
@@ -6054,10 +6075,10 @@ export async function registerRoutes(app: express.Application) {
                               if (lineIdx === 0 || elId === 'svg1' || elId === 'svg' || elId.startsWith('svg:svg')) {
                                 continue;
                               }
-                              const elX = (parseFloat(parts[1]) || 0) * INK_PX_TO_PT;
-                              const elY = (parseFloat(parts[2]) || 0) * INK_PX_TO_PT;
-                              const elW = (parseFloat(parts[3]) || 0) * INK_PX_TO_PT;
-                              const elH = (parseFloat(parts[4]) || 0) * INK_PX_TO_PT;
+                              const elX = (parseFloat(parts[1]) || 0) * inkToPtX;
+                              const elY = (parseFloat(parts[2]) || 0) * inkToPtY;
+                              const elW = (parseFloat(parts[3]) || 0) * inkToPtX;
+                              const elH = (parseFloat(parts[4]) || 0) * inkToPtY;
                               if (elW > 0.5 && elH > 0.5) {
                                 const cx = Math.max(elX, 0);
                                 const cy = Math.max(elY, 0);
