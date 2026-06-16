@@ -5780,43 +5780,66 @@ export async function registerRoutes(app: express.Application) {
                         ) : null;
 
                         if (fp && fp.dimensionalMatch !== 'none') {
-                          // Query the ORIGINAL PDF directly (not the converted SVG). Parse exactly like the
-                          // white-content verification: skip the root <svg> (line 0), clamp each element to
-                          // the page, union the rest. Output is CSS px@96, top-left origin → convert to pt
-                          // and flag `__fromSvgCoords` so downstream applies the SVG→PDF coordinate flip.
+                          // Establish the artwork's true geometric extent for this template-matching
+                          // (pre-imposed) sheet. Both candidate sources are top-left-origin and in pt, and
+                          // whichever wins is flagged `__fromSvgCoords` so downstream applies the SVG→PDF
+                          // coordinate flip. The direct-PDF fallback parses exactly like the white-content
+                          // verification: skip the root <svg> (line 0), clamp each element to the page,
+                          // union the rest (CSS px@96 → pt via inkToPtX/Y).
                           const pageWPt = pdfPageDimensions.widthPts;
                           const pageHPt = pdfPageDimensions.heightPts;
-                          // Inkscape picks its import filter by file EXTENSION, and the stored original PDF
-                          // has no `.pdf` suffix (it's a hash) — so querying it directly returns nothing.
-                          // GS sniffs content and works regardless; Inkscape does not. Copy to a temp
-                          // `.pdf` so the PDF import filter engages, then clean it up.
-                          const tmpPdfForQuery = path.join(os.tmpdir(), `preimposed_bounds_${Date.now()}_${Math.random().toString(36).slice(2)}.pdf`);
-                          let queryRaw = '';
-                          try {
-                            fs.copyFileSync(originalPdfPathForBounds, tmpPdfForQuery);
-                            queryRaw = (await execAsyncRaw(`inkscape --query-all "${tmpPdfForQuery}" 2>/dev/null`, { encoding: 'utf8' as any, timeout: 15000 })).stdout.toString();
-                          } finally {
-                            try { fs.unlinkSync(tmpPdfForQuery); } catch { /* best-effort cleanup */ }
-                          }
-                          const qLines = queryRaw.trim().split('\n');
-                          let gX0 = Infinity, gY0 = Infinity, gX1 = -Infinity, gY1 = -Infinity;
-                          for (let i = 1; i < qLines.length; i++) {
-                            const parts = qLines[i].split(',');
-                            if (parts.length < 5) continue;
-                            const ex = (parseFloat(parts[1]) || 0) * inkToPtX;
-                            const ey = (parseFloat(parts[2]) || 0) * inkToPtY;
-                            const ew = (parseFloat(parts[3]) || 0) * inkToPtX;
-                            const eh = (parseFloat(parts[4]) || 0) * inkToPtY;
-                            if (ew <= 0.5 || eh <= 0.5) continue;
-                            const cx0 = Math.max(ex, 0), cy0 = Math.max(ey, 0);
-                            const cx1 = Math.min(ex + ew, pageWPt), cy1 = Math.min(ey + eh, pageHPt);
-                            if (cx1 > cx0 && cy1 > cy0) {
-                              gX0 = Math.min(gX0, cx0); gY0 = Math.min(gY0, cy0);
-                              gX1 = Math.max(gX1, cx1); gY1 = Math.max(gY1, cy1);
+                          // PREFER the clean union already computed from the pdf2svg-converted SVG
+                          // (`inkscapeVerifyBounds`): it is correctly positioned and reliable.
+                          // Querying the ORIGINAL PDF directly
+                          // with Inkscape is a last resort — Inkscape's PDF importer can mis-measure
+                          // (e.g. clip paths / gradient masks get treated as page-sized geometry, so the
+                          // union balloons and anchors to the page corner, then the original PDF gets
+                          // cropped to that shifted box → artwork clipped on one edge with empty margin
+                          // on the other). Only fall back to the direct query when the SVG union is
+                          // unavailable (e.g. high-coverage sheets where the white-content verify never ran).
+                          let trueBounds: { xMin: number; yMin: number; xMax: number; yMax: number; width: number; height: number } | null = null;
+                          if (inkscapeVerifyBounds) {
+                            trueBounds = {
+                              xMin: inkscapeVerifyBounds.xMin, yMin: inkscapeVerifyBounds.yMin,
+                              xMax: inkscapeVerifyBounds.xMax, yMax: inkscapeVerifyBounds.yMax,
+                              width: inkscapeVerifyBounds.width, height: inkscapeVerifyBounds.height,
+                            };
+                            console.log(`📄 Pre-imposed sheet check: reusing clean SVG-based bounds ${trueBounds.width.toFixed(1)}×${trueBounds.height.toFixed(1)}pt (avoids unreliable direct-PDF Inkscape query)`);
+                          } else {
+                            // Inkscape picks its import filter by file EXTENSION, and the stored original PDF
+                            // has no `.pdf` suffix (it's a hash) — so querying it directly returns nothing.
+                            // GS sniffs content and works regardless; Inkscape does not. Copy to a temp
+                            // `.pdf` so the PDF import filter engages, then clean it up.
+                            const tmpPdfForQuery = path.join(os.tmpdir(), `preimposed_bounds_${Date.now()}_${Math.random().toString(36).slice(2)}.pdf`);
+                            let queryRaw = '';
+                            try {
+                              fs.copyFileSync(originalPdfPathForBounds, tmpPdfForQuery);
+                              queryRaw = (await execAsyncRaw(`inkscape --query-all "${tmpPdfForQuery}" 2>/dev/null`, { encoding: 'utf8' as any, timeout: 15000 })).stdout.toString();
+                            } finally {
+                              try { fs.unlinkSync(tmpPdfForQuery); } catch { /* best-effort cleanup */ }
+                            }
+                            const qLines = queryRaw.trim().split('\n');
+                            let gX0 = Infinity, gY0 = Infinity, gX1 = -Infinity, gY1 = -Infinity;
+                            for (let i = 1; i < qLines.length; i++) {
+                              const parts = qLines[i].split(',');
+                              if (parts.length < 5) continue;
+                              const ex = (parseFloat(parts[1]) || 0) * inkToPtX;
+                              const ey = (parseFloat(parts[2]) || 0) * inkToPtY;
+                              const ew = (parseFloat(parts[3]) || 0) * inkToPtX;
+                              const eh = (parseFloat(parts[4]) || 0) * inkToPtY;
+                              if (ew <= 0.5 || eh <= 0.5) continue;
+                              const cx0 = Math.max(ex, 0), cy0 = Math.max(ey, 0);
+                              const cx1 = Math.min(ex + ew, pageWPt), cy1 = Math.min(ey + eh, pageHPt);
+                              if (cx1 > cx0 && cy1 > cy0) {
+                                gX0 = Math.min(gX0, cx0); gY0 = Math.min(gY0, cy0);
+                                gX1 = Math.max(gX1, cx1); gY1 = Math.max(gY1, cy1);
+                              }
+                            }
+                            if (gX0 < Infinity) {
+                              trueBounds = { xMin: gX0, yMin: gY0, xMax: gX1, yMax: gY1, width: gX1 - gX0, height: gY1 - gY0 };
                             }
                           }
-                          if (gX0 < Infinity) {
-                            const trueBounds = { xMin: gX0, yMin: gY0, xMax: gX1, yMax: gY1, width: gX1 - gX0, height: gY1 - gY0 };
+                          if (trueBounds) {
                             const inkCoverage = (trueBounds.width * trueBounds.height) / (pageWPt * pageHPt);
                             const inkLargerThanGs =
                               trueBounds.width >= gsBounds.width - 1 &&

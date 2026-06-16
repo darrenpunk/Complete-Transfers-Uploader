@@ -199,15 +199,28 @@ A NEW clipping class, distinct from the white-content trap above. When a custome
   union of the elements.
 
 **The rule:** when `analyzeFullPageMatch` (server/full-page-match.ts, 10pt tol) returns a
-`direct`/`rotated` dimensional match, query the ORIGINAL PDF's true vector bounds and adopt
-them over the GS bbox — but ONLY when they are **strictly larger than GS** (width & height
+`direct`/`rotated` dimensional match, establish the artwork's true vector extent (`trueBounds`)
+and adopt it over the GS bbox — but ONLY when it is **strictly larger than GS** (width & height
 ≥ GS−1, at least one > GS+1) AND **coverage < 0.97** (so genuinely tight content isn't
 oversized and a near-full-page background rect isn't promoted). Flag adopted bounds
-`__fromSvgCoords=true` so the downstream SVG→PDF coordinate flip applies. Parse like the
-white-content block: skip line 0 (root `<svg>`), clamp each element to the page, ×INK_PX_TO_PT.
-Failure is caught + logged non-critical → degrades to the prior GS path. Counter-tests that
-MUST stay tight/cropped: small content on a large page (teddy portrait-on-landscape, a
-64×65mm crest); full-page tests (mtsg, rotated bem) stay full-page.
+`__fromSvgCoords=true` so the downstream SVG→PDF coordinate flip applies. Failure is caught +
+logged non-critical → degrades to the prior GS path. Counter-tests that MUST stay tight/cropped:
+small content on a large page (teddy portrait-on-landscape, a 64×65mm crest); full-page tests
+(mtsg, rotated bem) stay full-page.
+
+**`trueBounds` SOURCE PRIORITY (SO91356 fix — load-bearing):** PREFER the already-computed
+`inkscapeVerifyBounds` (the clean element union from the **pdf2svg-converted SVG**, correctly
+positioned, same pt/top-down coords). Only fall back to querying the **ORIGINAL PDF directly**
+via `inkscape --query-all` when `inkscapeVerifyBounds` is null (high-coverage sheets where the
+white-content verify never ran). **Why:** Inkscape's PDF *importer* mis-measures clip-paths /
+gradient masks — it treats them as page-sized geometry, so the union BALLOONS and ANCHORS to
+the page corner. SO91356 (3-page A3 pdf-lib output, MediaBox 841.89×1190.55pt) hit exactly
+this: direct-PDF query returned a corner-anchored (39.3,26.7)→(841.9,1190.6) box that overrode
+the correct clean union (14.7,10.0)→(780.1,1140.6)=765.4×1130.6pt=270×398.8mm, shifting the
+crop → artwork clipped on page 1. pdf2svg converts the SAME PDF cleanly first, so its SVG union
+is trustworthy where the direct PDF import is not. **Accepted tradeoff:** if `inkscapeVerifyBounds`
+is itself under-reported by a converter artifact, the direct-PDF query is no longer attempted in
+that case — judged rarer than the clip-path inflation it prevents.
 
 ## The load-bearing sub-trap: Inkscape picks its import filter by FILE EXTENSION
 `inkscape --query-all` returned **0 lines** on the stored original PDF and the block silently
