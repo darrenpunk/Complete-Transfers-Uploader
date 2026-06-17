@@ -5730,6 +5730,22 @@ export async function registerRoutes(app: express.Application) {
                                     aYMinPdf < gsBounds.yMin - tolPt ||
                                     aXMax > gsBounds.xMax + tolPt ||
                                     aYMaxPdf > gsBounds.yMax + tolPt;
+                                  // Persist the alpha-trim artwork extent (clamped, PDF bottom-left
+                                  // coords) so the later all-elements-union block can CAP its bounds to
+                                  // the true visible artwork instead of ballooning to a pdf2svg
+                                  // page-sized wrapper group.
+                                  {
+                                    const cXMin = Math.max(aXMin, 0);
+                                    const cYMin = Math.max(aYMinPdf, 0);
+                                    const cXMax = Math.min(aXMax, pageWpt);
+                                    const cYMax = Math.min(aYMaxPdf, pageHpt);
+                                    if (cXMax > cXMin && cYMax > cYMin) {
+                                      (file as any)._alphaTrimPdfBounds = {
+                                        xMin: cXMin, yMin: cYMin, xMax: cXMax, yMax: cYMax,
+                                        width: cXMax - cXMin, height: cYMax - cYMin,
+                                      };
+                                    }
+                                  }
                                   if (alphaExtends) {
                                     const uXMin = Math.max(Math.min(gsBounds.xMin, aXMin), 0);
                                     const uYMin = Math.max(Math.min(gsBounds.yMin, aYMinPdf), 0);
@@ -6206,15 +6222,31 @@ export async function registerRoutes(app: express.Application) {
                               console.log(`   Inkscape: ${inkscapeWidth.toFixed(2)}×${inkscapeHeight.toFixed(2)}pts`);
                               console.log(`🔧 Using Inkscape dimensions to prevent clipping`);
                               
-                              const finalWidth = Math.max(contentWidthPts, inkscapeWidth);
-                              const finalHeight = Math.max(contentHeightPts, inkscapeHeight);
+                              // ALPHA-TRIM CAP: the all-elements union can include an invisible
+                              // page-sized wrapper group that pdf2svg emits, ballooning the bounds to the
+                              // whole page (viewBox) rather than the artwork. The alpha-trim ground truth
+                              // (from the white-content block) captured every VISIBLE pixel incl. white
+                              // ink and excluded transparent margins, so when the union materially exceeds
+                              // it the excess is invisible geometry — cap to the true artwork extent. Only
+                              // cap when alpha is NOT smaller than the current content (so we never shrink
+                              // below what GS legitimately found).
+                              const alphaPdf = (file as any)._alphaTrimPdfBounds;
+                              const alphaCap = !!(alphaPdf && pdfPageDimensions
+                                && (inkscapeWidth > alphaPdf.width + 3 || inkscapeHeight > alphaPdf.height + 3)
+                                && alphaPdf.width + 3 >= contentWidthPts && alphaPdf.height + 3 >= contentHeightPts);
+                              if (alphaCap) {
+                                console.log(`✂️ Capping all-elements union (${inkscapeWidth.toFixed(1)}×${inkscapeHeight.toFixed(1)}pt) to alpha-trim artwork (${alphaPdf.width.toFixed(1)}×${alphaPdf.height.toFixed(1)}pt) — union included invisible page-sized geometry`);
+                              }
+
+                              const finalWidth = alphaCap ? alphaPdf.width : Math.max(contentWidthPts, inkscapeWidth);
+                              const finalHeight = alphaCap ? alphaPdf.height : Math.max(contentHeightPts, inkscapeHeight);
                               svgBoundsWidth = finalWidth;
                               svgBoundsHeight = finalHeight;
                               contentWidthPts = finalWidth;
                               contentHeightPts = finalHeight;
                               
-                              svgBoundsX = unionXMin;
-                              svgBoundsY = unionYMin;
+                              svgBoundsX = alphaCap ? alphaPdf.xMin : unionXMin;
+                              svgBoundsY = alphaCap ? (pdfPageDimensions!.heightPts - alphaPdf.yMax) : unionYMin;
                               boundsWereInkscapeCorrected = true;
                               
                               const pxToMm = 1 / 2.834645669;

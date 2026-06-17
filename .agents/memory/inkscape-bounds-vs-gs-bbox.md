@@ -312,9 +312,30 @@ twin and a stars test file already detected correctly and are unchanged. PDF reg
 **Accepted tradeoff / known residual:** alpha-trim takes the bounding box of ALL opaque pixels,
 so a stray faraway anti-aliased mark would expand bounds (mitigated only by the 2pt tolerance,
 not by connected-component filtering). Not seen on real artwork; revisit with min-area filtering
-only if a noisy file surfaces. Also: a SEPARATE later block (`inkscape --query-all` all-elements
-union → "🔧 Using Inkscape dimensions to prevent clipping") can still balloon to the full-page
-viewBox when the pdf2svg SVG has a page-sized wrapper AND GS coverage ≥ 50% (its `isBackgroundRect`
-guard only fires below 50%). It did NOT trigger for the verified files (their union didn't exceed
-the artwork), but if a future file comes back as the full page despite this rescue, that block is
-the next place to apply the same alpha-trim cap.
+only if a noisy file surfaces.
+
+## Companion fix: the all-elements-union block ALSO needs the alpha-trim cap (50–92% coverage band)
+A SEPARATE later block re-runs `inkscape --query-all`, takes the all-elements UNION, and on a
+"larger than GS" result logs "🔧 Using Inkscape dimensions to prevent clipping" and overrides
+the bounds. For a pdf2svg SVG with a page-sized WRAPPER GROUP that union balloons to the full
+page (the PDF viewBox). Its `isBackgroundRect` guard only suppresses this when GS coverage < 0.50,
+so files in the **50–92% coverage band** (GS coverage ≥ 0.50 so the guard sleeps, but < 0.92 so
+the alpha rescue ran) came back as the full-page viewBox instead of the artwork. Real symptom:
+flahavans_cap A3-landscape returned full-page 420×297mm instead of artwork 395×291mm.
+
+**Fix (load-bearing):** the alpha rescue persists its clamped extent on `(file as any)._alphaTrimPdfBounds`
+(PDF bottom-left coords) ALWAYS when it computes (not only when it expanded GS). In the union
+override branch, CAP to that artwork extent when `alphaCap` holds: alpha exists AND the inkscape
+union exceeds alpha by >3pt on either axis AND alpha ≥ current content − 3pt (the last clause is
+the safety guard that prevents shrinking below what GS legitimately found). When capped, set
+`finalWidth/Height = alpha.width/height`, `svgBoundsX = alpha.xMin`, `svgBoundsY = pageHeightPts −
+alpha.yMax` (PDF bottom-left → SVG top-left). The existing branch then reconstructs
+`originalPdfBounds` exactly to the alpha box (verified: pdfYMax = alpha.yMax, pdfYMin = alpha.yMin),
+and because `boundsWereInkscapeCorrected` stays true the zero-origin normalization translate uses
+those same svgBoundsX/Y — so crop, viewBox size, and translate all stay in one frame (no double-flip).
+
+**Why the cap only applies in the 50–92% band:** the cap needs `_alphaTrimPdfBounds`, which only
+exists when the alpha rescue ran (coverage < 0.92). Designs that nearly fill the page (≥0.92,
+e.g. the yellow flahavans twin at 92% → stays 420×297) never get the cap — there viewBox ≈
+artwork anyway. Verified after fix: flahavans_cap 395×291 ✓, test_2 367×237 ✓, stars 383×260 ✓,
+yellow 420×297 (unchanged) ✓, PDF regression 8 pass / 0 fail / 7 skip.
