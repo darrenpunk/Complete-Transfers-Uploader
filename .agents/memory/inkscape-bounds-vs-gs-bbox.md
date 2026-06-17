@@ -335,7 +335,27 @@ and because `boundsWereInkscapeCorrected` stays true the zero-origin normalizati
 those same svgBoundsX/Y — so crop, viewBox size, and translate all stay in one frame (no double-flip).
 
 **Why the cap only applies in the 50–92% band:** the cap needs `_alphaTrimPdfBounds`, which only
-exists when the alpha rescue ran (coverage < 0.92). Designs that nearly fill the page (≥0.92,
-e.g. the yellow flahavans twin at 92% → stays 420×297) never get the cap — there viewBox ≈
-artwork anyway. Verified after fix: flahavans_cap 395×291 ✓, test_2 367×237 ✓, stars 383×260 ✓,
-yellow 420×297 (unchanged) ✓, PDF regression 8 pass / 0 fail / 7 skip.
+exists when the alpha rescue ran (coverage < 0.92). Verified after fix: flahavans_cap 395×291 ✓,
+test_2 367×237 ✓, stars 383×260 ✓, yellow ~395 (also capped to artwork) ✓, PDF regression
+8 pass / 0 fail / 7 skip.
+
+## CRITICAL companion: whenever you tighten upload bounds, the PNG fallback raster MUST be cropped to match
+Tightening `originalPdfBounds` to the artwork is only half the job. The canvas sizes the element
+to those bounds, but for "complex PDF" files (broken blend-mode filters get stripped →
+`__forcePngFallback`) the canvas renders a PNG fallback instead of the cropped SVG, and that
+fallback is rendered by **Ghostscript from the FULL ORIGINAL PDF PAGE** (`gs -sDEVICE=pngalpha
+-dUseCropBox`). So the raster stays full-page (A-series aspect ~1.414) while the element is now
+the cropped artwork (~1.361) — the canvas squishes the full page into the smaller box and the
+artwork looks **scaled-down and offset** ("artwork is scaling down in bounds"). The rsvg branch
+is fine because it renders the already-cropped tight-content.svg.
+
+**Fix (load-bearing):** right after the Ghostscript full-page render, crop the PNG to
+`originalPdfBounds` when the bounds are smaller than the page. Compute crop offsets/size as
+FRACTIONS of the ACTUAL rendered PNG dims (`identify -format "%w %h"`), NOT from assumed dpi math:
+`cropX = xMin/pageW·aw`, `cropY = (pageH − yMax)/pageH·ah` (PDF bottom-left yMax = TOP edge →
+top-down image offset), `cropW = width/pageW·aw`, `cropH = height/pageH·ah`, each clamped to the
+image. Write the crop to a TEMP file then `renameSync` over the original (atomic) so a SIGKILL
+mid-write can't leave a truncated-but->1KB PNG that passes the `size > 1024` validity gate.
+**How to know it's right:** the fallback PNG aspect must equal the bounds aspect (e.g. both 1.361),
+and a `convert -trim` of the fallback should fill it edge-to-edge (only a few px margin).
+**Symptom to watch for:** fallback PNG aspect = full-page (~1.414) while bounds aspect ≠ that.

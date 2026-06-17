@@ -6447,6 +6447,41 @@ export async function registerRoutes(app: express.Application) {
                                 `gs -dNOPAUSE -dBATCH -dSAFER -dQUIET -sDEVICE=pngalpha -r${dpi} -dFirstPage=1 -dLastPage=1 -dUseCropBox -dGraphicsAlphaBits=4 -dTextAlphaBits=4 -sOutputFile="${pngPath}" "${originalPdfPath}"`,
                                 { timeout: 60000, killSignal: 'SIGKILL' as any, maxBuffer: 32 * 1024 * 1024 }
                               );
+                              // Ghostscript rasterizes the FULL PDF page (CropBox/MediaBox), NOT the
+                              // cropped artwork. When the detected bounds are smaller than the page
+                              // (alpha-trim / inkscape correction tightened them to the artwork) the
+                              // canvas element is sized to those cropped bounds — so a full-page raster
+                              // gets squished and the artwork looks scaled-down and offset. Crop the PNG
+                              // to the artwork bounds so it matches the element framing 1:1. Crop
+                              // fractions are derived from the ACTUAL rendered dims (robust to GS
+                              // rounding and CropBox≠MediaBox).
+                              try {
+                                const opb = originalPdfBounds as any;
+                                if (opb && pdfPageDimensions
+                                    && (opb.width < pdfPageDimensions.widthPts - 1 || opb.height < pdfPageDimensions.heightPts - 1)) {
+                                  const dimOut = (await execAsyncRaw(`identify -format "%w %h" "${pngPath}"`, { encoding: 'utf8' as any, timeout: 15000 })).stdout.toString().trim();
+                                  const [aw, ah] = dimOut.split(/\s+/).map(Number);
+                                  if (aw > 0 && ah > 0) {
+                                    const cropX = Math.max(0, Math.round((opb.xMin / pdfPageDimensions.widthPts) * aw));
+                                    const cropY = Math.max(0, Math.round(((pdfPageDimensions.heightPts - opb.yMax) / pdfPageDimensions.heightPts) * ah));
+                                    const cropW = Math.max(1, Math.min(aw - cropX, Math.round((opb.width / pdfPageDimensions.widthPts) * aw)));
+                                    const cropH = Math.max(1, Math.min(ah - cropY, Math.round((opb.height / pdfPageDimensions.heightPts) * ah)));
+                                    // Crop to a temp file then atomically rename so a SIGKILL mid-write
+                                    // can never leave a truncated-but->1KB PNG that passes the size gate.
+                                    const cropTmp = `${pngPath}.crop.tmp.png`;
+                                    await execAsyncRaw(`convert "${pngPath}" -crop ${cropW}x${cropH}+${cropX}+${cropY} +repage "${cropTmp}"`, { timeout: 30000, killSignal: 'SIGKILL' as any, maxBuffer: 32 * 1024 * 1024 });
+                                    if (fs.existsSync(cropTmp) && fs.statSync(cropTmp).size > 1024) {
+                                      fs.renameSync(cropTmp, pngPath);
+                                      console.log(`✂️ Cropped Ghostscript full-page fallback to artwork bounds: ${cropW}×${cropH}+${cropX}+${cropY} (page ${aw}×${ah})`);
+                                    } else {
+                                      if (fs.existsSync(cropTmp)) try { fs.unlinkSync(cropTmp); } catch {}
+                                      console.log(`⚠️ Fallback crop produced an invalid file — keeping full-page fallback`);
+                                    }
+                                  }
+                                }
+                              } catch (cropErr) {
+                                console.log(`⚠️ Fallback crop skipped (non-critical):`, (cropErr as Error).message);
+                              }
                             } else {
                               await execAsyncRaw(`rsvg-convert "${svgPath}" -o "${pngPath}" -w ${pngW} -h ${pngH}`, {
                                 timeout: 30000,
