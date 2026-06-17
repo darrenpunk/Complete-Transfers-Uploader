@@ -5682,6 +5682,76 @@ export async function registerRoutes(app: express.Application) {
                           console.log(`✅ Inkscape confirms GS bounds are accurate (similar area)`);
                         }
                       }
+
+                      // GROUND-TRUTH ALPHA-TRIM RESCUE.
+                      // Both detectors above can MISS white/light artwork: GS -sDEVICE=bbox renders
+                      // on a white page so white ink is invisible (returns only the coloured strip),
+                      // and inkscape --query-all on the pdf2svg-converted SVG can collapse the whole
+                      // design into ONE full-page group — which the background-rect heuristic then
+                      // treats as an invisible page rect and discards, leaving the cropped GS strip.
+                      // Rendering the ORIGINAL PDF to a TRANSPARENT raster keeps white ink as opaque
+                      // pixels while empty page margins stay transparent, so an alpha-trim is the
+                      // true ARTWORK extent (content union, NOT the page viewBox). Only ever EXPAND
+                      // to the union — never shrink — so files GS already measured correctly (the
+                      // alpha extent matches within tolerance) are untouched. Coords are PDF points
+                      // (origin bottom-left), same space as gsBounds, so NO __fromSvgCoords flip.
+                      if (pdfPageDimensions && pdfPageDimensions.widthPts > 0 && pdfPageDimensions.heightPts > 0) {
+                        const alphaOriginalPdf = (file as any).originalPdfPath as string | undefined;
+                        let alphaPngPath: string | null = null;
+                        try {
+                          if (alphaOriginalPdf && fs.existsSync(alphaOriginalPdf)) {
+                            const alphaDPI = getSmartPreviewDPI(alphaOriginalPdf);
+                            alphaPngPath = path.join(os.tmpdir(), `whitetrim_${Date.now()}_${Math.random().toString(36).slice(2)}.png`);
+                            await execAsyncRaw(`gs -dNOPAUSE -dBATCH -dFirstPage=1 -dLastPage=1 -sDEVICE=pngalpha -r${alphaDPI} -dMaxBitmap=80000000 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${alphaPngPath}" "${alphaOriginalPdf}"`, { timeout: 60000 });
+                            if (fs.existsSync(alphaPngPath) && fs.statSync(alphaPngPath).size > 0) {
+                              const idOut = execSync(`identify -format "%w %h" "${alphaPngPath}"`, { encoding: 'utf8', timeout: 5000 }).trim();
+                              const [pngW, pngH] = idOut.split(/\s+/).map(Number);
+                              if (pngW > 0 && pngH > 0) {
+                                const trimOut = execSync(`convert "${alphaPngPath}" -trim -format "%w %h %X %Y" info:`, { encoding: 'utf8', timeout: 5000 }).trim();
+                                const tp = trimOut.split(/\s+/).map(Number);
+                                if (tp.length >= 4 && tp[0] > 0 && tp[1] > 0) {
+                                  const [trimW, trimH, trimOffX, trimOffY] = tp;
+                                  const pageWpt = pdfPageDimensions.widthPts;
+                                  const pageHpt = pdfPageDimensions.heightPts;
+                                  const sX = pageWpt / pngW;
+                                  const sY = pageHpt / pngH;
+                                  const aXMin = Math.abs(trimOffX) * sX;
+                                  const aYMinImg = Math.abs(trimOffY) * sY;
+                                  const aW = trimW * sX;
+                                  const aH = trimH * sY;
+                                  const aXMax = aXMin + aW;
+                                  const aYMinPdf = pageHpt - aYMinImg - aH; // image top-left → PDF bottom-left
+                                  const aYMaxPdf = aYMinPdf + aH;
+                                  const alphaCov = (aW * aH) / (pageWpt * pageHpt);
+                                  console.log(`🔍 Alpha-trim ground truth: ${(aW * 0.352778).toFixed(1)}×${(aH * 0.352778).toFixed(1)}mm (${(alphaCov * 100).toFixed(0)}% page) vs current bounds ${(gsBounds.width * 0.352778).toFixed(1)}×${(gsBounds.height * 0.352778).toFixed(1)}mm`);
+                                  const tolPt = 2; // ~0.7mm — ignore anti-alias fringe
+                                  const alphaExtends =
+                                    aXMin < gsBounds.xMin - tolPt ||
+                                    aYMinPdf < gsBounds.yMin - tolPt ||
+                                    aXMax > gsBounds.xMax + tolPt ||
+                                    aYMaxPdf > gsBounds.yMax + tolPt;
+                                  if (alphaExtends) {
+                                    const uXMin = Math.max(Math.min(gsBounds.xMin, aXMin), 0);
+                                    const uYMin = Math.max(Math.min(gsBounds.yMin, aYMinPdf), 0);
+                                    const uXMax = Math.min(Math.max(gsBounds.xMax, aXMax), pageWpt);
+                                    const uYMax = Math.min(Math.max(gsBounds.yMax, aYMaxPdf), pageHpt);
+                                    gsBounds = { xMin: uXMin, yMin: uYMin, xMax: uXMax, yMax: uYMax, width: uXMax - uXMin, height: uYMax - uYMin };
+                                    // Reflect the corrected extent so the downstream pre-imposed-sheet
+                                    // check reuses these bounds instead of the stale full-page rect.
+                                    inkscapeVerifyBounds = { ...gsBounds };
+                                    console.log(`⚠️ GS/Inkscape missed light/white content — expanded to alpha union: ${(gsBounds.width * 0.352778).toFixed(1)}×${(gsBounds.height * 0.352778).toFixed(1)}mm`);
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        } catch (alphaErr) {
+                          console.log(`⚠️ Alpha-trim ground-truth rescue failed (non-critical):`, alphaErr);
+                        } finally {
+                          if (alphaPngPath) { try { if (fs.existsSync(alphaPngPath)) fs.unlinkSync(alphaPngPath); } catch { /* best-effort */ } }
+                        }
+                      }
+
                       inkscapeVerified = true;
                     } else {
                       console.log(`✅ GS BBOX TRUSTED: Content covers ${(areaCoverage * 100).toFixed(0)}% of page`);

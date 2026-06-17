@@ -267,3 +267,54 @@ getTrimBox fallback), carry it on `pdfPageDimensions`, and branch the fill gate 
 is correct. **Known pre-existing (not changed):** the GS-empty fallback block adopts `artBoxPts`
 with no source check; the 60% gate doesn't translate there (no GS content to measure), and that
 path is white-on-white where the box is usually the right answer — leave it unless it surfaces.
+
+---
+
+# Alpha-trim ground-truth rescue ALSO belongs on the GS-primary (pdf2svg) path, not just large-format DTF
+
+The large-format DTF path already alpha-trims a rendered PNG (see section above). The SAME
+ground-truth technique is now ALSO needed on the normal pdf2svg/Inkscape path, because BOTH
+of that path's detectors can simultaneously miss white/light ink on a landscape design:
+- `gs -sDEVICE=bbox` renders on a WHITE page → white ink is invisible → returns only the
+  coloured strip (e.g. a 160×290mm right-hand strip of a true ~395×290mm A3-landscape design).
+- `inkscape --query-all` on the pdf2svg SVG can COLLAPSE the whole design into ONE full-page
+  element, which the background-rect heuristic ("the rule" up top) then discards as an invisible
+  page rect → the cropped GS strip survives. So the maxSingleElement heuristic is NOT enough
+  when the SVG genuinely has a page-sized wrapper element.
+
+**The rule (durable lesson):** the only reliable signal for the TRUE visible-artwork extent
+(includes white ink, excludes empty margins) is to render the ORIGINAL pdf to a TRANSPARENT
+raster (`gs -sDEVICE=pngalpha`) and `convert -trim` the opaque-pixel bounding box. White ink is
+opaque → kept; empty page margins are alpha=0 → trimmed. This is the ground truth; trust it.
+
+**Where applied:** inside the white-content verification branch (only runs when GS area
+coverage < 0.92), AFTER the existing GS-vs-Inkscape reconciliation, EXPAND `gsBounds` to the
+union of GS + alpha-trim (never shrink; 2pt tolerance) and mirror it into `inkscapeVerifyBounds`
+so the downstream pre-imposed-sheet check reuses the corrected extent. Coords: image top-left →
+PDF bottom-left via `pdfYMin = pageHpt - aYMinImg - aH` (same pt/bottom-left space as gsBounds,
+so NO `__fromSvgCoords` flip). Render is wrapped in try/finally (temp PNG always unlinked) and
+all failures are non-fatal.
+
+**Load-bearing details / how to apply:**
+- MUST page-scope the render with `-dFirstPage=1 -dLastPage=1` — without it a multi-page upload
+  rasterizes the wrong page and wastes CPU/RAM on the upload hot path.
+- Use `getSmartPreviewDPI(originalPdf)` for the render resolution (already memory-tuned).
+- Only ever EXPAND to the union, never shrink, so files GS already measured correctly (alpha
+  extent matches within tolerance) are untouched — this is what keeps the 8/0/7 regression green.
+- The <0.92 coverage gate means designs that nearly fill the page (artwork ≈ page) skip this
+  entirely — there the viewBox already ≈ the artwork so there's nothing to correct.
+
+**Verified:** flahavans A3-landscape, white "Flower Girl 10-7-26" text on the left + red/yellow
+logos on the right (MediaBox 420×297mm). Was detected 160×290mm (cropped to the coloured strip);
+now 367×237mm artwork (white intact, tight to content, NOT the full 420×297 viewBox). Yellow-only
+twin and a stars test file already detected correctly and are unchanged. PDF regression 8/0/7.
+
+**Accepted tradeoff / known residual:** alpha-trim takes the bounding box of ALL opaque pixels,
+so a stray faraway anti-aliased mark would expand bounds (mitigated only by the 2pt tolerance,
+not by connected-component filtering). Not seen on real artwork; revisit with min-area filtering
+only if a noisy file surfaces. Also: a SEPARATE later block (`inkscape --query-all` all-elements
+union → "🔧 Using Inkscape dimensions to prevent clipping") can still balloon to the full-page
+viewBox when the pdf2svg SVG has a page-sized wrapper AND GS coverage ≥ 50% (its `isBackgroundRect`
+guard only fires below 50%). It did NOT trigger for the verified files (their union didn't exceed
+the artwork), but if a future file comes back as the full page despite this rescue, that block is
+the next place to apply the same alpha-trim cap.
