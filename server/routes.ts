@@ -6462,17 +6462,90 @@ export async function registerRoutes(app: express.Application) {
                                   const dimOut = (await execAsyncRaw(`identify -format "%w %h" "${pngPath}"`, { encoding: 'utf8' as any, timeout: 15000 })).stdout.toString().trim();
                                   const [aw, ah] = dimOut.split(/\s+/).map(Number);
                                   if (aw > 0 && ah > 0) {
-                                    const cropX = Math.max(0, Math.round((opb.xMin / pdfPageDimensions.widthPts) * aw));
-                                    const cropY = Math.max(0, Math.round(((pdfPageDimensions.heightPts - opb.yMax) / pdfPageDimensions.heightPts) * ah));
-                                    const cropW = Math.max(1, Math.min(aw - cropX, Math.round((opb.width / pdfPageDimensions.widthPts) * aw)));
-                                    const cropH = Math.max(1, Math.min(ah - cropY, Math.round((opb.height / pdfPageDimensions.heightPts) * ah)));
+                                    // Bounds-math crop rectangle, derived from the DETECTED vector bounds.
+                                    let x0 = Math.max(0, Math.round((opb.xMin / pdfPageDimensions.widthPts) * aw));
+                                    let y0 = Math.max(0, Math.round(((pdfPageDimensions.heightPts - opb.yMax) / pdfPageDimensions.heightPts) * ah));
+                                    let x1 = Math.min(aw, x0 + Math.max(1, Math.round((opb.width / pdfPageDimensions.widthPts) * aw)));
+                                    let y1 = Math.min(ah, y0 + Math.max(1, Math.round((opb.height / pdfPageDimensions.heightPts) * ah)));
+                                    // Snapshot the bounds-math rect BEFORE the alpha union mutates it, so
+                                    // the clip detector below can measure how far real (opaque) content
+                                    // extends past the detected vector bounds.
+                                    const bmX0 = x0, bmY0 = y0, bmX1 = x1, bmY1 = y1;
+                                    // ──────────────────────────────────────────────────────────────
+                                    // LOSSLESS-CROP SAFETY (clipping incident 2026-06):
+                                    // The detected vector bounds (originalPdfBounds) can UNDER-estimate
+                                    // white / light reverse-out artwork because GS -sDEVICE=bbox is
+                                    // ink-only and cannot see white pixels. Cropping a full-page raster
+                                    // to those too-small bounds then SLICES real artwork (e.g. the
+                                    // bottom arc + text of a white badge). This Ghostscript pngalpha
+                                    // render makes EVERY painted pixel — white included — opaque, so the
+                                    // image's OWN non-transparent bbox is the TRUE content extent. UNION
+                                    // the bounds-math rect with that alpha bbox: genuine empty margins
+                                    // are still trimmed when bounds are correct, but real content can
+                                    // NEVER be cropped away. Worst case the PNG ends a touch larger than
+                                    // the element box (minor scale), which is always preferable to a clip.
+                                    try {
+                                      const trimBox = (await execAsyncRaw(`convert "${pngPath}" -format "%@" info:`, { encoding: 'utf8' as any, timeout: 15000 })).stdout.toString().trim();
+                                      const tm = trimBox.match(/^(\d+)x(\d+)\+(\d+)\+(\d+)$/);
+                                      if (tm) {
+                                        const tw = +tm[1], th = +tm[2], tx = +tm[3], ty = +tm[4];
+                                        if (tw > 0 && th > 0) {
+                                          x0 = Math.min(x0, tx);
+                                          y0 = Math.min(y0, ty);
+                                          x1 = Math.max(x1, tx + tw);
+                                          y1 = Math.max(y1, ty + th);
+                                          // ── CLIP DETECTOR (non-blocking observability) ──────────────
+                                          // If the opaque-pixel bbox extends materially BEYOND the
+                                          // detected vector bounds, the vector-bounds crop WOULD have
+                                          // sliced real artwork — the alpha union above just prevented it.
+                                          // Record that near-miss so production clipping is measurable
+                                          // instead of silent. Tolerance = 1% of the render (>= 4px) so
+                                          // antialiasing / rounding on correctly-measured art stays silent.
+                                          const clipTol = Math.max(4, Math.round(0.01 * Math.max(aw, ah)));
+                                          const overL = bmX0 - tx;
+                                          const overT = bmY0 - ty;
+                                          const overR = (tx + tw) - bmX1;
+                                          const overB = (ty + th) - bmY1;
+                                          const maxOver = Math.max(overL, overT, overR, overB);
+                                          if (maxOver > clipTol) {
+                                            const pxToMm = (pdfPageDimensions.widthPts / aw) * 0.352777778;
+                                            import('./index')
+                                              .then(({ persistCrashLog }) => persistCrashLog(
+                                                'clip_suspected',
+                                                `Canvas artwork under-detected: opaque content extends ${maxOver}px (~${(maxOver * pxToMm).toFixed(1)}mm) beyond detected vector bounds — alpha-union safety prevented the clip`,
+                                                {
+                                                  stage: 'canvas_fallback_alpha_union',
+                                                  pngFilename,
+                                                  originalPdfFilename: originalPdfFilename || null,
+                                                  renderPx: { w: aw, h: ah },
+                                                  boundsMathPx: { x0: bmX0, y0: bmY0, x1: bmX1, y1: bmY1 },
+                                                  alphaBboxPx: { x: tx, y: ty, w: tw, h: th },
+                                                  overflowPx: { left: overL, top: overT, right: overR, bottom: overB },
+                                                  detectedBoundsMm: opb
+                                                    ? { w: +(opb.width * 0.352777778).toFixed(1), h: +(opb.height * 0.352777778).toFixed(1) }
+                                                    : null,
+                                                }
+                                              ))
+                                              .catch((e: any) => console.error(`[CRASH LOG] persistCrashLog(clip_suspected) failed: ${e?.message || e}`));
+                                          }
+                                        }
+                                      }
+                                    } catch (trimErr) {
+                                      console.log(`⚠️ Alpha-bbox safety check skipped (non-critical) — keeping bounds-math crop:`, (trimErr as Error).message);
+                                    }
+                                    x0 = Math.max(0, x0); y0 = Math.max(0, y0);
+                                    x1 = Math.min(aw, x1); y1 = Math.min(ah, y1);
+                                    const cropX = x0;
+                                    const cropY = y0;
+                                    const cropW = Math.max(1, x1 - x0);
+                                    const cropH = Math.max(1, y1 - y0);
                                     // Crop to a temp file then atomically rename so a SIGKILL mid-write
                                     // can never leave a truncated-but->1KB PNG that passes the size gate.
                                     const cropTmp = `${pngPath}.crop.tmp.png`;
                                     await execAsyncRaw(`convert "${pngPath}" -crop ${cropW}x${cropH}+${cropX}+${cropY} +repage "${cropTmp}"`, { timeout: 30000, killSignal: 'SIGKILL' as any, maxBuffer: 32 * 1024 * 1024 });
                                     if (fs.existsSync(cropTmp) && fs.statSync(cropTmp).size > 1024) {
                                       fs.renameSync(cropTmp, pngPath);
-                                      console.log(`✂️ Cropped Ghostscript full-page fallback to artwork bounds: ${cropW}×${cropH}+${cropX}+${cropY} (page ${aw}×${ah})`);
+                                      console.log(`✂️ Cropped Ghostscript full-page fallback to content∪bounds union: ${cropW}×${cropH}+${cropX}+${cropY} (page ${aw}×${ah})`);
                                     } else {
                                       if (fs.existsSync(cropTmp)) try { fs.unlinkSync(cropTmp); } catch {}
                                       console.log(`⚠️ Fallback crop produced an invalid file — keeping full-page fallback`);

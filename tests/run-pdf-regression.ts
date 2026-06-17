@@ -33,6 +33,14 @@ const FIXTURES_DIR = join(__dirname, 'pdf-fixtures');
 const OUTPUT_DIR = join(FIXTURES_DIR, 'output');
 const BASE_URL = (process.env.PDF_REGRESSION_BASE_URL || 'http://localhost:5000').replace(/\/$/, '');
 const PDF_GEN_TIMEOUT_MS = 120_000;
+const UPLOADS_DIR = join(__dirname, '..', 'uploads');
+/**
+ * Heavy fixtures (very large uploads) are skipped by default in the 384MB dev
+ * sandbox to avoid OOM. Include them with PDF_REGRESSION_INCLUDE_HEAVY=1 or when
+ * running against a non-localhost (production-sized) base URL.
+ */
+const INCLUDE_HEAVY =
+  process.env.PDF_REGRESSION_INCLUDE_HEAVY === '1' || !/(localhost|127\.0\.0\.1)/.test(BASE_URL);
 
 interface PlaceExplicit { x: number; y: number; widthMm: number; heightMm: number; }
 interface PlaceObject {
@@ -56,10 +64,24 @@ interface ContentBboxAssertion {
 
 interface Assertions {
   minPages?: number;
+  maxPages?: number;
   page1WidthPt?: number;
   page1HeightPt?: number;
   tolerancePt?: number;
   contentBboxMm?: ContentBboxAssertion;
+  /** Assert the uploaded artwork bounds (logo.originalWidth/Height, mm). */
+  uploadBoundsMm?: { minWidthMm?: number; maxWidthMm?: number; minHeightMm?: number; maxHeightMm?: number };
+  /** Assert the uploaded bounds aspect ratio (originalWidth / originalHeight). */
+  boundsAspect?: { min?: number; max?: number };
+  /**
+   * If true, assert the canvas-fallback PNG aspect matches the upload bounds
+   * aspect. Catches the "full-page fallback squished into cropped element"
+   * regression. No-ops when the logo has no canvasFallbackFilename (i.e. it
+   * renders via the tight-content SVG, not a PNG fallback).
+   */
+  checkFallbackAspect?: boolean;
+  /** Relative tolerance for checkFallbackAspect (default 0.03 = 3%). */
+  fallbackAspectTolerance?: number;
   note?: string;
 }
 
@@ -77,6 +99,21 @@ interface Fixture {
    * silently skipped otherwise (logged so failures are visible).
    */
   outlineFonts?: boolean;
+  /**
+   * Heavy fixtures (very large uploads) are skipped by default because the
+   * 384MB dev sandbox can OOM on them. Include them with
+   * PDF_REGRESSION_INCLUDE_HEAVY=1 or by pointing PDF_REGRESSION_BASE_URL at a
+   * non-localhost (production-sized) instance.
+   */
+  heavy?: boolean;
+  /** Optional imposition grid to apply to the placed element before generating. */
+  imposition?: { rows: number; columns: number; horizontalSpacing?: number; verticalSpacing?: number; centerOnCanvas?: boolean };
+  /**
+   * Applique dual-canvas setup. When present the runner also places the logo on
+   * canvasIndex 1 (embroidery) and sets project.appliqueBadgesForm so the
+   * generator emits the badge + embroidery + spec-form pages.
+   */
+  applique?: { form: Record<string, unknown>; embroidery?: boolean };
   assertions: Assertions;
 }
 
@@ -95,6 +132,18 @@ interface Logo {
   originalHeight?: number | null;
   width?: number | null;
   height?: number | null;
+  /** PNG written when a PDF upload can't be rendered as a tight-content SVG. */
+  canvasFallbackFilename?: string | null;
+  /** Raw artwork bounds captured at upload time (pt). */
+  originalPdfBounds?: {
+    width?: number;
+    height?: number;
+    xMin?: number;
+    xMax?: number;
+    yMin?: number;
+    yMax?: number;
+    units?: string;
+  } | null;
 }
 
 interface Result {
@@ -184,7 +233,7 @@ async function outlineLogoFonts(logoId: string): Promise<string> {
   throw new Error(`POST /api/logos/${logoId}/outline-fonts -> ${resp.status} ${text.slice(0, 300)}`);
 }
 
-async function placeElement(projectId: string, logo: Logo, fixture: Fixture, template: TemplateSize) {
+async function placeElement(projectId: string, logo: Logo, fixture: Fixture, template: TemplateSize, canvasIndex = 0) {
   // Resolve placement options. fixture.place can be a shorthand string,
   // an explicit {x,y,widthMm,heightMm}, or a richer {mode,rotation,...} object.
   let mode: 'fit-to-content' | 'fit-to-template' = 'fit-to-content';
@@ -261,14 +310,54 @@ async function placeElement(projectId: string, logo: Logo, fixture: Fixture, tem
       zIndex: 0,
       isVisible: true,
       isLocked: false,
-      canvasIndex: 0,
+      canvasIndex,
     }),
   });
   if (!resp.ok) {
     const body = await resp.text().catch(() => '');
     throw new Error(`POST canvas-elements -> ${resp.status} ${body.slice(0, 300)}`);
   }
-  return { widthMm, heightMm, widthPx, heightPx, x, y, rotation };
+  const created = await resp.json().catch(() => ({} as any));
+  return { elementId: created?.id as string | undefined, widthMm, heightMm, widthPx, heightPx, x, y, rotation };
+}
+
+/**
+ * Replicate a placed canvas element into a rows×columns grid via the Imposition
+ * tool. Mirrors the customer-facing "Imposition" action.
+ */
+async function applyImposition(
+  elementId: string,
+  imp: NonNullable<Fixture['imposition']>,
+): Promise<{ totalElements?: number; newElements?: number }> {
+  const resp = await fetch(`${BASE_URL}/api/canvas-elements/${elementId}/imposition`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      rows: imp.rows,
+      columns: imp.columns,
+      horizontalSpacing: imp.horizontalSpacing ?? 0,
+      verticalSpacing: imp.verticalSpacing ?? 0,
+      centerOnCanvas: imp.centerOnCanvas ?? true,
+    }),
+  });
+  if (!resp.ok) {
+    const body = await resp.text().catch(() => '');
+    throw new Error(`POST imposition -> ${resp.status} ${body.slice(0, 300)}`);
+  }
+  return (await resp.json().catch(() => ({}))) as { totalElements?: number; newElements?: number };
+}
+
+/** PATCH arbitrary fields onto a project (used to set appliqueBadgesForm). */
+async function patchProject(projectId: string, fields: Record<string, unknown>): Promise<void> {
+  const resp = await fetch(`${BASE_URL}/api/projects/${projectId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(fields),
+  });
+  if (!resp.ok) {
+    const body = await resp.text().catch(() => '');
+    throw new Error(`PATCH /api/projects/${projectId} -> ${resp.status} ${body.slice(0, 300)}`);
+  }
 }
 
 async function generatePdf(projectId: string): Promise<Buffer> {
@@ -323,11 +412,38 @@ async function getContentBboxMm(pdfPath: string): Promise<{ widthMm: number; hei
   }
 }
 
+/**
+ * Aspect ratio (w/h) of an image in uploads/ via ImageMagick `identify`.
+ * Used to verify the canvas-fallback PNG isn't a squished full-page render.
+ * Returns null if the file is missing or identify fails (e.g. running against a
+ * remote base URL where uploads/ isn't local).
+ */
+async function getPngAspect(fileName: string): Promise<number | null> {
+  try {
+    const p = join(UPLOADS_DIR, fileName);
+    const { stdout } = await execFileAsync('identify', ['-format', '%w %h\n', `${p}[0]`]);
+    const first = stdout.trim().split('\n')[0] || '';
+    const [w, h] = first.trim().split(/\s+/).map(Number);
+    if (!w || !h) return null;
+    return w / h;
+  } catch {
+    return null;
+  }
+}
+
 async function runFixture(f: Fixture): Promise<Result> {
   const start = Date.now();
   const messages: string[] = [];
   if (!f.enabled) {
     return { id: f.id, status: 'skip', durationMs: 0, messages: ['disabled in fixtures.json'] };
+  }
+  if (f.heavy && !INCLUDE_HEAVY) {
+    return {
+      id: f.id,
+      status: 'skip',
+      durationMs: 0,
+      messages: ['heavy fixture — set PDF_REGRESSION_INCLUDE_HEAVY=1 or point PDF_REGRESSION_BASE_URL at a production-sized instance'],
+    };
   }
   try {
     const fixturePath = join(FIXTURES_DIR, f.file);
@@ -350,6 +466,27 @@ async function runFixture(f: Fixture): Promise<Result> {
     const placement = await placeElement(project.id, logo, f, template);
     messages.push(`placed: ${placement.widthMm.toFixed(1)}x${placement.heightMm.toFixed(1)}mm at canvas (${placement.x.toFixed(0)}, ${placement.y.toFixed(0)})pt rotation=${placement.rotation}°`);
 
+    // Imposition: replicate the placed element into a grid before generating.
+    if (f.imposition) {
+      if (!placement.elementId) throw new Error('imposition requested but canvas-elements POST returned no element id');
+      const imp = await applyImposition(placement.elementId, f.imposition);
+      messages.push(`imposition: ${f.imposition.rows}x${f.imposition.columns} grid → ${imp.totalElements ?? '?'} total element(s)`);
+    }
+
+    // Applique: mark the project as applique by attaching the badges spec form,
+    // which makes generate-pdf append the applique specification page on top of
+    // the badge artwork pages. Only the "with embroidery" variant additionally
+    // mirrors the logo onto the embroidery canvas (index 1).
+    if (f.applique) {
+      await patchProject(project.id, { appliqueBadgesForm: f.applique.form });
+      if (f.applique.embroidery) {
+        await placeElement(project.id, logo, f, template, 1);
+        messages.push('applique: set appliqueBadgesForm + mirrored logo onto embroidery canvas (index 1)');
+      } else {
+        messages.push('applique: set appliqueBadgesForm (badge-only)');
+      }
+    }
+
     const pdfBuf = await generatePdf(project.id);
     const outputPath = join(OUTPUT_DIR, `${f.id}.pdf`);
     await writeFile(outputPath, pdfBuf);
@@ -367,6 +504,9 @@ async function runFixture(f: Fixture): Promise<Result> {
 
     if (typeof a.minPages === 'number' && pages.length < a.minPages) {
       failures.push(`pages ${pages.length} < min ${a.minPages}`);
+    }
+    if (typeof a.maxPages === 'number' && pages.length > a.maxPages) {
+      failures.push(`pages ${pages.length} > max ${a.maxPages} — extra page regression (full-sheet bg / duplicate)?`);
     }
     if (typeof a.page1WidthPt === 'number' && Math.abs(w - a.page1WidthPt) > tol) {
       failures.push(`page1 width ${w.toFixed(1)}pt != expected ${a.page1WidthPt}pt (tolerance ${tol}pt) — orientation regression?`);
@@ -392,6 +532,51 @@ async function runFixture(f: Fixture): Promise<Result> {
         }
         if (typeof c.maxHeightMm === 'number' && bbox.heightMm > c.maxHeightMm) {
           failures.push(`content height ${bbox.heightMm.toFixed(1)}mm > max ${c.maxHeightMm}mm`);
+        }
+      }
+    }
+
+    // --- Upload-time assertions (artwork bounds + canvas-fallback aspect) ---
+    const bw = typeof logo.originalWidth === 'number' ? logo.originalWidth : null;
+    const bh = typeof logo.originalHeight === 'number' ? logo.originalHeight : null;
+    if (a.uploadBoundsMm) {
+      const ub = a.uploadBoundsMm;
+      if (bw == null || bh == null) {
+        failures.push('uploadBoundsMm asserted but logo has no originalWidth/Height');
+      } else {
+        if (typeof ub.minWidthMm === 'number' && bw < ub.minWidthMm) failures.push(`upload bounds width ${bw.toFixed(1)}mm < min ${ub.minWidthMm}mm`);
+        if (typeof ub.maxWidthMm === 'number' && bw > ub.maxWidthMm) failures.push(`upload bounds width ${bw.toFixed(1)}mm > max ${ub.maxWidthMm}mm`);
+        if (typeof ub.minHeightMm === 'number' && bh < ub.minHeightMm) failures.push(`upload bounds height ${bh.toFixed(1)}mm < min ${ub.minHeightMm}mm`);
+        if (typeof ub.maxHeightMm === 'number' && bh > ub.maxHeightMm) failures.push(`upload bounds height ${bh.toFixed(1)}mm > max ${ub.maxHeightMm}mm`);
+      }
+    }
+    if (a.boundsAspect) {
+      if (bw == null || bh == null || bh === 0) {
+        failures.push('boundsAspect asserted but logo has no usable originalWidth/Height');
+      } else {
+        const asp = bw / bh;
+        messages.push(`bounds aspect: ${asp.toFixed(3)}`);
+        if (typeof a.boundsAspect.min === 'number' && asp < a.boundsAspect.min) failures.push(`bounds aspect ${asp.toFixed(3)} < min ${a.boundsAspect.min}`);
+        if (typeof a.boundsAspect.max === 'number' && asp > a.boundsAspect.max) failures.push(`bounds aspect ${asp.toFixed(3)} > max ${a.boundsAspect.max}`);
+      }
+    }
+    if (a.checkFallbackAspect) {
+      if (!logo.canvasFallbackFilename) {
+        messages.push('checkFallbackAspect: logo has no canvasFallbackFilename (renders via SVG) — skipped');
+      } else if (bw == null || bh == null || bh === 0) {
+        failures.push('checkFallbackAspect asserted but no usable bounds aspect to compare against');
+      } else {
+        const fa = await getPngAspect(logo.canvasFallbackFilename);
+        if (fa == null) {
+          messages.push(`checkFallbackAspect: could not read fallback PNG ${logo.canvasFallbackFilename} (remote base URL?) — skipped`);
+        } else {
+          const boundsAsp = bw / bh;
+          const tolRel = a.fallbackAspectTolerance ?? 0.03;
+          const rel = Math.abs(fa - boundsAsp) / boundsAsp;
+          messages.push(`fallback aspect: ${fa.toFixed(3)} vs bounds ${boundsAsp.toFixed(3)} (rel ${(rel * 100).toFixed(1)}%, tol ${(tolRel * 100).toFixed(0)}%)`);
+          if (rel > tolRel) {
+            failures.push(`canvas-fallback PNG aspect ${fa.toFixed(3)} != bounds aspect ${boundsAsp.toFixed(3)} (off ${(rel * 100).toFixed(1)}% > ${(tolRel * 100).toFixed(0)}%) — full-page-fallback squish regression?`);
+          }
         }
       }
     }
@@ -435,9 +620,19 @@ async function main() {
   console.log(`  base URL: ${BASE_URL}`);
   if (onlyId) console.log(`  filter:   --only=${onlyId}`);
 
-  const alive = await ping();
+  // Wait for the server to come up rather than exiting immediately. When this
+  // suite runs as its own workflow it can start before `Start application` is
+  // ready, which previously surfaced as a spurious "failed" run.
+  const waitRetries = Number(process.env.PDF_REGRESSION_WAIT_RETRIES ?? 30);
+  let alive = false;
+  for (let i = 0; i < waitRetries; i++) {
+    alive = await ping();
+    if (alive) break;
+    if (i === 0) console.log(`  waiting for server at ${BASE_URL} (up to ${waitRetries * 2}s) ...`);
+    await new Promise((r) => setTimeout(r, 2000));
+  }
   if (!alive) {
-    console.error(`\nSERVER NOT REACHABLE at ${BASE_URL}. Start the dev workflow or set PDF_REGRESSION_BASE_URL.\n`);
+    console.error(`\nSERVER NOT REACHABLE at ${BASE_URL} after ${waitRetries * 2}s. Start the dev workflow or set PDF_REGRESSION_BASE_URL.\n`);
     process.exit(2);
   }
 

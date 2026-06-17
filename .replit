@@ -43,12 +43,12 @@ waitForPort = 5000
 name = "pdf-regression"
 author = "agent"
 
+[workflows.workflow.metadata]
+isValidation = true
+
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npx tsx tests/run-pdf-regression.ts"
-
-[workflows.workflow.metadata]
-isValidation = true
 
 [[ports]]
 localPort = 3333

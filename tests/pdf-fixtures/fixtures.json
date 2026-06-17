@@ -89,9 +89,17 @@
       "templateId": "template-A3",
       "garmentColor": "#FFFFFF",
       "place": "fit-to-content",
-      "enabled": false,
+      "enabled": true,
       "assertions": {
-        "note": "Disabled: customer flow involves the UI landscape-variant switch prompt; without that the test is essentially a duplicate of fixture 03. Re-enable if/when the runner gains UI-flow simulation."
+        "minPages": 1,
+        "page1WidthPt": 842,
+        "page1HeightPt": 1191,
+        "tolerancePt": 4,
+        "contentBboxMm": {
+          "minWidthMm": 120,
+          "minHeightMm": 250,
+          "note": "Source detected bounds 206x281mm placed fit-to-content on a portrait A3 template. Page MUST stay portrait A3 (842x1191pt) — the primary guard: a non-portrait source must NOT flip the output page (the customer-facing landscape-variant switch is a separate UI step we don't exercise). Content rendered ~156x385mm; generous mins (120x250) lock 'not grossly clipped/shrunk' without over-fitting this file's quirky bounds."
+        }
       }
     },
     {
@@ -130,27 +138,46 @@
       "file": "07_grid-imposition-source_RAINBOW-DOG-SOURCE.pdf",
       "templateId": "template-A3",
       "garmentColor": "#FFFFFF",
-      "place": "fit-to-content",
-      "enabled": false,
+      "place": { "mode": "fit-to-content", "widthMm": 120, "heightMm": 167 },
+      "enabled": true,
+      "imposition": { "rows": 2, "columns": 2, "centerOnCanvas": true },
       "assertions": {
-        "note": "Disabled: requires Imposition tool (POST /api/canvas-elements/:id/imposition) to replicate the logo into a grid before generation. Runner extension needed."
+        "minPages": 1,
+        "page1WidthPt": 842,
+        "page1HeightPt": 1191,
+        "tolerancePt": 4,
+        "contentBboxMm": {
+          "minWidthMm": 150,
+          "minHeightMm": 200,
+          "note": "Imposition smoke test: the logo is placed at 120x167mm then replicated into a 2x2 grid (POST /api/canvas-elements/:id/imposition) so the grid (~240x334mm) fits inside A3 with margins. All four copies must render without any being clipped at the page edge — content bbox should span ~2x the single copy. Mins to be tightened from the observed grid extent; the natural-size source (278x386mm) would overflow a 2x2 grid, so it is scaled down first."
+        }
       }
     },
     {
       "id": "08-er-applique-dual-canvas",
       "file": "08_applique-dual-canvas_ER-APPLIQUE.pdf",
-      "templateId": "applique-100x70",
+      "templateId": "applique-badge",
       "garmentColor": "#FFFFFF",
       "place": "fit-to-content",
-      "enabled": false,
+      "enabled": true,
+      "applique": {
+        "form": {
+          "embroideryFileOptions": ["DST", "EMB"],
+          "embroideryThreadOptions": ["Maderia Polyneon 40"],
+          "position": ["LEFT BREAST"],
+          "graphicSize": "100x70mm",
+          "embroideredParts": "Full badge outline embroidered"
+        }
+      },
       "assertions": {
-        "note": "Disabled: requires dual-canvas + appliqueBadgesForm data. Runner extension needed."
+        "minPages": 1,
+        "note": "OBSERVATION MODE: applique badge project (templateSize contains 'applique' → generate-pdf appends the applique specification page). Loose minPages until the observed page-count/content-bbox are captured, then tighten."
       }
     },
     {
       "id": "09-grub-applique-with-embroidery",
       "file": "09_applique-with-embroidery_GRUB-APPLIQUE.pdf",
-      "templateId": "applique-100x70",
+      "templateId": "applique-badge",
       "garmentColor": "#FFFFFF",
       "place": "fit-to-content",
       "enabled": false,
@@ -161,12 +188,22 @@
     {
       "id": "10-bui-applique-100x70",
       "file": "10_applique-100x70_BUI-TESTER.pdf",
-      "templateId": "applique-100x70",
+      "templateId": "applique-badge",
       "garmentColor": "#FFFFFF",
       "place": "fit-to-content",
-      "enabled": false,
+      "enabled": true,
+      "applique": {
+        "form": {
+          "embroideryFileOptions": ["DST", "EMB"],
+          "embroideryThreadOptions": ["Maderia Polyneon 40"],
+          "position": ["LEFT BREAST"],
+          "graphicSize": "100x70mm",
+          "embroideredParts": "Full badge outline embroidered"
+        }
+      },
       "assertions": {
-        "note": "Disabled: applique form. Runner extension needed."
+        "minPages": 1,
+        "note": "OBSERVATION MODE: applique badge (templateSize contains 'applique' → generate-pdf appends the applique specification page). Loose minPages until the observed page-count/content-bbox are captured, then tighten."
       }
     },
     {
@@ -186,9 +223,16 @@
       "templateId": "dtf-SRA3",
       "garmentColor": "#FFFFFF",
       "place": "fit-to-content",
-      "enabled": false,
+      "enabled": true,
+      "heavy": true,
       "assertions": {
-        "note": "Disabled: 35MB upload runs slow in dev sandbox. Enable selectively for production smoke tests via PDF_REGRESSION_BASE_URL."
+        "minPages": 1,
+        "contentBboxMm": {
+          "minWidthMm": 150,
+          "minHeightMm": 150,
+          "note": "Large DTF art smoke test. Just proves a heavy file round-trips through generation without OOM/clip."
+        },
+        "note": "HEAVY-GATED: 35MB upload OOMs the 384MB localhost dev sandbox, so this is skipped by default on localhost. It runs when PDF_REGRESSION_INCLUDE_HEAVY=1 or when PDF_REGRESSION_BASE_URL points at a production-sized instance."
       }
     },
     {
@@ -208,6 +252,86 @@
           "minHeightMm": 400,
           "note": "Customer uploaded an A4 (210x297mm) source to the 1000x550mm DTF Large template, then scaled the canvas element up to 778.8x548mm. The PRIMARY regression guard is page1WidthPt/HeightPt above (page must be 1000x550mm ≈ 2834x1559pt, NOT A4 595x842pt). Secondary content guards (minWidthMm=200, minHeightMm=400): rendered artwork must occupy at least 200x400mm — proves the canvas scale-up was honored, not partially regressed. If DTF passthrough regresses and ships the source as-is, content would be capped near source A4 (~210x297mm) and fail minHeightMm. If the generator partially scales, the wider minWidthMm/minHeightMm pair catches it."
         }
+      }
+    },
+    {
+      "id": "16-flahavans-cap-feimage-fallback-crop",
+      "file": "16_feimage-fallback-crop_FLAHAVANS-CAP.pdf",
+      "templateId": "dtf-large",
+      "garmentColor": "#808080",
+      "place": "fit-to-content",
+      "enabled": true,
+      "assertions": {
+        "minPages": 1,
+        "boundsAspect": { "min": 1.30, "max": 1.42 },
+        "uploadBoundsMm": { "minWidthMm": 380, "maxWidthMm": 425, "minHeightMm": 280, "maxHeightMm": 305 },
+        "checkFallbackAspect": true,
+        "fallbackAspectTolerance": 0.05,
+        "contentBboxMm": {
+          "minWidthMm": 120,
+          "minHeightMm": 200,
+          "note": "Placed on the wide 1000x550mm DTF Large template so the landscape A3 source fits without capping/overflow (on a narrow portrait template the multi-up sheet overflows and clips). The source is a multi-up sheet (two columns of Flahavan's logos) whose true inked region is ~160x290mm — the rest of the page is whitespace. Output must not be blank or clipped: feImage-heavy artwork (40 feImage regions) must rasterise the full-height (~290mm) two-column content. Mins kept conservative (120x200) because detected upload bounds vary 395-420mm wide depending on whether the gs-fallback or inkscape path wins under load."
+        },
+        "note": "DUAL LOCK for two real flahavans-cap regressions. (1) gs-fallback-crop: this file forces a canvas fallback PNG; checkFallbackAspect requires that PNG's aspect ≈ the detected bounds aspect (1.361). If the gs bbox fallback regresses to a cropped/full-page strip the fallback PNG aspect drifts and this goes red. (2) pdf2svg feImage 1.2x page inflation: the file's MediaBox is landscape A3 (420x297mm) and true content is 395x290mm; uploadBoundsMm maxWidthMm=425/maxHeightMm=305 keep detected bounds inside the MediaBox+tolerance, so if the feImage filter-region inflation (~1.2x → ~474x348mm) returns, the MediaBox clamp regression is caught here."
+      }
+    },
+    {
+      "id": "17-kilkenny-white-text-on-dark",
+      "file": "17_white-text-on-dark_KILKENNY-WHITE.pdf",
+      "templateId": "template-A3",
+      "garmentColor": "#1A1A1A",
+      "place": "fit-to-content",
+      "enabled": true,
+      "assertions": {
+        "minPages": 1,
+        "page1WidthPt": 842,
+        "page1HeightPt": 1191,
+        "tolerancePt": 4,
+        "boundsAspect": { "min": 1.00, "max": 1.15 },
+        "uploadBoundsMm": { "minWidthMm": 95, "maxWidthMm": 106, "minHeightMm": 88, "maxHeightMm": 101 },
+        "contentBboxMm": {
+          "minWidthMm": 70,
+          "minHeightMm": 65,
+          "note": "Full crest including the white bottom text must render — proves no bottom-band clip from gs under-reporting white ink or from the svg zero-origin normalisation translate."
+        },
+        "note": "WHITE-ON-DARK lock (Kilkenny County Council crest, white text along the bottom, on a dark garment). gs -sDEVICE=bbox under-reports white/light ink and historically returned a cropped landscape strip → wrong crop + portrait↔landscape flip. The fix trusts inkscape --query-all unless ONE element dominates the page (>85%). Detected bounds must come back ≈100x94mm (near-square, aspect ~1.066), NOT a wide strip. Compare against fixture 18 (identical artwork, black text) — both MUST report the same bounds; if white drifts away from black, gs under-reporting has regressed."
+      }
+    },
+    {
+      "id": "18-kilkenny-black-text-counter",
+      "file": "18_black-text-counter_KILKENNY-BLACK.pdf",
+      "templateId": "template-A3",
+      "garmentColor": "#1A1A1A",
+      "place": "fit-to-content",
+      "enabled": true,
+      "assertions": {
+        "minPages": 1,
+        "page1WidthPt": 842,
+        "page1HeightPt": 1191,
+        "tolerancePt": 4,
+        "boundsAspect": { "min": 1.00, "max": 1.15 },
+        "uploadBoundsMm": { "minWidthMm": 95, "maxWidthMm": 106, "minHeightMm": 88, "maxHeightMm": 101 },
+        "contentBboxMm": {
+          "minWidthMm": 70,
+          "minHeightMm": 65
+        },
+        "note": "COUNTER-TEST to fixture 17. Identical crest with BLACK text (gs reads black ink fine, so bounds were always correct here). Detected bounds must equal the white-text twin (≈100x94mm). This guards against an OVER-correction of the white-on-dark fix: if a future change to the gs-vs-inkscape reconciliation distorts normal (black, gs-correct) artwork, this fixture catches it."
+      }
+    },
+    {
+      "id": "19-synth-white-bottom-edge-fullpage",
+      "file": "19_white-bottom-edge-fullpage_SYNTH.pdf",
+      "templateId": "template-A3",
+      "garmentColor": "#1A1A1A",
+      "place": "fit-to-content",
+      "enabled": true,
+      "assertions": {
+        "minPages": 1,
+        "page1WidthPt": 842,
+        "page1HeightPt": 1191,
+        "tolerancePt": 6,
+        "uploadBoundsMm": { "minWidthMm": 288, "maxWidthMm": 300, "minHeightMm": 410, "maxHeightMm": 421 },
+        "note": "SYNTHETIC alpha-trim-floor lock. Near-full-page green panel (GS coverage ~94% ≥0.92 so the white-content rescue gate is skipped) with a WHITE bar at the extreme BOTTOM edge that gs -sDEVICE=bbox cannot see (white ink on gs's white render page). True visible content is 838x1182pt (~295.6x417mm); gs-only stops at 838x1120pt (~395mm tall) and clips the white bar. minHeightMm=410 fails on the gs-only clip and passes once the unconditional alpha-trim floor expands the committed bounds to cover ALL visible content. Counter-balanced by fixtures 17/18 (must not over-grow correct artwork)."
       }
     }
   ]
