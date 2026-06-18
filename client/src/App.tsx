@@ -9,6 +9,7 @@ import { SafariBanner } from "@/components/safari-banner";
 import { ErrorBoundary } from "@/components/error-boundary";
 import NotFound from "@/pages/not-found";
 import AdminDashboard from "@/pages/admin-dashboard";
+import AdminRecovery from "@/pages/admin-recovery";
 import UploadTool from "@/pages/upload-tool";
 import DownloadOdooModule from "@/pages/download-odoo-module";
 import ModuleDownload from "@/pages/ModuleDownload";
@@ -31,6 +32,7 @@ function Router() {
       <Route path="/bounds-demo" component={() => <div className="container mx-auto py-8"><BoundsDemoStandalone /></div>} />
       <Route path="/download-odoo-module" component={DownloadOdooModule} />
       <Route path="/module-download" component={ModuleDownload} />
+      <Route path="/admin/recovery" component={AdminRecovery} />
       <Route path="/admin" component={AdminDashboard} />
       {/* <Route path="/video-guides" component={VideoGuides} /> */}
       <Route component={NotFound} />

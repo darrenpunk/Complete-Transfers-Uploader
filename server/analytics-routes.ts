@@ -1,7 +1,10 @@
 import type { Express } from "express";
 import { type IStorage } from "./storage";
 import crypto from "crypto";
+import path from "path";
+import fs from "fs";
 import { pool } from "./db";
+import { ensureLocal } from "./object-storage";
 
 const ADMIN_TOKEN_SECRET = crypto.randomBytes(32).toString("hex");
 
@@ -89,6 +92,134 @@ export function registerAnalyticsRoutes(app: Express, storage: IStorage) {
       res.status(401).json({ error: "Unauthorized" });
     }
   };
+
+  // ───────────────────────────────────────────────────────────────────────
+  // ARTWORK RECOVERY (admin): look up a customer's projects/logos and download
+  // the ORIGINAL uploaded file if a generated output ever goes wrong. Originals
+  // are preserved at upload time AND mirrored to Object Storage, so ensureLocal()
+  // restores them on a local miss (after a redeploy or disk prune).
+  // ───────────────────────────────────────────────────────────────────────
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const UPLOADS_DIR = path.resolve(process.cwd(), "uploads");
+
+  // Contain a DB-sourced relative filename to the uploads/ directory. Returns the
+  // absolute path only if it resolves STRICTLY inside uploads/, else null. Guards
+  // the admin file-download sink against path traversal from a corrupted DB value.
+  const safeUploadsPath = (rel: string | null): string | null => {
+    if (!rel || rel.includes("\0") || path.isAbsolute(rel)) return null;
+    const abs = path.resolve(UPLOADS_DIR, rel);
+    if (abs !== UPLOADS_DIR && !abs.startsWith(UPLOADS_DIR + path.sep)) return null;
+    return abs;
+  };
+
+  // Pick the file that best represents the customer's TRUE original. A preserved
+  // PDF/AI/EPS (captured before any processing) is always preferred; native
+  // SVG/PNG uploads have no separate original, so `filename` IS the original.
+  const logoOriginalInfo = (logo: any): { rel: string | null; mime: string | null } => {
+    if (logo.originalFilename) return { rel: logo.originalFilename, mime: logo.originalMimeType || null };
+    if (logo.filename) return { rel: logo.filename, mime: logo.mimeType || null };
+    return { rel: null, mime: null };
+  };
+
+  const summarizeProject = (p: any) => ({
+    id: p.id,
+    name: p.name || null,
+    uploaderEmail: p.uploaderEmail || null,
+    uploaderId: p.uploaderId || null,
+    status: p.status || null,
+    createdAt: p.createdAt || null,
+    quantity: p.quantity ?? null,
+  });
+
+  const summarizeLogo = (logo: any) => {
+    const { rel } = logoOriginalInfo(logo);
+    return {
+      id: logo.id,
+      projectId: logo.projectId,
+      originalName: logo.originalName || null,
+      mimeType: logo.mimeType || null,
+      originalMimeType: logo.originalMimeType || null,
+      size: logo.size || null,
+      hasOriginal: !!rel,
+      originalIsPreservedPdf: !!logo.originalFilename,
+      downloadExt: rel ? (rel.split(".").pop() || "").toLowerCase() : null,
+    };
+  };
+
+  app.get("/api/admin/recovery/search", adminAuth, async (req, res) => {
+    try {
+      const q = String(req.query.q || "").trim();
+      if (!q) return res.status(400).json({ error: "Provide a customer email, project ID, or logo ID" });
+
+      const results: Array<{ project: any; logos: any[] }> = [];
+
+      if (q.includes("@")) {
+        const projs = await storage.getProjectsByEmail(q);
+        for (const p of projs) {
+          const logos = await storage.getLogosByProject(p.id);
+          results.push({ project: summarizeProject(p), logos: logos.map(summarizeLogo) });
+        }
+      } else if (UUID_RE.test(q)) {
+        const proj = await storage.getProject(q);
+        if (proj) {
+          const logos = await storage.getLogosByProject(proj.id);
+          results.push({ project: summarizeProject(proj), logos: logos.map(summarizeLogo) });
+        } else {
+          const logo = await storage.getLogo(q);
+          if (logo) {
+            const parent = await storage.getProject(logo.projectId);
+            results.push({
+              project: parent
+                ? summarizeProject(parent)
+                : { id: logo.projectId, name: "(project not found)", uploaderEmail: null, createdAt: null, status: null },
+              logos: [summarizeLogo(logo)],
+            });
+          }
+        }
+      } else {
+        return res.status(400).json({ error: "Search must be a customer email, a project ID, or a logo ID" });
+      }
+
+      res.json({ query: q, count: results.length, results });
+    } catch (e: any) {
+      console.error("Admin recovery search error:", e?.message || e);
+      res.status(500).json({ error: "Search failed" });
+    }
+  });
+
+  app.get("/api/admin/recovery/original/:logoId", adminAuth, async (req, res) => {
+    try {
+      if (!UUID_RE.test(req.params.logoId)) return res.status(400).json({ error: "Invalid logo ID" });
+
+      const logo = await storage.getLogo(req.params.logoId);
+      if (!logo) return res.status(404).json({ error: "Logo not found" });
+
+      const { rel, mime } = logoOriginalInfo(logo);
+      const abs = safeUploadsPath(rel);
+      if (!rel || !abs) return res.status(404).json({ error: "No original file available for this logo" });
+
+      const restored = await ensureLocal(rel);
+      if (!restored || !fs.existsSync(abs)) {
+        return res.status(404).json({ error: "Original file is not available locally or in cloud backup" });
+      }
+
+      const ext = (rel.split(".").pop() || "bin").toLowerCase();
+      const baseName =
+        ((logo as any).originalName || `original-${logo.id}`)
+          .replace(/\.[^.]+$/, "")
+          .replace(/[^\w\-. ]+/g, "_")
+          .trim() || `original-${logo.id}`;
+      const downloadName = `${baseName}.${ext}`;
+      const contentType = mime || (ext === "pdf" ? "application/pdf" : "application/octet-stream");
+
+      res.setHeader("Content-Type", contentType);
+      res.setHeader("Content-Disposition", `attachment; filename="${downloadName}"`);
+      res.sendFile(abs);
+    } catch (e: any) {
+      console.error("Admin recovery download error:", e?.message || e);
+      if (!res.headersSent) res.status(500).json({ error: "Download failed" });
+    }
+  });
 
   app.get("/api/admin/analytics/dbcheck", adminAuth, async (req, res) => {
     try {

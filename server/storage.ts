@@ -44,6 +44,7 @@ export interface IStorage {
   // Project methods
   getProject(id: string): Promise<Project | undefined>;
   getProjects(): Promise<Project[]>;
+  getProjectsByEmail(email: string): Promise<Project[]>;
   createProject(project: InsertProject): Promise<Project>;
   updateProject(id: string, updates: Partial<Project>): Promise<Project | undefined>;
   deleteProject(id: string): Promise<boolean>;
@@ -252,6 +253,13 @@ export class MemStorage implements IStorage {
     return Array.from(this.projects.values()).sort((a, b) => 
       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
+  }
+
+  async getProjectsByEmail(email: string): Promise<Project[]> {
+    const target = email.trim().toLowerCase();
+    return Array.from(this.projects.values())
+      .filter(p => (p.uploaderEmail || "").toLowerCase() === target)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }
 
   async createProject(insertProject: InsertProject): Promise<Project> {
@@ -824,6 +832,17 @@ export class DatabaseStorage implements IStorage {
       () => db.select().from(projects).orderBy(desc(projects.createdAt)),
       [],
       "getProjects"
+    );
+  }
+
+  async getProjectsByEmail(email: string): Promise<Project[]> {
+    const target = email.trim().toLowerCase();
+    return this.dbRetry(
+      () => db.select().from(projects)
+        .where(eq(sql`lower(${projects.uploaderEmail})`, target))
+        .orderBy(desc(projects.createdAt)),
+      [],
+      "getProjectsByEmail"
     );
   }
 
