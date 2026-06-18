@@ -5991,6 +5991,83 @@ export async function registerRoutes(app: express.Application) {
                       console.log(`✅ Using ArtBox as content bounds: ${artBoxFromPdf.width.toFixed(1)}×${artBoxFromPdf.height.toFixed(1)}pts = ${(artBoxFromPdf.width * pxToMm).toFixed(1)}×${(artBoxFromPdf.height * pxToMm).toFixed(1)}mm`);
                     }
 
+                    // GROUND-TRUTH ALPHA-TRIM for white-on-white (GS bbox empty, no ArtBox).
+                    // GS -sDEVICE=bbox renders on a white page so white/light ink is INVISIBLE
+                    // (returns 0 0 0 0). The usual fallback below reads `inkscape --query-all | head -1`
+                    // (the ROOT <svg>), but pdf2svg feImage/clip filter regions inflate AND mis-place
+                    // that root box for these files (see pdf2svg-feimage-page-inflation gotcha): the
+                    // content gets a wrong origin (claims it touches the page top/right edges) so the
+                    // zero-origin normalization shifts it out of the viewBox and CLIPS it.
+                    // Rendering the ORIGINAL PDF to a TRANSPARENT raster keeps white ink as opaque
+                    // pixels; an alpha-trim is then the TRUE artwork extent. Coords produced here are
+                    // TOP-DOWN pt (origin top-left) — the SAME convention the inkscape branch below
+                    // uses — so the originalPdfBounds Y-flip and the downstream normalization translate
+                    // (which both derive from inkscapeBounds) stay consistent. Falls through to the
+                    // inkscape query if the render/trim fails.
+                    if (!inkscapeBounds && pdfPageDimensions && pdfPageDimensions.widthPts > 0 && pdfPageDimensions.heightPts > 0) {
+                      const alphaWhitePdf = (file as any).originalPdfPath as string | undefined;
+                      if (alphaWhitePdf && fs.existsSync(alphaWhitePdf)) {
+                        let alphaWhitePng: string | null = null;
+                        try {
+                          const aDPI = getSmartPreviewDPI(alphaWhitePdf);
+                          alphaWhitePng = path.join(os.tmpdir(), `wwtrim_${Date.now()}_${Math.random().toString(36).slice(2)}.png`);
+                          await execAsyncRaw(`gs -dNOPAUSE -dBATCH -dFirstPage=1 -dLastPage=1 -sDEVICE=pngalpha -r${aDPI} -dMaxBitmap=80000000 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${alphaWhitePng}" "${alphaWhitePdf}"`, { timeout: 60000 });
+                          if (fs.existsSync(alphaWhitePng) && fs.statSync(alphaWhitePng).size > 0) {
+                            const idOut = execSync(`identify -format "%w %h" "${alphaWhitePng}"`, { encoding: 'utf8', timeout: 5000 }).trim();
+                            const [pngW, pngH] = idOut.split(/\s+/).map(Number);
+                            if (pngW > 0 && pngH > 0) {
+                              const trimOut = execSync(`convert "${alphaWhitePng}" -trim -format "%w %h %X %Y" info:`, { encoding: 'utf8', timeout: 5000 }).trim();
+                              const tp = trimOut.split(/\s+/).map(Number);
+                              if (tp.length >= 4 && tp[0] > 0 && tp[1] > 0) {
+                                const [trimW, trimH, trimOffX, trimOffY] = tp;
+                                const pageWpt = pdfPageDimensions.widthPts;
+                                const pageHpt = pdfPageDimensions.heightPts;
+                                const sX = pageWpt / pngW;
+                                const sY = pageHpt / pngH;
+                                const aXMin = Math.max(Math.abs(trimOffX) * sX, 0);
+                                const aYMinTop = Math.max(Math.abs(trimOffY) * sY, 0);
+                                const aXMax = Math.min(aXMin + trimW * sX, pageWpt);
+                                const aYMaxTop = Math.min(aYMinTop + trimH * sY, pageHpt);
+                                const aW = aXMax - aXMin;
+                                const aH = aYMaxTop - aYMinTop;
+                                const aCov = (aW * aH) / (pageWpt * pageHpt);
+                                if (aW > 1 && aH > 1 && aCov > 0.002 && aCov <= 1.0) {
+                                  inkscapeBounds = { xMin: aXMin, yMin: aYMinTop, xMax: aXMax, yMax: aYMaxTop, width: aW, height: aH };
+                                  // These coords are TOP-DOWN (origin top-left), the SAME convention the
+                                  // __fromSvgCoords branch expects. Flag them so the normalization block
+                                  // Y-flips correctly for BOTH originalPdfBounds (the output PDF crop
+                                  // window) AND the zero-origin normTranslate (the on-canvas SVG shift).
+                                  // Without this flag the block treats the bounds as PDF bottom-origin and
+                                  // uses `pageH - yMax` for the translate — shifting the artwork DOWN by
+                                  // the bottom-margin instead of the top-margin, so it overflows the
+                                  // viewBox bottom and clips on canvas AND in output.
+                                  (inkscapeBounds as any).__fromSvgCoords = true;
+                                  // Persist the artwork extent in PDF bottom-origin coords so the later
+                                  // all-elements-union block can CAP its bounds to the true visible
+                                  // artwork (instead of ballooning to a pdf2svg page-sized feImage wrapper)
+                                  // if that correction ever fires for this file.
+                                  (file as any)._alphaTrimPdfBounds = {
+                                    xMin: aXMin,
+                                    yMin: pageHpt - aYMaxTop,
+                                    xMax: aXMax,
+                                    yMax: pageHpt - aYMinTop,
+                                    width: aW,
+                                    height: aH,
+                                  };
+                                  const pxToMmA = 1 / 2.834645669;
+                                  console.log(`✅ Alpha-trim white-on-white bounds: (${aXMin.toFixed(1)}, ${aYMinTop.toFixed(1)}) size ${aW.toFixed(1)}×${aH.toFixed(1)}pts = ${(aW * pxToMmA).toFixed(1)}×${(aH * pxToMmA).toFixed(1)}mm (${(aCov * 100).toFixed(0)}% page)`);
+                                }
+                              }
+                            }
+                          }
+                        } catch (awErr) {
+                          console.log(`⚠️ Alpha-trim white-on-white detection failed (non-critical), trying Inkscape:`, awErr);
+                        } finally {
+                          if (alphaWhitePng) { try { if (fs.existsSync(alphaWhitePng)) fs.unlinkSync(alphaWhitePng); } catch { /* best-effort */ } }
+                        }
+                      }
+                    }
+
                     if (!inkscapeBounds) {
                       try {
                         const { execSync: execSyncBounds } = await import('child_process');

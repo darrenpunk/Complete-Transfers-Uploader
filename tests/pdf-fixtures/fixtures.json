@@ -333,6 +333,26 @@
         "uploadBoundsMm": { "minWidthMm": 288, "maxWidthMm": 300, "minHeightMm": 410, "maxHeightMm": 421 },
         "note": "SYNTHETIC alpha-trim-floor lock. Near-full-page green panel (GS coverage ~94% ≥0.92 so the white-content rescue gate is skipped) with a WHITE bar at the extreme BOTTOM edge that gs -sDEVICE=bbox cannot see (white ink on gs's white render page). True visible content is 838x1182pt (~295.6x417mm); gs-only stops at 838x1120pt (~395mm tall) and clips the white bar. minHeightMm=410 fails on the gs-only clip and passes once the unconditional alpha-trim floor expands the committed bounds to cover ALL visible content. Counter-balanced by fixtures 17/18 (must not over-grow correct artwork)."
       }
+    },
+    {
+      "id": "20-schembri-white-on-white-landscape-A4",
+      "file": "20_white-on-white-A4-landscape_SCHEMBRI.pdf",
+      "templateId": "template-A3",
+      "garmentColor": "#1A1A1A",
+      "place": "fit-to-content",
+      "skipPlace": true,
+      "enabled": true,
+      "assertions": {
+        "minPages": 1,
+        "page1WidthPt": 842,
+        "page1HeightPt": 1191,
+        "tolerancePt": 6,
+        "boundsAspect": { "min": 1.47, "max": 1.59 },
+        "uploadBoundsMm": { "minWidthMm": 273, "maxWidthMm": 284, "minHeightMm": 177, "maxHeightMm": 188 },
+        "outputContentAspect": { "min": 1.47, "max": 1.59 },
+        "outputContentCentered": { "tolerancePx": 16 },
+        "note": "WHITE-ON-WHITE no-clip lock (Schembri Batteries, pure-white art on a landscape A4 page, 841.89x595.276pt). gs -sDEVICE=bbox returns 0 0 0 0 (white ink is invisible on gs's white render page) and the old fallback read `inkscape --query-all | head -1` (the root <svg>), but pdf2svg feImage/clip filter regions inflate AND mis-place that root box so the content claimed it touched the page top/right; the zero-origin normalisation then shifted the artwork out of the viewBox and clipped ~35pt off the bottom-right both on the canvas and in the output. The fix renders the ORIGINAL pdf to a transparent raster and alpha-trims it for the TRUE artwork extent. Detected upload bounds must be ~278.4x182.1mm (aspect ~1.53), NOT a page-sized/origin-hugged box. skipPlace=true models the real \"upload → generate\" flow (single auto-created centered element) so the saved output is clean; outputContentAspect then locks the OUTPUT artwork aspect (measured white-aware via pngalpha+trim) to ~1.53 — a clip/squish/overflow regression drifts this number and goes red. Must route through the standard (non-large-format) bounds path — keep templateId a normal template, not dtf-large."
+      }
     }
   ]
 }

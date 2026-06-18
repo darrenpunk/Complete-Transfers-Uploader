@@ -22,6 +22,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
+import { tmpdir } from 'node:os';
 import { PDFDocument } from 'pdf-lib';
 
 const execFileAsync = promisify(execFile);
@@ -82,6 +83,24 @@ interface Assertions {
   checkFallbackAspect?: boolean;
   /** Relative tolerance for checkFallbackAspect (default 0.03 = 3%). */
   fallbackAspectTolerance?: number;
+  /**
+   * Assert the aspect ratio (w/h) of the OUTPUT page-1 visible artwork, measured
+   * the WHITE-AWARE way (gs -sDEVICE=pngalpha render + alpha-trim) so white-on-
+   * white output is seen. A clipped/squished or overflowing output shows up as an
+   * aspect drift away from the upload bounds aspect. Best paired with skipPlace so
+   * the measured content is the single real-app element, not a harness duplicate.
+   */
+  outputContentAspect?: { min?: number; max?: number; note?: string };
+  /**
+   * Assert the OUTPUT page-1 visible artwork is CENTERED on the page: left/right
+   * and top/bottom margins of the WHITE-AWARE trimmed content bbox must be within
+   * tolerancePx of each other (default 16px @ 100 DPI ≈ 4pt — tight enough to
+   * catch a real off-centre shift of tens of px, loose enough for AA/subpixel
+   * jitter on fuzzy white edges). This locks the literal "uploaded artwork was
+   * NOT centred" symptom, which an aspect-only check does not enforce. Pair with
+   * skipPlace so the measured content is the single real-app centered element.
+   */
+  outputContentCentered?: { tolerancePx?: number; note?: string };
   note?: string;
 }
 
@@ -91,6 +110,16 @@ interface Fixture {
   templateId: string;
   garmentColor: string;
   place: PlaceMode;
+  /**
+   * If true, skip the explicit canvas placement step and rely ONLY on the
+   * element the upload handler auto-creates (centered, sized to the detected
+   * upload bounds, in mm). This mirrors the real "upload → generate" flow with
+   * exactly ONE element, so the saved output is clean and an outputContentAspect
+   * assertion is meaningful. (placeElement otherwise POSTs a SECOND element in
+   * point units — a giant off-page/overflow copy that pollutes the output.)
+   * Incompatible with imposition/applique (which need a placed element id).
+   */
+  skipPlace?: boolean;
   enabled: boolean;
   /**
    * If true, after upload the runner POSTs to
@@ -431,6 +460,45 @@ async function getPngAspect(fileName: string): Promise<number | null> {
   }
 }
 
+/**
+ * Visible-artwork bbox of OUTPUT page 1, measured the WHITE-AWARE way.
+ *
+ * The production output is artwork-only on a transparent page, so plain
+ * `gs -sDEVICE=bbox` (which renders on a WHITE page) cannot see white ink and
+ * returns an empty bbox for white-on-white logos. Instead we render to a
+ * TRANSPARENT raster (`-sDEVICE=pngalpha`) — white fills become opaque pixels —
+ * and alpha-trim to the true visible extent. A clip/squish/overflow then shows
+ * up as an aspect drift. Returns null if any tool step fails.
+ */
+async function getOutputContentBbox(
+  pdfPath: string,
+): Promise<{ aspect: number; contentW: number; contentH: number; pageW: number; pageH: number; offX: number; offY: number } | null> {
+  const png = join(tmpdir(), `pdfreg_out_${Date.now()}_${Math.random().toString(36).slice(2)}.png`);
+  try {
+    await execFileAsync('gs', [
+      '-q', '-dBATCH', '-dNOPAUSE', '-dFirstPage=1', '-dLastPage=1',
+      '-sDEVICE=pngalpha', '-r100', `-sOutputFile=${png}`, pdfPath,
+    ]);
+    const { stdout: idOut } = await execFileAsync('identify', ['-format', '%w %h', png]);
+    const [pageW, pageH] = idOut.trim().split(/\s+/).map(Number);
+    const { stdout: trimOut } = await execFileAsync('convert', [png, '-trim', '-format', '%w %h %X %Y', 'info:']);
+    const tp = trimOut.trim().split(/\s+/).map(Number);
+    if (tp.length < 4) return null;
+    const [contentW, contentH, offX, offY] = tp;
+    if (!(contentW > 0) || !(contentH > 0)) return null;
+    return { aspect: contentW / contentH, contentW, contentH, pageW, pageH, offX, offY };
+  } catch {
+    return null;
+  } finally {
+    try {
+      const fs = await import('node:fs');
+      if (fs.existsSync(png)) fs.unlinkSync(png);
+    } catch {
+      /* best-effort temp cleanup */
+    }
+  }
+}
+
 async function runFixture(f: Fixture): Promise<Result> {
   const start = Date.now();
   const messages: string[] = [];
@@ -463,12 +531,20 @@ async function runFixture(f: Fixture): Promise<Result> {
       messages.push(outlineStatus);
     }
 
-    const placement = await placeElement(project.id, logo, f, template);
-    messages.push(`placed: ${placement.widthMm.toFixed(1)}x${placement.heightMm.toFixed(1)}mm at canvas (${placement.x.toFixed(0)}, ${placement.y.toFixed(0)})pt rotation=${placement.rotation}°`);
+    let placement: Awaited<ReturnType<typeof placeElement>> | null = null;
+    if (f.skipPlace) {
+      if (f.imposition || f.applique) {
+        throw new Error('skipPlace is incompatible with imposition/applique (they need a placed element id)');
+      }
+      messages.push('placement: skipped (skipPlace) — using the auto-created centered element; mirrors real "upload → generate"');
+    } else {
+      placement = await placeElement(project.id, logo, f, template);
+      messages.push(`placed: ${placement.widthMm.toFixed(1)}x${placement.heightMm.toFixed(1)}mm at canvas (${placement.x.toFixed(0)}, ${placement.y.toFixed(0)})pt rotation=${placement.rotation}°`);
+    }
 
     // Imposition: replicate the placed element into a grid before generating.
     if (f.imposition) {
-      if (!placement.elementId) throw new Error('imposition requested but canvas-elements POST returned no element id');
+      if (!placement?.elementId) throw new Error('imposition requested but canvas-elements POST returned no element id');
       const imp = await applyImposition(placement.elementId, f.imposition);
       messages.push(`imposition: ${f.imposition.rows}x${f.imposition.columns} grid → ${imp.totalElements ?? '?'} total element(s)`);
     }
@@ -576,6 +652,40 @@ async function runFixture(f: Fixture): Promise<Result> {
           messages.push(`fallback aspect: ${fa.toFixed(3)} vs bounds ${boundsAsp.toFixed(3)} (rel ${(rel * 100).toFixed(1)}%, tol ${(tolRel * 100).toFixed(0)}%)`);
           if (rel > tolRel) {
             failures.push(`canvas-fallback PNG aspect ${fa.toFixed(3)} != bounds aspect ${boundsAsp.toFixed(3)} (off ${(rel * 100).toFixed(1)}% > ${(tolRel * 100).toFixed(0)}%) — full-page-fallback squish regression?`);
+          }
+        }
+      }
+    }
+
+    if (a.outputContentAspect || a.outputContentCentered) {
+      const ob = await getOutputContentBbox(outputPath);
+      if (!ob) {
+        failures.push('outputContentAspect/Centered asserted but output content bbox could not be measured (pngalpha+trim)');
+      } else {
+        messages.push(`output content: ${ob.contentW}x${ob.contentH}px aspect ${ob.aspect.toFixed(3)} (page ${ob.pageW}x${ob.pageH}, off ${ob.offX},${ob.offY})`);
+        if (a.outputContentAspect) {
+          const oc = a.outputContentAspect;
+          if (typeof oc.min === 'number' && ob.aspect < oc.min) {
+            failures.push(`output content aspect ${ob.aspect.toFixed(3)} < min ${oc.min} — output CLIP/squish regression?`);
+          }
+          if (typeof oc.max === 'number' && ob.aspect > oc.max) {
+            failures.push(`output content aspect ${ob.aspect.toFixed(3)} > max ${oc.max} — output overflow / duplicate-element regression?`);
+          }
+        }
+        if (a.outputContentCentered) {
+          const tol = a.outputContentCentered.tolerancePx ?? 16;
+          const leftM = ob.offX;
+          const rightM = ob.pageW - ob.offX - ob.contentW;
+          const topM = ob.offY;
+          const botM = ob.pageH - ob.offY - ob.contentH;
+          const dx = Math.abs(leftM - rightM);
+          const dy = Math.abs(topM - botM);
+          messages.push(`output margins: L${leftM} R${rightM} T${topM} B${botM} px (Δx ${dx}, Δy ${dy}, tol ${tol})`);
+          if (dx > tol) {
+            failures.push(`output NOT horizontally centered: |L${leftM}-R${rightM}|=${dx}px > ${tol}px — off-centre regression?`);
+          }
+          if (dy > tol) {
+            failures.push(`output NOT vertically centered: |T${topM}-B${botM}|=${dy}px > ${tol}px — off-centre regression?`);
           }
         }
       }
