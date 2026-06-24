@@ -1824,102 +1824,55 @@ const CanvasWorkspace = forwardRef(function CanvasWorkspace({
 
 
 
-  // Function to fit all content within safety margins
+  // Fit in Bounds: scale the artwork to the MAXIMUM size that fits the template
+  // (scaling up or down, keeping aspect ratio) and center it on the canvas.
+  // Uses the canvas's center-based coordinate system: canvas centre is (0,0) and
+  // element.x/element.y is the centre of each element (same model as the clipping
+  // check and handleCenterOnCanvas).
   const handleFitToBounds = () => {
     if (!template || !canvasElements || canvasElements.length === 0) {
       console.log('❌ Cannot fit to bounds: missing template or elements');
       return;
     }
-    
-    // Calculate safety margins - DTF templates need more generous scaling
-    const isDTFTemplate = template.id.startsWith('dtf-large') || template.id.startsWith('dtf-SRA3') || template.name === 'large_dtf';
-    const safetyMarginMm = 3; // Keep standard 3mm for all templates
-    const safeWidth = template.width - (safetyMarginMm * 2);
-    const safeHeight = template.height - (safetyMarginMm * 2);
-    
-    console.log(`🎯 ${isDTFTemplate ? 'DTF' : 'Standard'} template fit-to-bounds: ${safeWidth}×${safeHeight}mm usable area (${safetyMarginMm}mm margins)`);
-    
-    // Find the bounding box of all elements, accounting for rotation
+
+    // Small safety margin so the maxed artwork doesn't sit hard against the cut edge.
+    const safetyMarginMm = 3;
+    const safeWidth = template.width - safetyMarginMm * 2;
+    const safeHeight = template.height - safetyMarginMm * 2;
+
+    // Bounding box of all elements (centre-based, accounting for rotation).
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-    
     canvasElements.forEach(element => {
       const isRotated = element.rotation === 90 || element.rotation === 270;
       const visualWidth = isRotated ? element.height : element.width;
       const visualHeight = isRotated ? element.width : element.height;
-      
-      minX = Math.min(minX, element.x);
-      minY = Math.min(minY, element.y);
-      maxX = Math.max(maxX, element.x + visualWidth);
-      maxY = Math.max(maxY, element.y + visualHeight);
+      minX = Math.min(minX, element.x - visualWidth / 2);
+      maxX = Math.max(maxX, element.x + visualWidth / 2);
+      minY = Math.min(minY, element.y - visualHeight / 2);
+      maxY = Math.max(maxY, element.y + visualHeight / 2);
     });
-    
+
     const contentWidth = maxX - minX;
     const contentHeight = maxY - minY;
-    
-    // Calculate scale factor to fit within safety margins
-    const scaleX = safeWidth / contentWidth;
-    const scaleY = safeHeight / contentHeight;
-    const scaleFactor = Math.min(scaleX, scaleY, 1); // Don't scale up, only down
-    
-    // DTF template-specific positioning adjustments (already defined above)
-    
-    if (scaleFactor < 1) {
-      console.log(`🎯 Scaling content by ${(scaleFactor * 100).toFixed(0)}% to fit within safety margins`);
-      
-      // Scale and reposition all elements
-      canvasElements.forEach(element => {
-        const isRotated = element.rotation === 90 || element.rotation === 270;
-        const visualWidth = isRotated ? element.height : element.width;
-        const visualHeight = isRotated ? element.width : element.height;
-        const relativeX = element.x - minX;
-        const relativeY = element.y - minY;
-        
-        const newVisualWidth = Math.round(visualWidth * scaleFactor);
-        const newVisualHeight = Math.round(visualHeight * scaleFactor);
-        const newWidth = isRotated ? newVisualHeight : newVisualWidth;
-        const newHeight = isRotated ? newVisualWidth : newVisualHeight;
-        
-        let newX, newY;
-        if (isDTFTemplate) {
-          const scaledContentWidth = contentWidth * scaleFactor;
-          newX = Math.round((template.width - scaledContentWidth) / 2 + (relativeX * scaleFactor));
-          newY = Math.round(safetyMarginMm + (relativeY * scaleFactor));
-        } else {
-          newX = Math.round(safetyMarginMm + (relativeX * scaleFactor));
-          newY = Math.round(safetyMarginMm + (relativeY * scaleFactor));
-        }
-        
-        updateElementDirect(element.id, {
-          x: newX,
-          y: newY,
-          width: newWidth,
-          height: newHeight
-        });
+    if (contentWidth <= 0 || contentHeight <= 0) return;
+
+    const contentCenterX = (minX + maxX) / 2;
+    const contentCenterY = (minY + maxY) / 2;
+
+    // Largest uniform scale that still fits inside the safe area (can enlarge OR shrink).
+    const scaleFactor = Math.min(safeWidth / contentWidth, safeHeight / contentHeight);
+
+    console.log(`🎯 Fit in Bounds: scaling artwork to ${(scaleFactor * 100).toFixed(0)}% (max fit) and centering on canvas`);
+
+    // Scale every element about the content centre, then recentre the whole group at (0,0).
+    canvasElements.forEach(element => {
+      updateElementDirect(element.id, {
+        x: Math.round((element.x - contentCenterX) * scaleFactor),
+        y: Math.round((element.y - contentCenterY) * scaleFactor),
+        width: Math.round(element.width * scaleFactor),
+        height: Math.round(element.height * scaleFactor),
       });
-    } else {
-      // Just center the content if it already fits
-      let centerOffsetX, centerOffsetY;
-      
-      if (isDTFTemplate) {
-        centerOffsetX = (template.width - contentWidth) / 2;
-        centerOffsetY = safetyMarginMm + (safeHeight - contentHeight) / 4;
-        console.log('🎯 DTF template: Centering horizontally, positioning towards top');
-      } else {
-        centerOffsetX = (safeWidth - contentWidth) / 2 + safetyMarginMm;
-        centerOffsetY = (safeHeight - contentHeight) / 2 + safetyMarginMm;
-        console.log('🎯 Standard template: Centering content within safety margins');
-      }
-      
-      canvasElements.forEach(element => {
-        const relativeX = element.x - minX;
-        const relativeY = element.y - minY;
-        
-        updateElementDirect(element.id, {
-          x: Math.round(centerOffsetX + relativeX),
-          y: Math.round(centerOffsetY + relativeY)
-        });
-      });
-    }
+    });
   };
 
   // Function to center all content on canvas without scaling
