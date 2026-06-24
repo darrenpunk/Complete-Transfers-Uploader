@@ -2055,7 +2055,8 @@ const CanvasWorkspace = forwardRef(function CanvasWorkspace({
                 </h2>
                 <p className="mt-1 text-sm text-gray-600">
                   Some artwork extends beyond the canvas bounds and will be clipped in the final print.
-                  Move or resize it to fit inside the dashed canvas area.
+                  Tap <span className="font-semibold">Fit in Bounds</span> below to automatically scale it
+                  inside, or move and resize it to fit the dashed canvas area.
                 </p>
               </div>
               <button
@@ -2067,35 +2068,28 @@ const CanvasWorkspace = forwardRef(function CanvasWorkspace({
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <div className="flex justify-end border-t border-gray-100 bg-gray-50 px-5 py-3">
+            <div className="flex justify-end gap-2 border-t border-gray-100 bg-gray-50 px-5 py-3">
               <Button
                 type="button"
-                variant="destructive"
+                variant="outline"
                 size="sm"
                 onClick={() => setPositionWarningDismissed(true)}
               >
-                Got it, I'll fix it
+                I'll fix it manually
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                onClick={handleFitToBounds}
+              >
+                <Maximize2 className="mr-1 h-4 w-4" />
+                Fit in Bounds
               </Button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Compact persistent reminder shown after the modal is dismissed while
-          artwork is still clipping — keeps the warning visible (not below the
-          fold) without covering the canvas. Tap to re-open the full modal. */}
-      {showPositionPill && (
-        <div className="absolute top-3 left-1/2 z-40 -translate-x-1/2 pointer-events-none">
-          <button
-            type="button"
-            onClick={() => setPositionWarningDismissed(false)}
-            className="pointer-events-auto flex items-center gap-2 rounded-full bg-red-600 px-4 py-1.5 text-sm font-medium text-white shadow-lg ring-1 ring-red-700/50 hover:bg-red-700"
-          >
-            ⚠️ Artwork will be clipped — tap to review
-          </button>
-        </div>
-      )}
-      
       {/* Garment Color Required Warning */}
       {!project.garmentColor && (
         <div className="bg-red-500 text-white px-4 py-2 text-sm font-medium">
@@ -2524,6 +2518,21 @@ const CanvasWorkspace = forwardRef(function CanvasWorkspace({
 
       {/* Canvas Container */}
       <div className="flex-1 relative overflow-hidden" style={{ backgroundColor: '#606060' }}>
+        {/* Compact persistent reminder shown after the modal is dismissed while
+            artwork is still clipping. Anchored to the top of the canvas area
+            (below the toolbar, so it never covers the Fit in Bounds button) and
+            kept in view. Tap to re-open the full modal. */}
+        {showPositionPill && (
+          <div className="absolute top-3 left-1/2 z-30 -translate-x-1/2 pointer-events-none">
+            <button
+              type="button"
+              onClick={() => setPositionWarningDismissed(false)}
+              className="pointer-events-auto flex items-center gap-2 rounded-full bg-red-600 px-4 py-1.5 text-sm font-medium text-white shadow-lg ring-1 ring-red-700/50 hover:bg-red-700"
+            >
+              ⚠️ Artwork will be clipped — tap to review
+            </button>
+          </div>
+        )}
         {isAppliqueTemplate && (() => {
           const badgeCount = canvasElements.filter(el => (el.canvasIndex || 0) === 0).length;
           const embroideryCount = canvasElements.filter(el => (el.canvasIndex || 0) === 1).length;
