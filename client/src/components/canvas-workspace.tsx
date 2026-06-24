@@ -1826,6 +1826,8 @@ const CanvasWorkspace = forwardRef(function CanvasWorkspace({
 
   // Fit in Bounds: scale the artwork to the MAXIMUM size that fits the template
   // (scaling up or down, keeping aspect ratio) and center it on the canvas.
+  // Fills the template edge-to-edge (no safety margin) — exactly matching the
+  // template size does not trip the clipping warning (which has a 0.5mm tolerance).
   // Uses the canvas's center-based coordinate system: canvas centre is (0,0) and
   // element.x/element.y is the centre of each element (same model as the clipping
   // check and handleCenterOnCanvas).
@@ -1835,10 +1837,9 @@ const CanvasWorkspace = forwardRef(function CanvasWorkspace({
       return;
     }
 
-    // Small safety margin so the maxed artwork doesn't sit hard against the cut edge.
-    const safetyMarginMm = 3;
-    const safeWidth = template.width - safetyMarginMm * 2;
-    const safeHeight = template.height - safetyMarginMm * 2;
+    // Fill the full template — no safety margin (edge-to-edge).
+    const safeWidth = template.width;
+    const safeHeight = template.height;
 
     // Bounding box of all elements (centre-based, accounting for rotation).
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
