@@ -280,6 +280,10 @@ const CanvasWorkspace = forwardRef(function CanvasWorkspace({
   // Canvas dragging state
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  // Whether the user has dismissed the centered "Position Warning" modal. While
+  // dismissed (and still clipping) a compact pill stays visible; the reset effect
+  // clears this once clipping stops, so a new clipping episode re-pops the modal.
+  const [positionWarningDismissed, setPositionWarningDismissed] = useState(false);
   
   // Canvas element resizing state
   const [isResizing, setIsResizing] = useState(false);
@@ -1964,6 +1968,39 @@ const CanvasWorkspace = forwardRef(function CanvasWorkspace({
     });
   };
 
+  // Compute (before the early return, so the reset effect below stays a valid,
+  // unconditional hook) whether any visible element extends beyond the canvas
+  // bounds and will be clipped in the final print.
+  const hasElementsOutsideCanvas = !!template && canvasElements.some(element => {
+    if (!element.isVisible) return false;
+
+    const templateHalfWidth = template!.width / 2;
+    const templateHalfHeight = template!.height / 2;
+
+    const isRotated = element.rotation === 90 || element.rotation === 270;
+    const visualWidth = isRotated ? element.height : element.width;
+    const visualHeight = isRotated ? element.width : element.height;
+
+    const elementHalfWidth = visualWidth / 2;
+    const elementHalfHeight = visualHeight / 2;
+
+    const elementLeft = element.x - elementHalfWidth;
+    const elementRight = element.x + elementHalfWidth;
+    const elementTop = element.y - elementHalfHeight;
+    const elementBottom = element.y + elementHalfHeight;
+
+    // Small tolerance for floating point precision
+    const tolerance = 0.5;
+    return elementLeft < -templateHalfWidth - tolerance || elementTop < -templateHalfHeight - tolerance ||
+           elementRight > templateHalfWidth + tolerance || elementBottom > templateHalfHeight + tolerance;
+  });
+
+  // Once nothing is clipping, clear the dismissal so the full warning modal
+  // re-appears the next time artwork goes out of bounds (a new clipping episode).
+  useEffect(() => {
+    if (!hasElementsOutsideCanvas) setPositionWarningDismissed(false);
+  }, [hasElementsOutsideCanvas]);
+
   if (!template) {
     return (
       <div className="flex-1 flex items-center justify-center">
@@ -1985,46 +2022,77 @@ const CanvasWorkspace = forwardRef(function CanvasWorkspace({
   const innerCanvasWidth = template.pixelWidth * (zoom / 100);
   const innerCanvasHeight = template.pixelHeight * (zoom / 100);
 
-  // Compute if any elements are outside canvas bounds (not safety margins)
-  const hasElementsOutsideCanvas = canvasElements.some(element => {
-    if (!element.isVisible) return false;
-    
-    // Only warn when elements extend beyond the actual canvas bounds (0mm margin)
-    const templateHalfWidth = template.width / 2;
-    const templateHalfHeight = template.height / 2;
-    
-    const isRotated = element.rotation === 90 || element.rotation === 270;
-    const visualWidth = isRotated ? element.height : element.width;
-    const visualHeight = isRotated ? element.width : element.height;
-    
-    const elementHalfWidth = visualWidth / 2;
-    const elementHalfHeight = visualHeight / 2;
-    
-    const elementLeft = element.x - elementHalfWidth;
-    const elementRight = element.x + elementHalfWidth;
-    const elementTop = element.y - elementHalfHeight;
-    const elementBottom = element.y + elementHalfHeight;
-    
-    // Check against canvas bounds with small tolerance for floating point precision
-    const tolerance = 0.5;
-    return elementLeft < -templateHalfWidth - tolerance || elementTop < -templateHalfHeight - tolerance || 
-           elementRight > templateHalfWidth + tolerance || elementBottom > templateHalfHeight + tolerance;
-  });
+  // Centered modal shows first; once dismissed, a compact pill persists while the
+  // artwork is still clipping so the warning is never fully lost before checkout.
+  // Both are hidden mid drag/resize to avoid flicker.
+  const showPositionWarning = hasElementsOutsideCanvas && !isDragging && !isResizing && !positionWarningDismissed;
+  const showPositionPill = hasElementsOutsideCanvas && !isDragging && !isResizing && positionWarningDismissed;
 
   return (
     <TooltipProvider>
     <div className="flex-1 flex flex-col relative">
-      {/* Position Warning Banner - Absolute overlay pinned to the BOTTOM of the
-          workspace so it doesn't reflow the canvas (avoids drag flicker) and
-          doesn't cover the top toolbar / step indicator. */}
-      {hasElementsOutsideCanvas && (
-        <div className="absolute bottom-0 left-0 right-0 z-30 bg-red-50/95 border-t border-red-300 px-4 py-2 text-center pointer-events-none shadow-sm">
-          <p className="text-sm text-red-800 font-medium">
-            ⚠️ Position Warning
-          </p>
-          <p className="text-xs text-red-700">
-            Some elements extend beyond the canvas bounds and will be clipped in the final output.
-          </p>
+      {/* Position Warning - centered floating modal so customers can't miss it.
+          (The old bottom banner sat below the fold on large DTF templates.)
+          The backdrop is non-blocking (pointer-events-none) so the user can grab
+          and reposition artwork immediately; grabbing it hides the modal and it
+          auto-clears once nothing is clipping. Dismissible via the buttons. */}
+      {showPositionWarning && (
+        <div className="absolute inset-0 z-40 flex items-center justify-center p-4 pointer-events-none">
+          <div className="absolute inset-0 bg-black/30" />
+          <div
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="position-warning-title"
+            className="relative pointer-events-auto w-full max-w-md overflow-hidden rounded-xl bg-white shadow-2xl ring-1 ring-red-200"
+          >
+            <div className="flex items-start gap-3 p-5">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-100 text-xl">
+                ⚠️
+              </div>
+              <div className="flex-1">
+                <h2 id="position-warning-title" className="text-base font-semibold text-red-800">
+                  Position Warning
+                </h2>
+                <p className="mt-1 text-sm text-gray-600">
+                  Some artwork extends beyond the canvas bounds and will be clipped in the final print.
+                  Move or resize it to fit inside the dashed canvas area.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPositionWarningDismissed(true)}
+                className="shrink-0 rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                aria-label="Dismiss warning"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="flex justify-end border-t border-gray-100 bg-gray-50 px-5 py-3">
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                onClick={() => setPositionWarningDismissed(true)}
+              >
+                Got it, I'll fix it
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Compact persistent reminder shown after the modal is dismissed while
+          artwork is still clipping — keeps the warning visible (not below the
+          fold) without covering the canvas. Tap to re-open the full modal. */}
+      {showPositionPill && (
+        <div className="absolute top-3 left-1/2 z-40 -translate-x-1/2 pointer-events-none">
+          <button
+            type="button"
+            onClick={() => setPositionWarningDismissed(false)}
+            className="pointer-events-auto flex items-center gap-2 rounded-full bg-red-600 px-4 py-1.5 text-sm font-medium text-white shadow-lg ring-1 ring-red-700/50 hover:bg-red-700"
+          >
+            ⚠️ Artwork will be clipped — tap to review
+          </button>
         </div>
       )}
       
