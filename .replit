@@ -74,6 +74,10 @@ ADMIN_PASSWORD = "admin123"
 [userenv.production]
 NODE_ENV = "production"
 MALLOC_ARENA_MAX = "2"
+VITE_ODOO_URL = "https://www.completetransfers.com"
+
+[userenv.development]
+VITE_ODOO_URL = "https://stage-completetransfers-19.odoo.com"
 
 [postMerge]
 path = "scripts/post-merge.sh"
