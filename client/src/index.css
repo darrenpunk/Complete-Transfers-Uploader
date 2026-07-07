@@ -302,7 +302,11 @@ img[alt*="vectorized"] {
 
   body {
     @apply font-sans antialiased bg-background text-foreground;
-    font-family: 'Inter', sans-serif;
+    /* NOTE: no custom font-family here on purpose. We never ship a webfont, so
+       naming one (e.g. 'Inter') makes browsers resolve it against fonts installed
+       on the CUSTOMER's machine — a corrupted local font with that name renders
+       the whole UI as dingbats (seen in production, Chrome + Firefox alike).
+       Tailwind's font-sans system stack above is safe on every OS. */
   }
   
   /* Ensure all major containers inherit dark theme */
