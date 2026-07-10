@@ -38,6 +38,23 @@ fallback reliably evades binary content scanners; the existing chunked path send
 binary chunks so it does NOT help. Real fix is a WAF allowlist on the CompleteTransfers
 domain — outside this codebase.
 
+## Triage: "basket emptied + order shows no artwork" (uploads OK, cart step failed)
+
+When a customer reports their **basket kept emptying** and an order shows **no artwork**,
+it is usually NOT lost upload data on our side. Check the prod `projects` table
+(database skill, `environment:"production"`) for that artwork name: if you find one or
+more rows in status `draft` each with `logo_count >= 1`, the upload REACHED us and the
+file is stored safely — the failure was later, at the add-to-cart / checkout / Odoo
+session step. Repeated draft rows for the same artwork (e.g. 07:06, 07:08, 14:01, 14:10)
+= the customer re-trying because the cart kept dropping. Cross-check `crash_logs`: if the
+worker was healthy (probes OK, no `suspected_crash`/`memory_critical`) and other customers'
+projects that same window have `logo_count 1`, the breakage is customer-session/network
+(their proxy/DLP dropping the Odoo session cookie → Odoo starts a fresh empty cart), not
+our code. **Recovery for support:** the artwork is retrievable from the stored draft
+project's logo — hand it back so the order can be rebuilt; the customer does NOT need to
+re-upload. Basket-emptying itself is Odoo/session-level and not fixable in our iframe
+unless it starts hitting MANY customers (then it is systemic, investigate cart/session).
+
 ## SHIPPED: the base64-JSON fallback is now live — durable lessons
 
 - **Re-entrancy:** the base64 fallback decodes JSON → writes temp files → does an internal
