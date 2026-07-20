@@ -20,3 +20,9 @@ The file genuinely IS a 200 DPI raster (a photo), so prod's raster + low-res war
 
 **Why:** the memory-skip gate was added to stop pdf2svg/GS from OOM-crashing prod on big files; it was never meant to change artwork *classification*, but it does as a side effect.
 **How to apply:** any fix must (1) make classification deterministic regardless of memory pressure (don't silently downgrade raster→vector under load), and (2) crop the raster-only extracted PNG to content bounds, not the full page — WITHOUT removing the OOM protection the skip gate provides. Treat "always-vector to suppress the warning" as a product decision, not an obvious fix: it would hide a legitimate low-res-for-print warning.
+
+## Resolution rules (now in code — don't regress)
+- The skip gate uses IS_PROD-aware thresholds like every other memory cap in the guard: prod values unchanged, dev values sized above the dev workspace's idle RSS. Any NEW memory threshold added to the guard must be IS_PROD-gated from day one, or dev silently diverges from prod again.
+- Raster-only PDFs get their canvas display size AND their persisted print-crop bounds from ONE GS-bbox measurement of the pristine original (same sanity gate as the generator's live-bbox crop: positive, fits page ±1pt, >5% page area). On gate failure both fall back to full-page MediaBox + no stored bounds. Never let display size and print crop come from different measurements.
+- GS bbox on raster-image PDFs reports the full image placement rect (not inked pixels), so the vector-path "white art returns a cropped strip" failure mode does NOT apply to the raster-only branch — no Inkscape cross-check needed there.
+- `preflightData.warnings` is NOT purely forensic: the order PDF's label strip prints "Preflight Warnings: N" from it. Informational/diagnostic notes stored there must start with "Content analysis skipped" (the label counter filters that prefix) or staff-facing order labels will flag clean orders.

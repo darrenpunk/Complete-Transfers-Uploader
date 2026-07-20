@@ -21,6 +21,15 @@ const CONTAINER_LIMIT_MB = IS_PROD ? 512 : 2048;
 const CONTAINER_REJECT_MB = IS_PROD ? 460 : 1800;
 const CONTAINER_WARN_MB = IS_PROD ? 400 : 1500;
 
+// shouldSkipNonEssential() gates the PDF content analysis (pdfimages/pdf2svg) that
+// classifies uploads as raster vs vector. It MUST follow the same IS_PROD pattern as
+// the caps above: the dev workspace idles at ~380-500MB (Vite + esbuild + tsx), so
+// hardcoded prod caps (350/300) made dev skip the analysis on EVERY upload — silently
+// classifying raster PDFs as vector and diverging from production behaviour.
+// Prod values are unchanged (byte-identical OOM protection).
+const SKIP_NONESSENTIAL_CONTAINER_MB = IS_PROD ? 350 : 1500;
+const SKIP_NONESSENTIAL_RSS_MB = IS_PROD ? 300 : 1000;
+
 interface QueueEntry {
   resolve: () => void;
   reject: (err: Error) => void;
@@ -272,7 +281,7 @@ export function isMemoryCritical(thresholdMB = 400): boolean {
 export function shouldSkipNonEssential(): boolean {
   const containerMB = getContainerMemoryMB();
   const rssMB = Math.round(process.memoryUsage().rss / 1024 / 1024);
-  const skip = containerMB > 350 || rssMB > 300;
+  const skip = containerMB > SKIP_NONESSENTIAL_CONTAINER_MB || rssMB > SKIP_NONESSENTIAL_RSS_MB;
   if (skip) {
     console.log(`[OP-GUARD] Skipping non-essential ops (RSS: ${rssMB}MB, Container: ${containerMB}MB)`);
   }

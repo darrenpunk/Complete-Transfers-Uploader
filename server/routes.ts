@@ -1379,10 +1379,17 @@ export async function registerRoutes(app: express.Application) {
           }
 
           // Warnings collected by preflight (low-res, missing fonts, oversize, etc.)
+          // Informational "Content analysis skipped" notes are DB forensics only —
+          // exclude them here or every large-format DTF order (which always skips
+          // analysis) would print "Preflight Warnings: 1" on its label strip.
           let warningCount = 0;
           for (const logo of logos as any[]) {
             const w = logo.preflightData?.warnings;
-            if (Array.isArray(w)) warningCount += w.length;
+            if (Array.isArray(w)) {
+              warningCount += w.filter(
+                (msg: any) => typeof msg !== 'string' || !msg.startsWith('Content analysis skipped')
+              ).length;
+            }
           }
 
           preflightLines.push(`Design Elements: ${totalLogos} logo${totalLogos !== 1 ? 's' : ''} uploaded`);
@@ -4496,7 +4503,14 @@ export async function registerRoutes(app: express.Application) {
               contentBounds: (file as any).originalPdfBounds || null,
               colorsDetected: [],
               requiresVectorization: false,
-              warnings: [] as string[],
+              // Not rendered client-side — stored in the logo row's preflightData for
+              // forensics so a "why was this PDF treated as vector?" question is
+              // answerable from the DB alone.
+              warnings: [
+                isLargeFormatDTF
+                  ? 'Content analysis skipped: large-format DTF'
+                  : 'Content analysis skipped: memory pressure — file defaulted to vector workflow',
+              ] as string[],
             }
           : await productionFlow.runPreflightCheck(filePath, file.mimetype);
         
@@ -5241,7 +5255,7 @@ export async function registerRoutes(app: express.Application) {
         // The PNG is rendered at 300 DPI, so using PNG pixel dimensions with 72 DPI conversion gives wrong results
         // Instead, read the PDF MediaBox directly which gives us the correct dimensions in pts (72 pts/inch)
         if ((file as any).isPdfWithRasterOnly && (file as any).originalPdfPath) {
-          console.log('📐 RASTER PDF: Using original PDF MediaBox dimensions (not PNG pixels)');
+          console.log('📐 RASTER PDF: Measuring artwork bounds (GS bbox, MediaBox fallback)');
           try {
             const { PDFDocument } = await import('pdf-lib');
             const originalPdfBytes = fs.readFileSync((file as any).originalPdfPath);
@@ -5251,10 +5265,55 @@ export async function registerRoutes(app: express.Application) {
             
             // Convert pts to mm: 1 pt = 1/72 inch = 25.4/72 mm
             const ptsToMm = 25.4 / 72;
+            // Default: full page (previous behaviour, kept as the safe fallback)
             displayWidth = mediaBox.width * ptsToMm;
             displayHeight = mediaBox.height * ptsToMm;
             
-            console.log(`✅ PDF MediaBox: ${mediaBox.width.toFixed(2)}×${mediaBox.height.toFixed(2)}pts = ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm`);
+            // Measure the ACTUAL artwork region with Ghostscript bbox. A raster-only PDF
+            // is typically a photo/logo placed on a larger page (e.g. A3 with margins) —
+            // the canvas element must size to the artwork, not the page. CRITICAL: the
+            // SAME measurement is stored as originalPdfBounds so PDF generation crops the
+            // pristine original PDF to exactly the region shown on the canvas (one
+            // measurement drives both display size and print crop — they can never
+            // disagree). If GS bbox fails the sanity gate we keep the full-page size and
+            // leave originalPdfBounds null, which is the pre-fix behaviour end-to-end.
+            try {
+              const gsRasterOut = (await execAsyncRaw(
+                `gs -dBATCH -dNOPAUSE -dQUIET -sDEVICE=bbox "${(file as any).originalPdfPath}" 2>&1`,
+                { encoding: 'utf8' as any, timeout: 30000 }
+              )).stdout.toString();
+              const hiRes = gsRasterOut.match(/%%HiResBoundingBox:\s*([\d.-]+)\s+([\d.-]+)\s+([\d.-]+)\s+([\d.-]+)/);
+              const intRes = gsRasterOut.match(/%%BoundingBox:\s*([\d.-]+)\s+([\d.-]+)\s+([\d.-]+)\s+([\d.-]+)/);
+              const m = hiRes || intRes;
+              if (m) {
+                const bx1 = parseFloat(m[1]);
+                const by1 = parseFloat(m[2]);
+                const bx2 = parseFloat(m[3]);
+                const by2 = parseFloat(m[4]);
+                const bw = bx2 - bx1;
+                const bh = by2 - by1;
+                // Same sanity gate as the generator's live-bbox crop (robust-pdf-generator):
+                // bounds must be positive, fit the page (±1pt), and cover >5% of the page
+                // area — anything else is almost certainly GS bbox failing on white or
+                // transparent content, so keep the full page (never risk clipping artwork).
+                const fitsPage = bx1 >= -1 && by1 >= -1 && bx2 <= mediaBox.width + 1 && by2 <= mediaBox.height + 1;
+                const areaRatio = (bw * bh) / (mediaBox.width * mediaBox.height);
+                if (bw > 1 && bh > 1 && fitsPage && areaRatio > 0.05) {
+                  displayWidth = bw * ptsToMm;
+                  displayHeight = bh * ptsToMm;
+                  originalPdfBounds = { xMin: bx1, yMin: by1, xMax: bx2, yMax: by2, width: bw, height: bh, units: 'pt' };
+                  console.log(`✅ RASTER PDF artwork bounds: (${bx1.toFixed(1)},${by1.toFixed(1)})→(${bx2.toFixed(1)},${by2.toFixed(1)}) = ${bw.toFixed(1)}×${bh.toFixed(1)}pts = ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm (${(areaRatio * 100).toFixed(0)}% of page)`);
+                } else {
+                  console.log(`⚠️ RASTER PDF: GS bbox unreasonable ((${bx1.toFixed(1)},${by1.toFixed(1)})→(${bx2.toFixed(1)},${by2.toFixed(1)}) on ${mediaBox.width.toFixed(1)}×${mediaBox.height.toFixed(1)}pt page, ${(areaRatio * 100).toFixed(1)}% area) — keeping full-page MediaBox size`);
+                }
+              } else {
+                console.log('⚠️ RASTER PDF: GS bbox returned no BoundingBox line — keeping full-page MediaBox size');
+              }
+            } catch (gsRasterErr) {
+              console.log('⚠️ RASTER PDF: GS bbox failed — keeping full-page MediaBox size:', gsRasterErr);
+            }
+            
+            console.log(`✅ PDF MediaBox: ${mediaBox.width.toFixed(2)}×${mediaBox.height.toFixed(2)}pts — display size ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm`);
           } catch (pdfError) {
             console.log('⚠️ Failed to read PDF MediaBox, falling back to PNG dimensions:', pdfError);
             // Fallback to PNG dimensions with correct 300 DPI conversion
