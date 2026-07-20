@@ -5299,10 +5299,65 @@ export async function registerRoutes(app: express.Application) {
                 const fitsPage = bx1 >= -1 && by1 >= -1 && bx2 <= mediaBox.width + 1 && by2 <= mediaBox.height + 1;
                 const areaRatio = (bw * bh) / (mediaBox.width * mediaBox.height);
                 if (bw > 1 && bh > 1 && fitsPage && areaRatio > 0.05) {
-                  displayWidth = bw * ptsToMm;
-                  displayHeight = bh * ptsToMm;
-                  originalPdfBounds = { xMin: bx1, yMin: by1, xMax: bx2, yMax: by2, width: bw, height: bh, units: 'pt' };
-                  console.log(`✅ RASTER PDF artwork bounds: (${bx1.toFixed(1)},${by1.toFixed(1)})→(${bx2.toFixed(1)},${by2.toFixed(1)}) = ${bw.toFixed(1)}×${bh.toFixed(1)}pts = ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm (${(areaRatio * 100).toFixed(0)}% of page)`);
+                  // The canvas PNG is a FULL-PAGE Ghostscript render, so if we shrink the
+                  // element to the artwork bounds without also cropping the PNG, the page
+                  // whitespace stays baked into the image and the artwork appears scaled
+                  // down inside the element. Crop the PNG to the SAME bbox region (PDF
+                  // y-up → PNG y-down flip; scale handles the MAX_SIDE_PX resize). Apply
+                  // the artwork bounds ONLY if the crop succeeds — element size, canvas
+                  // image, and print crop must always describe the same region. On any
+                  // failure keep full-page size + null bounds (pre-fix behaviour).
+                  let rasterPngCropOk = false;
+                  try {
+                    const rasterPngPath = (file as any).extractedRasterPath && fs.existsSync((file as any).extractedRasterPath)
+                      ? (file as any).extractedRasterPath
+                      : path.join(uploadDir, finalFilename);
+                    const pngDims = await getPNGDimensions(rasterPngPath);
+                    // Guard: the PNG must actually be a render of THIS page's MediaBox.
+                    // A /Rotate page (GS swaps render dims but pdf-lib MediaBox is
+                    // unrotated) or a multi-page PDF (GS renders the LAST page into the
+                    // single output while our regex takes the FIRST page's bbox) would
+                    // silently produce a wrong crop — bail to full-page on aspect mismatch.
+                    const pageAspect = mediaBox.width / mediaBox.height;
+                    const pngAspectOk = !!pngDims && pngDims.width > 0 && pngDims.height > 0 &&
+                      Math.abs((pngDims.width / pngDims.height) - pageAspect) / pageAspect < 0.03;
+                    if (pngDims && pngAspectOk) {
+                      const scaleX = pngDims.width / mediaBox.width;
+                      const scaleY = pngDims.height / mediaBox.height;
+                      const cropX = Math.max(0, Math.floor(bx1 * scaleX));
+                      const cropY = Math.max(0, Math.floor((mediaBox.height - by2) * scaleY));
+                      const cropW = Math.max(1, Math.min(pngDims.width - cropX, Math.ceil(bw * scaleX)));
+                      const cropH = Math.max(1, Math.min(pngDims.height - cropY, Math.ceil(bh * scaleY)));
+                      const croppedPngPath = rasterPngPath.replace(/\.png$/i, '') + '_artcrop.png';
+                      await execAsync(
+                        `convert "${rasterPngPath}" -crop ${cropW}x${cropH}+${cropX}+${cropY} +repage "${croppedPngPath}"`,
+                        { timeout: 20000 }
+                      );
+                      const croppedDims = fs.existsSync(croppedPngPath) ? await getPNGDimensions(croppedPngPath) : null;
+                      if (croppedDims && croppedDims.width > 0 && croppedDims.height > 0) {
+                        finalFilename = path.basename(croppedPngPath);
+                        finalUrl = `/uploads/${finalFilename}`;
+                        (file as any).extractedRasterPath = croppedPngPath;
+                        (file as any).extractedPngWidth = croppedDims.width;
+                        (file as any).extractedPngHeight = croppedDims.height;
+                        allFilesToBackup.add(finalFilename);
+                        rasterPngCropOk = true;
+                        console.log(`✂️ RASTER PDF canvas PNG cropped to artwork: ${cropW}×${cropH}+${cropX}+${cropY} (${croppedDims.width}×${croppedDims.height}px) → ${finalFilename}`);
+                      } else {
+                        console.log('⚠️ RASTER PDF: cropped PNG missing or unreadable — keeping full-page size');
+                      }
+                    } else {
+                      console.log(`⚠️ RASTER PDF: canvas PNG unreadable or aspect mismatch vs MediaBox (${pngDims ? (pngDims.width / pngDims.height).toFixed(3) : 'n/a'} vs ${pageAspect.toFixed(3)}, /Rotate or multi-page?) — keeping full-page size`);
+                    }
+                  } catch (pngCropErr) {
+                    console.log('⚠️ RASTER PDF: canvas PNG crop failed — keeping full-page size:', pngCropErr);
+                  }
+                  if (rasterPngCropOk) {
+                    displayWidth = bw * ptsToMm;
+                    displayHeight = bh * ptsToMm;
+                    originalPdfBounds = { xMin: bx1, yMin: by1, xMax: bx2, yMax: by2, width: bw, height: bh, units: 'pt' };
+                    console.log(`✅ RASTER PDF artwork bounds: (${bx1.toFixed(1)},${by1.toFixed(1)})→(${bx2.toFixed(1)},${by2.toFixed(1)}) = ${bw.toFixed(1)}×${bh.toFixed(1)}pts = ${displayWidth.toFixed(2)}×${displayHeight.toFixed(2)}mm (${(areaRatio * 100).toFixed(0)}% of page)`);
+                  }
                 } else {
                   console.log(`⚠️ RASTER PDF: GS bbox unreasonable ((${bx1.toFixed(1)},${by1.toFixed(1)})→(${bx2.toFixed(1)},${by2.toFixed(1)}) on ${mediaBox.width.toFixed(1)}×${mediaBox.height.toFixed(1)}pt page, ${(areaRatio * 100).toFixed(1)}% area) — keeping full-page MediaBox size`);
                 }
