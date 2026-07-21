@@ -70,6 +70,65 @@ function execAsync(command: string, options?: any): Promise<{ stdout: string; st
   return execAsyncRaw(command, opts);
 }
 
+// ---------------------------------------------------------------------------
+// Lightweight PDF page-box reader (pdfinfo -box → GS fallback → pdf-lib only
+// for small files). Reading MediaBox/ArtBox/TrimBox via pdf-lib requires
+// loading + parsing the ENTIRE file into the JS heap — a 75MB Illustrator PDF
+// with big embedded rasters costs ~150MB+ of RSS per load, enough to push
+// production over the 400MB memory-restart line mid-upload (customer 500,
+// 2026-07-21 Crokes A3). pdfinfo runs out-of-process and costs the node heap
+// nothing, so ALWAYS prefer it for box reads on the upload path.
+// ---------------------------------------------------------------------------
+type PdfPageBox = { x: number; y: number; width: number; height: number };
+async function getPdfBoxesLight(pdfPath: string): Promise<{ mediaBox: PdfPageBox; artBox: PdfPageBox | null; trimBox: PdfPageBox | null } | null> {
+  // Tier 1: poppler pdfinfo — reads the page dict only, no full-file parse.
+  try {
+    const { stdout: pdfinfoOut } = await execAsyncRaw(`pdfinfo -box "${pdfPath}"`, { encoding: 'utf8' as any, timeout: 20000 });
+    const stdout = pdfinfoOut.toString();
+    const parseBox = (name: string): PdfPageBox | null => {
+      const m = stdout.match(new RegExp(`^${name}:\\s+([\\d.eE+-]+)\\s+([\\d.eE+-]+)\\s+([\\d.eE+-]+)\\s+([\\d.eE+-]+)`, 'm'));
+      if (!m) return null;
+      const x1 = parseFloat(m[1]), y1 = parseFloat(m[2]), x2 = parseFloat(m[3]), y2 = parseFloat(m[4]);
+      const w = x2 - x1, h = y2 - y1;
+      if (!isFinite(w) || !isFinite(h) || w <= 0 || h <= 0) return null;
+      return { x: x1, y: y1, width: w, height: h };
+    };
+    const mediaBox = parseBox('MediaBox');
+    if (mediaBox) {
+      return { mediaBox, artBox: parseBox('ArtBox'), trimBox: parseBox('TrimBox') };
+    }
+  } catch {}
+  // Tier 2: Ghostscript MediaBox query (same trick as the DTF path fallback).
+  try {
+    const { stdout: gsOut } = await execAsyncRaw(
+      `gs -dNODISPLAY -dQUIET -dNOPAUSE -dBATCH -c "(${pdfPath}) (r) file runpdfbegin 1 pdfgetpage /MediaBox pdfgetpageattr == quit" 2>/dev/null`,
+      { encoding: 'utf8' as any, timeout: 15000 }
+    );
+    const m = gsOut.toString().match(/\[([0-9.-]+)\s+([0-9.-]+)\s+([0-9.-]+)\s+([0-9.-]+)\]/);
+    if (m) {
+      const x1 = parseFloat(m[1]), y1 = parseFloat(m[2]);
+      const w = parseFloat(m[3]) - x1, h = parseFloat(m[4]) - y1;
+      if (w > 0 && h > 0) return { mediaBox: { x: x1, y: y1, width: w, height: h }, artBox: null, trimBox: null };
+    }
+  } catch {}
+  // Tier 3: pdf-lib — ONLY for small files, since this loads the whole file
+  // into the heap. Never do this for large PDFs (memory-restart risk).
+  try {
+    if (fs.statSync(pdfPath).size < 30 * 1024 * 1024) {
+      const { PDFDocument } = await import('pdf-lib');
+      const doc = await PDFDocument.load(fs.readFileSync(pdfPath), { ignoreEncryption: true });
+      const page = doc.getPages()[0];
+      const mb = page.getMediaBox();
+      let ab: PdfPageBox | null = null;
+      let tb: PdfPageBox | null = null;
+      try { ab = page.getArtBox(); } catch {}
+      try { tb = page.getTrimBox(); } catch {}
+      return { mediaBox: mb, artBox: ab, trimBox: tb };
+    }
+  } catch {}
+  return null;
+}
+
 function buildPdfFilename(projectName: string, quantity: number, productCode?: string | null, suffix?: string): string {
   const name = (projectName || 'artwork').replace(/_/g, ' ');
   const suffixStr = suffix ? ` ${suffix}` : '';
@@ -5257,11 +5316,12 @@ export async function registerRoutes(app: express.Application) {
         if ((file as any).isPdfWithRasterOnly && (file as any).originalPdfPath) {
           console.log('📐 RASTER PDF: Measuring artwork bounds (GS bbox, MediaBox fallback)');
           try {
-            const { PDFDocument } = await import('pdf-lib');
-            const originalPdfBytes = fs.readFileSync((file as any).originalPdfPath);
-            const originalPdf = await PDFDocument.load(originalPdfBytes);
-            const firstPage = originalPdf.getPages()[0];
-            const mediaBox = firstPage.getMediaBox();
+            // Lightweight box read — NEVER pdf-lib here: raster-only PDFs are
+            // exactly the huge-embedded-raster files whose full-file parse
+            // spikes RSS past the production memory-restart line.
+            const pdfBoxes = await getPdfBoxesLight((file as any).originalPdfPath);
+            if (!pdfBoxes) throw new Error('Could not read PDF page boxes (pdfinfo/gs/pdf-lib all failed)');
+            const mediaBox = pdfBoxes.mediaBox;
             
             // Convert pts to mm: 1 pt = 1/72 inch = 25.4/72 mm
             const ptsToMm = 25.4 / 72;
@@ -5388,11 +5448,10 @@ export async function registerRoutes(app: express.Application) {
           if ((file as any).originalPdfPath) {
             // Use original PDF dimensions
             try {
-              const { PDFDocument } = await import('pdf-lib');
-              const originalPdfBytes = fs.readFileSync((file as any).originalPdfPath);
-              const originalPdf = await PDFDocument.load(originalPdfBytes);
-              const firstPage = originalPdf.getPages()[0];
-              const mediaBox = firstPage.getMediaBox();
+              // Lightweight box read (pdfinfo) — no full-file pdf-lib parse
+              const pdfBoxesLite = await getPdfBoxesLight((file as any).originalPdfPath);
+              if (!pdfBoxesLite) throw new Error('Could not read PDF page boxes');
+              const mediaBox = pdfBoxesLite.mediaBox;
               
               const ptsToMm = 25.4 / 72;
               displayWidth = mediaBox.width * ptsToMm;
@@ -5418,11 +5477,10 @@ export async function registerRoutes(app: express.Application) {
           // NOTE: isDirectRasterUpload already set correct displayWidth/displayHeight from embedded DPI — don't override
           if ((file as any).originalPdfPath) {
             try {
-              const { PDFDocument } = await import('pdf-lib');
-              const originalPdfBytes = fs.readFileSync((file as any).originalPdfPath);
-              const originalPdf = await PDFDocument.load(originalPdfBytes);
-              const firstPage = originalPdf.getPages()[0];
-              const mediaBox = firstPage.getMediaBox();
+              // Lightweight box read (pdfinfo) — no full-file pdf-lib parse
+              const pdfBoxesLite = await getPdfBoxesLight((file as any).originalPdfPath);
+              if (!pdfBoxesLite) throw new Error('Could not read PDF page boxes');
+              const mediaBox = pdfBoxesLite.mediaBox;
               
               const ptsToMm = 25.4 / 72;
               displayWidth = mediaBox.width * ptsToMm;
@@ -5477,13 +5535,13 @@ export async function registerRoutes(app: express.Application) {
                 // The MediaBox defines the intended artwork size - use it directly with NO scaling
                 console.log('📐 Extracting PDF PAGE DIMENSIONS (MediaBox) from original PDF - will use 1:1 with NO scaling');
                 
-                // Use pdf-lib to get exact MediaBox dimensions
+                // Lightweight box read (pdfinfo) — no full-file pdf-lib parse.
+                // A 75MB Illustrator PDF parsed by pdf-lib costs ~150MB+ RSS,
+                // which crossed the production memory-restart line mid-upload.
                 try {
-                  const { PDFDocument } = await import('pdf-lib');
-                  const originalPdfBytes = fs.readFileSync((file as any).originalPdfPath);
-                  const originalPdf = await PDFDocument.load(originalPdfBytes);
-                  const firstPage = originalPdf.getPages()[0];
-                  const mediaBox = firstPage.getMediaBox();
+                  const pdfBoxesLite = await getPdfBoxesLight((file as any).originalPdfPath);
+                  if (!pdfBoxesLite) throw new Error('Could not read PDF page boxes');
+                  const mediaBox = pdfBoxesLite.mediaBox;
                   
                   const pageWidth = mediaBox.width;
                   const pageHeight = mediaBox.height;
@@ -5494,8 +5552,8 @@ export async function registerRoutes(app: express.Application) {
                   // needs the content-fill gate below to avoid stretching a tiny logo to the whole template.
                   let artBoxPts: { x: number; y: number; width: number; height: number } | null = null;
                   let artBoxSource: 'artbox' | 'trimbox' | null = null;
-                  try {
-                    const artBox = firstPage.getArtBox();
+                  const artBox = pdfBoxesLite.artBox;
+                  if (artBox) {
                     // Only use ArtBox if it's meaningfully smaller than MediaBox (not just a fallback copy)
                     const wDiff = Math.abs(artBox.width - pageWidth);
                     const hDiff = Math.abs(artBox.height - pageHeight);
@@ -5505,9 +5563,9 @@ export async function registerRoutes(app: express.Application) {
                       const pxToMmArt = 1 / 2.834645669;
                       console.log(`🎨 ArtBox found: (${artBox.x.toFixed(1)}, ${artBox.y.toFixed(1)}) ${artBox.width.toFixed(1)}×${artBox.height.toFixed(1)}pts = ${(artBox.width * pxToMmArt).toFixed(1)}×${(artBox.height * pxToMmArt).toFixed(1)}mm`);
                     }
-                  } catch {}
-                  try {
-                    const trimBox = firstPage.getTrimBox();
+                  }
+                  const trimBox = pdfBoxesLite.trimBox;
+                  if (trimBox) {
                     const wDiff = Math.abs(trimBox.width - pageWidth);
                     const hDiff = Math.abs(trimBox.height - pageHeight);
                     if (!artBoxPts && trimBox.width > 10 && trimBox.height > 10 && (wDiff > 5 || hDiff > 5)) {
@@ -5516,7 +5574,7 @@ export async function registerRoutes(app: express.Application) {
                       const pxToMmTrim = 1 / 2.834645669;
                       console.log(`✂️ TrimBox found: (${trimBox.x.toFixed(1)}, ${trimBox.y.toFixed(1)}) ${trimBox.width.toFixed(1)}×${trimBox.height.toFixed(1)}pts = ${(trimBox.width * pxToMmTrim).toFixed(1)}×${(trimBox.height * pxToMmTrim).toFixed(1)}mm`);
                     }
-                  } catch {}
+                  }
 
                   // CRITICAL: Store PDF page dimensions for fallback use
                   const pxToMm = 1 / 2.834645669; // 72 DPI standard

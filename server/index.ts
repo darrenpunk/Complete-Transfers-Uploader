@@ -228,7 +228,24 @@ if (process.env.NODE_ENV === 'production') {
   const MEMORY_GC_INTERVAL = 120_000;
   const MEMORY_WARN_MB = 350;
   const MEMORY_RESTART_MB = 400;
+  // Max time the memory-critical exit may be deferred while a real customer
+  // operation (upload / pdf-gen) is in flight. Sized to cover the longest
+  // legitimate heavy op (OperationGuard op limit 180s) — a genuine runaway
+  // leak still restarts, but a customer's upload is no longer killed mid-
+  // request by its own transient memory spike (2026-07-21 Crokes A3 500).
+  const MEMORY_DEFER_MAX_MS = 180_000;
   let restartScheduled = false;
+  let memoryCriticalSince = 0;
+  // Timestamp of the most recent memory-critical trigger. Used to detect a
+  // STALE deferral clock: if RSS settles in the 350–400MB band after a
+  // deferred incident (never crossing the 350MB reset line), the old
+  // memoryCriticalSince would survive for hours and a fresh >400MB spike
+  // would compute a huge deferredForMs and exit immediately — even with a
+  // customer op in flight, recreating the original mid-upload kill. Criticals
+  // in a CONTINUOUS incident re-fire every MEMORY_CHECK_INTERVAL, so a gap
+  // much larger than that means the previous incident ended and the clock
+  // must be restarted.
+  let lastMemoryCriticalAt = 0;
 
   function cleanTempFiles() {
     try {
@@ -307,8 +324,24 @@ if (process.env.NODE_ENV === 'production') {
       console.warn(`[MEMORY WARNING] RSS: ${rssMB}MB → ${effectiveRssMB}MB after GC, Heap: ${heapMB}MB`);
       persistCrashLog('memory_warning', `RSS: ${rssMB}MB → ${effectiveRssMB}MB after GC, Heap: ${heapMB}MB`);
     }
+    if (effectiveRssMB < MEMORY_WARN_MB && !restartScheduled) {
+      // Fully recovered — reset the deferral clock so the next incident gets
+      // a fresh 180s window.
+      memoryCriticalSince = 0;
+    }
     if (effectiveRssMB > MEMORY_RESTART_MB && !restartScheduled) {
       restartScheduled = true;
+      const criticalNow = Date.now();
+      // Stale-clock guard: if the previous critical trigger is more than a few
+      // check intervals old, the earlier incident ended without a full reset
+      // (RSS parked in the 350–400 band) — treat this spike as a NEW incident
+      // so it gets its own full deferral window.
+      if (memoryCriticalSince !== 0 && criticalNow - lastMemoryCriticalAt > MEMORY_CHECK_INTERVAL * 3) {
+        console.warn(`[MEMORY CRITICAL] Deferral clock was stale (last trigger ${Math.round((criticalNow - lastMemoryCriticalAt) / 1000)}s ago) — starting a fresh deferral window`);
+        memoryCriticalSince = 0;
+      }
+      if (memoryCriticalSince === 0) memoryCriticalSince = criticalNow;
+      lastMemoryCriticalAt = criticalNow;
       console.error(`[MEMORY CRITICAL] RSS: ${effectiveRssMB}MB (post-GC) — graceful restart in 3s to avoid OOM kill`);
       // CRITICAL: await the forensic write before scheduling exit. Otherwise the
       // 3s timer can fire before Neon commits the row (especially when DB is
@@ -335,9 +368,26 @@ if (process.env.NODE_ENV === 'production') {
             console.warn(`[MEMORY CRITICAL] Aborted graceful restart — RSS recovered to ${finalRssMB}MB (< ${MEMORY_WARN_MB}MB warn line)`);
             persistCrashLog('memory_recovered', `RSS recovered to ${finalRssMB}MB during 3s exit window — restart cancelled`);
             restartScheduled = false;
+            memoryCriticalSince = 0;
             return;
           }
-          console.error(`[MEMORY CRITICAL] Exiting for graceful restart (final RSS: ${finalRssMB}MB)`);
+          // DEFER while a real customer op (upload / pdf-gen) is in flight.
+          // Killing the process mid-upload converts a transient memory spike
+          // into a customer-facing 500 (2026-07-21 13:46 Crokes A3: exit fired
+          // 3s into an active upload). The wedge watchdog already defers on
+          // in-flight work — mirror that here, bounded by MEMORY_DEFER_MAX_MS
+          // so a genuine leak still restarts (stale ops are also swept by
+          // OperationGuard every 30s, so this can't defer forever).
+          const opStats = getOperationStats();
+          const deferredForMs = Date.now() - memoryCriticalSince;
+          if (opStats.active > 0 && deferredForMs < MEMORY_DEFER_MAX_MS) {
+            const opsDesc = opStats.activeOps.map((o: any) => `${o.label}(${o.runningSeconds}s)`).join(', ');
+            console.warn(`[MEMORY CRITICAL] Deferring restart — ${opStats.active} customer op(s) in flight: ${opsDesc} (RSS ${finalRssMB}MB, deferred ${Math.round(deferredForMs / 1000)}s of max ${MEMORY_DEFER_MAX_MS / 1000}s)`);
+            persistCrashLog('memory_warning', `restart DEFERRED — RSS ${finalRssMB}MB but ops in flight: ${opsDesc} (deferred ${Math.round(deferredForMs / 1000)}s/${MEMORY_DEFER_MAX_MS / 1000}s)`);
+            restartScheduled = false;
+            return;
+          }
+          console.error(`[MEMORY CRITICAL] Exiting for graceful restart (final RSS: ${finalRssMB}MB${opStats.active > 0 ? `, defer window exhausted with ${opStats.active} op(s) still active` : ''})`);
           process.exit(1);
         }, remaining);
       });
