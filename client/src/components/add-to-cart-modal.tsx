@@ -101,26 +101,26 @@ export default function AddToCartModal({
             Next Step: Add to Cart
           </DialogTitle>
           <DialogDescription className="text-center text-base">
-            Name your project then add it to your cart.
+            Name your artwork then add it to your cart.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-2 pb-2">
           <Label htmlFor="project-name" className="text-sm font-medium flex items-center gap-1.5">
             <Pencil className="w-3.5 h-3.5" />
-            Project Name
+            Artwork Name
           </Label>
           <Input
             id="project-name"
             value={editableName}
             onChange={(e) => setEditableName(e.target.value)}
             onBlur={handleNameBlur}
-            placeholder="Enter a name for this project"
+            placeholder="Enter a name for this artwork"
             className={isUntitled ? "border-amber-500/50 focus:border-amber-500" : ""}
             data-testid="input-project-name"
           />
           {isUntitled && (
-            <p className="text-xs text-amber-400">Please give your project a descriptive name before ordering.</p>
+            <p className="text-xs text-amber-400">Please give your artwork a descriptive name before ordering.</p>
           )}
         </div>
 
@@ -162,7 +162,7 @@ export default function AddToCartModal({
               <div>
                 <h3 className="font-semibold text-lg mb-1">Add to Your Cart</h3>
                 <p className="text-sm text-muted-foreground">
-                  Choose your next action after adding this project to your Odoo shopping cart.
+                  Choose your next action after adding this artwork to your Odoo shopping cart.
                 </p>
               </div>
             </div>
