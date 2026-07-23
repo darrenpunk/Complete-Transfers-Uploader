@@ -678,7 +678,12 @@ export default function UploadTool() {
 
   // Add to Cart - Uses iframe postMessage (working approach) or API fallback
   const addToCartMutation = useMutation({
-    mutationFn: async (action?: 'new-project' | 'view-cart') => {
+    mutationFn: async (opts?: { action?: 'new-project' | 'view-cart'; quantity?: number }) => {
+      const action = opts?.action;
+      // Explicit quantity from the add-to-cart modal. Passed through the payload
+      // so the order carries the right qty even if the currentProject state in
+      // this closure is stale (the PATCH that saves it may still be settling).
+      const quantityOverride = opts?.quantity;
       if (!currentProject?.id) throw new Error("No project selected");
       
       // Use Replit backend proxy to avoid CORS issues
@@ -753,11 +758,19 @@ export default function UploadTool() {
         templateSize: currentProject.templateSize,
         garmentColor: currentProject.garmentColor,
         garmentColorName: currentProject.garmentColor ? getGarmentColorName(currentProject.garmentColor) : '',
-        garmentColors: currentProject.garmentColors || [],
+        garmentColors: (() => {
+          // Keep single-colour breakdown in sync with an explicit quantity override
+          // (currentProject in this closure may predate the quantity PATCH)
+          const colors = (currentProject.garmentColors as GarmentColorItem[] | null) || [];
+          if (quantityOverride && colors.length === 1) {
+            return [{ ...colors[0], quantity: quantityOverride }];
+          }
+          return colors;
+        })(),
         inkColor: currentProject.inkColor || '',
         inkColorName: currentProject.inkColor ? getInkColorName(currentProject.inkColor) : '',
-        quantity: currentProject.quantity,
-        totalQuantity: currentProject.quantity, // Use regular quantity as fallback
+        quantity: quantityOverride ?? currentProject.quantity,
+        totalQuantity: quantityOverride ?? currentProject.quantity, // Use regular quantity as fallback
         comments: currentProject.comments || '', // Send user comments from modal
         partnerEmail: partnerEmail || (() => { try { return localStorage.getItem('partner_email') || sessionStorage.getItem('partner_email') || undefined; } catch { return undefined; } })(), // Send partner email if available (for iframe session workaround)
         // Server's express.json limit is 200MB (server/index.ts). Stay safely under
@@ -1060,8 +1073,28 @@ export default function UploadTool() {
   };
 
   // Handle add to cart action from modal
-  const handleAddToCartAction = (action: 'new-project' | 'view-cart') => {
-    addToCartMutation.mutate(action);
+  const handleAddToCartAction = async (action: 'new-project' | 'view-cart', quantity?: number) => {
+    // Persist the modal's quantity to the project BEFORE adding to cart, so the
+    // server (which treats DB quantity as authoritative) names the PDF correctly.
+    if (quantity && currentProject && quantity !== currentProject.quantity) {
+      try {
+        const updates: Partial<Project> = { quantity };
+        const colors = (currentProject.garmentColors as GarmentColorItem[] | null) || [];
+        if (colors.length === 1) {
+          // Single-colour breakdown must stay in sync with the total
+          updates.garmentColors = [{ ...colors[0], quantity }];
+        }
+        await updateProjectMutation.mutateAsync(updates);
+      } catch {
+        toast({
+          title: "Couldn't save quantity",
+          description: "Please try again before adding to cart.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+    addToCartMutation.mutate({ action, quantity });
   };
 
   // Check if project needs naming before action
@@ -3344,6 +3377,18 @@ export default function UploadTool() {
         isGeneratingPDF={generatePDFMutation.isPending}
         onProjectNameChange={(name) => {
           updateProjectMutation.mutate({ name });
+        }}
+        quantity={currentProject?.quantity ?? 1}
+        minQuantity={currentProject?.templateSize?.toLowerCase().includes('dtf') ? 1 : 10}
+        quantityLocked={((currentProject?.garmentColors as GarmentColorItem[] | null) || []).length > 1}
+        onQuantityChange={(qty) => {
+          if (!currentProject) return;
+          const updates: Partial<Project> = { quantity: qty };
+          const colors = (currentProject.garmentColors as GarmentColorItem[] | null) || [];
+          if (colors.length === 1) {
+            updates.garmentColors = [{ ...colors[0], quantity: qty }];
+          }
+          updateProjectMutation.mutate(updates);
         }}
       />
 

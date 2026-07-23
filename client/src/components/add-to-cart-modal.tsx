@@ -18,11 +18,15 @@ interface AddToCartModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   projectName: string;
-  onAddToCart: (action: 'new-project' | 'view-cart') => void;
+  onAddToCart: (action: 'new-project' | 'view-cart', quantity?: number) => void;
   onDownloadPDF?: () => void;
   isAddingToCart?: boolean;
   isGeneratingPDF?: boolean;
   onProjectNameChange?: (name: string) => void;
+  quantity?: number;
+  minQuantity?: number;
+  quantityLocked?: boolean;
+  onQuantityChange?: (quantity: number) => void;
 }
 
 export default function AddToCartModal({
@@ -34,14 +38,25 @@ export default function AddToCartModal({
   isAddingToCart = false,
   isGeneratingPDF = false,
   onProjectNameChange,
+  quantity,
+  minQuantity = 1,
+  quantityLocked = false,
+  onQuantityChange,
 }: AddToCartModalProps) {
   const [editableName, setEditableName] = useState(projectName);
+  // Committed quantity (validated). Starts at the project's current quantity
+  // WITHOUT clamping — only user edits are clamped to [minQuantity, 10000],
+  // so an untouched field never silently changes the order quantity.
+  const [committedQty, setCommittedQty] = useState<number>(quantity ?? 1);
+  const [qtyInput, setQtyInput] = useState<string>(String(quantity ?? 1));
 
   useEffect(() => {
     if (open) {
       setEditableName(projectName);
+      setCommittedQty(quantity ?? 1);
+      setQtyInput(String(quantity ?? 1));
     }
-  }, [open, projectName]);
+  }, [open, projectName, quantity]);
 
   const handleNameBlur = () => {
     const trimmed = editableName.trim();
@@ -50,6 +65,30 @@ export default function AddToCartModal({
     }
   };
 
+  const handleQtyInputChange = (value: string) => {
+    setQtyInput(value);
+    const parsed = parseInt(value);
+    if (!isNaN(parsed) && parsed > 0) {
+      setCommittedQty(Math.max(minQuantity, Math.min(10000, parsed)));
+    }
+  };
+
+  const handleQtyBlur = () => {
+    setQtyInput(String(committedQty));
+    if (onQuantityChange && quantity !== undefined && committedQty !== quantity) {
+      onQuantityChange(committedQty);
+    }
+  };
+
+  const commitBeforeAction = () => {
+    const trimmed = editableName.trim();
+    if (trimmed && trimmed !== projectName && onProjectNameChange) {
+      onProjectNameChange(trimmed);
+    }
+    return committedQty;
+  };
+
+  const showQuantity = quantity !== undefined;
   const isUntitled = !editableName.trim() || editableName.trim() === 'Untitled Project';
 
   return (
@@ -84,6 +123,34 @@ export default function AddToCartModal({
             <p className="text-xs text-amber-400">Please give your project a descriptive name before ordering.</p>
           )}
         </div>
+
+        {showQuantity && (
+          <div className="space-y-2 pb-2">
+            <Label htmlFor="cart-quantity" className="text-sm font-medium flex items-center gap-1.5">
+              <ShoppingCart className="w-3.5 h-3.5" />
+              Quantity of Transfers Required
+            </Label>
+            <div className="flex items-center gap-3">
+              <Input
+                id="cart-quantity"
+                type="number"
+                min={minQuantity}
+                max={10000}
+                value={qtyInput}
+                onChange={(e) => handleQtyInputChange(e.target.value)}
+                onBlur={handleQtyBlur}
+                disabled={quantityLocked}
+                className="w-28 text-center"
+                data-testid="input-cart-quantity"
+              />
+              <p className="text-xs text-muted-foreground">
+                {quantityLocked
+                  ? 'Total from your per-colour quantities — go back to the editor to change them.'
+                  : `Min: ${minQuantity}. This quantity is used for your order and the artwork file name.`}
+              </p>
+            </div>
+          </div>
+        )}
         
         <div className="py-4 space-y-4">
           {/* Primary Action Section */}
@@ -103,11 +170,8 @@ export default function AddToCartModal({
             <div className="space-y-2">
               <Button
                 onClick={() => {
-                  const trimmed = editableName.trim();
-                  if (trimmed && trimmed !== projectName && onProjectNameChange) {
-                    onProjectNameChange(trimmed);
-                  }
-                  onAddToCart('view-cart');
+                  const finalQty = commitBeforeAction();
+                  onAddToCart('view-cart', showQuantity ? finalQty : undefined);
                 }}
                 disabled={isAddingToCart || isGeneratingPDF || isUntitled}
                 className="w-full bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all"
@@ -121,11 +185,8 @@ export default function AddToCartModal({
               
               <Button
                 onClick={() => {
-                  const trimmed = editableName.trim();
-                  if (trimmed && trimmed !== projectName && onProjectNameChange) {
-                    onProjectNameChange(trimmed);
-                  }
-                  onAddToCart('new-project');
+                  const finalQty = commitBeforeAction();
+                  onAddToCart('new-project', showQuantity ? finalQty : undefined);
                 }}
                 disabled={isAddingToCart || isGeneratingPDF || isUntitled}
                 variant="outline"
