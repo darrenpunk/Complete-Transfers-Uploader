@@ -24,8 +24,16 @@ the recovery republish.
 - **Why no self-heal fired:** the liveness/wedge watchdog counts success as status<500, and DB-backed endpoints return 200 in ~31.5s with FALLBACK data (template-sizes, customer-features, heartbeat) → looks healthy. Health-probe escalation (3 consecutive failures, 10–15min cadence) would need ~30–45min. Gap: no detector for "all real DB connects failing, fallbacks masking it".
 - Endpoints serving 200-with-fallback-after-31s is itself the signature: `200 in 315xxms` lines = 3×~10s connect timeouts then fallback.
 
-**How to apply:** if this recurs, confirm prod DB replica is healthy first, then
-republish immediately — don't wait for self-heal. If it recurs often, the fix
-direction discussed: a DB-connectivity escalation (N minutes of 100% pool
-connect failures + zero successes → requestGracefulRestart), reusing the
-existing deferral invariants in server/self-restart.ts.
+**Safeguard now built (2026-07-24, `server/db-watchdog.ts`):** production-only
+probe (`SELECT 1` every 30s, raced vs 15s) → `requestGracefulRestart`
+(`db_connectivity_restart`, forensic event type) only when ≥5 consecutive probe
+failures AND ≥3min with zero successes. Passive success = `pool.on('connect')`
+ONLY — deliberately NOT `'acquire'` (probe's own checkout would reset the timer
+before its query ran, blinding it to hung-client wedges). Cuts this outage
+class from ~12min to ~3-4min. Accepted tradeoff: a prolonged full Neon outage
+restart-loops every ~3-4min (intended).
+
+**How to apply:** if it recurs anyway, confirm prod DB replica is healthy
+first, then republish — don't wait. Expect a `db_connectivity_restart` row in
+crash_logs when the watchdog fires; investigate any firing that customers
+didn't notice (possible false positive).

@@ -23,6 +23,7 @@ const FORENSIC_EVENT_TYPES = new Set([
   // when the wedge watchdog / health-probe escalation pulled the trigger.
   'liveness_restart',
   'health_probe_restart',
+  'db_connectivity_restart',
 ]);
 
 const __filename = fileURLToPath(import.meta.url);
@@ -930,6 +931,22 @@ async function main() {
     startPdfHealthMonitor();
   } catch (e) {
     console.error('[SERVER] Failed to start PDF health monitor:', e);
+  }
+
+  // DB-connectivity watchdog — restarts the process if EVERY database connect
+  // fails for ~3 minutes straight (the 2026-07-24 wedge signature). Fallback
+  // 200s mask that state from the liveness watchdog, so it needs its own probe.
+  // Production-only, matching the memory/liveness watchdogs — in dev a DB blip
+  // should never kill the workflow.
+  if (process.env.NODE_ENV === 'production' || process.env.DB_WATCHDOG_ENABLED === '1') {
+    try {
+      const { startDbWatchdog } = await import('./db-watchdog');
+      startDbWatchdog();
+    } catch (e) {
+      console.error('[SERVER] Failed to start DB watchdog:', e);
+    }
+  } else {
+    console.log('[DB-WATCHDOG] disabled (NODE_ENV !== production and DB_WATCHDOG_ENABLED != 1)');
   }
 }
 
