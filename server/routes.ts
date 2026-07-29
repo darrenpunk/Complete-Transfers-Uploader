@@ -184,6 +184,18 @@ async function extractOriginalPNG(pdfPath: string, outputPrefix: string): Promis
       console.log(`📦 Medium file (${fileSizeMB.toFixed(1)}MB) - using ${renderDPI} DPI`);
     }
     
+    // Multi-page PDFs are pass-through documents. The canvas preview represents
+    // page 1, so explicitly render only that page rather than pairing a
+    // single output image with an ambiguous document-level render.
+    const pageArgs = (() => {
+      try {
+        const pages = execSync(`pdfinfo "${pdfPath}" 2>/dev/null | awk '/^Pages:/ {print $2}'`, { encoding: 'utf8', timeout: 10000 }).trim();
+        return Number(pages) > 1 ? ' -dFirstPage=1 -dLastPage=1' : '';
+      } catch {
+        return '';
+      }
+    })();
+
     // Method 1: Try direct PDF-to-PNG conversion using Ghostscript
     try {
       console.log(`🎯 DIRECT PDF RENDERING: Using Ghostscript at ${renderDPI} DPI`);
@@ -191,7 +203,7 @@ async function extractOriginalPNG(pdfPath: string, outputPrefix: string): Promis
       const timestamp = Date.now();
       const outputPath = path.join(path.dirname(pdfPath), `${path.basename(outputPrefix)}_direct_${timestamp}.png`);
       
-      const gsCommand = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r${renderDPI} -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -dMaxBitmap=80000000 -sOutputFile="${outputPath}" "${pdfPath}"`;
+      const gsCommand = `gs -dNOPAUSE -dBATCH${pageArgs} -sDEVICE=pngalpha -r${renderDPI} -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -dMaxBitmap=80000000 -sOutputFile="${outputPath}" "${pdfPath}"`;
       
       console.log('📋 Ghostscript direct rendering command:', gsCommand);
       await execAsync(gsCommand, { timeout: gsTimeout });
@@ -233,7 +245,7 @@ async function extractOriginalPNG(pdfPath: string, outputPrefix: string): Promis
           console.log('🔄 Retrying at 96 DPI as fallback...');
           const timestamp = Date.now();
           const fallbackPath = path.join(path.dirname(pdfPath), `${path.basename(outputPrefix)}_direct_${timestamp}.png`);
-          const fallbackCmd = `gs -dNOPAUSE -dBATCH -sDEVICE=pngalpha -r96 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -dMaxBitmap=80000000 -sOutputFile="${fallbackPath}" "${pdfPath}"`;
+          const fallbackCmd = `gs -dNOPAUSE -dBATCH${pageArgs} -sDEVICE=pngalpha -r96 -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -dMaxBitmap=80000000 -sOutputFile="${fallbackPath}" "${pdfPath}"`;
           await execAsync(fallbackCmd, { timeout: 60000 });
           if (fs.existsSync(fallbackPath)) {
             const stats = fs.statSync(fallbackPath);
@@ -5322,12 +5334,31 @@ export async function registerRoutes(app: express.Application) {
             const pdfBoxes = await getPdfBoxesLight((file as any).originalPdfPath);
             if (!pdfBoxes) throw new Error('Could not read PDF page boxes (pdfinfo/gs/pdf-lib all failed)');
             const mediaBox = pdfBoxes.mediaBox;
+            const isMultiPagePdf = Number((file as any).pageCount || 1) > 1;
             
             // Convert pts to mm: 1 pt = 1/72 inch = 25.4/72 mm
             const ptsToMm = 25.4 / 72;
             // Default: full page (previous behaviour, kept as the safe fallback)
             displayWidth = mediaBox.width * ptsToMm;
             displayHeight = mediaBox.height * ptsToMm;
+
+            // Multi-page PDFs are pass-through documents. Their first page
+            // can contain light/white artwork that GS bbox cannot see (this
+            // upload has a white vertical strip on the right), while the
+            // later pages can have a completely different composition.
+            // Applying one bbox to the first-page preview silently clips it.
+            // Keep the first-page preview and the pristine PDF in the same
+            // full-page coordinate space; the original PDF's later pages are
+            // still appended unchanged during pass-through generation.
+            if (isMultiPagePdf) {
+              originalPdfBounds = {
+                xMin: 0, yMin: 0,
+                xMax: mediaBox.width, yMax: mediaBox.height,
+                width: mediaBox.width, height: mediaBox.height,
+                units: 'pt'
+              };
+              console.log(`📄 RASTER MULTI-PAGE PDF (${(file as any).pageCount} pages): using full first-page MediaBox — skipping single-page GS bbox crop to prevent clipping`);
+            }
             
             // Measure the ACTUAL artwork region with Ghostscript bbox. A raster-only PDF
             // is typically a photo/logo placed on a larger page (e.g. A3 with margins) —
@@ -5338,6 +5369,11 @@ export async function registerRoutes(app: express.Application) {
             // disagree). If GS bbox fails the sanity gate we keep the full-page size and
             // leave originalPdfBounds null, which is the pre-fix behaviour end-to-end.
             try {
+              if (isMultiPagePdf) {
+                // See the guard above: a bbox from the whole document is not
+                // valid bounds for the first-page canvas preview.
+                throw new Error('multi-page pass-through PDF');
+              }
               const gsRasterOut = (await execAsyncRaw(
                 `gs -dBATCH -dNOPAUSE -dQUIET -sDEVICE=bbox "${(file as any).originalPdfPath}" 2>&1`,
                 { encoding: 'utf8' as any, timeout: 30000 }
