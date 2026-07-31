@@ -91,6 +91,9 @@ export default function UploadTool() {
   const [authStatus, setAuthStatus] = useState<'checking' | 'authenticated' | 'not-authenticated'>('checking');
   const [customerVectorOnly, setCustomerVectorOnly] = useState(false);
   const [customerFeaturesLoaded, setCustomerFeaturesLoaded] = useState(false);
+  const [templateFetchError, setTemplateFetchError] = useState<string | null>(null);
+  const [templateFetchAttempt, setTemplateFetchAttempt] = useState(0);
+  const [templateFetchAttempted, setTemplateFetchAttempted] = useState(false);
   const [showPassThroughModal, setShowPassThroughModal] = useState(false);
   const [pendingPassThroughLogo, setPendingPassThroughLogo] = useState<{ logoId: string; pageCount: number; fileName: string } | null>(null);
   const [detectedReorderColors, setDetectedReorderColors] = useState<Array<{color: string; colorName: string; quantity: number}>>([]);
@@ -331,7 +334,7 @@ export default function UploadTool() {
   // Fetch template sizes - with direct fetch fallback for production reliability
   // NOTE: cache key includes 'with-landscape' to avoid collisions with any other component
   // that might use ["/api/template-sizes"] (without landscape variants).
-  const { data: queryTemplateSizes } = useQuery<TemplateSize[]>({
+  const { data: queryTemplateSizes, isError: templateQueryError } = useQuery<TemplateSize[]>({
     queryKey: ["/api/template-sizes-with-landscape", partnerEmail],
     queryFn: async () => {
       const url = `/api/template-sizes?includeLandscape=true${partnerEmail ? `&customerCode=${encodeURIComponent(partnerEmail)}` : ''}`;
@@ -342,24 +345,44 @@ export default function UploadTool() {
   const [fallbackTemplateSizes, setFallbackTemplateSizes] = useState<TemplateSize[]>([]);
 
   useEffect(() => {
+    let active = true;
+    setTemplateFetchAttempted(false);
+    setTemplateFetchError(null);
+
     const doFetch = () => {
       console.log('⏰ Fetching template sizes directly...');
       fetch(`/api/template-sizes?includeLandscape=true${partnerEmail ? `&customerCode=${encodeURIComponent(partnerEmail)}` : ''}`)
-        .then(res => res.json())
+        .then(async res => {
+          if (!res.ok) {
+            throw new Error(`Template request failed (${res.status})`);
+          }
+          return await res.json();
+        })
         .then(data => {
           if (Array.isArray(data) && data.length > 0) {
             console.log('✅ Direct fetch got template sizes:', data.length);
-            setFallbackTemplateSizes(data);
+            if (active) setFallbackTemplateSizes(data);
+          } else {
+            throw new Error('Template response was empty');
           }
         })
-        .catch(err => console.error('❌ Direct fetch failed:', err));
+        .catch(err => {
+          console.error('❌ Direct fetch failed:', err);
+          if (active) {
+            setTemplateFetchError('We could not load the product list. Please check your connection and try again.');
+          }
+        })
+        .finally(() => {
+          if (active) setTemplateFetchAttempted(true);
+        });
     };
 
     // Always run the direct fetch on mount as a safety net — guarantees we have a list
     // that includes landscape variants even if the React Query cache somehow holds a stale
     // (filtered) response.
     doFetch();
-  }, [partnerEmail]);
+    return () => { active = false; };
+  }, [partnerEmail, templateFetchAttempt]);
 
   // Prefer whichever loaded first/has more entries; both fetch with includeLandscape=true
   // so they should agree, but if one is missing landscape variants we want the bigger one.
@@ -369,6 +392,15 @@ export default function UploadTool() {
     if (q && f) return q.length >= f.length ? q : f;
     return q || f || [];
   })();
+
+  const retryTemplateFetch = () => {
+    setTemplateFetchAttempted(false);
+    setTemplateFetchError(null);
+    queryClient.invalidateQueries({
+      queryKey: ["/api/template-sizes-with-landscape", partnerEmail],
+    });
+    setTemplateFetchAttempt(attempt => attempt + 1);
+  };
 
   // Fetch project if ID provided
   const { data: project, isError: projectLoadError, isFetched: projectFetched } = useQuery<Project>({
@@ -2481,12 +2513,12 @@ export default function UploadTool() {
           
           // Update logos cache directly
           queryClient.setQueryData(
-            ["/api/projects", currentProject.id, "logos"],
+            ["/api/projects", currentProject!.id, "logos"],
             (oldLogos: any[] = []) => [...oldLogos, ...newLogos]
           );
           
           // Invalidate canvas elements to fetch new ones
-          queryClient.invalidateQueries({ queryKey: ["/api/projects", currentProject.id, "canvas-elements"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/projects", currentProject!.id, "canvas-elements"] });
           
           // Auto-select newly uploaded logos once canvas elements load
           setPendingAutoSelectLogoIds(newLogos.map((l: any) => l.id));
@@ -2752,13 +2784,30 @@ export default function UploadTool() {
 
   if (!currentProject) {
     const anyModalOpen = showProductLauncher || showTemplateSelector || showAppliqueBadgesModal || showVectorizationForm || showDtfQuickUpload;
+    const templateLoadFailed = templateFetchAttempted && templateSizes.length === 0 &&
+      (templateQueryError || !!templateFetchError);
     return (
       <div className="min-h-screen bg-background">
-        {!anyModalOpen && (
+        {!anyModalOpen && !templateLoadFailed && (
           <div className="flex items-center justify-center min-h-screen">
             <div className="text-center">
               <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
               <p className="mt-4 text-muted-foreground">Setting up your workspace...</p>
+            </div>
+          </div>
+        )}
+        {!anyModalOpen && templateLoadFailed && (
+          <div className="flex items-center justify-center min-h-screen p-6">
+            <div className="w-full max-w-md rounded-xl border border-border bg-card p-8 text-center shadow-lg">
+              <AlertCircle className="mx-auto mb-4 h-10 w-10 text-destructive" />
+              <h1 className="text-xl font-semibold text-foreground">Unable to load the workspace</h1>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {templateFetchError || "The product list could not be loaded. Please try again."}
+              </p>
+              <Button onClick={retryTemplateFetch} className="mt-6 w-full">
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Try again
+              </Button>
             </div>
           </div>
         )}

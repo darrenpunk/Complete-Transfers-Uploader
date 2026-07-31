@@ -14,3 +14,4 @@
 - [Canvas fallback alpha-union crop + clip net](canvas-fallback-alpha-union-crop.md) — never crop the GS full-page fallback PNG tighter than its opaque-pixel bbox (white art is invisible to gs bbox); guarded by regression suite + `pdf-regression` validation + `clip_suspected` detector.
 - [Large-PDF upload OOM](large-pdf-upload-oom.md) — box reads on upload path must use getPdfBoxesLight (pdfinfo→GS→pdf-lib<30MB), never full pdf-lib load; memory watchdog defers exit while customer ops in flight (180s cap + stale-clock guard).
 - [Prod DB-connect wedge](prod-db-connect-wedge.md) — app up but ALL Neon connects time out (+neon ErrorEvent TypeError); fallback 200s mask it from liveness watchdog; verify replica healthy then republish, don't wait for self-heal.
+- [Template catalog loading](template-catalog-loading.md) — a failed product-list request can look like a customer-only blank page; always expose retry instead of an indefinite setup spinner.
