@@ -39,15 +39,38 @@ interface NavigationCall {
 // Re-implement the handler logic extracted from iframe_message_handler.js so we
 // can unit-test it without importing browser globals.
 function makeHandler(deps: {
-  fetchImpl: (url: string, opts: RequestInit) => Promise<{ json: () => Promise<unknown> }>;
+  fetchImpl: (url: string, opts: RequestInit) => Promise<{ status: number; json: () => Promise<unknown> }>;
   onNavigate: (href: string) => void;
   onPostMessage: (msg: CartClaimedMessage) => void;
   onBannerShown: (msg: string) => void;
+  /** Called when a 403 triggers the sign-in-and-retry flow. Receives the login URL. */
+  onSignInRedirect?: (loginUrl: string) => void;
+  /** Stub for sessionStorage.setItem — captures pending claim storage. */
+  onPendingClaimSaved?: (key: string, value: string) => void;
 }) {
-  const { fetchImpl, onNavigate, onPostMessage, onBannerShown } = deps;
+  const { fetchImpl, onNavigate, onPostMessage, onBannerShown, onSignInRedirect, onPendingClaimSaved } = deps;
+
+  const PENDING_CLAIM_KEY = 'artwork_pending_claim';
 
   function showClaimError(message: string) {
     onBannerShown(message);
+  }
+
+  function showSignInBanner(loginUrl: string) {
+    if (onSignInRedirect) onSignInRedirect(loginUrl);
+    // The banner itself is a DOM concern — we record the login URL for test assertions.
+  }
+
+  function handleAuthRequired(orderId: number | string, accessToken: string, cartUrl: string) {
+    // Persist pending claim (stub captured by test)
+    const payload = JSON.stringify({ orderId, accessToken, cartUrl });
+    if (onPendingClaimSaved) onPendingClaimSaved(PENDING_CLAIM_KEY, payload);
+
+    // Route through logout first so a wrong-account session is cleared before the login form
+    const returnUrl = 'https://example.com/product/1'; // stub for window.location.href
+    const loginUrl = '/web/login?redirect=' + encodeURIComponent(returnUrl);
+    const signInUrl = '/web/session/logout?redirect=' + encodeURIComponent(loginUrl);
+    showSignInBanner(signInUrl);
   }
 
   async function handleClaimCart(event: {
@@ -79,6 +102,20 @@ function makeHandler(deps: {
 
     try {
       const response = await fetchImpl(url, { method: 'GET', credentials: 'include' });
+
+      // 403 → session expired; prompt sign-in instead of a generic error banner
+      if (response.status === 403) {
+        if (!skipNavigation) {
+          handleAuthRequired(orderId, accessToken, cartUrl);
+        }
+        if (event.source) {
+          const msg: CartClaimedMessage = { type: 'cart-claimed', success: false, orderId, error: 'Session expired — please sign in' };
+          event.source.postMessage(msg, '*');
+          onPostMessage(msg);
+        }
+        return;
+      }
+
       const data = await response.json() as { success?: boolean; error?: string };
 
       if (data.success) {
@@ -113,7 +150,28 @@ function makeHandler(deps: {
     }
   }
 
-  return { handleClaimCart };
+  /** Simulates the page-load auto-retry that runs after returning from /web/login */
+  async function tryRetryPendingClaim(storedValue: string | null) {
+    if (!storedValue) return;
+    let pending: { orderId?: number | string; accessToken?: string; cartUrl?: string };
+    try {
+      pending = JSON.parse(storedValue);
+    } catch (e) {
+      return;
+    }
+    if (!pending.orderId) return;
+    await handleClaimCart({
+      data: {
+        orderId: pending.orderId,
+        accessToken: pending.accessToken || '',
+        cartUrl: pending.cartUrl || '/shop/cart',
+        skipNavigation: false,
+      },
+      source: null,
+    });
+  }
+
+  return { handleClaimCart, tryRetryPendingClaim };
 }
 
 // ---------------------------------------------------------------------------
@@ -151,7 +209,7 @@ test('single successful claim navigates to /shop/cart', async () => {
   const handler = makeHandler({
     fetchImpl: async (url, opts) => {
       fetchCalls.push({ url, method: opts.method as string, credentials: opts.credentials as string });
-      return { json: async () => ({ success: true, cart_quantity: 1 }) };
+      return { status: 200, json: async () => ({ success: true, cart_quantity: 1 }) };
     },
     onNavigate: (href) => navigations.push(href),
     onPostMessage: (msg) => postMessages.push(msg),
@@ -187,7 +245,7 @@ test('four sequential additions: each claims independently, final navigate goes 
   const handler = makeHandler({
     fetchImpl: async (url, opts) => {
       fetchCalls.push({ url, method: opts.method as string, credentials: opts.credentials as string });
-      return { json: async () => ({ success: true, cart_quantity: fetchCalls.length }) };
+      return { status: 200, json: async () => ({ success: true, cart_quantity: fetchCalls.length }) };
     },
     onNavigate: (href) => navigations.push(href),
     onPostMessage: (msg) => postMessages.push(msg),
@@ -245,6 +303,7 @@ test('failed claim shows banner and does not navigate', async () => {
 
   const handler = makeHandler({
     fetchImpl: async () => ({
+      status: 200,
       json: async () => ({ error: 'You are not authorized to claim this cart' }),
     }),
     onNavigate: (href) => navigations.push(href),
@@ -297,7 +356,7 @@ test('missing orderId sends error and does not fetch', async () => {
   const handler = makeHandler({
     fetchImpl: async (url, opts) => {
       fetchCalls.push({ url, method: opts.method as string, credentials: opts.credentials as string });
-      return { json: async () => ({}) };
+      return { status: 200, json: async () => ({}) };
     },
     onNavigate: (href) => navigations.push(href),
     onPostMessage: (msg) => postMessages.push(msg),
@@ -328,7 +387,7 @@ test('claim URL uses GET query-string params matching the Odoo http route', asyn
   const handler = makeHandler({
     fetchImpl: async (url, opts) => {
       fetchCalls.push({ url, method: opts.method as string, credentials: opts.credentials as string });
-      return { json: async () => ({ success: true }) };
+      return { status: 200, json: async () => ({ success: true }) };
     },
     onNavigate: () => {},
     onPostMessage: () => {},
@@ -349,6 +408,116 @@ test('claim URL uses GET query-string params matching the Odoo http route', asyn
   assert.ok(url.includes('access_token='), 'access_token in query string');
   assert.ok(!url.includes('tok/with+special=chars'), 'special chars are percent-encoded');
   assert.equal(fetchCalls[0].method, 'GET', 'must be GET, not POST');
+});
+
+// ---------------------------------------------------------------------------
+// Test 7: 403 response — shows sign-in banner, does NOT show generic error,
+//         stores pending claim in sessionStorage, does NOT navigate
+// ---------------------------------------------------------------------------
+test('403 response triggers sign-in-and-retry flow, not a generic error banner', async () => {
+  const navigations: string[] = [];
+  const banners: string[] = [];
+  const signInRedirects: string[] = [];
+  const savedClaims: Array<{ key: string; value: string }> = [];
+  const postMessages: CartClaimedMessage[] = [];
+
+  const handler = makeHandler({
+    fetchImpl: async () => ({ status: 403, json: async () => ({}) }),
+    onNavigate: (href) => navigations.push(href),
+    onPostMessage: (msg) => postMessages.push(msg),
+    onBannerShown: (msg) => banners.push(msg),
+    onSignInRedirect: (url) => signInRedirects.push(url),
+    onPendingClaimSaved: (key, value) => savedClaims.push({ key, value }),
+  });
+
+  const source = makeFakeSource();
+  await handler.handleClaimCart({
+    data: { orderId: 77, accessToken: 'expired_tok', cartUrl: '/shop/cart' },
+    source: { postMessage: (msg: unknown) => source.postMessage(msg as CartClaimedMessage) },
+  });
+
+  // Must NOT navigate to cart on 403
+  assert.equal(navigations.length, 0, 'must NOT navigate on 403');
+  // Generic error banner must NOT be shown — sign-in banner replaces it
+  assert.equal(banners.length, 0, 'generic error banner must not be shown on 403');
+  // Sign-in redirect must be triggered and route through logout first
+  assert.equal(signInRedirects.length, 1, 'sign-in redirect must be triggered');
+  assert.ok(signInRedirects[0].includes('/web/session/logout'), 'routes through logout to clear wrong-account sessions');
+  assert.ok(signInRedirects[0].includes('redirect='), 'logout URL carries a redirect param');
+  // The encoded redirect must contain /web/login so the user lands on the login form
+  assert.ok(signInRedirects[0].includes(encodeURIComponent('/web/login')), 'logout redirect points to /web/login');
+  // Pending claim must be saved to sessionStorage
+  assert.equal(savedClaims.length, 1, 'pending claim saved to storage');
+  const saved = JSON.parse(savedClaims[0].value);
+  assert.equal(saved.orderId, 77, 'saved orderId matches');
+  assert.equal(saved.accessToken, 'expired_tok', 'saved accessToken matches');
+  assert.equal(saved.cartUrl, '/shop/cart', 'saved cartUrl matches');
+  // iframe must still get a failure postMessage
+  assert.equal(postMessages.filter(m => !m.success).length, 1, 'iframe notified of failure');
+  assert.ok(postMessages[0].error?.toLowerCase().includes('sign in') ||
+            postMessages[0].error?.toLowerCase().includes('session') ||
+            postMessages[0].error?.toLowerCase().includes('expired'), 'error message describes auth failure');
+});
+
+// ---------------------------------------------------------------------------
+// Test 8: After sign-in redirect, tryRetryPendingClaim auto-retries and
+//         navigates to cart on success
+// ---------------------------------------------------------------------------
+test('pending claim is auto-retried after sign-in and navigates to cart on success', async () => {
+  const navigations: string[] = [];
+  const banners: string[] = [];
+  const signInRedirects: string[] = [];
+  const fetchCalls: MockFetchCall[] = [];
+
+  const handler = makeHandler({
+    fetchImpl: async (url, opts) => {
+      fetchCalls.push({ url, method: opts.method as string, credentials: opts.credentials as string });
+      return { status: 200, json: async () => ({ success: true }) };
+    },
+    onNavigate: (href) => navigations.push(href),
+    onPostMessage: () => {},
+    onBannerShown: (msg) => banners.push(msg),
+    onSignInRedirect: (url) => signInRedirects.push(url),
+  });
+
+  // Simulate what sessionStorage holds after the user saved a pending claim
+  const storedClaim = JSON.stringify({ orderId: 88, accessToken: 'fresh_tok', cartUrl: '/shop/cart' });
+  await handler.tryRetryPendingClaim(storedClaim);
+
+  // Must fetch the claim endpoint
+  assert.equal(fetchCalls.length, 1, 'one fetch call on retry');
+  assert.ok(fetchCalls[0].url.includes('order_id=88'), 'retried with correct orderId');
+  assert.ok(fetchCalls[0].url.includes('access_token='), 'retried with accessToken');
+  // Must navigate to cart after successful retry
+  assert.equal(navigations.length, 1, 'navigates after successful retry');
+  assert.equal(navigations[0], '/shop/cart', 'navigates to cart URL from pending claim');
+  // No error banner on success
+  assert.equal(banners.length, 0, 'no error banner when retry succeeds');
+  // No sign-in redirect on success
+  assert.equal(signInRedirects.length, 0, 'no sign-in redirect when retry succeeds');
+});
+
+// ---------------------------------------------------------------------------
+// Test 9: tryRetryPendingClaim with null/empty storage — does nothing
+// ---------------------------------------------------------------------------
+test('tryRetryPendingClaim with no stored claim is a no-op', async () => {
+  const navigations: string[] = [];
+  const fetchCalls: MockFetchCall[] = [];
+
+  const handler = makeHandler({
+    fetchImpl: async (url, opts) => {
+      fetchCalls.push({ url, method: opts.method as string, credentials: opts.credentials as string });
+      return { status: 200, json: async () => ({ success: true }) };
+    },
+    onNavigate: (href) => navigations.push(href),
+    onPostMessage: () => {},
+    onBannerShown: () => {},
+  });
+
+  await handler.tryRetryPendingClaim(null);
+
+  assert.equal(fetchCalls.length, 0, 'no fetch when storage is empty');
+  assert.equal(navigations.length, 0, 'no navigation when storage is empty');
 });
 
 // ---------------------------------------------------------------------------

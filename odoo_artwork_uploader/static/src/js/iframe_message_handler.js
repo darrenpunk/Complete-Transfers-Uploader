@@ -18,6 +18,9 @@
 
     function initMessageHandler() {
         console.log('📡 Initializing global artwork uploader iframe message handler');
+
+        // Auto-retry any claim that was interrupted by a login redirect
+        tryRetryPendingClaim();
         
         window.addEventListener('message', function(event) {
             // Only process our specific message types
@@ -164,6 +167,8 @@
         });
     }
     
+    var PENDING_CLAIM_KEY = 'artwork_pending_claim';
+
     function showClaimError(message) {
         // Inject a dismissable error banner into the page (recoverable — user can retry)
         var existing = document.getElementById('artwork-claim-error-banner');
@@ -189,6 +194,94 @@
         setTimeout(function() {
             if (banner.parentNode) banner.parentNode.removeChild(banner);
         }, 12000);
+    }
+
+    function showSignInBanner(signInUrl) {
+        // Show a persistent banner prompting the user to sign out and sign in again
+        var existing = document.getElementById('artwork-claim-error-banner');
+        if (existing) existing.parentNode.removeChild(existing);
+
+        var banner = document.createElement('div');
+        banner.id = 'artwork-claim-error-banner';
+        banner.style.cssText = [
+            'position:fixed', 'top:20px', 'left:50%', 'transform:translateX(-50%)',
+            'background:#b91c1c', 'color:#fff', 'padding:14px 20px',
+            'border-radius:8px', 'box-shadow:0 4px 12px rgba(0,0,0,.35)',
+            'z-index:999999', 'max-width:480px', 'text-align:center',
+            'font-family:sans-serif', 'font-size:14px', 'line-height:1.5'
+        ].join(';');
+
+        var closeBtn = document.createElement('span');
+        closeBtn.textContent = '✕';
+        closeBtn.style.cssText = 'position:absolute;top:8px;right:12px;cursor:pointer;font-size:16px;opacity:.8';
+        closeBtn.addEventListener('click', function() {
+            if (banner.parentNode) banner.parentNode.removeChild(banner);
+        });
+
+        var msgEl = document.createElement('span');
+        msgEl.innerHTML = '⚠️ &nbsp;You are not authorised to claim this cart. ' +
+            '<a href="' + signInUrl + '" style="color:#fff;font-weight:bold;text-decoration:underline">' +
+            'Sign out and sign in again</a>';
+
+        banner.appendChild(closeBtn);
+        banner.appendChild(msgEl);
+        document.body.appendChild(banner);
+    }
+
+    function handleAuthRequired(orderId, accessToken, cartUrl) {
+        // Persist the pending claim so it survives the login redirect
+        try {
+            sessionStorage.setItem(PENDING_CLAIM_KEY, JSON.stringify({
+                orderId: orderId,
+                accessToken: accessToken,
+                cartUrl: cartUrl
+            }));
+        } catch (e) {
+            // sessionStorage unavailable — banner still shown, retry won't be automatic
+        }
+
+        // Route through logout so that an already-authenticated wrong-account session
+        // is cleared before the login form is shown.  Odoo's /web/session/logout accepts
+        // a `redirect` GET param and works for both logged-out and logged-in users.
+        var returnUrl = window.location.href;
+        var loginUrl = '/web/login?redirect=' + encodeURIComponent(returnUrl);
+        var signInUrl = '/web/session/logout?redirect=' + encodeURIComponent(loginUrl);
+
+        console.log('🔐 Cart claim rejected (403). Storing pending claim and showing sign-out/sign-in prompt.');
+        showSignInBanner(signInUrl);
+    }
+
+    function tryRetryPendingClaim() {
+        var pendingJson;
+        try {
+            pendingJson = sessionStorage.getItem(PENDING_CLAIM_KEY);
+        } catch (e) { return; }
+
+        if (!pendingJson) return;
+
+        var pending;
+        try {
+            pending = JSON.parse(pendingJson);
+        } catch (e) {
+            try { sessionStorage.removeItem(PENDING_CLAIM_KEY); } catch (e2) {}
+            return;
+        }
+
+        // Clear immediately to prevent retry loops on repeated failures
+        try { sessionStorage.removeItem(PENDING_CLAIM_KEY); } catch (e) {}
+
+        if (!pending.orderId) return;
+
+        console.log('🔄 Retrying pending cart claim after sign-in:', pending.orderId);
+        handleClaimCart({
+            data: {
+                orderId: pending.orderId,
+                accessToken: pending.accessToken || '',
+                cartUrl: pending.cartUrl || '/shop/cart',
+                skipNavigation: false
+            },
+            source: null
+        });
     }
     
     function handleClaimCart(event) {
@@ -223,9 +316,28 @@
             credentials: 'include',
         })
         .then(function(response) {
+            // 403 means the session is not authorised — prompt sign-in instead of showing
+            // a generic error with no recovery path
+            if (response.status === 403) {
+                console.warn('⚠️ claim-cart returned 403 — session expired or not authorised');
+                if (!skipNavigation) {
+                    handleAuthRequired(orderId, accessToken, cartUrl);
+                }
+                if (event.source) {
+                    event.source.postMessage({
+                        type: 'cart-claimed',
+                        success: false,
+                        orderId: orderId,
+                        error: 'Session expired — please sign in'
+                    }, '*');
+                }
+                return null; // signal to the next .then() that we already handled this
+            }
             return response.json();
         })
         .then(function(data) {
+            if (data === null || data === undefined) return; // already handled (403 branch)
+
             if (data.success) {
                 console.log('✅ Cart claimed successfully:', data);
                 
