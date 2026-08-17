@@ -26,9 +26,6 @@ author = "agent"
 task = "workflow.run"
 args = "Start application"
 
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "pdf-regression"
 
 [[workflows.workflow]]
 name = "Start application"
