@@ -15,3 +15,4 @@
 - [Large-PDF upload OOM](large-pdf-upload-oom.md) — box reads on upload path must use getPdfBoxesLight (pdfinfo→GS→pdf-lib<30MB), never full pdf-lib load; memory watchdog defers exit while customer ops in flight (180s cap + stale-clock guard).
 - [Prod DB-connect wedge](prod-db-connect-wedge.md) — app up but ALL Neon connects time out (+neon ErrorEvent TypeError); fallback 200s mask it from liveness watchdog; verify replica healthy then republish, don't wait for self-heal.
 - [Template catalog loading](template-catalog-loading.md) — a failed product-list request can look like a customer-only blank page; always expose retry instead of an indefinite setup spinner.
+- [Development heap ceiling](development-heap-ceiling.md) — this PDF/Vite dev server needs more than the default 384MB Node heap even without regression tests.
