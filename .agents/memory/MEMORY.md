@@ -16,4 +16,5 @@
 - [Prod DB-connect wedge](prod-db-connect-wedge.md) — app up but ALL Neon connects time out (+neon ErrorEvent TypeError); fallback 200s mask it from liveness watchdog; verify replica healthy then republish, don't wait for self-heal.
 - [Template catalog loading](template-catalog-loading.md) — a failed product-list request can look like a customer-only blank page; always expose retry instead of an indefinite setup spinner.
 - [Development heap ceiling](development-heap-ceiling.md) — this PDF/Vite dev server needs more than the default 384MB Node heap even without regression tests.
+- [Cart round-trip e2e smoke](cart-e2e-smoke.md) — staging Odoo 404s on /artwork/*; e2e targets prod, empty access_token is legit for same-session carts.
 - [Cart claim handler duplication](duplicate-claim-cart-handlers.md) — iframe cart claims had two parent listeners; the legacy JSON POST could race the valid query-string redirect and show an empty cart.

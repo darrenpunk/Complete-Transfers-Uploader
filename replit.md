@@ -24,6 +24,8 @@ A full-stack web application for designing and generating production-ready vecto
 - `server/routes.ts`: API endpoint definitions.
 - `client/src/theme/`: Frontend theme configuration.
 - `tests/`: End-to-end and regression tests.
+  - `npm run test:e2e` (`tests/e2e-cart-roundtrip.ts`, also the `cart-e2e` workflow): live add-to-cart → claim-cart → /shop/cart smoke test. Add-to-cart goes through the deployed Replit app proxy (`E2E_APP_BASE_URL`, default the production `.replit.app` URL); session/claim/cart run against the deployed Odoo (`E2E_ODOO_BASE_URL`, default production). Optional portal login via `E2E_PORTAL_LOGIN`/`E2E_PORTAL_PASSWORD`; `E2E_DIRECT_ODOO=1` bypasses the app proxy. Creates one clearly-labelled draft cart order per run. Note: the staging Odoo (`VITE_ODOO_URL`) currently 404s on `/artwork/*`.
+  - `npx tsx tests/claim-cart.test.ts`: pure unit tests of the claim-cart handler logic (no network).
 - `server/health-monitor.ts`: PDF generation health probes.
 - `server/robust-pdf-generator.ts`: Core PDF generation logic.
 - `server/assets/`: Runtime-required assets (ICC profile `PSO_Coated_FOGRA51.icc`, fallback `Vector_Service.pdf`). Kept here (not `attached_assets/`) so the deployment image can safely exclude `attached_assets/`.
