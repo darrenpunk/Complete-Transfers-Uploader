@@ -164,6 +164,33 @@
         });
     }
     
+    function showClaimError(message) {
+        // Inject a dismissable error banner into the page (recoverable — user can retry)
+        var existing = document.getElementById('artwork-claim-error-banner');
+        if (existing) existing.parentNode.removeChild(existing);
+        
+        var banner = document.createElement('div');
+        banner.id = 'artwork-claim-error-banner';
+        banner.style.cssText = [
+            'position:fixed', 'top:20px', 'left:50%', 'transform:translateX(-50%)',
+            'background:#b91c1c', 'color:#fff', 'padding:14px 20px',
+            'border-radius:8px', 'box-shadow:0 4px 12px rgba(0,0,0,.35)',
+            'z-index:999999', 'max-width:480px', 'text-align:center',
+            'font-family:sans-serif', 'font-size:14px', 'line-height:1.5',
+            'cursor:pointer'
+        ].join(';');
+        banner.innerHTML = '⚠️ &nbsp;' + message +
+            '<br><small style="opacity:.8">Click to dismiss &nbsp;·&nbsp; Please refresh and try again</small>';
+        banner.addEventListener('click', function() {
+            banner.parentNode.removeChild(banner);
+        });
+        document.body.appendChild(banner);
+        // Auto-dismiss after 12 seconds so it doesn't block the page forever
+        setTimeout(function() {
+            if (banner.parentNode) banner.parentNode.removeChild(banner);
+        }, 12000);
+    }
+    
     function handleClaimCart(event) {
         var orderId = event.data.orderId;
         var accessToken = event.data.accessToken || '';
@@ -172,40 +199,25 @@
         
         if (!orderId) {
             console.error('❌ claim-cart message missing orderId');
+            if (event.source) {
+                event.source.postMessage({
+                    type: 'cart-claimed',
+                    success: false,
+                    error: 'Missing orderId'
+                }, '*');
+            }
             return;
         }
         
         console.log('🛒 Claiming cart:', orderId, 'token:', accessToken ? 'present' : 'none', 'skipNav:', skipNavigation);
         
-        // Build claim-cart URL with redirect parameter
-        // This ensures the session is set BEFORE the cart page loads (avoids race condition)
+        // Build claim-cart URL (GET with query params — matches type='http' route)
         var url = '/artwork/claim-cart?order_id=' + orderId;
         if (accessToken) {
             url += '&access_token=' + encodeURIComponent(accessToken);
         }
         
-        // If we need to navigate, use redirect mode to avoid race conditions
-        if (!skipNavigation) {
-            // Add redirect parameter - server will set session then redirect
-            url += '&redirect=' + encodeURIComponent(cartUrl);
-            console.log('🔄 Using server-side redirect to:', cartUrl);
-            
-            // Send confirmation back to iframe before navigating
-            if (event.source) {
-                event.source.postMessage({
-                    type: 'cart-claimed',
-                    success: true,
-                    orderId: orderId
-                }, '*');
-                console.log('📤 Sent cart-claimed confirmation to iframe');
-            }
-            
-            // Navigate via server redirect (session is set before page loads)
-            window.location.href = url;
-            return;
-        }
-        
-        // If skipNavigation, use fetch to set session without redirect
+        // Fetch to confirm the claim succeeded before doing anything
         fetch(url, {
             method: 'GET',
             credentials: 'include',
@@ -216,18 +228,40 @@
         .then(function(data) {
             if (data.success) {
                 console.log('✅ Cart claimed successfully:', data);
+                
+                // Send confirmation back to iframe
+                if (event.source) {
+                    event.source.postMessage({
+                        type: 'cart-claimed',
+                        success: true,
+                        orderId: orderId
+                    }, '*');
+                    console.log('📤 Sent cart-claimed confirmation to iframe');
+                }
+                
+                // Navigate only after confirmed claim
+                if (!skipNavigation) {
+                    console.log('🔄 Navigating to cart after confirmed claim:', cartUrl);
+                    window.location.href = cartUrl;
+                }
             } else {
-                console.error('❌ Failed to claim cart:', data.error);
-            }
-            
-            // Send confirmation back to iframe
-            if (event.source) {
-                event.source.postMessage({
-                    type: 'cart-claimed',
-                    success: data.success || false,
-                    orderId: orderId
-                }, '*');
-                console.log('📤 Sent cart-claimed confirmation to iframe');
+                var errorMsg = data.error || 'Failed to claim cart';
+                console.error('❌ Failed to claim cart:', errorMsg);
+                
+                // Send failure back to iframe
+                if (event.source) {
+                    event.source.postMessage({
+                        type: 'cart-claimed',
+                        success: false,
+                        orderId: orderId,
+                        error: errorMsg
+                    }, '*');
+                }
+                
+                // Show a visible, dismissable error banner (navigation does NOT happen)
+                if (!skipNavigation) {
+                    showClaimError('Your cart could not be linked to this session. ' + errorMsg);
+                }
             }
         })
         .catch(function(error) {
@@ -241,6 +275,11 @@
                     orderId: orderId,
                     error: error.message
                 }, '*');
+            }
+            
+            // Show recoverable error banner — no navigation
+            if (!skipNavigation) {
+                showClaimError('Network error while linking your cart. Please refresh and try again.');
             }
         });
     }

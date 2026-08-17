@@ -978,16 +978,16 @@ export default function UploadTool() {
             console.log('🔗 Claiming cart via Odoo endpoint:', { orderId, claimUrl });
             
             if (isInIframe) {
+              // Post to the single global handler (iframe_message_handler.js).
+              // That handler confirms the claim via GET before navigating, so
+              // we must NOT race it with a parallel window.parent.location.href.
               window.parent.postMessage({
                 type: 'claim-cart',
                 orderId: orderId,
                 accessToken: accessToken,
                 cartUrl: cartUrl
               }, '*');
-              setTimeout(() => {
-                console.log('🔗 Navigating parent to claim-cart URL:', claimUrl);
-                window.parent.location.href = claimUrl;
-              }, 1500);
+              console.log('🔗 Sent claim-cart to parent handler for order:', orderId);
             } else {
               window.location.href = claimUrl;
             }

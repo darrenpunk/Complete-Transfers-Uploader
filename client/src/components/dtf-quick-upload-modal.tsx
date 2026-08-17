@@ -98,21 +98,24 @@ export function DtfQuickUploadModal({
 
       setTimeout(() => {
         if (orderId && accessToken) {
-          const claimUrl = `${base}/artwork/claim-cart?order_id=${orderId}&access_token=${accessToken}&redirect=${encodeURIComponent(cartUrl)}`;
+          const claimUrl = `${base}/artwork/claim-cart?order_id=${orderId}&access_token=${accessToken}`;
           if (isInIframe) {
+            // Post to the single global handler (iframe_message_handler.js).
+            // That handler confirms the claim via GET before navigating, so
+            // we must NOT race it with a parallel window.parent.location.href.
             window.parent.postMessage({
               type: 'claim-cart',
               orderId,
               accessToken,
               cartUrl,
             }, '*');
-            setTimeout(() => { window.parent.location.href = claimUrl; }, 1500);
+            console.log('🔗 Sent claim-cart to parent handler for order:', orderId);
           } else {
-            window.location.href = claimUrl;
+            window.location.href = claimUrl + '&redirect=' + encodeURIComponent(cartUrl);
           }
         } else {
           if (isInIframe) {
-            window.parent.location.href = cartUrl;
+            window.parent.postMessage({ type: 'navigate-to-cart', url: cartUrl }, '*');
           } else {
             window.location.href = cartUrl;
           }

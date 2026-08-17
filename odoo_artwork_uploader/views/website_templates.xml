@@ -55,34 +55,9 @@
                                     }, '*');
                                 }
                                 
-                                // Handle claim-cart: sync the session cart with the order created via API
-                                if (event.data.type === 'claim-cart') {
-                                    var orderId = event.data.orderId;
-                                    var accessToken = event.data.accessToken;
-                                    var cartUrl = event.data.cartUrl || '/shop/cart';
-                                    console.log('🔗 Claiming cart in session:', { orderId: orderId, accessToken: accessToken });
-                                    
-                                    if (orderId) {
-                                        // Call Odoo endpoint to bind this sale order to the current session
-                                        fetch('/artwork/claim-cart', {
-                                            method: 'POST',
-                                            headers: { 'Content-Type': 'application/json' },
-                                            credentials: 'include',
-                                            body: JSON.stringify({ order_id: orderId, access_token: accessToken })
-                                        })
-                                        .then(function(response) { return response.json(); })
-                                        .then(function(data) {
-                                            console.log('✅ Cart claimed in session:', data);
-                                            window.location.href = cartUrl;
-                                        })
-                                        .catch(function(error) {
-                                            console.error('❌ Cart claim failed:', error);
-                                            window.location.href = cartUrl;
-                                        });
-                                    } else {
-                                        window.location.href = cartUrl;
-                                    }
-                                }
+                                // Note: claim-cart is handled exclusively by the global
+                                // iframe_message_handler.js (website.assets_frontend) to avoid
+                                // duplicate processing and racing navigations.
                                 
                                 // Handle add-to-cart requests from iframe
                                 if (event.data.type === 'add-to-cart') {
