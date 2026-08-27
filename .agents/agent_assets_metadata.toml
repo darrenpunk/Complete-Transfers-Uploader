@@ -114,3 +114,10 @@ id = "GPtsxDN-QN2t0gtwZXWNy"
 uri = "file://attached_assets/TIDE_cleaned_for_upload.pdf"
 type = "pdf"
 title = "TIDE — re-saved for upload (content identical)"
+
+[[outputs]]
+id = "7W1IDDtZC11y3EKoTzNjx"
+uri = "file://attached_assets/fixed_output/artwork_uploader_fixed.zip"
+type = "unspecified"
+title = "artwork_uploader (fixed)"
+description = "Your uploaded module with both claim-cart bugs corrected."
