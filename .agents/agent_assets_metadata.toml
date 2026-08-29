@@ -121,3 +121,10 @@ uri = "file://attached_assets/fixed_output/artwork_uploader_fixed.zip"
 type = "unspecified"
 title = "artwork_uploader (fixed)"
 description = "Your uploaded module with both claim-cart bugs corrected."
+
+[[outputs]]
+id = "h7eYZ-ZdcMigcpSxZoXz_"
+uri = "file://attached_assets/artwork-app-code-review.zip"
+type = "unspecified"
+title = "Artwork app code review package"
+description = "Sanitized 1.2 MB source package for importing into the other Replit Agent. Includes client, server, shared code, Odoo module, tests, schemas, and integration documentation; excludes secrets, customer uploads, logs, Git history, dependencies, generated output, and large PDF fixtures."
