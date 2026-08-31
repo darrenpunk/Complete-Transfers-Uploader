@@ -40,6 +40,19 @@ interface ProjectSummary {
 interface RecoveryResult {
   project: ProjectSummary;
   logos: LogoSummary[];
+  vectorization?: VectorizationSummary;
+}
+interface VectorizationSummary {
+  id: string;
+  originalName: string | null;
+  mimeType: string | null;
+  size: number | null;
+  createdAt: string | null;
+  status: string | null;
+  serviceType: string | null;
+  transferProduct: string | null;
+  quantity: number | null;
+  hasSource: boolean;
 }
 
 function LoginForm({ onLogin }: { onLogin: () => void }) {
@@ -187,7 +200,40 @@ export default function AdminRecovery() {
     setDownloadingId(null);
   };
 
-  const totalLogos = results.reduce((acc, r) => acc + r.logos.length, 0);
+  const downloadVectorizationSource = async (request: VectorizationSummary) => {
+    setDownloadingId(`vectorization-${request.id}`);
+    setError("");
+    try {
+      const res = await fetch(`/api/admin/recovery/vectorization/${request.id}`, {
+        headers: { Authorization: `Bearer ${getAdminToken()}` },
+      });
+      if (res.status === 401) {
+        clearAdminToken();
+        setAuthed(false);
+        return;
+      }
+      if (!res.ok) {
+        let msg = "Download failed";
+        try { msg = (await res.json()).error || msg; } catch {}
+        setError(msg);
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = request.originalName || `vectorization-${request.id}`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      setError("Download failed");
+    }
+    setDownloadingId(null);
+  };
+
+  const totalFiles = results.reduce((acc, r) => acc + r.logos.length + (r.vectorization ? 1 : 0), 0);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -213,7 +259,7 @@ export default function AdminRecovery() {
           <CardContent className="pt-6">
             <form onSubmit={runSearch} className="flex gap-2">
               <Input
-                placeholder="Customer email, project ID, or logo ID"
+                placeholder="Customer email, project/logo ID, or vectorization UUID"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 autoFocus
@@ -231,13 +277,13 @@ export default function AdminRecovery() {
           <div className="text-center text-muted-foreground py-12 flex flex-col items-center gap-2">
             <FileWarning className="h-8 w-8" />
             <p>No orders found for that search.</p>
-            <p className="text-xs">Try the exact customer email, or a project/logo ID.</p>
+            <p className="text-xs">Try the exact customer email, project/logo ID, or vector-transfer UUID.</p>
           </div>
         )}
 
         {results.length > 0 && (
           <p className="text-sm text-muted-foreground">
-            Found {results.length} order{results.length === 1 ? "" : "s"} · {totalLogos} artwork file{totalLogos === 1 ? "" : "s"}
+            Found {results.length} order{results.length === 1 ? "" : "s"} · {totalFiles} artwork file{totalFiles === 1 ? "" : "s"}
           </p>
         )}
 
@@ -257,7 +303,49 @@ export default function AdminRecovery() {
               </div>
             </CardHeader>
             <CardContent>
-              {r.logos.length === 0 ? (
+              {r.vectorization ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Original source file</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Size</TableHead>
+                      <TableHead className="text-right">Recover</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    <TableRow>
+                      <TableCell className="max-w-[280px] truncate" title={r.vectorization.originalName || r.vectorization.id}>
+                        {r.vectorization.originalName || <span className="text-muted-foreground">(unnamed)</span>}
+                      </TableCell>
+                      <TableCell className="uppercase text-xs">
+                        {(r.vectorization.mimeType || "").split("/").pop() || "—"}
+                      </TableCell>
+                      <TableCell>{formatBytes(r.vectorization.size)}</TableCell>
+                      <TableCell className="text-right">
+                        {r.vectorization.hasSource ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="gap-1"
+                            disabled={downloadingId === `vectorization-${r.vectorization.id}`}
+                            onClick={() => downloadVectorizationSource(r.vectorization!)}
+                          >
+                            {downloadingId === `vectorization-${r.vectorization.id}` ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Download className="h-4 w-4" />
+                            )}
+                            Original source
+                          </Button>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">no source</span>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              ) : r.logos.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No artwork files on this order.</p>
               ) : (
                 <Table>

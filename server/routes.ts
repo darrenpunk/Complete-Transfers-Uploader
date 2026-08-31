@@ -11225,6 +11225,10 @@ ${svgClose}`;
       });
 
       const vectorizationRequest = await storage.createVectorizationRequest(requestData);
+      // Vectorisation source files are not represented by a normal logo row, so
+      // mirror the upload immediately rather than relying on the background sweep.
+      // Artwork Recovery can then restore the source after a restart/redeploy.
+      await backupFilesNow([req.file.filename]);
 
       console.log('Vectorization request created:', {
         id: vectorizationRequest.id,

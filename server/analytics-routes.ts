@@ -100,6 +100,7 @@ export function registerAnalyticsRoutes(app: Express, storage: IStorage) {
   // restores them on a local miss (after a redeploy or disk prune).
   // ───────────────────────────────────────────────────────────────────────
   const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const VECTOR_TRANSFER_PREFIX = "vector-transfer-";
   const UPLOADS_DIR = path.resolve(process.cwd(), "uploads");
 
   // Contain a DB-sourced relative filename to the uploads/ directory. Returns the
@@ -146,10 +147,30 @@ export function registerAnalyticsRoutes(app: Express, storage: IStorage) {
     };
   };
 
+  const summarizeVectorization = (request: any) => ({
+    id: request.id,
+    originalName: request.originalName || null,
+    mimeType: request.mimeType || null,
+    size: request.size || null,
+    createdAt: request.createdAt || null,
+    status: request.status || null,
+    serviceType: request.serviceType || null,
+    transferProduct: request.transferProduct || null,
+    quantity: request.quantity ?? null,
+    hasSource: !!request.filename,
+  });
+
+  const vectorizationIdFromQuery = (q: string): string | null => {
+    const candidate = q.toLowerCase().startsWith(VECTOR_TRANSFER_PREFIX)
+      ? q.slice(VECTOR_TRANSFER_PREFIX.length)
+      : q;
+    return UUID_RE.test(candidate) ? candidate : null;
+  };
+
   app.get("/api/admin/recovery/search", adminAuth, async (req, res) => {
     try {
       const q = String(req.query.q || "").trim();
-      if (!q) return res.status(400).json({ error: "Provide a customer email, project ID, or logo ID" });
+      if (!q) return res.status(400).json({ error: "Provide a customer email, project ID, logo ID, or vectorization UUID" });
 
       const results: Array<{ project: any; logos: any[] }> = [];
 
@@ -159,13 +180,15 @@ export function registerAnalyticsRoutes(app: Express, storage: IStorage) {
           const logos = await storage.getLogosByProject(p.id);
           results.push({ project: summarizeProject(p), logos: logos.map(summarizeLogo) });
         }
-      } else if (UUID_RE.test(q)) {
-        const proj = await storage.getProject(q);
+      } else if (UUID_RE.test(q) || vectorizationIdFromQuery(q)) {
+        const vectorizationId = vectorizationIdFromQuery(q);
+        const projectId = UUID_RE.test(q) ? q : null;
+        const proj = projectId ? await storage.getProject(projectId) : undefined;
         if (proj) {
           const logos = await storage.getLogosByProject(proj.id);
           results.push({ project: summarizeProject(proj), logos: logos.map(summarizeLogo) });
         } else {
-          const logo = await storage.getLogo(q);
+          const logo = projectId ? await storage.getLogo(projectId) : undefined;
           if (logo) {
             const parent = await storage.getProject(logo.projectId);
             results.push({
@@ -174,16 +197,72 @@ export function registerAnalyticsRoutes(app: Express, storage: IStorage) {
                 : { id: logo.projectId, name: "(project not found)", uploaderEmail: null, createdAt: null, status: null },
               logos: [summarizeLogo(logo)],
             });
+          } else if (vectorizationId) {
+            const vectorization = await storage.getVectorizationRequest(vectorizationId);
+            if (vectorization) {
+              results.push({
+                project: summarizeProject({
+                  id: `${VECTOR_TRANSFER_PREFIX}${vectorization.id}`,
+                  name: `Vectorization - ${vectorization.originalName || vectorization.id}`,
+                  status: vectorization.status,
+                  createdAt: vectorization.createdAt,
+                  quantity: vectorization.quantity,
+                }),
+                logos: [],
+                vectorization: summarizeVectorization(vectorization),
+              } as any);
+            }
           }
         }
       } else {
-        return res.status(400).json({ error: "Search must be a customer email, a project ID, or a logo ID" });
+        return res.status(400).json({ error: "Search must be a customer email, project ID, logo ID, or vectorization UUID" });
       }
 
       res.json({ query: q, count: results.length, results });
     } catch (e: any) {
       console.error("Admin recovery search error:", e?.message || e);
       res.status(500).json({ error: "Search failed" });
+    }
+  });
+
+  app.get("/api/admin/recovery/vectorization/:id", adminAuth, async (req, res) => {
+    try {
+      const id = req.params.id;
+      if (!UUID_RE.test(id)) return res.status(400).json({ error: "Invalid vectorization ID" });
+
+      const vectorization = await storage.getVectorizationRequest(id);
+      if (!vectorization) return res.status(404).json({ error: "Vectorization request not found" });
+
+      const rel = vectorization.filename || null;
+      const abs = safeUploadsPath(rel);
+      if (!rel || !abs) return res.status(404).json({ error: "No source file is available for this vectorization request" });
+
+      const restored = await ensureLocal(rel);
+      if (!restored || !fs.existsSync(abs)) {
+        return res.status(404).json({ error: "Source file is not available locally or in cloud backup" });
+      }
+
+      const mime = vectorization.mimeType || "application/octet-stream";
+      const mimeExtension: Record<string, string> = {
+        "image/jpeg": ".jpg",
+        "image/jpg": ".jpg",
+        "image/png": ".png",
+        "image/svg+xml": ".svg",
+        "application/pdf": ".pdf",
+        "application/postscript": ".eps",
+      };
+      const rawName = path.basename(vectorization.originalName || `vectorization-${id}`);
+      const cleanedName = rawName.replace(/[^\w.\- ]+/g, "_").trim() || `vectorization-${id}`;
+      const downloadName = path.extname(cleanedName)
+        ? cleanedName
+        : `${cleanedName}${mimeExtension[mime] || ""}`;
+
+      res.setHeader("Content-Type", mime);
+      res.setHeader("Content-Disposition", `attachment; filename="${downloadName}"`);
+      res.sendFile(abs);
+    } catch (e: any) {
+      console.error("Admin vectorization recovery download error:", e?.message || e);
+      if (!res.headersSent) res.status(500).json({ error: "Download failed" });
     }
   });
 
