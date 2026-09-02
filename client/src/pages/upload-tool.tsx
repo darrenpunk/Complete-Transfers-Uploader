@@ -2445,7 +2445,8 @@ export default function UploadTool() {
     // sending) and switch to the base64-JSON fallback immediately instead of making the user
     // wait out the full timeout. `handled` guards every terminal path so we act exactly once.
     const STALL_MS = 30000; // no upload progress for this long while still sending ⇒ hung proxy
-    const POST_UPLOAD_STALL_MS = 45000; // bytes fully sent but NO server response this long ⇒ hung proxy (a normal /logos upload responds in ~3s). This is the LOGO upload path only, so a rare duplicate logo is an acceptable tradeoff; the user prefers silent recovery over a hard failure.
+    const POST_UPLOAD_STALL_MS = 45000; // Small uploads normally process quickly; keep fast WAF recovery for them.
+    const LARGE_PDF_PROCESSING_GRACE_MS = 120000; // Large/complex PDFs can legitimately spend ~45s+ in GS/pdf2svg after bytes reach 100%.
     const totalUploadBytes = files.reduce((sum, f) => sum + f.size, 0);
     const canFallback = !isFallback && totalUploadBytes <= SAFE_JSON_BYTES;
     let handled = false;
@@ -2481,7 +2482,9 @@ export default function UploadTool() {
           // Bytes are sent, but a hung proxy can still withhold the server response indefinitely
           // (small files reach 100% instantly, so the mid-send watchdog never caught it). Keep a
           // watchdog running so a post-send hang falls back instead of waiting out the 2-min timeout.
-          armStallTimer(POST_UPLOAD_STALL_MS);
+          armStallTimer(totalUploadBytes > 20 * 1024 * 1024
+            ? LARGE_PDF_PROCESSING_GRACE_MS
+            : POST_UPLOAD_STALL_MS);
         } else {
           armStallTimer(); // reset the stall watchdog on every chunk of real progress
         }
@@ -2774,7 +2777,7 @@ export default function UploadTool() {
     xhr.open('POST', uploadUrl);
     if (contentType) xhr.setRequestHeader('Content-Type', contentType);
     xhr.withCredentials = true;
-    xhr.timeout = 120000; // 2 minute timeout for large files
+    xhr.timeout = 180000; // Large PDFs can need two minutes of server-side analysis after upload completes.
     xhr.send(uploadBody);
     armStallTimer(); // start the stall watchdog in case the connection hangs before any progress
     }

@@ -12,7 +12,8 @@
 
 const SAFE_JSON_BYTES = 80 * 1024 * 1024; // base64 (~1.33x) stays under the server's 200MB JSON limit and avoids browser OOM
 const STALL_MS = 30000; // no upload progress for this long (while still sending) ⇒ treat as a hung proxy
-const POST_UPLOAD_STALL_MS = 45000; // bytes fully sent but NO server response this long ⇒ hung proxy (a normal /logos upload responds in ~3s); fall back rather than waiting out the 2-min timeout. Logo upload only, so a rare duplicate logo is an acceptable tradeoff vs a hard failure.
+const POST_UPLOAD_STALL_MS = 45000; // Small uploads normally process quickly; keep fast WAF recovery for them.
+const LARGE_PDF_PROCESSING_GRACE_MS = 120000; // Large/complex PDFs can legitimately spend ~45s+ in GS/pdf2svg after bytes reach 100%.
 
 export interface UploadWithFallbackOptions {
   projectId: string;
@@ -83,7 +84,9 @@ export function uploadLogosWithFallback(opts: UploadWithFallbackOptions): Promis
             // A hung proxy can withhold the server response even after all bytes are sent (small
             // files hit 100% instantly, so the mid-send watchdog never fires). Keep a watchdog
             // running so a post-send hang falls back instead of waiting out the 2-min timeout.
-            armStallTimer(POST_UPLOAD_STALL_MS);
+            armStallTimer(totalBytes > 20 * 1024 * 1024
+              ? LARGE_PDF_PROCESSING_GRACE_MS
+              : POST_UPLOAD_STALL_MS);
           } else {
             armStallTimer(); // reset the stall watchdog on every chunk of real progress
           }
@@ -139,7 +142,7 @@ export function uploadLogosWithFallback(opts: UploadWithFallbackOptions): Promis
       xhr.open('POST', url);
       if (contentType) xhr.setRequestHeader('Content-Type', contentType);
       xhr.withCredentials = true;
-      xhr.timeout = 120000; // 2 minutes
+      xhr.timeout = 180000; // Large PDFs can need two minutes of server-side analysis after upload completes.
       xhr.send(body);
       armStallTimer(); // start the stall watchdog in case the connection hangs before any progress
     };
