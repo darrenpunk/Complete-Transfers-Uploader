@@ -12,8 +12,8 @@
 
 const SAFE_JSON_BYTES = 80 * 1024 * 1024; // base64 (~1.33x) stays under the server's 200MB JSON limit and avoids browser OOM
 const STALL_MS = 30000; // no upload progress for this long (while still sending) ⇒ treat as a hung proxy
-const POST_UPLOAD_STALL_MS = 45000; // Small uploads normally process quickly; keep fast WAF recovery for them.
-const LARGE_PDF_PROCESSING_GRACE_MS = 120000; // Large/complex PDFs can legitimately spend ~45s+ in GS/pdf2svg after bytes reach 100%.
+const POST_UPLOAD_STALL_MS = 45000; // Raster uploads normally process quickly; keep fast WAF recovery for them.
+const VECTOR_PROCESSING_GRACE_MS = 120000; // Even small PDFs can be complex enough to spend 60s+ in GS/pdf2svg.
 
 export interface UploadWithFallbackOptions {
   projectId: string;
@@ -41,6 +41,14 @@ async function buildBase64Body(files: File[], canvasIndex?: number): Promise<str
 export function uploadLogosWithFallback(opts: UploadWithFallbackOptions): Promise<any[]> {
   const { projectId, files, canvasIndex, onProgress, onProcessing } = opts;
   const totalBytes = files.reduce((sum, f) => sum + f.size, 0);
+  const needsVectorProcessingGrace = files.some((file) => {
+    const name = file.name.toLowerCase();
+    return file.type === 'application/pdf'
+      || file.type === 'application/postscript'
+      || name.endsWith('.pdf')
+      || name.endsWith('.ai')
+      || name.endsWith('.eps');
+  });
 
   return new Promise<any[]>((resolve, reject) => {
     const send = (url: string, body: XMLHttpRequestBodyInit, contentType: string | null, isFallback: boolean) => {
@@ -84,8 +92,8 @@ export function uploadLogosWithFallback(opts: UploadWithFallbackOptions): Promis
             // A hung proxy can withhold the server response even after all bytes are sent (small
             // files hit 100% instantly, so the mid-send watchdog never fires). Keep a watchdog
             // running so a post-send hang falls back instead of waiting out the 2-min timeout.
-            armStallTimer(totalBytes > 20 * 1024 * 1024
-              ? LARGE_PDF_PROCESSING_GRACE_MS
+            armStallTimer(needsVectorProcessingGrace || totalBytes > 20 * 1024 * 1024
+              ? VECTOR_PROCESSING_GRACE_MS
               : POST_UPLOAD_STALL_MS);
           } else {
             armStallTimer(); // reset the stall watchdog on every chunk of real progress

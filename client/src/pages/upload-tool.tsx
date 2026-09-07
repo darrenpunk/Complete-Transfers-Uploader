@@ -2445,9 +2445,17 @@ export default function UploadTool() {
     // sending) and switch to the base64-JSON fallback immediately instead of making the user
     // wait out the full timeout. `handled` guards every terminal path so we act exactly once.
     const STALL_MS = 30000; // no upload progress for this long while still sending ⇒ hung proxy
-    const POST_UPLOAD_STALL_MS = 45000; // Small uploads normally process quickly; keep fast WAF recovery for them.
-    const LARGE_PDF_PROCESSING_GRACE_MS = 120000; // Large/complex PDFs can legitimately spend ~45s+ in GS/pdf2svg after bytes reach 100%.
+    const POST_UPLOAD_STALL_MS = 45000; // Raster uploads normally process quickly; keep fast WAF recovery for them.
+    const VECTOR_PROCESSING_GRACE_MS = 120000; // Even small PDFs can be complex enough to spend 60s+ in GS/pdf2svg.
     const totalUploadBytes = files.reduce((sum, f) => sum + f.size, 0);
+    const needsVectorProcessingGrace = files.some((file) => {
+      const name = file.name.toLowerCase();
+      return file.type === 'application/pdf'
+        || file.type === 'application/postscript'
+        || name.endsWith('.pdf')
+        || name.endsWith('.ai')
+        || name.endsWith('.eps');
+    });
     const canFallback = !isFallback && totalUploadBytes <= SAFE_JSON_BYTES;
     let handled = false;
     let stallTimer: ReturnType<typeof setTimeout> | null = null;
@@ -2482,8 +2490,8 @@ export default function UploadTool() {
           // Bytes are sent, but a hung proxy can still withhold the server response indefinitely
           // (small files reach 100% instantly, so the mid-send watchdog never caught it). Keep a
           // watchdog running so a post-send hang falls back instead of waiting out the 2-min timeout.
-          armStallTimer(totalUploadBytes > 20 * 1024 * 1024
-            ? LARGE_PDF_PROCESSING_GRACE_MS
+          armStallTimer(needsVectorProcessingGrace || totalUploadBytes > 20 * 1024 * 1024
+            ? VECTOR_PROCESSING_GRACE_MS
             : POST_UPLOAD_STALL_MS);
         } else {
           armStallTimer(); // reset the stall watchdog on every chunk of real progress
