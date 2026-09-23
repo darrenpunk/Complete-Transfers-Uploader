@@ -10,6 +10,15 @@ export function normalizeRotation(rotation: number | null | undefined): number {
 }
 
 /**
+ * CSS transforms rotate clockwise for positive angles because screen Y grows
+ * downward. PDF coordinates grow upward, so pdf-lib needs the opposite sign
+ * to produce the same visual rotation.
+ */
+export function canvasRotationToPdfRotation(rotation: number | null | undefined): number {
+  return normalizeRotation(-normalizeRotation(rotation));
+}
+
+/**
  * pdf-lib rotates images/pages around the supplied bottom-left draw origin.
  * Return the origin that keeps the visual centre fixed at targetCenterX/Y for
  * any rotation angle.

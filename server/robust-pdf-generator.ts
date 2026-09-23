@@ -16,7 +16,7 @@ import { exec, execSync } from 'child_process';
 import { manufacturerColors } from '@shared/garment-colors';
 import { analyzeFullPageMatch } from './full-page-match';
 import { ensureLocal, pin, unpin } from './object-storage';
-import { getCenteredDrawPosition, normalizeRotation } from './pdf-placement';
+import { canvasRotationToPdfRotation, getCenteredDrawPosition } from './pdf-placement';
 
 const execAsyncRaw = promisify(exec);
 const INKSCAPE_TIMEOUT = 30000;
@@ -1971,7 +1971,7 @@ grestore`;
       
       console.log(`🔧 ViewBox offset compensation: X=${viewBoxOffsetX.toFixed(1)}pt, Y=${viewBoxOffsetY.toFixed(1)}pt`);
       
-      const normalizedRotation = normalizeRotation(element.rotation);
+      const normalizedRotation = canvasRotationToPdfRotation(element.rotation);
       let drawX: number;
       let drawY: number;
 
@@ -1991,7 +1991,7 @@ grestore`;
         drawY = placement.y;
       }
       
-      console.log(`🎯 ROTATION CENTERING: target center=(${targetCenterX.toFixed(1)}, ${targetCenterY.toFixed(1)}), rotation=${element.rotation || 0}°`);
+      console.log(`🎯 ROTATION CENTERING: target center=(${targetCenterX.toFixed(1)}, ${targetCenterY.toFixed(1)}), canvas rotation=${element.rotation || 0}°, PDF rotation=${normalizedRotation}°`);
       console.log(`📍 DRAW POSITION: (${drawX.toFixed(1)}, ${drawY.toFixed(1)}) with size ${contentWidthPts.toFixed(1)}×${contentHeightPts.toFixed(1)}pts`);
       
       const drawOptions = {
@@ -2407,7 +2407,7 @@ grestore`;
       targetCenterY,
       contentWidthPts,
       contentHeightPts,
-      element.rotation,
+      canvasRotationToPdfRotation(element.rotation),
     );
     const drawX = placement.x;
     const drawY = placement.y;

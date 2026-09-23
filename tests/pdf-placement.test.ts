@@ -1,5 +1,9 @@
 import assert from "node:assert/strict";
-import { getCenteredDrawPosition, normalizeRotation } from "../server/pdf-placement";
+import {
+  canvasRotationToPdfRotation,
+  getCenteredDrawPosition,
+  normalizeRotation,
+} from "../server/pdf-placement";
 
 function transformedCenter(
   x: number,
@@ -32,5 +36,18 @@ for (const rotation of [0, 37, 90, 180, 270, 359, -90, 450]) {
 assert.equal(normalizeRotation(-90), 270);
 assert.equal(normalizeRotation(450), 90);
 assert.equal(normalizeRotation(undefined), 0);
+assert.equal(canvasRotationToPdfRotation(0), 0);
+assert.equal(canvasRotationToPdfRotation(90), 270);
+assert.equal(canvasRotationToPdfRotation(180), 180);
+assert.equal(canvasRotationToPdfRotation(270), 90);
+assert.equal(canvasRotationToPdfRotation(-90), 90);
+
+// A point to the right of an element's centre must move visually downward
+// under CSS rotate(+90deg). PDF +270deg moves that point toward negative PDF Y,
+// which is downward after rendering into screen coordinates.
+const pdfQuarterTurn = canvasRotationToPdfRotation(90);
+const quarterTurnRadians = pdfQuarterTurn * Math.PI / 180;
+const rotatedRightPointPdfY = Math.sin(quarterTurnRadians) * 10;
+assert.ok(rotatedRightPointPdfY < 0, "canvas +90° must remain visually clockwise in PDF output");
 
 console.log("pdf placement tests passed");
