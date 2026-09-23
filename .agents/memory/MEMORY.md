@@ -20,3 +20,4 @@
 - [Cart claim handler duplication](duplicate-claim-cart-handlers.md) — iframe cart claims had two parent listeners; the legacy JSON POST could race the valid query-string redirect and show an empty cart.
 - [Odoo cart assets deploy separately](odoo-cart-assets-deploy-separately.md) — Replit publishes do not update Odoo browser assets; verify claim-cart fixes in the live Odoo bundle before calling them live.
 - [Large-PDF processing grace](large-pdf-processing-grace.md) — never treat 45s after upload reaches 100% as a network stall; complex PDFs can still be processing successfully.
+- [Customer-template identity matching](customer-template-identity-matching.md) — exclusive templates match the exact email Odoo reports for the live session, which may differ from the named contact.
