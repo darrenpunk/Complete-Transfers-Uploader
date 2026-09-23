@@ -635,6 +635,7 @@ export default function UploadTool() {
 
   const uploadCanvasScreenshot = async (projectId: string): Promise<boolean> => {
     try {
+      await canvasWorkspaceRef.current?.flushPendingUpdates();
       const dataUrl = await canvasWorkspaceRef.current?.captureCanvasAsImage();
       if (!dataUrl) {
         console.warn('⚠️ Canvas screenshot capture returned null');

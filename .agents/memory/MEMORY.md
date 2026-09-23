@@ -21,3 +21,4 @@
 - [Odoo cart assets deploy separately](odoo-cart-assets-deploy-separately.md) — Replit publishes do not update Odoo browser assets; verify claim-cart fixes in the live Odoo bundle before calling them live.
 - [Large-PDF processing grace](large-pdf-processing-grace.md) — never treat 45s after upload reaches 100% as a network stall; complex PDFs can still be processing successfully.
 - [Customer-template identity matching](customer-template-identity-matching.md) — exclusive templates match the exact email Odoo reports for the live session, which may differ from the named contact.
+- [Canvas saves must be ordered](canvas-save-ordering.md) — coalesce rapid element updates per ID and drain them before screenshot/PDF generation, or stale PATCHes can jumble output.

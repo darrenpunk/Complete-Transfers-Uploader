@@ -16,6 +16,7 @@ import { exec, execSync } from 'child_process';
 import { manufacturerColors } from '@shared/garment-colors';
 import { analyzeFullPageMatch } from './full-page-match';
 import { ensureLocal, pin, unpin } from './object-storage';
+import { getCenteredDrawPosition, normalizeRotation } from './pdf-placement';
 
 const execAsyncRaw = promisify(exec);
 const INKSCAPE_TIMEOUT = 30000;
@@ -1970,44 +1971,38 @@ grestore`;
       
       console.log(`🔧 ViewBox offset compensation: X=${viewBoxOffsetX.toFixed(1)}pt, Y=${viewBoxOffsetY.toFixed(1)}pt`);
       
+      const normalizedRotation = normalizeRotation(element.rotation);
       let drawX: number;
       let drawY: number;
-      
-      if (isFullPagePdf) {
+
+      if (isFullPagePdf && normalizedRotation === 0) {
         drawX = 0;
         drawY = 0;
         console.log(`📄 Full-page PDF: Placing at origin (0, 0) to cover full page${isLandscapePdf ? ' (LANDSCAPE)' : ''}`);
-      } else if (element.rotation === 90) {
-        drawX = targetCenterX + adjustedContentHeightPts / 2;
-        drawY = targetCenterY - adjustedContentWidthPts / 2;
-      } else if (element.rotation === 180) {
-        drawX = targetCenterX + adjustedContentWidthPts / 2;
-        drawY = targetCenterY + adjustedContentHeightPts / 2;
-      } else if (element.rotation === 270) {
-        drawX = targetCenterX - adjustedContentHeightPts / 2;
-        drawY = targetCenterY + adjustedContentWidthPts / 2;
       } else {
-        // No rotation - standard bottom-left positioning
-        drawX = targetCenterX - adjustedContentWidthPts / 2;
-        drawY = targetCenterY - adjustedContentHeightPts / 2;
+        const placement = getCenteredDrawPosition(
+          targetCenterX,
+          targetCenterY,
+          adjustedContentWidthPts,
+          adjustedContentHeightPts,
+          normalizedRotation,
+        );
+        drawX = placement.x;
+        drawY = placement.y;
       }
       
       console.log(`🎯 ROTATION CENTERING: target center=(${targetCenterX.toFixed(1)}, ${targetCenterY.toFixed(1)}), rotation=${element.rotation || 0}°`);
       console.log(`📍 DRAW POSITION: (${drawX.toFixed(1)}, ${drawY.toFixed(1)}) with size ${contentWidthPts.toFixed(1)}×${contentHeightPts.toFixed(1)}pts`);
       
-      const shouldSkipRotation = isFullPagePdf && isLandscapePdf;
       const drawOptions = {
         x: drawX,
         y: drawY,
         width: adjustedContentWidthPts,
         height: adjustedContentHeightPts,
-        rotate: (element.rotation && !shouldSkipRotation) ? degrees(element.rotation) : undefined,
+        rotate: normalizedRotation ? degrees(normalizedRotation) : undefined,
       };
-      
-      if (shouldSkipRotation && element.rotation) {
-        console.log(`📄 LANDSCAPE FULL-PAGE: Skipping element rotation (${element.rotation}°) - output page already matches PDF orientation`);
-      }
-      console.log(`📐 FINAL EMBEDDING: Position=(${drawX.toFixed(1)}, ${drawY.toFixed(1)}) Size=${adjustedContentWidthPts.toFixed(1)}×${adjustedContentHeightPts.toFixed(1)}pts, Rotation=${shouldSkipRotation ? 0 : (element.rotation || 0)}°`);
+
+      console.log(`📐 FINAL EMBEDDING: Position=(${drawX.toFixed(1)}, ${drawY.toFixed(1)}) Size=${adjustedContentWidthPts.toFixed(1)}×${adjustedContentHeightPts.toFixed(1)}pts, Rotation=${normalizedRotation}°`);
       
       if (page1) {
         page1.drawPage(logoPage, drawOptions);
@@ -2407,32 +2402,25 @@ grestore`;
     const targetCenterX = templateCenterXPts + element.x * MM_TO_POINTS;
     const targetCenterY = templateCenterYPts - element.y * MM_TO_POINTS;
     
-    let drawX: number;
-    let drawY: number;
-    
-    if (element.rotation === 90) {
-      drawX = targetCenterX + contentHeightPts / 2;
-      drawY = targetCenterY - contentWidthPts / 2;
-    } else if (element.rotation === 180) {
-      drawX = targetCenterX + contentWidthPts / 2;
-      drawY = targetCenterY + contentHeightPts / 2;
-    } else if (element.rotation === 270) {
-      drawX = targetCenterX - contentHeightPts / 2;
-      drawY = targetCenterY + contentWidthPts / 2;
-    } else {
-      drawX = targetCenterX - contentWidthPts / 2;
-      drawY = targetCenterY - contentHeightPts / 2;
-    }
+    const placement = getCenteredDrawPosition(
+      targetCenterX,
+      targetCenterY,
+      contentWidthPts,
+      contentHeightPts,
+      element.rotation,
+    );
+    const drawX = placement.x;
+    const drawY = placement.y;
     
     const drawOptions = {
       x: drawX,
       y: drawY,
       width: contentWidthPts,
       height: contentHeightPts,
-      rotate: element.rotation ? degrees(element.rotation) : undefined,
+      rotate: placement.rotation ? degrees(placement.rotation) : undefined,
     };
     
-    console.log(`📍 RASTER POSITION: (${drawX.toFixed(1)}, ${drawY.toFixed(1)}) Size=${contentWidthPts.toFixed(1)}×${contentHeightPts.toFixed(1)}pts, Rotation=${element.rotation || 0}°`);
+    console.log(`📍 RASTER POSITION: (${drawX.toFixed(1)}, ${drawY.toFixed(1)}) Size=${contentWidthPts.toFixed(1)}×${contentHeightPts.toFixed(1)}pts, Rotation=${placement.rotation}°`);
     
     if (page1) {
       page1.drawImage(embeddedImage, drawOptions);

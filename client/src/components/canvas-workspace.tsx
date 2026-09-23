@@ -155,6 +155,7 @@ function hasValidContentBounds(logo: Logo): logo is Logo & { contentBounds: Cont
 
 export interface CanvasWorkspaceHandle {
   captureCanvasAsImage: () => Promise<string | null>;
+  flushPendingUpdates: () => Promise<void>;
 }
 
 const CanvasWorkspace = forwardRef(function CanvasWorkspace({
@@ -316,6 +317,9 @@ const CanvasWorkspace = forwardRef(function CanvasWorkspace({
   // History state for undo/redo functionality
   const [history, setHistory] = useState<CanvasElement[][]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
+  const pendingUpdatePromisesRef = useRef<Set<Promise<void>>>(new Set());
+  const queuedElementUpdatesRef = useRef<Map<string, Partial<CanvasElement>>>(new Map());
+  const elementUpdateWorkersRef = useRef<Map<string, Promise<void>>>(new Map());
 
 
   // History management
@@ -349,22 +353,51 @@ const CanvasWorkspace = forwardRef(function CanvasWorkspace({
         }
       );
 
-      // Send update to server
-      const response = await fetch(`/api/canvas-elements/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updates)
-      });
-      
-      if (!response.ok) {
-        console.error('Failed to update element - server error:', response.status);
-        // Revert optimistic update on failure
-        queryClient.invalidateQueries({
-          queryKey: ["/api/projects", project.id, "canvas-elements"]
+      // Coalesce rapid drag/resize updates per element and send them in order.
+      // Without this queue, an older PATCH can finish after the final PATCH and
+      // leave the database out of sync with the on-screen canvas.
+      const queued = queuedElementUpdatesRef.current.get(id) || {};
+      queuedElementUpdatesRef.current.set(id, { ...queued, ...updates });
+
+      let workerPromise = elementUpdateWorkersRef.current.get(id);
+      if (!workerPromise) {
+        let activeWorker: Promise<void>;
+        activeWorker = (async () => {
+          while (queuedElementUpdatesRef.current.has(id)) {
+            const nextUpdates = queuedElementUpdatesRef.current.get(id)!;
+            queuedElementUpdatesRef.current.delete(id);
+
+            try {
+              const response = await fetch(`/api/canvas-elements/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(nextUpdates)
+              });
+
+              if (!response.ok) {
+                throw new Error(`Canvas update failed with status ${response.status}`);
+              }
+              console.log('✅ Canvas API update successful');
+            } catch (error) {
+              console.error('Failed to update element:', error);
+              queuedElementUpdatesRef.current.delete(id);
+              queryClient.invalidateQueries({
+                queryKey: ["/api/projects", project.id, "canvas-elements"]
+              });
+              break;
+            }
+          }
+        })().finally(() => {
+          elementUpdateWorkersRef.current.delete(id);
+          pendingUpdatePromisesRef.current.delete(activeWorker);
         });
-      } else {
-        console.log('✅ Canvas API update successful');
+
+        workerPromise = activeWorker;
+        elementUpdateWorkersRef.current.set(id, workerPromise);
+        pendingUpdatePromisesRef.current.add(workerPromise);
       }
+
+      await workerPromise;
     } catch (error) {
       console.error('Failed to update element:', error);
       // Revert optimistic update on error
@@ -805,9 +838,16 @@ const CanvasWorkspace = forwardRef(function CanvasWorkspace({
     return captureCanvasArtworkOnly();
   }, [captureCanvasArtworkOnly]);
 
+  const flushPendingUpdates = useCallback(async () => {
+    while (pendingUpdatePromisesRef.current.size > 0) {
+      await Promise.allSettled(Array.from(pendingUpdatePromisesRef.current));
+    }
+  }, []);
+
   useImperativeHandle(ref, () => ({
     captureCanvasAsImage,
-  }), [captureCanvasAsImage]);
+    flushPendingUpdates,
+  }), [captureCanvasAsImage, flushPendingUpdates]);
 
   // Automatic cleanup of orphaned canvas elements
   useCleanupOrphanedElements({
@@ -3166,7 +3206,9 @@ const CanvasWorkspace = forwardRef(function CanvasWorkspace({
                         }}
                         onMouseDown={(e) => {
                           e.stopPropagation();
-                          let rotationTimeout: NodeJS.Timeout;
+                           let rotationTimeout: NodeJS.Timeout;
+                           let hasRotationMove = false;
+                           const latestRotationUpdates = new Map<string, Partial<CanvasElement>>();
                           
                           // Use ref to get the LATEST selectedElements to avoid stale closures
                           const currentSelectedElements = selectedElementsRef.current;
@@ -3207,8 +3249,8 @@ const CanvasWorkspace = forwardRef(function CanvasWorkspace({
                             const rect = canvasRef.current.getBoundingClientRect();
                             const scaleFactor = zoom / 100;
                             const mmToPixelRatio = template ? template.pixelWidth / template.width : 1;
-                            const groupCenterPixelX = groupCenter.x * mmToPixelRatio * scaleFactor;
-                            const groupCenterPixelY = groupCenter.y * mmToPixelRatio * scaleFactor;
+                            const groupCenterPixelX = ((template?.width || 0) / 2 + groupCenter.x) * mmToPixelRatio * scaleFactor;
+                            const groupCenterPixelY = ((template?.height || 0) / 2 + groupCenter.y) * mmToPixelRatio * scaleFactor;
                             initialMouseAngle = Math.atan2(
                               e.clientY - rect.top - groupCenterPixelY,
                               e.clientX - rect.left - groupCenterPixelX
@@ -3220,13 +3262,8 @@ const CanvasWorkspace = forwardRef(function CanvasWorkspace({
                             }
                           }
                           
-                          const handleRotationMouseMove = (moveEvent: MouseEvent) => {
+                           const applyRotationPreview = (moveEvent: MouseEvent) => {
                             if (!canvasRef.current) return;
-                            
-                            clearTimeout(rotationTimeout);
-                            
-                            // Reduced timeout for smoother rotation (was 50ms)
-                            rotationTimeout = setTimeout(async () => {
                               const rect = canvasRef.current!.getBoundingClientRect();
                               const scaleFactor = zoom / 100;
                               const mmToPixelRatio = template ? template.pixelWidth / template.width : 1;
@@ -3234,8 +3271,8 @@ const CanvasWorkspace = forwardRef(function CanvasWorkspace({
                               if (isGroupRotation && initialGroupState) {
                                 // GROUP ROTATION: Rotate all elements around group center
                                 console.log('🔄 Group rotation update - elements to rotate:', initialGroupState.size, 'ids:', Array.from(initialGroupState.keys()));
-                                const groupCenterPixelX = groupCenter.x * mmToPixelRatio * scaleFactor;
-                                const groupCenterPixelY = groupCenter.y * mmToPixelRatio * scaleFactor;
+                                 const groupCenterPixelX = ((template?.width || 0) / 2 + groupCenter.x) * mmToPixelRatio * scaleFactor;
+                                 const groupCenterPixelY = ((template?.height || 0) / 2 + groupCenter.y) * mmToPixelRatio * scaleFactor;
                                 
                                 // Calculate current mouse angle from group center
                                 const currentMouseAngle = Math.atan2(
@@ -3259,11 +3296,11 @@ const CanvasWorkspace = forwardRef(function CanvasWorkspace({
                                   
                                   console.log(`🔃 Rotating element ${elementId}: initial(${initialState.x.toFixed(1)}, ${initialState.y.toFixed(1)}) -> new(${newX.toFixed(1)}, ${newY.toFixed(1)}) rot: ${initialState.rotation} -> ${Math.round(newElementRotation)}`);
                                   
-                                  updateElementDirect(elementId, { 
+                                   latestRotationUpdates.set(elementId, {
                                     x: Math.round(newX * 10) / 10,
                                     y: Math.round(newY * 10) / 10,
                                     rotation: Math.round(newElementRotation) 
-                                  }, false);
+                                   });
                                 });
                               } else {
                                 // SINGLE ELEMENT ROTATION (original behavior)
@@ -3282,17 +3319,48 @@ const CanvasWorkspace = forwardRef(function CanvasWorkspace({
                                 console.log('Rotation handle drag - updating to:', Math.round(normalizedAngle));
                                 
                                 // Use same direct update function as other operations
-                                updateElementDirect(element.id, { 
+                                 latestRotationUpdates.set(element.id, {
                                   rotation: Math.round(normalizedAngle) 
                                 });
                               }
-                            }, 16); // Reduced from 50ms for smoother rotation (~60fps)
+
+                               queryClient.setQueryData(
+                                 ["/api/projects", project.id, "canvas-elements"],
+                                 (oldData: CanvasElement[] | undefined) => {
+                                   if (!oldData) return oldData;
+                                   return oldData.map(current => {
+                                     const update = latestRotationUpdates.get(current.id);
+                                     return update ? { ...current, ...update } : current;
+                                   });
+                                 }
+                               );
+                           };
+
+                           const handleRotationMouseMove = (moveEvent: MouseEvent) => {
+                             if (!canvasRef.current) return;
+                             hasRotationMove = true;
+                             clearTimeout(rotationTimeout);
+                             rotationTimeout = setTimeout(() => applyRotationPreview(moveEvent), 16);
                           };
                           
-                          const handleRotationMouseUp = () => {
+                           const handleRotationMouseUp = async (upEvent: MouseEvent) => {
                             clearTimeout(rotationTimeout);
                             document.removeEventListener('mousemove', handleRotationMouseMove);
                             document.removeEventListener('mouseup', handleRotationMouseUp);
+                             if (!hasRotationMove) return;
+
+                             // Commit the exact mouse-up state once. This prevents overlapping
+                             // PATCH requests from completing out of order and ensures the final
+                             // rotation is persisted before PDF generation can continue.
+                             applyRotationPreview(upEvent);
+                             await Promise.all(
+                               Array.from(latestRotationUpdates.entries()).map(([id, updates]) =>
+                                 updateElementDirect(id, updates, false)
+                               )
+                             );
+                             queryClient.invalidateQueries({
+                               queryKey: ["/api/projects", project.id, "canvas-elements"]
+                             });
                           };
                           
                           document.addEventListener('mousemove', handleRotationMouseMove);
